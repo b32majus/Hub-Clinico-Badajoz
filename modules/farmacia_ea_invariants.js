@@ -776,10 +776,262 @@
         }
     }
 
+    /*
+     * Composición pasiva T01 → F4.4 (FH-EA R1, ea-adaptacion-pasiva).
+     *
+     * `composeFollowup(envelope, payload, context)` es un seam puro de
+     * adaptación: recibe la envelope y el payload que ya respetan F4.4 y una
+     * colección T01 en `payload.followup.adverse_events`. No conoce DOM,
+     * página, paciente activo, reloj, catálogo, almacenamiento ni transporte,
+     * no genera identidades y no crea un acto por ficha.
+     *
+     *   - Las fichas T01 reciben `patientRef`/`actId` de la envelope SÓLO si
+     *     no los traen. Una referencia ya aportada que no coincida se rechaza;
+     *     nunca se sobrescribe.
+     *   - `context` aporta explícitamente `{ present, history, selections,
+     *     revisions }`. Las tres colecciones pueden estar vacías. Las
+     *     observaciones se validan con `validateObservations` y cada revisión
+     *     con `validateRevision`; no se reimplementan sus reglas.
+     *   - Cada revisión debe pertenecer al paciente y acto actuales y su
+     *     `next` debe ser exactamente una observación incorporada del acto
+     *     actual. Toda observación incorporada con `amendment` exige su
+     *     revisión explícita: no se admite omitir `previous`.
+     *   - Se reemplaza únicamente `payload.followup.adverse_events` por la
+     *     representación R1 `{ patientRef, actId, present, adverse_events,
+     *     occurredAt? }` (fecha común sólo si la envelope la aporta) y se
+     *     delega la construcción de UN acto en
+     *     `farmaciaActPayloads.createFollowupAct(envelope, adaptedPayload)`.
+     *     El resto del payload (líneas, bloques opacos y su orden) permanece
+     *     intacto.
+     *
+     * Éxito: `{ ok: true, act, retained, history, selections, revisions }`,
+     * donde `act` es el resultado F4.4 y las ramas conservan las entradas
+     * validadas. Fallo: `{ ok: false, error: { code, message } }`, sin acto ni
+     * representación parcial. Entradas y salidas están profundamente
+     * desconectadas y no hay estado entre llamadas.
+     */
+    function sameStructure(left, right) {
+        if (left === right) {
+            return true;
+        }
+        if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
+            return false;
+        }
+        var leftIsArray = Array.isArray(left);
+        if (leftIsArray !== Array.isArray(right)) {
+            return false;
+        }
+        var index;
+        if (leftIsArray) {
+            if (left.length !== right.length) {
+                return false;
+            }
+            for (index = 0; index < left.length; index += 1) {
+                if (!sameStructure(left[index], right[index])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        var leftKeys = Object.keys(left).sort();
+        var rightKeys = Object.keys(right).sort();
+        if (leftKeys.length !== rightKeys.length) {
+            return false;
+        }
+        for (index = 0; index < leftKeys.length; index += 1) {
+            if (leftKeys[index] !== rightKeys[index]) {
+                return false;
+            }
+            if (!sameStructure(left[leftKeys[index]], right[rightKeys[index]])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function containsRecord(records, candidate) {
+        for (var index = 0; index < records.length; index += 1) {
+            if (sameStructure(records[index], candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Añade la identidad de la envelope sólo cuando la ficha no la trae.
+    // Una referencia propia (aunque sea undefined/null/'' o contradictoria)
+    // se valida por igualdad estricta y nunca se sobrescribe.
+    function withEnvelopeIdentity(event, patientRef, actId) {
+        var copy = cloneStructure(event, []);
+        if (hasOwn(copy, 'patientRef')) {
+            if (copy.patientRef !== patientRef) {
+                return fail('PATIENT_ASSOCIATION_MISMATCH', 'Una ficha aporta un patientRef que no coincide con la envelope.');
+            }
+        } else {
+            copy.patientRef = patientRef;
+        }
+        if (hasOwn(copy, 'actId')) {
+            if (copy.actId !== actId) {
+                return fail('ACT_ASSOCIATION_MISMATCH', 'Una ficha aporta un actId que no coincide con la envelope.');
+            }
+        } else {
+            copy.actId = actId;
+        }
+        return { ok: true, event: copy };
+    }
+
+    function composeFollowup(envelope, payload, context) {
+        try {
+            if (!isRecord(envelope)) {
+                return fail('INVALID_ENVELOPE', 'La envelope debe ser un objeto explícito.');
+            }
+            if (!isNonEmptyString(envelope.patientRef)) {
+                return fail('INVALID_PATIENT_REF', 'La envelope debe traer patientRef explícito no vacío.');
+            }
+            if (!isNonEmptyString(envelope.actId)) {
+                return fail('INVALID_ACT_ID', 'La envelope debe traer actId explícito no vacío.');
+            }
+            if (!isRecord(payload)) {
+                return fail('INVALID_PAYLOAD', 'El payload debe ser un objeto explícito.');
+            }
+            if (!hasOwn(payload, 'followup') || !isRecord(payload.followup)) {
+                return fail('INVALID_FOLLOWUP', 'El payload debe traer el bloque followup explícito.');
+            }
+            if (!hasOwn(payload.followup, 'adverse_events') || !Array.isArray(payload.followup.adverse_events)) {
+                return fail('INVALID_ADVERSE_EVENTS', 'payload.followup.adverse_events debe ser la colección T01 explícita.');
+            }
+            if (!isRecord(context)) {
+                return fail('INVALID_CONTEXT', 'El contexto debe ser un objeto explícito.');
+            }
+            if (!hasOwn(context, 'present') ||
+                !hasOwn(context, 'history') ||
+                !hasOwn(context, 'selections') ||
+                !hasOwn(context, 'revisions')) {
+                return fail('INVALID_CONTEXT', 'El contexto exige present, history, selections y revisions explícitos.');
+            }
+            if (!Array.isArray(context.history) ||
+                !Array.isArray(context.selections) ||
+                !Array.isArray(context.revisions)) {
+                return fail('INVALID_CONTEXT', 'history, selections y revisions deben ser arrays explícitos.');
+            }
+
+            var events = [];
+            for (var index = 0; index < payload.followup.adverse_events.length; index += 1) {
+                var event = payload.followup.adverse_events[index];
+                if (!isRecord(event)) {
+                    return fail('INVALID_EVENT', 'Cada ficha T01 debe ser un objeto explícito.');
+                }
+                var identified = withEnvelopeIdentity(event, envelope.patientRef, envelope.actId);
+                if (!identified.ok) {
+                    return identified;
+                }
+                events.push(identified.event);
+            }
+
+            var observationRequest = {
+                patientRef: envelope.patientRef,
+                actId: envelope.actId,
+                present: context.present,
+                adverse_events: events,
+                history: context.history,
+                selections: context.selections
+            };
+            if (hasOwn(envelope, 'occurredAt')) {
+                observationRequest.occurredAt = envelope.occurredAt;
+            }
+
+            var observations = validateObservations(observationRequest);
+            if (!observations.ok) {
+                return observations;
+            }
+
+            var revisions = [];
+            for (var revisionIndex = 0; revisionIndex < context.revisions.length; revisionIndex += 1) {
+                var validatedRevision = validateRevision(context.revisions[revisionIndex]);
+                if (!validatedRevision.ok) {
+                    return validatedRevision;
+                }
+                var previous = validatedRevision.previous;
+                var next = validatedRevision.next;
+                if (previous.patientRef !== envelope.patientRef || next.patientRef !== envelope.patientRef) {
+                    return fail('REVISION_PATIENT_MISMATCH', 'Una revisión referencia a otro paciente.');
+                }
+                if (previous.actId !== envelope.actId || next.actId !== envelope.actId) {
+                    return fail('REVISION_ACT_MISMATCH', 'Una revisión pertenece a otro acto.');
+                }
+                revisions.push({
+                    operation: validatedRevision.operation,
+                    previous: previous,
+                    next: next
+                });
+            }
+
+            var incorporated = observations.representation.adverse_events;
+            for (var linkIndex = 0; linkIndex < revisions.length; linkIndex += 1) {
+                if (!containsRecord(incorporated, revisions[linkIndex].next)) {
+                    return fail('REVISION_OBSERVATION_MISMATCH', 'El next de una revisión no corresponde a ninguna observación incorporada del acto actual.');
+                }
+            }
+            for (var amendmentIndex = 0; amendmentIndex < incorporated.length; amendmentIndex += 1) {
+                var observation = incorporated[amendmentIndex];
+                if (hasOwn(observation, 'amendment') && observation.amendment !== undefined) {
+                    var linked = false;
+                    for (var candidateIndex = 0; candidateIndex < revisions.length; candidateIndex += 1) {
+                        if (sameStructure(revisions[candidateIndex].next, observation)) {
+                            linked = true;
+                            break;
+                        }
+                    }
+                    if (!linked) {
+                        return fail('MISSING_REVISION', 'Una observación con amendment exige su revisión explícita.');
+                    }
+                }
+            }
+
+            var representation = {
+                patientRef: envelope.patientRef,
+                actId: envelope.actId,
+                present: context.present,
+                adverse_events: incorporated
+            };
+            if (hasOwn(envelope, 'occurredAt')) {
+                representation.occurredAt = cloneStructure(envelope.occurredAt, []);
+            }
+
+            var adaptedPayload = cloneStructure(payload, []);
+            adaptedPayload.followup.adverse_events = representation;
+
+            if (!HubTools.farmaciaActPayloads ||
+                typeof HubTools.farmaciaActPayloads.createFollowupAct !== 'function') {
+                return fail('MISSING_ACT_BUILDER', 'farmaciaActPayloads.createFollowupAct no está disponible.');
+            }
+
+            var actResult = HubTools.farmaciaActPayloads.createFollowupAct(envelope, adaptedPayload);
+            if (!isRecord(actResult)) {
+                return fail('INVALID_ACT_RESULT', 'El constructor F4.4 no devolvió un resultado estructurado.');
+            }
+            if (actResult.ok !== true) {
+                return actResult;
+            }
+
+            return {
+                ok: true,
+                act: actResult,
+                retained: observations.retained,
+                history: observations.history,
+                selections: observations.selections,
+                revisions: revisions
+            };
+        } catch (problem) {
+            return fail('INVALID_REQUEST', 'La composición no se pudo validar.');
+        }
+    }
+
     HubTools.farmaciaEaInvariants = {
         validateNewEvents: validateNewEvents,
         validateObservations: validateObservations,
-        validateRevision: validateRevision
+        validateRevision: validateRevision,
+        composeFollowup: composeFollowup
     };
 
     if (typeof console !== 'undefined' && typeof console.log === 'function') {
