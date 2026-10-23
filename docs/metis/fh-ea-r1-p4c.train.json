@@ -1,0 +1,21 @@
+{
+  "schema": "metis.train/v1",
+  "train": "FH-EA R1: invariantes puras compatibles con T01 y F4.4",
+  "units": [
+    {
+      "ticket": "docs/metis/fh-ea-r1-p4c-ea-cardinalidad-estados.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea-r1-p4c-ea-episodios-observaciones.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea-r1-p4c-ea-ausencias-causalidad.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea-r1-p4c-ea-revisiones-conservadas.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea-r1-p4c-ea-adaptacion-pasiva.md"
+    }
+  ]
+}
