@@ -541,12 +541,41 @@
         if (empty) empty.classList.toggle('hidden', followupOtherDrugs.length > 0);
     }
 
+    // La identidad de un tratamiento relacionado no puede cambiar detrás
+    // de una sospecha ya declarada expresamente en una ficha EA. Requiere
+    // desvincularlo antes de sustituir nombre o identificadores de fármaco.
+    function hasEaEpisodeSuspectForOtherDrug(uid) {
+        var suspectId = 'other:' + uid;
+        return eaEventsCollection().some(function (event) {
+            return Array.isArray(event.suspect_ids) && event.suspect_ids.indexOf(suspectId) >= 0;
+        });
+    }
+
+    function blockRelatedDrugIdentityChange(uid) {
+        if (!hasEaEpisodeSuspectForOtherDrug(uid)) return false;
+        window.alert('Este medicamento está marcado como sospechoso en una ficha EA. Desvincúlelo antes de cambiar su identidad o seleccionar otro medicamento.');
+        return true;
+    }
+
     function updateFollowupOtherDrug(uid, key, value) {
-        followupOtherDrugs = followupOtherDrugs.map(function (drug) {
-            if (drug.uid === uid) drug[key] = value;
-            return drug;
+        var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+        // Solo los campos de identidad del fármaco quedan bloqueados detrás de
+        // una sospecha explícita; dosis, vía, pauta y demás datos no
+        // identitarios permanecen editables.
+        var identityField = ['farmaco', 'principioActivo', 'selectedDrugId', 'codigoNacional', 'nregistro', 'sourceType'].indexOf(key) >= 0;
+        if (drug && identityField && String(drug[key] || '') !== String(value || '') && blockRelatedDrugIdentityChange(uid)) {
+            // El evento input ya modificó visualmente el campo: revertirlo
+            // para que interfaz y modelo clínico permanezcan coherentes.
+            var control = document.querySelector('[data-uid="' + uid + '"][data-field="' + key + '"]');
+            if (control) control.value = drug[key] || '';
+            return false;
+        }
+        followupOtherDrugs = followupOtherDrugs.map(function (item) {
+            if (item.uid === uid) item[key] = value;
+            return item;
         });
         updateSuspectDrugSelector();
+        return true;
     }
 
     function buildFollowupField(labelText, control) {
@@ -600,6 +629,12 @@
         var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
         if (!drug) return false;
         var suspectId = 'other:' + uid;
+        // No destruir el medicamento origen de una sospecha aún vinculada en
+        // una ficha EA: exigir desvinculación explícita antes de eliminarlo.
+        if (hasEaEpisodeSuspectForOtherDrug(uid)) {
+            window.alert('Medicamento marcado como sospechoso en una ficha EA. Desvincúlelo en esa ficha antes de eliminarlo.');
+            return false;
+        }
         var linked = currentFollowupVisit && (currentFollowupVisit.adverse_event.suspect_ids.indexOf(suspectId) >= 0 || currentFollowupVisit.causality_by_suspect[suspectId]);
         if (linked && !window.confirm(RELATED_DISCARD_MESSAGE)) return false;
         var C = getCatalog();
@@ -829,6 +864,9 @@
     function applyCatalogSelectionToOtherDrug(uid, d) {
         var existing = followupOtherDrugs.find(function (drug) { return drug.uid === uid; });
         if (!existing || !d) return;
+        // Elegir otra entrada de catálogo mutaría la identidad de la misma
+        // referencia other:uid. No trasladar automáticamente la sospecha.
+        if (blockRelatedDrugIdentityChange(uid)) return false;
         var C = getCatalog();
         if (C && C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(d)) return;
         var context = followupCatalogContext('', uid);
@@ -1034,7 +1072,230 @@
         updateLegacySuspectSummary(candidates);
         updateCausalityContextLabels();
         updateCausalityVisibility();
+        refreshEaEpisodeSuspects();
         updateExportInterlock();
+    }
+
+    // Memoria de la huella de identidad de la fuente EN EL MOMENTO de marcar
+    // cada sospechoso por episodio (solo memoria de edición, nunca
+    // persistida). La huella cubre TODOS los campos de identidad disponibles
+    // de la fuente, no solo su nombre visible.
+    var eaSuspectMarkedSources = {};
+
+    function eaSuspectSourceKey(episodeId, suspectId) {
+        return episodeId + '|' + suspectId;
+    }
+
+    function eaOtherDrugFingerprint(drug) {
+        drug = drug || {};
+        return JSON.stringify({
+            farmaco: drug.farmaco || '',
+            principioActivo: drug.principioActivo || '',
+            selectedDrugId: drug.selectedDrugId || '',
+            codigoNacional: drug.codigoNacional || '',
+            nregistro: drug.nregistro || '',
+            // Identitario también en updateFollowupOtherDrug: la huella debe
+            // cubrirlo para no transferir la sospecha entre orígenes de
+            // catálogo distinto con igual nombre.
+            sourceType: drug.sourceType || ''
+        });
+    }
+
+    function eaLineFingerprint(line) {
+        line = line || {};
+        return JSON.stringify({
+            nombre_linea: line.nombre_linea || '',
+            farmaco_nombre: line.farmaco_nombre || '',
+            nombre_comercial: line.nombre_comercial || '',
+            principio_activo: line.principio_activo || '',
+            // Identificadores de fuente de la línea (nombres exactos de la
+            // fuente; nada que ver con el sourceType de «Otros fármacos»).
+            codigo_nacional: line.codigo_nacional || '',
+            nregistro: line.nregistro || '',
+            source_type: line.source_type || ''
+        });
+    }
+
+    function eaSuspectSourceFingerprint(suspectId) {
+        if (suspectId.indexOf('line:') === 0) {
+            var lineId = suspectId.slice('line:'.length);
+            var line = currentBiologicLines.find(function (item) { return item.linea_id === lineId; });
+            // Fuente realmente ausente (find === undefined): centinela
+            // explícito, nunca una huella válida calculada sobre un objeto
+            // vacío.
+            return line === undefined ? null : eaLineFingerprint(line);
+        }
+        if (suspectId.indexOf('other:') === 0) {
+            var uid = suspectId.slice('other:'.length);
+            var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+            return drug === undefined ? null : eaOtherDrugFingerprint(drug);
+        }
+        return '';
+    }
+
+    function rememberEaSuspectSource(episodeId, suspectId) {
+        eaSuspectMarkedSources[eaSuspectSourceKey(episodeId, suspectId)] = {
+            fingerprint: eaSuspectSourceFingerprint(suspectId),
+            pending: false
+        };
+    }
+
+    function forgetEaSuspectSource(episodeId, suspectId) {
+        delete eaSuspectMarkedSources[eaSuspectSourceKey(episodeId, suspectId)];
+    }
+
+    // Estado PEGAJOSO de la marca: una huella distinta o una fuente perdida
+    // degradan la marca a «pendiente de reconciliación» de forma permanente;
+    // ninguna coincidencia posterior de identidad la restaura automáticamente
+    // (ni siquiera recuperar la fuente original). La única vía de
+    // reconciliación es desvincular y volver a marcar de forma expresa. Una
+    // marca sin huella registrada (p. ej. restaurada sin memoria de sesión)
+    // tampoco se presenta jamás como sospecha vigente sobre una identidad no
+    // verificada.
+    function eaSuspectMarkIsPending(episodeId, suspectId) {
+        var record = eaSuspectMarkedSources[eaSuspectSourceKey(episodeId, suspectId)];
+        if (!record) return true;
+        var fingerprint = eaSuspectSourceFingerprint(suspectId);
+        // Sin huella registrada o fuente realmente ausente (centinela null):
+        // la marca pasa a pendiente de forma irreversible; la identidad no se
+        // verifica y no se restaura automáticamente aunque la fuente exacta
+        // reaparezca después.
+        if (!fingerprint) { record.pending = true; return true; }
+        if (!record.pending && fingerprint !== record.fingerprint) record.pending = true;
+        return record.pending;
+    }
+
+    // G0 FH-EA-02: estos candidatos son referencias de tratamientos ya
+    // identificados explícitamente en esta visita/paciente, NUNCA
+    // sospechosos automáticos. Se exige un nombre real: no se ofrecen
+    // etiquetas técnicas de relleno y nada se preselecciona.
+    function getEaNamedDrugCandidates() {
+        return getRelevantDrugCandidates().map(function (candidate) {
+            var name = '';
+            if (candidate.source === 'principal') {
+                var lineId = candidate.id.slice('line:'.length);
+                var line = currentBiologicLines.find(function (item) { return item.linea_id === lineId; });
+                name = line && firstNonEmpty(line.nombre_linea, line.farmaco_nombre, line.nombre_comercial, line.principio_activo) || '';
+            } else if (candidate.source === 'other') {
+                var uid = candidate.id.slice('other:'.length);
+                var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+                name = drug && firstNonEmpty(drug.farmaco, drug.principioActivo) || '';
+            }
+            if (!name) return null;
+            // Rotulación de origen: la distinción histórica ya calculada por
+            // getRelevantDrugCandidates se preserva como sufijo rotulado;
+            // nunca presume actividad, exposición ni sospecha, y no altera
+            // la identidad estable del candidato.
+            var historicCategory = /histórico|suspendido|pendiente de inicio/i.test(candidate.category || '') ? candidate.category : '';
+            return { id: candidate.id, label: name, historicCategory: historicCategory };
+        }).filter(Boolean);
+    }
+
+    // D05: la sospecha se vincula al EPISODIO, por selección explícita, y es
+    // solo memoria de edición. El estado legacy de sospechosos (singular y
+    // vinculado a causalidad de visita) NO se lee ni se altera desde aquí.
+    function setEaEpisodeSuspect(episodeId, candidateId, selected) {
+        var event = findEaEvent(episodeId);
+        if (!event || typeof candidateId !== 'string' || !candidateId) return false;
+        if (!Array.isArray(event.suspect_ids)) event.suspect_ids = [];
+        var index = event.suspect_ids.indexOf(candidateId);
+        if (selected) {
+            var candidate = getEaNamedDrugCandidates().find(function (item) { return item.id === candidateId; });
+            if (!candidate) return false;
+            if (index < 0) {
+                event.suspect_ids.push(candidateId);
+                rememberEaSuspectSource(episodeId, candidateId);
+            }
+        } else if (index >= 0) {
+            event.suspect_ids.splice(index, 1);
+            forgetEaSuspectSource(episodeId, candidateId);
+        }
+        return true;
+    }
+
+    // Tratamiento visual del máster G0 v0.4: casilla teal + borde teal en el
+    // estado marcado; tratamiento neutro sin marcar.
+    function applyEaSuspectChipState(label, checkbox) {
+        if (checkbox.checked) {
+            applyEaStyle(label, { border: '1px solid #008777', background: '#E6F4F1' });
+            applyEaStyle(checkbox, { accentColor: '#008777' });
+        } else {
+            applyEaStyle(label, { border: '1px solid #E2E8F0', background: '#FBFDFD' });
+            applyEaStyle(checkbox, { accentColor: '' });
+        }
+    }
+
+    function renderEaEpisodeSuspects(event, container) {
+        F.clearChildren(container);
+        var marked = Array.isArray(event.suspect_ids) ? event.suspect_ids.slice() : [];
+        var candidates = getEaNamedDrugCandidates();
+        var candidatesById = {};
+        candidates.forEach(function (candidate) { candidatesById[candidate.id] = candidate; });
+        // Fuente perdida, identidad de fuente cambiada tras marcar o marca
+        // sin huella verificable: la referencia se conserva rotulada como
+        // pendiente de reconciliación, sin reasociarla al nuevo nombre ni
+        // fabricar una identidad nueva.
+        var missing = [];
+        marked.forEach(function (id) {
+            var candidate = candidatesById[id];
+            // Sin cortocircuito: el estado de la marca se evalúa para TODAS
+            // las referencias marcadas, exista o no candidato. Así la
+            // ausencia de fuente fija pending=true antes de que la identidad
+            // pueda reintroducirse idéntica y reaparecer como vigente.
+            var pending = eaSuspectMarkIsPending(event.episode_id, id);
+            if (!candidate || pending) {
+                missing.push({ id: id, label: 'Referencia pendiente de reconciliación (' + id + ')', missing: true });
+                if (candidate) delete candidatesById[id];
+            }
+        });
+        var options = candidates.filter(function (candidate) { return !!candidatesById[candidate.id]; }).concat(missing);
+        if (!options.length) {
+            container.appendChild(createElement('p', 'search-card__hint', 'Sin medicamentos identificados explícitamente en esta visita. Regístrelos antes de seleccionarlos.'));
+            return;
+        }
+        options.forEach(function (candidate) {
+            var labelText = candidate.label;
+            if (candidate.missing) labelText += ' · fuente no disponible';
+            else if (candidate.historicCategory) labelText += ' — ' + candidate.historicCategory;
+            var label = createElement('label', 'ea-suspect-option');
+            applyEaStyle(label, { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 10px', background: '#FBFDFD' });
+            var checkbox = createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = candidate.id;
+            checkbox.checked = marked.indexOf(candidate.id) >= 0;
+            checkbox.setAttribute('aria-label', 'Marcar sospechoso de este EA: ' + candidate.label);
+            checkbox.addEventListener('change', function () {
+                if (!setEaEpisodeSuspect(event.episode_id, candidate.id, checkbox.checked)) {
+                    checkbox.checked = !checkbox.checked;
+                } else if (typeof window.setTimeout === 'function') {
+                    // Refrescar al terminar el evento: la degradación pegajosa
+                    // y la reconciliación explícita deben verse de inmediato,
+                    // sin desmontar la casilla pulsada durante el propio
+                    // tratamiento del cambio.
+                    window.setTimeout(refreshEaEpisodeSuspects, 0);
+                }
+                applyEaSuspectChipState(label, checkbox);
+            });
+            applyEaSuspectChipState(label, checkbox);
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(labelText));
+            container.appendChild(label);
+        });
+    }
+
+    // Las casillas por episodio se regeneran cuando cambia cualquier fuente
+    // autorizada (altas/bajas de «Otros fármacos», selección de catálogo,
+    // cambios de línea/restauración de estado), no solo al editar el nombre.
+    function refreshEaEpisodeSuspects() {
+        var list = byId('fhSegEaList');
+        if (!list) return;
+        eaEventsCollection().forEach(function (event) {
+            var card = Array.prototype.find.call(list.querySelectorAll('.ea-t01-card'), function (item) {
+                return item.getAttribute('data-episode-id') === event.episode_id;
+            });
+            var container = card && card.querySelector('.ea-suspect-list');
+            if (container) renderEaEpisodeSuspects(event, container);
+        });
     }
 
     function getSelectedSuspectDrugLabel() {
@@ -1409,6 +1670,7 @@
         var draft = {
             episode_id: nextEaEpisodeId(),
             observation_id: nextEaObservationId(),
+            suspect_ids: [],
             status: 'draft',
             description: '',
             evolution: 'no_consta',
@@ -1437,6 +1699,9 @@
         if (!event) return false;
         var message = event.status === 'incorporated' ? EA_DISCARD_MESSAGE : EA_DRAFT_DISCARD_MESSAGE;
         if (!window.confirm(message)) return false;
+        (Array.isArray(event.suspect_ids) ? event.suspect_ids : []).forEach(function (id) {
+            forgetEaSuspectSource(episodeId, id);
+        });
         currentFollowupVisit.adverse_events = eaEventsCollection().filter(function (item) { return item !== event; });
         if (!eaIncorporatedEvents().length) hideEaContradictionNotice();
         renderEaZone();
@@ -1585,13 +1850,11 @@
             body.appendChild(createElement('p', 'search-card__hint', 'La descripción del EA nuevo es obligatoria para incorporarlo a la representación preparada del acto.'));
         }
 
-        // C-088 VIS-02: fidelidad visual del máster G0 v0.4 en la tarjeta
-        // expandida — disclosure «Información clínica adicional (opcional)» y
-        // bloque demo «Medicamentos señalados expresamente como sospechosos».
-        // SOLO presentación: controles inertes (disabled, sin id, sin valores
-        // ni datos fabricados). No crean observaciones, no vinculan
-        // sospechosos, no evalúan causalidad y no alteran el snapshot del
-        // acto (T02/T03 siguen fuera de T01).
+        // C-088 VIS-02 → G0 FH-EA-02: se preserva el disclosure clínico
+        // adicional como DEMO, todavía disabled. Los candidatos a sospechosos
+        // de cada episodio sí son seleccionables explícitamente y solo viven
+        // en memoria de edición de la ficha; no habilitan causalidad, guardado
+        // ni proyección F4.4.
         var extraDetails = document.createElement('details');
         extraDetails.className = 'ea-t01-demo-details';
         extraDetails.setAttribute('data-ea-demo-control', 't01');
@@ -1627,21 +1890,14 @@
         body.appendChild(createElement('div', 'form-label', 'Medicamentos señalados expresamente como sospechosos'));
         var demoSuspects = createElement('div', 'ea-suspect-list');
         applyEaStyle(demoSuspects, { display: 'flex', flexWrap: 'wrap', gap: '8px' });
-        ['A', 'B', 'C'].forEach(function (drugId) {
-            var chipLabel = createElement('label');
-            applyEaStyle(chipLabel, { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 10px', background: '#FBFDFD' });
-            var chip = document.createElement('input');
-            chip.type = 'checkbox';
-            chip.disabled = true;
-            chip.checked = false;
-            chip.setAttribute('aria-label', 'Tratamiento sintético ' + drugId + ' (candidato de demo, no funcional en T01)');
-            chip.setAttribute('data-ea-demo-control', 't01');
-            chipLabel.appendChild(chip);
-            chipLabel.appendChild(document.createTextNode('Tratamiento sintético ' + drugId));
-            demoSuspects.appendChild(chipLabel);
-        });
+        // G0 FH-EA-02: solo medicamentos ya identificados por el profesional o
+        // por una línea explícita, con nombre real; ninguna opción implica
+        // exposición, tratamiento activo ni causa. Cada episodio conserva sus
+        // propias selecciones, sin usar el modelo singular legacy de
+        // causalidad.
+        renderEaEpisodeSuspects(event, demoSuspects);
         body.appendChild(demoSuspects);
-        body.appendChild(createElement('p', 'search-card__hint', 'Son candidatos de demo, no se consideran automáticamente tratamientos actuales ni causa demostrada. Bloque de presentación visual, no funcional en T01: no vincula sospechosos ni evalúa causalidad, y desvincular/guardar no existe en esta unidad.'));
+        body.appendChild(createElement('p', 'search-card__hint', 'Selección en edición. No forma parte del acto preparado, no se ha guardado ni exportado. La sospecha se marca únicamente por selección explícita; no se preselecciona nada y no se ha evaluado causalidad.'));
         card.appendChild(body);
         return card;
     }
