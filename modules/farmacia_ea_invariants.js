@@ -11,15 +11,24 @@
  *   - `HubTools.farmaciaEaInvariants.validateNewEvents(request)`.
  *   - `HubTools.farmaciaEaInvariants.validateObservations(request)`.
  *
- * Entrada de `validateNewEvents`: `{ patientRef, actId, present, adverse_events }`.
+ * Entrada de `validateNewEvents`: `{ patientRef, actId, present, occurredAt?,
+ * adverse_events }`.
  *   - `patientRef` y `actId` son strings propios no vacíos que identifican el
  *     acto actual. Nunca se infieren ni se completan.
  *   - `present` es exactamente uno de `si`, `no`, `no_consta`; no se
  *     normaliza ningún otro token.
+ *   - `occurredAt` es opcional y se transporta una sola vez si es propiedad
+ *     propia del acto; no se valida como metadata F4.4, no se inventa y no se
+ *     proyecta como inicio, resolución, duración, autoría ni evolución EA.
  *   - Cada ficha trae explícitamente `{ patientRef, actId, episode_id,
  *     observation_id, status, description? }`. Los cuatro identificadores
  *     son strings propios no vacíos y `status` es exactamente `draft` o
  *     `incorporated` (vocabulario T01).
+ *   - Si una ficha declara `suspicions` como array, cada elemento referencia
+ *     su paciente y episodio. Si declara `evaluations` como array, cada
+ *     elemento aporta identidad, pareja episodio-medicamento, método y acto
+ *     coherentes con la ficha. Los campos ausentes o centinelas escalares se
+ *     conservan sin convertirlos en asociaciones.
  *
  * Reglas:
  *   - Las fichas del mismo paciente y del acto actual con estado
@@ -125,6 +134,79 @@
         return cloned;
     }
 
+    // Asociaciones clínicas explícitas (FH-EA R1).
+    //
+    // Una sospecha pertenece al episodio, no al acto: conserva la referencia
+    // expresa al paciente y al episodio de la ficha contenedora. Una
+    // evaluación pertenece a la pareja episodio-medicamento, al método y al
+    // acto donde se realizó. Sólo se validan arrays declarados: un centinela
+    // escalar o un campo ausente se conserva tal cual y no autoriza ni
+    // fabrica asociaciones. Tampoco se traduce el método ni se calcula nada.
+    function validateSuspicion(suspicion, observation) {
+        if (!isRecord(suspicion)) {
+            return fail('INVALID_SUSPICION', 'Cada sospecha debe ser un objeto explícito.');
+        }
+        if (!hasOwn(suspicion, 'patientRef') || !isNonEmptyString(suspicion.patientRef)) {
+            return fail('INVALID_SUSPICION_PATIENT_REF', 'Cada sospecha debe traer patientRef explícito no vacío.');
+        }
+        if (suspicion.patientRef !== observation.patientRef) {
+            return fail('SUSPICION_PATIENT_MISMATCH', 'Una sospecha referencia a otro paciente.');
+        }
+        if (!hasOwn(suspicion, 'episode_id') || !isNonEmptyString(suspicion.episode_id)) {
+            return fail('INVALID_SUSPICION_EPISODE_ID', 'Cada sospecha debe traer episode_id explícito no vacío.');
+        }
+        if (suspicion.episode_id !== observation.episode_id) {
+            return fail('SUSPICION_EPISODE_MISMATCH', 'Una sospecha referencia a otro episodio.');
+        }
+        if (!hasOwn(suspicion, 'medicationRef') || !isNonEmptyString(suspicion.medicationRef)) {
+            return fail('INVALID_SUSPICION_MEDICATION_REF', 'Cada sospecha debe traer medicationRef explícito no vacío.');
+        }
+        return null;
+    }
+
+    function validateEvaluation(evaluation, observation) {
+        if (!isRecord(evaluation)) {
+            return fail('INVALID_EVALUATION', 'Cada evaluación debe ser un objeto explícito.');
+        }
+        var required = ['evaluation_id', 'patientRef', 'episode_id', 'medicationRef', 'method', 'actId'];
+        for (var index = 0; index < required.length; index += 1) {
+            if (!hasOwn(evaluation, required[index]) || !isNonEmptyString(evaluation[required[index]])) {
+                return fail('INVALID_EVALUATION', 'Cada evaluación debe traer ' + required[index] + ' explícito no vacío.');
+            }
+        }
+        if (evaluation.patientRef !== observation.patientRef) {
+            return fail('EVALUATION_PATIENT_MISMATCH', 'Una evaluación referencia a otro paciente.');
+        }
+        if (evaluation.episode_id !== observation.episode_id) {
+            return fail('EVALUATION_EPISODE_MISMATCH', 'Una evaluación referencia a otro episodio.');
+        }
+        if (evaluation.actId !== observation.actId) {
+            return fail('EVALUATION_ACT_MISMATCH', 'Una evaluación debe pertenecer al acto de su observación contenedora.');
+        }
+        return null;
+    }
+
+    function validateClinicalAssociations(observation) {
+        var index;
+        if (hasOwn(observation, 'suspicions') && Array.isArray(observation.suspicions)) {
+            for (index = 0; index < observation.suspicions.length; index += 1) {
+                var suspicionError = validateSuspicion(observation.suspicions[index], observation);
+                if (suspicionError) {
+                    return suspicionError;
+                }
+            }
+        }
+        if (hasOwn(observation, 'evaluations') && Array.isArray(observation.evaluations)) {
+            for (index = 0; index < observation.evaluations.length; index += 1) {
+                var evaluationError = validateEvaluation(observation.evaluations[index], observation);
+                if (evaluationError) {
+                    return evaluationError;
+                }
+            }
+        }
+        return null;
+    }
+
     function validateNewEvents(request) {
         try {
             if (!isRecord(request)) {
@@ -170,6 +252,11 @@
                     return fail('PATIENT_ASSOCIATION_MISMATCH', 'Una ficha referencia a otro paciente.');
                 }
 
+                var associationError = validateClinicalAssociations(event);
+                if (associationError) {
+                    return associationError;
+                }
+
                 var belongsToCurrentAct = event.actId === request.actId;
                 if (belongsToCurrentAct && event.status === 'incorporated') {
                     if (!isNonEmptyString(event.description)) {
@@ -190,21 +277,31 @@
 
             var representationEvents;
             var retainedEvents;
+            var occurredAtValue;
+            var hasOccurredAt = hasOwn(request, 'occurredAt');
             try {
                 representationEvents = cloneCollection(incorporated);
                 retainedEvents = cloneCollection(retained);
+                if (hasOccurredAt) {
+                    occurredAtValue = cloneStructure(request.occurredAt, []);
+                }
             } catch (problem) {
                 return fail('UNSUPPORTED_STRUCTURE', 'La petición contiene una estructura no soportada.');
             }
 
+            var representation = {
+                patientRef: request.patientRef,
+                actId: request.actId,
+                present: request.present,
+                adverse_events: representationEvents
+            };
+            if (hasOccurredAt) {
+                representation.occurredAt = occurredAtValue;
+            }
+
             return {
                 ok: true,
-                representation: {
-                    patientRef: request.patientRef,
-                    actId: request.actId,
-                    present: request.present,
-                    adverse_events: representationEvents
-                },
+                representation: representation,
                 retained: retainedEvents
             };
         } catch (problem) {
@@ -220,13 +317,20 @@
      * no fusiona episodios por texto/medicamento/fecha, no infiere evolución y
      * no es autoridad de paciente ni API de persistencia.
      *
-     * Entrada: `{ patientRef, actId, present, adverse_events, history,
-     * selections }`.
+     * Entrada: `{ patientRef, actId, present, occurredAt?, adverse_events,
+     * history, selections }`.
+     *   - `occurredAt` opcional sigue el mismo transporte puro que en
+     *     `validateNewEvents`: una sola fecha del acto, sin inferencia clínica.
      *   - `history` es una colección explícita de observaciones incorporadas
      *     de actos anteriores del MISMO paciente. Cada observación lleva
      *     `{ patientRef, actId, episode_id, observation_id, status:
      *     'incorporated' }` y campos clínicos adicionales que se conservan sin
      *     interpretación. Su `actId` debe diferir del acto actual.
+     *   - `suspicions` y `evaluations`, si son arrays declarados, siguen las
+     *     mismas reglas de referencia que en las fichas nuevas: la sospecha
+     *     pertenece al episodio y la evaluación al acto de su observación
+     *     contenedora, también en historia. Una evaluación histórica nunca se
+     *     recoloca en el acto actual.
      *   - `selections` contiene referencias explícitas
      *     `{ patientRef, actId, episode_id, observation_id }` que deben
      *     coincidir exactamente con una observación histórica aportada.
@@ -240,12 +344,14 @@
      * una observación propia del acto nuevo. `basis` por sí solo no acredita
      * revisión y la descripción textual nunca se interpreta como declaración.
      *
-     * `evolution` opcional transporta exactamente `continuation`,
-     * `resolution` o `recurrence`. Continuación y resolución conservan el
-     * episodio de `basis`; recurrencia exige `basis` del episodio anterior,
-     * un `episode_id` nuevo (distinto de todos los históricos) y descripción
-     * explícita. Sin `basis`, una ficha incorporada solo puede ser nueva, con
-     * episodio no presente en historia y descripción explícita.
+     * `evolution` opcional transporta un valor literal. Sólo los tokens
+     * `continuation`, `resolution` o `recurrence` acreditan una declaración
+     * longitudinal; cualquier otro valor se conserva como dato opaco y no
+     * acredita revisión ni resuelve un episodio. Continuación y resolución
+     * conservan el episodio de `basis`; recurrencia exige `basis` del episodio
+     * anterior, un `episode_id` nuevo (distinto de todos los históricos) y
+     * descripción explícita. Sin `basis`, una ficha incorporada solo puede ser
+     * nueva, con episodio no presente en historia y descripción explícita.
      *
      * Éxito: `{ ok: true, representation: { patientRef, actId, present,
      * adverse_events }, retained, history, selections }`. La representación
@@ -355,6 +461,10 @@
                 if (historical.status !== 'incorporated') {
                     return fail('INVALID_HISTORY_STATUS', 'La historia solo contiene observaciones incorporadas.');
                 }
+                var historicalAssociationError = validateClinicalAssociations(historical);
+                if (historicalAssociationError) {
+                    return historicalAssociationError;
+                }
                 if (containsString(historyObservationIds, historical.observation_id)) {
                     return fail('DUPLICATE_OBSERVATION_ID', 'Una observación histórica reutiliza un observation_id.');
                 }
@@ -410,6 +520,10 @@
                 if (event.status !== 'draft' && event.status !== 'incorporated') {
                     return fail('INVALID_STATUS', 'status debe ser exactamente draft o incorporated.');
                 }
+                var eventAssociationError = validateClinicalAssociations(event);
+                if (eventAssociationError) {
+                    return eventAssociationError;
+                }
                 if (containsString(historyObservationIds, event.observation_id) ||
                     containsString(eventObservationIds, event.observation_id)) {
                     return fail('DUPLICATE_OBSERVATION_ID', 'Una observación reutiliza un observation_id de otro acto o episodio.');
@@ -418,9 +532,10 @@
 
                 var hasEvolution = hasOwn(event, 'evolution');
                 var evolution = hasEvolution ? event.evolution : null;
-                if (hasEvolution && !isEvolutionToken(evolution)) {
-                    return fail('INVALID_EVOLUTION', 'evolution debe ser continuation, resolution o recurrence.');
-                }
+                // Sólo los tokens longitudinales soportados acreditan una
+                // declaración. Cualquier otro valor se conserva como dato
+                // opaco y no autoriza revisión ni resolución.
+                var declaredEvolution = isEvolutionToken(evolution) ? evolution : null;
 
                 var hasBasis = hasOwn(event, 'basis');
                 if (hasBasis && !isReference(event.basis)) {
@@ -431,7 +546,7 @@
                 }
 
                 if (event.status === 'incorporated') {
-                    if (evolution === 'recurrence') {
+                    if (declaredEvolution === 'recurrence') {
                         if (!hasBasis) {
                             return fail('MISSING_BASIS', 'Una recurrencia exige basis del episodio anterior.');
                         }
@@ -445,13 +560,13 @@
                         if (event.episode_id !== event.basis.episode_id) {
                             return fail('EPISODE_ASSOCIATION_MISMATCH', 'Una ficha de seguimiento conserva el episodio de su basis.');
                         }
-                        if (evolution !== 'continuation' && evolution !== 'resolution' && !isExplicitReview(event)) {
+                        if (declaredEvolution !== 'continuation' && declaredEvolution !== 'resolution' && !isExplicitReview(event)) {
                             return fail('MISSING_REVIEW', 'basis por sí solo no acredita revisión; se exige revisión o evolución expresa.');
                         }
                         // Una revisión expresa no exige repetir descripción,
                         // gravedad, sospechoso ni causalidad.
                     } else {
-                        if (evolution === 'continuation' || evolution === 'resolution') {
+                        if (declaredEvolution === 'continuation' || declaredEvolution === 'resolution') {
                             return fail('MISSING_BASIS', 'Continuación, resolución y recurrencia exigen basis del episodio anterior.');
                         }
                         if (!isNonEmptyString(event.description)) {
@@ -478,23 +593,33 @@
             var retainedEvents;
             var historyCopy;
             var selectionsCopy;
+            var occurredAtValue;
+            var hasOccurredAt = hasOwn(request, 'occurredAt');
             try {
                 representationEvents = cloneCollection(incorporated);
                 retainedEvents = cloneCollection(retained);
                 historyCopy = cloneCollection(request.history);
                 selectionsCopy = cloneCollection(request.selections);
+                if (hasOccurredAt) {
+                    occurredAtValue = cloneStructure(request.occurredAt, []);
+                }
             } catch (problem) {
                 return fail('UNSUPPORTED_STRUCTURE', 'La petición contiene una estructura no soportada.');
             }
 
+            var representation = {
+                patientRef: request.patientRef,
+                actId: request.actId,
+                present: request.present,
+                adverse_events: representationEvents
+            };
+            if (hasOccurredAt) {
+                representation.occurredAt = occurredAtValue;
+            }
+
             return {
                 ok: true,
-                representation: {
-                    patientRef: request.patientRef,
-                    actId: request.actId,
-                    present: request.present,
-                    adverse_events: representationEvents
-                },
+                representation: representation,
                 retained: retainedEvents,
                 history: historyCopy,
                 selections: selectionsCopy
