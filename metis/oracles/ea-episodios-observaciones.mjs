@@ -7,6 +7,20 @@ const context = vm.createContext({ window: { HubTools: {} } });
 vm.runInContext(fs.readFileSync('modules/farmacia_ea_invariants.js', 'utf8'), context);
 const validate = context.window.HubTools.farmaciaEaInvariants?.validateObservations;
 assert.equal(typeof validate, 'function', 'Missing longitudinal identity / explicit review behavior');
+// Transport spelling is not a clinical rule. The focal tool supplies only
+// declaration data; it cannot run validation or alter identity fixtures.
+assert.ok(fs.existsSync('tools/farmacia_ea_r1_identity_check.mjs'),'required identity focal check');
+const { reviewDeclaration } = await import('../../tools/farmacia_ea_r1_identity_check.mjs');
+assert.equal(typeof reviewDeclaration,'function','document the explicit review transport in the focal tool');
+function review(unchanged) {
+  const declaration=reviewDeclaration({unchanged});
+  assert.ok(declaration && typeof declaration==='object' && !Array.isArray(declaration));
+  assert.ok(Object.keys(declaration).length>0);
+  for(const key of ['patientRef','actId','episode_id','observation_id','status','basis','description','evolution']) {
+    assert.equal(Object.hasOwn(declaration,key),false,'declaration factory cannot change the clinical fixture');
+  }
+  return declaration;
+}
 function local(x) {
   if (!x || typeof x !== 'object') return x;
   if (Array.isArray(x)) return Array.from(x, local);
@@ -14,7 +28,8 @@ function local(x) {
 }
 const old = {patientRef:'P-A', actId:'ACT-Z', episode_id:'E-A', observation_id:'O-1', status:'incorporated', description:'Mismo texto', medications:['M'], notes:{raw:['original']}};
 const ref = x => Object.fromEntries(['patientRef','actId','episode_id','observation_id'].map(k => [k,x[k]]));
-const current = (extra={}) => ({patientRef:'P-A',actId:'ACT-A',episode_id:'E-A',observation_id:'O-2',status:'incorporated',basis:ref(old),review:{confirmed:true,unchanged:true},...extra});
+const bareCurrent = (extra={}) => ({patientRef:'P-A',actId:'ACT-A',episode_id:'E-A',observation_id:'O-2',status:'incorporated',basis:ref(old),...extra});
+const current = (extra={}) => bareCurrent({...review(true),...extra});
 const request = (events=[], extra={}) => ({patientRef:'P-A',actId:'ACT-A',present:events.some(e=>e.status==='incorporated')?'si':'no_consta', adverse_events:events,history:[structuredClone(old)],selections:[],...extra});
 function run(input) {
   const before=structuredClone(input);
@@ -41,26 +56,26 @@ function bad(input) {
 const omit = (x,...keys) => {x=structuredClone(x); for(const k of keys) delete x[k]; return x;};
 
 good(request([current()]));
-good(request([current({review:{confirmed:true}})]));
+good(request([bareCurrent(review(false))]));
 good(request([current({description:'No contiene un token clínico de revisión'})]));
 for(const present of ['no','no_consta']) {
   good(request([],{present,selections:[ref(old)]}));
   bad(request([current()],{present}));
 }
 bad(request([],{present:'si',selections:[ref(old)]}));
-bad(request([omit(current(),'review')]));
-for(const review of [null,{}, {confirmed:false}, {unchanged:true}]) bad(request([current({review})]));
+bad(request([bareCurrent()]));
 // Neither a reference nor a magic phrase is a review declaration.
-bad(request([{...omit(current(),'review'),description:'revisado sin cambios'}]));
-const newEvent={...omit(current(),'basis','review'),episode_id:'E-NEW',description:'Mismo texto',medications:['M']};
+bad(request([bareCurrent({description:'revisado sin cambios'})]));
+const newEvent={...omit(bareCurrent(),'basis'),episode_id:'E-NEW',description:'Mismo texto',medications:['M']};
 good(request([newEvent]));
 bad(request([omit(newEvent,'description')]));
 good(request([newEvent,{...newEvent,episode_id:'E-OTHER',observation_id:'O-3'}]));
 console.log('PASS longitudinal / selection only / explicit review / equal text and drugs');
 
-for(const evolution of ['continuation','resolution']) good(request([{...omit(current(),'review'),evolution}]));
+for(const evolution of ['continuation','resolution']) good(request([bareCurrent({evolution})]));
 const recurrence={...newEvent,basis:ref(old),evolution:'recurrence'};
 good(request([recurrence]));
+bad(request([omit(recurrence,'description')]));
 bad(request([{...recurrence,episode_id:old.episode_id}]));
 bad(request([omit(recurrence,'basis')]));
 bad(request([{...current(),episode_id:'E-NEW'}]));
@@ -89,9 +104,12 @@ bad(request([current()],{history:[{...old,actId:'ACT-A'}]}));
 bad(request([current({observation_id:'O-1'})]));
 bad(request([current(),current({episode_id:'E-NEW',basis:undefined,description:'Otro'})]));
 bad(request([current()],{history:[old,{...old,episode_id:'E-OTHER'}]}));
+const otherHistory={...old,actId:'ACT-Y',episode_id:'E-B',observation_id:'O-B'};
+bad(request([current({basis:{...ref(old),observation_id:'O-B'}})],{history:[old,otherHistory]}));
+bad(request([current({basis:{...ref(old),episode_id:'E-B'}})],{history:[old,otherHistory]}));
 bad(request([],{selections:[{...ref(old),episode_id:'E-OTHER'}]}));
 for(const key of ['patientRef','actId','history','selections']) bad(omit(request(),key));
-const draft={...omit(current(),'review'),status:'draft',description:'',notes:{raw:['draft']}};
+const draft=bareCurrent({status:'draft',description:'',notes:{raw:['draft']}});
 good(request([draft]));
 console.log('PASS tuple negatives / current context / duplicate observation / drafts');
 
@@ -107,10 +125,14 @@ one.retained[0].notes.raw.push('output');
 one.representation.adverse_events[0].basis.actId='changed';
 one.selections[0].episode_id='changed';
 assert.deepEqual(a,before,'outputs cannot edit inputs');
-a.history[0].notes.raw.push('input'); a.adverse_events[0].review.confirmed=false;
+a.history[0].notes.raw.push('input'); a.adverse_events[0].basis.actId='input';
 assert.deepEqual(local(two),good(before),'inputs and independent outputs disconnected');
 const b={patientRef:'P-B',actId:'ACT-B',present:'no',adverse_events:[],history:[],selections:[]};
 good(b); bad({...b,adverse_events:[current()],present:'si'}); good(before); good(b);
+const bHistory={...old,patientRef:'P-B',actId:'B-OLD',episode_id:'B-E',observation_id:'B-O1'};
+const bEvent={...current(),patientRef:'P-B',actId:'ACT-B',episode_id:'B-E',observation_id:'B-O2',basis:ref(bHistory)};
+good({...b,present:'si',history:[bHistory],adverse_events:[bEvent]});
+good(before);
 console.log('PASS deterministic / deep isolation / A-B-A / atomic failure');
 
 assert.ok(fs.existsSync('tools/farmacia_ea_r1_identity_check.mjs'),'required identity focal check');
