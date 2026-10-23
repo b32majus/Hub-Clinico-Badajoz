@@ -55,6 +55,9 @@ console.log('PASS exact tokens');
 
 const draft = event(3, { status: 'draft', description: '', nested: { notes: ['draft'] } });
 for (const state of ['no', 'no_consta']) good(request(state, [draft]), [], [draft]);
+const draftWithoutDescription = event(4, { status: 'draft' });
+delete draftWithoutDescription.description;
+good(request('no_consta', [draftWithoutDescription]), [], [draftWithoutDescription]);
 bad(request('si', [draft]));
 good(request('si', [draft, event(1)]), [event(1)], [draft]);
 for (const description of ['', ' \n ', null, undefined]) bad(request('si', [event(0, { description })]));
@@ -78,6 +81,7 @@ for (const key of ['patientRef', 'actId', 'episode_id', 'observation_id']) {
   const missing = event(0); delete missing[key]; bad(request('si', [missing]));
 }
 bad(request('si', [event(0), event(1, { patientRef: 'P-B' })]));
+bad(request('si', [event(0, { patientRef: 'ACT-A', actId: 'P-A' })]));
 bad(request('si', [event(0, { status: 'finalized' })]));
 for (const input of [null, {}, request('no', null), request('si', [null])]) bad(input);
 console.log('PASS explicit identities / association mismatch / failure atomicity');

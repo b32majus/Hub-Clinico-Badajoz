@@ -36,6 +36,8 @@ None dentro de esta unidad. Mínimos institucionales adicionales y decisiones de
 
 Oráculo ejecutado sobre BASE sin solución: exit 1, aserción `Missing pure EA validation behavior` (sin import fallido). Instalación offline completada; Node disponible v26.7.0 frente al rango declarado >=20 <21 produce EBADENGINE. Las regresiones deben informarse con esta limitación, sin afirmar acreditación en Node 20.
 
+Con referencia privada: oráculo y check focal PASS; F4.4 contract 243/243, payloads 145/145, T01 69/69, todos exit 0 sin modificar suites. `npm run -s verify:nexus` completó exit 0 en el Node disponible. No hubo impedimentos de ejecución adicionales; no se afirma prueba de navegador ni persistencia. La solución queda fuera de los commits de preparación.
+
 ## Trazabilidad
 
 | Requisito | Testigo / criterio |
