@@ -225,9 +225,9 @@ function captureTwoEa(page) {
         assert.equal(await expandedBody.locator('details summary').count(), 1, 'expanded card shows the master disclosure');
         assert.ok((await expandedBody.locator('details summary').textContent()).includes('Información clínica adicional (opcional)'), 'disclosure matches master wording');
         assert.equal(await expandedBody.locator('details input[disabled], details textarea[disabled]').count(), 3, 'disclosure demo fields are inert');
-        assert.ok((await expandedBody.textContent()).includes('Medicamentos señalados expresamente como sospechosos'), 'suspects demo block present in expanded card');
-        assert.ok((await expandedBody.locator('input[type="checkbox"][data-ea-demo-control]').count()) === 3, 'three demo suspect checkboxes, all inert');
-        assert.ok(await expandedBody.locator('input[type="checkbox"][data-ea-demo-control]').first().isDisabled(), 'demo suspect checkboxes non-functional (no suspect/causality behavior in T01)');
+        assert.ok((await expandedBody.textContent()).includes('Medicamentos señalados expresamente como sospechosos'), 'per-episode suspect section present in expanded card');
+        assert.equal(await expandedBody.locator('.ea-suspect-list input[type="checkbox"]').count(), 0, 'no suspect candidates without an explicitly named medicine');
+        assert.ok((await expandedBody.locator('.ea-suspect-list').textContent()).includes('Sin medicamentos identificados explícitamente'), 'empty candidate source is explained, never filled with demo medicines');
         assert.ok((await page.locator('#fhSegEaSummary').textContent()).trim().startsWith('2 observación/es en esta visita · 2 episodio/s relacionado/s'), 'master footer summary arrangement');
         assert.ok(await page.locator('#fhSegEaShowStructureBtn').isDisabled(), '«Ver estructura simulada» visible but non-functional (demo, T01)');
         assert.ok(await page.locator('#fhSegEaResetDemoBtn').isDisabled(), '«Reiniciar ejemplo» visible but non-functional (demo, T01)');

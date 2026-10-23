@@ -33,6 +33,12 @@
 //     nregistro / source_type (líneas) forman parte de la huella completa.
 //     Las transiciones de fuente sin UI propia usan SOLO el seam público
 //     restoreEvaluationState — QA del seam, no recorrido UI.
+//   · FH-EA-02B corrección 1 (F2): el recorrido C1 deposita además la
+//     captura real del estado PENDIENTE («fuente idéntica devuelta, sigue
+//     pendiente»), 1440x900 + recorte EA1, fuera del repo en
+//     /srv/kairos-lab/metis-runs/nexus/fh-ea-closure/02b-evidence/ (testigo
+//     visual de la WO). Si esa ruta no está disponible, el test sigue
+//     verde y lo declara INCOMPLETE_VISUAL_EVIDENCE sin inventar alternativas.
 // Ejecutar: node tools/farmacia_ea_suspect_identity_browser_check.mjs
 
 import assert from 'node:assert/strict';
@@ -616,6 +622,27 @@ const SYNTH_CATALOG_GAMMA = {
         await restoreWith({ addDrugs: [gammaIdentity] });
         assert.equal(await pendingFor('other:seg-other-1').count(), 1, 'the identical source (same id, same content) returning does NOT restore vigente: degradation is irreversible');
         assert.ok(!(await chipList.textContent()).includes('Medicamento Gamma Sintético'), 'the returned identity is never re-presented as the current suspect');
+        // Testigo visual de la WO (FH-EA-02B, F2): captura real del estado
+        // PENDIENTE «fuente idéntica devuelta, sigue pendiente», desde este
+        // testigo focal con controles reales (la transición de fuente usó el
+        // seam público legítimo). Depositada FUERA del repo, para el eje
+        // Visual/UX. Fallo de captura no rebaja el recorrido: se declara
+        // INCOMPLETE_VISUAL_EVIDENCE.
+        await card1.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(200);
+        const evidenceDir = '/srv/kairos-lab/metis-runs/nexus/fh-ea-closure/02b-evidence';
+        try {
+            mkdirSync(evidenceDir, { recursive: true });
+            const pendingFullShot = path.join(evidenceDir, 'FH_EA_02B_pendiente_1440x900.png');
+            const pendingCropShot = path.join(evidenceDir, 'FH_EA_02B_pendiente_EA1_recorte.png');
+            await page.screenshot({ path: pendingFullShot });
+            await card1.screenshot({ path: pendingCropShot });
+            assert.ok(existsSync(pendingFullShot) && statSync(pendingFullShot).size > 0, 'pending-state viewport capture exists (1440x900, fuera del repo)');
+            assert.ok(existsSync(pendingCropShot) && statSync(pendingCropShot).size > 0, 'pending-state EA1 crop capture exists (fuera del repo)');
+            ok('FH-EA-02B pending-state visual witness captured (real pixels, fuera del repo): FH_EA_02B_pendiente_1440x900.png + FH_EA_02B_pendiente_EA1_recorte.png');
+        } catch (captureError) {
+            console.warn('INCOMPLETE_VISUAL_EVIDENCE — pending-state capture unavailable: ' + (captureError && captureError.message));
+        }
         // Única vía de reconciliación: desmarcar y volver a marcar expresamente.
         await pendingFor('other:seg-other-1').locator('input').click();
         await chipList.locator('label').filter({ hasText: 'Medicamento Gamma Sintético' }).locator('input').click();
