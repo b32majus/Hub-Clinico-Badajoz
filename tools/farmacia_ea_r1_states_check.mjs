@@ -31,6 +31,7 @@ const event = (index, extra = {}) => ({
     description: ' Texto original ',
     ...extra
 });
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const request = (present, events = []) => ({
     patientRef: 'P-A',
     actId: 'ACT-A',
@@ -182,6 +183,31 @@ assert.deepEqual(local(second.representation.adverse_events[0].data), {
 });
 assert.equal(second.retained[1].description, ' Texto original ');
 console.log('PASS aislamiento profundo y determinismo');
+
+// Clave propia '__proto__' (como la produce JSON.parse): debe sobrevivir
+// como dato en incluidas y retenidas, sin activar el setter heredado ni
+// cambiar el prototipo de la copia.
+const includedWithProto = JSON.parse('{"patientRef":"P-A","actId":"ACT-A","episode_id":"E-PROTO-IN","observation_id":"O-PROTO-IN","status":"incorporated","description":"Cefalea","__proto__":{"marker":"incluida"}}');
+const draftWithProto = JSON.parse('{"patientRef":"P-A","actId":"ACT-A","episode_id":"E-PROTO-DR","observation_id":"O-PROTO-DR","status":"draft","__proto__":{"marker":"borrador"}}');
+const historyWithProto = JSON.parse('{"patientRef":"P-A","actId":"ACT-OLD","episode_id":"E-PROTO-HI","observation_id":"O-PROTO-HI","status":"incorporated","description":"Historia","__proto__":{"marker":"historia"}}');
+const protoInput = request('si', [includedWithProto, draftWithProto, historyWithProto]);
+const protoResult = validate(protoInput);
+assert.equal(protoResult.ok, true);
+const sandboxObjectPrototype = vm.runInContext('Object.prototype', sandbox);
+const protoFichas = [
+    protoResult.representation.adverse_events[0],
+    protoResult.retained[0],
+    protoResult.retained[1]
+];
+for (const ficha of protoFichas) {
+    assert.equal(hasOwn(ficha, '__proto__'), true, 'la clave propia __proto__ debe conservarse');
+    assert.equal(Object.getPrototypeOf(ficha), sandboxObjectPrototype, 'el prototipo de la copia no debe cambiar');
+}
+assert.deepEqual(local(protoFichas[0].__proto__), { marker: 'incluida' });
+assert.deepEqual(local(protoFichas[1].__proto__), { marker: 'borrador' });
+assert.deepEqual(local(protoFichas[2].__proto__), { marker: 'historia' });
+accept(protoInput, [includedWithProto], [draftWithProto, historyWithProto]);
+console.log('PASS clave propia __proto__ preservada en incluidas y retenidas');
 
 // Sin estado entre llamadas: otro paciente/acto no conserva contexto.
 const otherPatient = { patientRef: 'P-B', actId: 'ACT-B', present: 'no_consta', adverse_events: [] };

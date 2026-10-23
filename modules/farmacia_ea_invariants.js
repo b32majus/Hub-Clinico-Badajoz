@@ -99,7 +99,15 @@
             var keys = Object.keys(value);
             for (var keyIndex = 0; keyIndex < keys.length; keyIndex += 1) {
                 var key = keys[keyIndex];
-                copy[key] = cloneStructure(value[key], ancestors);
+                // defineProperty evita que una clave propia '__proto__'
+                // (por ejemplo de JSON.parse) active el setter heredado y
+                // pierda el campo o cambie el prototipo de la copia.
+                Object.defineProperty(copy, key, {
+                    value: cloneStructure(value[key], ancestors),
+                    enumerable: true,
+                    writable: true,
+                    configurable: true
+                });
             }
         }
 
