@@ -9,6 +9,14 @@
     var autocompleteActiveIndex = -1;
     var manualRequestedAutocompleteActiveIndex = -1;
     var manualRequestedTransientProposal = null;
+    // Visible transient proposals per catalogue surface: what the catalogue
+    // itself wrote is a proposal, not free professional text, so a later
+    // selection may replace it even when there is no CIP+slot snapshot.
+    var requestedTransientProposal = null;
+    var validatedTransientProposal = null;
+    // True only while catalogue values are being written into the form; the
+    // synthetic input/change events must not re-open the suggestion list.
+    var applyingCatalogSelection = false;
     // WO #334 — transient e-Orden PRESENTATION context (issue #334). Set only
     // by the Unified Intake review for a NEW REQUEST without a selected
     // Farmacia patient, from explicit recognized e-Orden material. It drives
@@ -1470,6 +1478,24 @@
         return false;
     }
 
+    // A concrete catalogue entry is the only kind a pharmacist can select.
+    // Listing an entry without presentation or dose offered a visible option
+    // whose click silently did nothing at all.
+    function selectableCatalogResults(results) {
+        if (!results || !results.length) return [];
+        if (!C || typeof C.isConcreteCatalogSelection !== "function") return results;
+        return results.filter(function (drug) { return C.isConcreteCatalogSelection(drug); });
+    }
+
+    // Suggestion options are plain divs, so mousedown on one moves focus out of
+    // the search input and the 150 ms blur cleanup deleted the option between
+    // mousedown and mouseup: a deliberate (slower) click lost its target. Undoing
+    // the default focus change keeps the list alive until the real click lands,
+    // whatever the press duration.
+    function keepAutocompleteOptionPressed(event) {
+        if (event && typeof event.preventDefault === "function") event.preventDefault();
+    }
+
     function reconcileSelection(current, previous, drug, slot) {
         if (C && typeof C.reconcileCatalogSelection === "function") {
             return C.reconcileCatalogSelection(current, previous, drug, slot);
@@ -1486,7 +1512,8 @@
         ids = ids || requestedFieldIds();
         var context = { slot: "validacion.solicitado", cip: byId(ids.cip) ? byId(ids.cip).value : selectedCip() };
         var contextValid = typeof C.snapshotContextKey !== "function" || Boolean(C.snapshotContextKey(context));
-        var previous = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
+        var contextualPrevious = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
+        var previous = requestedTransientProposal || contextualPrevious;
         var reconciled = reconcileSelection({
             farmaco_nombre: byId(ids.farmaco).value,
             principio_activo: byId(ids.principioActivo).value,
@@ -1502,6 +1529,7 @@
         byId(ids.via).value = requestedViaValue;
 
         if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
+        requestedTransientProposal = { proposal_values: Object.assign({}, reconciled.proposal_values) };
         clearRequestedAutocompleteDropdown(dropdownId);
         updateSolicitadoSummary();
     }
@@ -1515,7 +1543,8 @@
         if (!drug || !farmacoEl || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         var context = catalogContext("validacion.validado");
         var contextValid = typeof C.snapshotContextKey !== "function" || Boolean(C.snapshotContextKey(context));
-        var previous = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
+        var contextualPrevious = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
+        var previous = validatedTransientProposal || contextualPrevious;
         var reconciled = reconcileSelection({
             farmaco_nombre: farmacoEl.value,
             principio_activo: princEl ? princEl.value : "",
@@ -1532,17 +1561,24 @@
         if (dosisEl) dosisEl.value = reconciled.values.dosis_texto || "";
         if (viaEl) viaEl.value = validatedViaValue;
         if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
+        validatedTransientProposal = { proposal_values: Object.assign({}, reconciled.proposal_values) };
 
-        [farmacoEl, princEl, presEl, dosisEl, viaEl].forEach(function (el) {
-            if (!el) return;
-            el.dispatchEvent(new Event("input", { bubbles: true }));
-            el.dispatchEvent(new Event("change", { bubbles: true }));
-        });
+        applyingCatalogSelection = true;
+        try {
+            [farmacoEl, princEl, presEl, dosisEl, viaEl].forEach(function (el) {
+                if (!el) return;
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+        } finally {
+            applyingCatalogSelection = false;
+        }
         clearValidadoAutocompleteDropdown();
         updateValidationModuleSummaries();
     }
 
     function renderValidadoAutocompleteDropdown(results) {
+        results = selectableCatalogResults(results);
         var dropdown = byId("autocompleteValidadoDropdown");
         F.clearChildren(dropdown);
         if (!results || results.length === 0) {
@@ -1570,6 +1606,7 @@
             if (drug.codigo_nacional) parts.push("CN " + drug.codigo_nacional);
             detailRow.textContent = parts.join(" · ");
             item.appendChild(detailRow);
+            item.addEventListener("mousedown", keepAutocompleteOptionPressed);
             (function (d) {
                 item.addEventListener("click", function () { selectValidadoDrug(d); });
             })(drug);
@@ -1588,6 +1625,7 @@
 
     function handleValidadoAutocompleteInput() {
         if (!C.loaded) return;
+        if (applyingCatalogSelection) return;
         var query = byId("fhValidadoFarmaco").value.trim();
         if (query.length < 2) {
             clearValidadoAutocompleteDropdown();
@@ -1663,16 +1701,22 @@
             proposal_values: Object.assign({}, reconciled.proposal_values)
         };
 
-        [farmacoEl, princEl, dosisEl, viaEl].forEach(function (el) {
-            if (!el) return;
-            el.dispatchEvent(new Event("input", { bubbles: true }));
-            el.dispatchEvent(new Event("change", { bubbles: true }));
-        });
+        applyingCatalogSelection = true;
+        try {
+            [farmacoEl, princEl, dosisEl, viaEl].forEach(function (el) {
+                if (!el) return;
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+        } finally {
+            applyingCatalogSelection = false;
+        }
         clearManualRequestedAutocompleteDropdown();
         updateSolicitadoSummary();
     }
 
     function renderManualRequestedAutocompleteDropdown(results) {
+        results = selectableCatalogResults(results);
         var dropdown = byId("fhManualAutocompleteDropdown");
         if (!dropdown) return;
         F.clearChildren(dropdown);
@@ -1701,6 +1745,7 @@
             if (drug.codigo_nacional) parts.push("CN " + drug.codigo_nacional);
             detailRow.textContent = parts.join(" · ");
             item.appendChild(detailRow);
+            item.addEventListener("mousedown", keepAutocompleteOptionPressed);
             (function (d) {
                 item.addEventListener("click", function () { selectManualRequestedDrug(d); });
             })(drug);
@@ -1720,6 +1765,7 @@
 
     function handleManualRequestedAutocompleteInput() {
         if (!C.loaded) return;
+        if (applyingCatalogSelection) return;
         var input = byId("fhManualFarmaco");
         if (!input) return;
         var query = input.value.trim();
@@ -1791,6 +1837,7 @@
     }
 
     function renderRequestedAutocompleteDropdown(config, results) {
+        results = selectableCatalogResults(results);
         var dropdown = byId(config.dropdownId);
         if (!dropdown) return;
         F.clearChildren(dropdown);
@@ -1819,6 +1866,7 @@
             if (drug.codigo_nacional) parts.push("CN " + drug.codigo_nacional);
             detailRow.textContent = parts.join(" · ");
             item.appendChild(detailRow);
+            item.addEventListener("mousedown", keepAutocompleteOptionPressed);
             (function (d) {
                 item.addEventListener("click", function () { selectDrug(d, config.ids, config.dropdownId); });
             })(drug);
@@ -1837,6 +1885,7 @@
 
     function handleRequestedAutocompleteInput(config) {
         if (!C.loaded) return;
+        if (applyingCatalogSelection) return;
         var query = byId(config.inputId).value.trim();
         if (query.length < 2) {
             clearRequestedAutocompleteDropdown(config.dropdownId);
