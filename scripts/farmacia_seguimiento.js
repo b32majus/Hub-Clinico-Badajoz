@@ -1070,8 +1070,7 @@
         select.value = adverse.causality_editing_id;
         select.disabled = adverse.suspect_ids.length === 0;
         updateLegacySuspectSummary(candidates);
-        updateCausalityContextLabels();
-        updateCausalityVisibility();
+        refreshEaCausalityEditor();
         refreshEaEpisodeSuspects();
         updateExportInterlock();
     }
@@ -1210,6 +1209,7 @@
             event.suspect_ids.splice(index, 1);
             forgetEaSuspectSource(episodeId, candidateId);
         }
+        refreshEaCausalityEditor();
         return true;
     }
 
@@ -1394,12 +1394,309 @@
         return true;
     }
 
-    function updateCausalityVisibility() {
-        var active = !!currentFollowupVisit && currentFollowupVisit.adverse_event.present === 'si';
-        var editing = active && !!currentFollowupVisit.adverse_event.causality_editing_id;
-        ['modSeguimientoCausalidad', 'modNaranjo', 'modKarchLasagna', 'modResumenCausalidad'].forEach(function (id) {
-            var section = byId(id); if (section) section.classList.toggle('hidden', !editing);
+    // ── Editor G0 de causalidad: episodio real → sospechosos marcados ──────
+    // El editor visible lee EXCLUSIVAMENTE currentFollowupVisit.adverse_events[]
+    // (episodios incorporados con descripción y sus suspect_ids) y captura los
+    // borradores en FarmaciaSeguimientoEaCausalityState. Nunca usa la máquina
+    // singular legacy (adverse_event.suspect_ids / causality_by_suspect) ni
+    // episodios DEMO del HTML.
+    var EA_CAUSALITY_NARANJO = 'naranjo';
+    var EA_CAUSALITY_KARCH = 'karch_lasagna';
+    var EA_CAUSALITY_KL_KEYS = {
+        klTemporal: 'temporal', klConocido: 'conocido', klAlternativa: 'alternativa',
+        klSuspendido: 'suspendido', klMejoraRetirada: 'mejoraRetirada',
+        klReadministracion: 'readministracion', klReaparece: 'reaparece'
+    };
+    var eaCausalityEditingEpisodeId = '';
+    var eaCausalityEditingSuspectRef = '';
+    var eaCausalityStateMarks = {};
+    var eaCausalityStateVisitIdentity = null;
+
+    function eaCausalityStateModule() {
+        return window.FarmaciaSeguimientoEaCausalityState || null;
+    }
+
+    function eaCausalityMarkKey(episodeId, suspectRef) {
+        return episodeId + '\u0000' + suspectRef;
+    }
+
+    function ensureEaCausalityStateContext() {
+        var stateModule = eaCausalityStateModule();
+        if (!stateModule || !currentFollowupVisit) return null;
+        stateModule.setEditingPatient(currentFollowupVisit.cip);
+        var visitIdentity = String(currentFollowupVisit.visit_id || '');
+        if (eaCausalityStateVisitIdentity !== visitIdentity) {
+            eaCausalityStateVisitIdentity = visitIdentity;
+            eaCausalityStateMarks = {};
+        }
+        stateModule.setEditingVisit(visitIdentity);
+        return stateModule;
+    }
+
+    // Mantiene las marcas del módulo alineadas con adverse_events[].suspect_ids:
+    // marcar habilita el borrador del contexto; desmarcar lo retira a historial
+    // en memoria sin destruirlo.
+    function syncEaCausalityStateMarks() {
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule) return;
+        var currentMarks = {};
+        eaEventsCollection().forEach(function (event) {
+            var marked = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+            marked.forEach(function (suspectRef) {
+                currentMarks[eaCausalityMarkKey(event.episode_id, suspectRef)] = {
+                    episodeId: event.episode_id,
+                    suspectRef: suspectRef
+                };
+            });
         });
+        Object.keys(currentMarks).forEach(function (key) {
+            if (eaCausalityStateMarks[key]) return;
+            var mark = currentMarks[key];
+            stateModule.setSuspectMarked(mark.episodeId, mark.suspectRef, true);
+        });
+        Object.keys(eaCausalityStateMarks).forEach(function (key) {
+            if (currentMarks[key]) return;
+            var mark = eaCausalityStateMarks[key];
+            stateModule.setSuspectMarked(mark.episodeId, mark.suspectRef, false);
+        });
+        eaCausalityStateMarks = currentMarks;
+    }
+
+    // Solo los medicamentos identificados con nombre real, marcados en ESTE
+    // episodio y con identidad de fuente verificable. Un sospechoso pendiente
+    // de reconciliación no se ofrece como opción evaluable (fail-closed).
+    function eaCausalityEvaluableSuspects(event) {
+        if (!event) return [];
+        var candidatesById = {};
+        getEaNamedDrugCandidates().forEach(function (candidate) {
+            candidatesById[candidate.id] = candidate;
+        });
+        var marked = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+        return marked.filter(function (suspectRef) {
+            return !!candidatesById[suspectRef] && !eaSuspectMarkIsPending(event.episode_id, suspectRef);
+        }).map(function (suspectRef) {
+            return candidatesById[suspectRef];
+        });
+    }
+
+    function eaCausalityAnswerKey(method, answerId) {
+        if (method === EA_CAUSALITY_NARANJO) return 'q' + String(answerId).replace('naranjoQ', '');
+        return EA_CAUSALITY_KL_KEYS[answerId] || answerId;
+    }
+
+    function eaCausalityMethodState(method) {
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule || !eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) {
+            return { status: 'no_evaluado', answers: {} };
+        }
+        return stateModule.getState(eaCausalityEditingEpisodeId, eaCausalityEditingSuspectRef, method);
+    }
+
+    function eaCausalityStateText(id, value) {
+        var element = byId(id);
+        if (element) element.textContent = value;
+    }
+
+    function renderEaCausalityChips(method, answers, enabled) {
+        var scope = method === EA_CAUSALITY_NARANJO ? '#modNaranjo ' : '#modKarchLasagna ';
+        var groups = document.querySelectorAll(scope + '.causality-chip-group');
+        Array.prototype.forEach.call(groups, function (group) {
+            var answerId = group.getAttribute('data-answer-id');
+            var key = eaCausalityAnswerKey(method, answerId);
+            var hasAnswer = Object.prototype.hasOwnProperty.call(answers || {}, key);
+            var value = hasAnswer ? answers[key] : null;
+            var chips = group.querySelectorAll('.causality-chip');
+            Array.prototype.forEach.call(chips, function (chip) {
+                var active = hasAnswer && chip.getAttribute('data-value') === value;
+                chip.classList.toggle('causality-chip--active', active);
+                chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+                chip.disabled = !enabled;
+            });
+        });
+    }
+
+    function eaCausalityEpisodeOptions() {
+        var select = byId('fhCausalityEpisode');
+        if (!select) return [];
+        var options = eaIncorporatedEvents().map(function (event) {
+            return {
+                value: event.episode_id,
+                label: String(event.description || '').trim() + ' · ' + event.episode_id
+            };
+        });
+        F.clearChildren(select);
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Seleccionar episodio adverso…';
+        select.appendChild(placeholder);
+        options.forEach(function (item) {
+            var option = document.createElement('option');
+            option.value = item.value;
+            option.textContent = item.label;
+            select.appendChild(option);
+        });
+        if (!options.some(function (item) { return item.value === eaCausalityEditingEpisodeId; })) {
+            // Con un único episodio documentado se ofrece ya seleccionado para
+            // poder mostrar sus sospechosos; nunca se autoselecciona un
+            // medicamento sospechoso.
+            eaCausalityEditingEpisodeId = options.length === 1 ? options[0].value : '';
+        }
+        select.value = eaCausalityEditingEpisodeId;
+        select.disabled = options.length === 0;
+        return options;
+    }
+
+    function eaCausalitySuspectOptions(event) {
+        var select = byId('fhCausalitySuspect');
+        if (!select) return [];
+        var suspects = eaCausalityEvaluableSuspects(event);
+        F.clearChildren(select);
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Seleccionar sospechoso...';
+        select.appendChild(placeholder);
+        suspects.forEach(function (candidate) {
+            var option = document.createElement('option');
+            option.value = candidate.id;
+            option.textContent = candidate.label;
+            select.appendChild(option);
+        });
+        if (!suspects.some(function (candidate) { return candidate.id === eaCausalityEditingSuspectRef; })) {
+            eaCausalityEditingSuspectRef = '';
+        }
+        select.value = eaCausalityEditingSuspectRef;
+        select.disabled = suspects.length === 0;
+        return suspects;
+    }
+
+    function setEaCausalityContextNotice(text) {
+        var notice = byId('fhCausalityContextoVacio');
+        if (!notice) return;
+        var span = notice.querySelector ? notice.querySelector('span') : null;
+        if (span) span.textContent = text;
+        notice.classList.toggle('hidden', !text);
+    }
+
+    function setEaCausalityProvisionalVisible(visible) {
+        var notice = byId('fhCausalityAvisoProvisional');
+        if (notice) notice.classList.toggle('hidden', !visible);
+    }
+
+    function refreshEaCausalityEditor() {
+        var section = byId('modSeguimientoCausalidad');
+        var presentElement = byId('fhSeguimientoEaPresente');
+        var present = presentElement && presentElement.value ? presentElement.value : 'no_consta';
+        if (section) section.classList.toggle('hidden', present !== 'si');
+        var noCausality = byId('fhSeguimientoEaNoCausalidad');
+        if (noCausality) noCausality.classList.toggle('hidden', present === 'si');
+        var episodeSelect = byId('fhCausalityEpisode');
+        var suspectSelect = byId('fhCausalitySuspect');
+        var contextNotice = byId('fhCausalityContextoVacio');
+        if (!episodeSelect || !suspectSelect) return;
+
+        if (present !== 'si') {
+            eaCausalityEditingEpisodeId = '';
+            eaCausalityEditingSuspectRef = '';
+            episodeSelect.disabled = true;
+            suspectSelect.disabled = true;
+            if (contextNotice) contextNotice.classList.add('hidden');
+            setEaCausalityProvisionalVisible(false);
+            renderEaCausalityChips(EA_CAUSALITY_NARANJO, {}, false);
+            renderEaCausalityChips(EA_CAUSALITY_KARCH, {}, false);
+            eaCausalityStateText('naranjoScore', '—');
+            eaCausalityStateText('naranjoCategoria', 'No evaluado');
+            eaCausalityStateText('klCategoria', 'No evaluado');
+            eaCausalityStateText('fhSeguimientoEaContextoNaranjo', '—');
+            eaCausalityStateText('fhSeguimientoEaContextoKl', '—');
+            eaCausalityStateText('fhSeguimientoEaContextoResumen', '—');
+            eaCausalityStateText('resumenNaranjo', 'No evaluado');
+            eaCausalityStateText('resumenKl', 'No evaluado');
+            var inactiveFinal = byId('fhCausalidadFinal');
+            if (inactiveFinal) inactiveFinal.disabled = true;
+            return;
+        }
+
+        syncEaCausalityStateMarks();
+        var episodes = eaCausalityEpisodeOptions();
+        var currentEvent = episodes.length
+            ? eaEventsCollection().find(function (event) { return event.episode_id === eaCausalityEditingEpisodeId; }) || null
+            : null;
+        var suspects = eaCausalitySuspectOptions(currentEvent);
+        var editing = !!(currentEvent && eaCausalityEditingSuspectRef);
+
+        if (!episodes.length) {
+            setEaCausalityContextNotice('No hay ningún episodio adverso documentado en esta visita. Incorpore un episodio con descripción para poder analizar la causalidad de sus medicamentos sospechosos.');
+        } else if (!currentEvent) {
+            setEaCausalityContextNotice('Seleccione el episodio adverso que desea evaluar. Solo se ofrecerán los medicamentos marcados expresamente como sospechosos de ese episodio.');
+        } else if (!suspects.length) {
+            setEaCausalityContextNotice('Este episodio no tiene medicamentos marcados expresamente como sospechosos. Marque al menos un sospechoso en ese episodio para evaluar su causalidad.');
+        } else if (!editing) {
+            setEaCausalityContextNotice('Seleccione el medicamento sospechoso del episodio para registrar su evaluación. Nada se selecciona automáticamente.');
+        } else {
+            setEaCausalityContextNotice('');
+        }
+
+        var naranjoState = eaCausalityMethodState(EA_CAUSALITY_NARANJO);
+        var karchState = eaCausalityMethodState(EA_CAUSALITY_KARCH);
+        var naranjoAnswers = naranjoState.answers || {};
+        var karchAnswers = karchState.answers || {};
+        var naranjoEvaluated = naranjoState.status !== 'no_evaluado';
+        var karchEvaluated = karchState.status !== 'no_evaluado';
+
+        renderEaCausalityChips(EA_CAUSALITY_NARANJO, naranjoAnswers, editing);
+        renderEaCausalityChips(EA_CAUSALITY_KARCH, karchAnswers, editing);
+
+        var naranjoScore = '—';
+        var naranjoCategory = 'No evaluado';
+        if (naranjoEvaluated && M) {
+            var score = M.calculateNaranjoScore(naranjoAnswers);
+            naranjoScore = String(score);
+            naranjoCategory = M.categorizeNaranjo(score);
+        }
+        var karchCategory = 'No evaluado';
+        if (karchEvaluated && M) karchCategory = M.categorizeKarchLasagna(karchAnswers);
+
+        eaCausalityStateText('naranjoScore', naranjoScore);
+        eaCausalityStateText('naranjoCategoria', naranjoCategory);
+        eaCausalityStateText('klCategoria', karchCategory);
+        eaCausalityStateText('resumenNaranjo', naranjoEvaluated ? naranjoScore + ' · ' + naranjoCategory : 'No evaluado');
+        eaCausalityStateText('resumenKl', karchEvaluated ? karchCategory : 'No evaluado');
+        setEaCausalityProvisionalVisible(editing);
+
+        var contextLabel = '—';
+        if (editing) {
+            var selected = suspects.find(function (candidate) { return candidate.id === eaCausalityEditingSuspectRef; });
+            contextLabel = selected ? selected.label : '—';
+        }
+        eaCausalityStateText('fhSeguimientoEaContextoNaranjo', contextLabel);
+        eaCausalityStateText('fhSeguimientoEaContextoKl', contextLabel);
+        eaCausalityStateText('fhSeguimientoEaContextoResumen', contextLabel);
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (finalAssessment) finalAssessment.disabled = !editing;
+    }
+
+    function selectEaCausalityEpisode(episodeId) {
+        eaCausalityEditingEpisodeId = String(episodeId || '');
+        eaCausalityEditingSuspectRef = '';
+        refreshEaCausalityEditor();
+    }
+
+    function selectEaCausalitySuspect(suspectRef) {
+        eaCausalityEditingSuspectRef = String(suspectRef || '');
+        refreshEaCausalityEditor();
+    }
+
+    function recordEaCausalityAnswer(method, group, chip) {
+        if (!eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) return false;
+        if (!chip || chip.disabled) return false;
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule) return false;
+        var answerId = group.getAttribute('data-answer-id');
+        var key = eaCausalityAnswerKey(method, answerId);
+        var value = chip.getAttribute('data-value');
+        if (!stateModule.recordAnswer(eaCausalityEditingEpisodeId, eaCausalityEditingSuspectRef, method, key, value)) return false;
+        refreshEaCausalityEditor();
+        return true;
     }
 
     function captureCommonAdverseEvent() {
@@ -1467,37 +1764,15 @@
         };
     }
 
-    function updateNaranjoScore() {
-        if (!M) return;
-        var score = M.calculateNaranjoScore(readNaranjoAnswersFromDom());
-        var category = M.categorizeNaranjo(score);
-        byId('naranjoScore').textContent = String(score);
-        byId('naranjoCategoria').textContent = category;
-        captureCausalityEditor();
-        updateFollowupCausalitySummary();
-    }
-
-    function updateKarchLasagna() {
-        if (!M) return;
-        byId('klCategoria').textContent = M.categorizeKarchLasagna(readKarchLasagnaAnswersFromDom());
-        captureCausalityEditor();
-        updateFollowupCausalitySummary();
-    }
-
-    function updateCausalityContextLabels() {
-        var label = getSelectedSuspectDrugLabel();
-        ['fhSeguimientoEaContextoNaranjo', 'fhSeguimientoEaContextoKl', 'fhSeguimientoEaContextoResumen'].forEach(function (id) {
-            var el = byId(id);
-            if (el) el.textContent = label;
-        });
-    }
-
-
-
     function updateFollowupCausalitySummary() {
-        updateCausalityContextLabels();
-        byId('resumenNaranjo').textContent = byId('naranjoScore').textContent + ' · ' + byId('naranjoCategoria').textContent;
-        byId('resumenKl').textContent = byId('klCategoria').textContent;
+        var scoreElement = byId('naranjoScore');
+        var categoryElement = byId('naranjoCategoria');
+        var karchElement = byId('klCategoria');
+        var score = scoreElement ? scoreElement.textContent : '';
+        var category = categoryElement ? categoryElement.textContent : '';
+        var karch = karchElement ? karchElement.textContent : '';
+        eaCausalityStateText('resumenNaranjo', (score === '—' || category === 'No evaluado' || !category) ? 'No evaluado' : score + ' · ' + category);
+        eaCausalityStateText('resumenKl', (!karch || karch === 'No evaluado') ? 'No evaluado' : karch);
     }
 
     function syncFollowupEaVisualState() {
@@ -1515,7 +1790,7 @@
         byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
         byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
         if (active) renderEaZone();
-        updateFollowupCausalitySummary();
+        refreshEaCausalityEditor();
     }
 
     function toggleFollowupEaFlow() {
@@ -1542,8 +1817,7 @@
         captureCommonAdverseEvent();
         syncFollowupEaVisualState();
         updateSuspectDrugSelector();
-        restoreCausalityEditor();
-        updateFollowupCausalitySummary();
+        refreshEaCausalityEditor();
     }
 
     function showCausalityNavNotice() {
@@ -1761,6 +2035,7 @@
         if (countBadge) countBadge.textContent = String(events.length);
         events.forEach(function (event, index) { list.appendChild(buildEaCard(event, index)); });
         updateEaSummary();
+        refreshEaCausalityEditor();
     }
 
     function buildEaCard(event, index) {
@@ -1815,6 +2090,10 @@
             if (incorporateButton) incorporateButton.disabled = String(event.description).trim() === '';
             card.setAttribute('data-ea-status', event.status);
             updateEaSummary();
+            // La descripción forma parte de la identidad visible del episodio:
+            // un EA que deja de estar incorporado no sigue ofreciéndose como
+            // episodio evaluable (fail-closed).
+            refreshEaCausalityEditor();
         });
         body.appendChild(descriptionInput);
         body.appendChild(createElement('p', 'search-card__hint', 'Se conserva el texto original. Codificación normalizada: pendiente de configuración y licencia del servicio.'));
@@ -3464,7 +3743,7 @@
         });
         toggleFollowupEaFlow();
         updateSuspectDrugSelector();
-        restoreCausalityEditor();
+        refreshEaCausalityEditor();
         updateExportInterlock();
         return cloneEvaluationState({
             current_visit: currentFollowupVisit,
@@ -3822,24 +4101,22 @@
         });
         var suspectEditor = byId('fhSeguimientoEaFarmacoSospechoso');
         if (suspectEditor) suspectEditor.addEventListener('change', function () { setCausalityEditor(suspectEditor.value); });
-        var finalAssessment = byId('fhCausalidadFinal');
-        if (finalAssessment) finalAssessment.addEventListener('change', captureCausalityEditor);
-        document.querySelectorAll('.causality-chip-group[data-answer-id^="naranjo"]').forEach(function (group) {
+        var causalityEpisode = byId('fhCausalityEpisode');
+        if (causalityEpisode) causalityEpisode.addEventListener('change', function () { selectEaCausalityEpisode(causalityEpisode.value); });
+        var causalitySuspect = byId('fhCausalitySuspect');
+        if (causalitySuspect) causalitySuspect.addEventListener('change', function () { selectEaCausalitySuspect(causalitySuspect.value); });
+        document.querySelectorAll('#modNaranjo .causality-chip-group').forEach(function (group) {
             group.addEventListener('click', function (e) {
                 var btn = e.target.closest('.causality-chip');
                 if (!btn) return;
-                group.querySelectorAll('.causality-chip').forEach(function (b) { b.classList.remove('causality-chip--active'); });
-                btn.classList.add('causality-chip--active');
-                updateNaranjoScore();
+                recordEaCausalityAnswer(EA_CAUSALITY_NARANJO, group, btn);
             });
         });
-        document.querySelectorAll('.causality-chip-group[data-answer-id^="kl"]').forEach(function (group) {
+        document.querySelectorAll('#modKarchLasagna .causality-chip-group').forEach(function (group) {
             group.addEventListener('click', function (e) {
                 var btn = e.target.closest('.causality-chip');
                 if (!btn) return;
-                group.querySelectorAll('.causality-chip').forEach(function (b) { b.classList.remove('causality-chip--active'); });
-                btn.classList.add('causality-chip--active');
-                updateKarchLasagna();
+                recordEaCausalityAnswer(EA_CAUSALITY_KARCH, group, btn);
             });
         });
         renderDLQI();
@@ -3853,8 +4130,7 @@
         });
 
         updateEaCausalidad();
-        updateNaranjoScore();
-        updateKarchLasagna();
+        refreshEaCausalityEditor();
         const cambiaNivel = document.getElementById('fhSegCambiaNivel');
         if (cambiaNivel) {
             const applyNivel = () => toggleField('fhSegNuevoNivel', cambiaNivel.value === 'Sí');
