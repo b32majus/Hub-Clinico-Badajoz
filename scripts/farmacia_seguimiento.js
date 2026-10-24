@@ -1318,6 +1318,13 @@
 
     function captureCausalityEditor() {
         if (!currentFollowupVisit) return;
+        /* Con el módulo de estado G0 presente, los cuestionarios visibles son
+           el editor de borradores en edición, no la máquina singular legacy.
+           Sus respuestas nunca se capturan hacia causality_by_suspect ni se
+           proyectan sobre las exportaciones: un borrador no es una causalidad
+           evaluada. El mundo legacy sin módulo (T01, PR57D) conserva intacto
+           su comportamiento de captura y exportación. */
+        if (eaCausalityStateModule()) return;
         var id = currentFollowupVisit.adverse_event.causality_editing_id;
         if (!id) return;
         currentFollowupVisit.causality_by_suspect[id] = {
@@ -1577,16 +1584,33 @@
         notice.classList.toggle('hidden', !text);
     }
 
+    // El aviso de edición no guardada reutiliza la semántica T01 (la edición
+    // no forma parte del acto preparado ni se ha guardado/exportado) y añade
+    // la provisionalidad de las puntuaciones y categorías de Naranjo/Karch.
+    // Se muestra desde que existe contexto de evaluación, aunque todavía no
+    // haya resultados que pintar.
+    var EA_CAUSALITY_PROVISIONAL_NOTICE = 'Las puntuaciones y categorías de Naranjo/Karch mostradas son provisionales y no constituyen una evaluación clínica formal registrada. Esta edición no forma parte del acto preparado y no se ha guardado ni exportado.';
+
     function setEaCausalityProvisionalVisible(visible) {
         var notice = byId('fhCausalityAvisoProvisional');
-        if (notice) notice.classList.toggle('hidden', !visible);
+        if (!notice) return;
+        var span = notice.querySelector ? notice.querySelector('span') : null;
+        if (span && span.textContent !== EA_CAUSALITY_PROVISIONAL_NOTICE) span.textContent = EA_CAUSALITY_PROVISIONAL_NOTICE;
+        notice.classList.toggle('hidden', !visible);
     }
 
     function refreshEaCausalityEditor() {
         var section = byId('modSeguimientoCausalidad');
         var presentElement = byId('fhSeguimientoEaPresente');
         var present = presentElement && presentElement.value ? presentElement.value : 'no_consta';
-        if (section) section.classList.toggle('hidden', present !== 'si');
+        if (section) {
+            /* El editor G0 y sus controles con id quedan fuera del envelope de
+               borradores del runtime del paciente: interactuar con la
+               causalidad en edición nunca redacta estado a almacenamiento
+               del navegador. */
+            section.setAttribute('data-fh-transient', 'true');
+            section.classList.toggle('hidden', present !== 'si');
+        }
         // Sin presencia declarada no hay evaluación posible: los cuestionarios
         // y el resumen quedan inactivos (ocultos) junto con la sección, no solo
         // deshabilitados. La explicación en español permanece visible.
