@@ -172,11 +172,14 @@ async function captureRepresentations(page) {
         } catch (error) {
             v2 = 'THROW:' + String((error && error.message) || error);
         }
+        // La hora de generación de cada fila cambia de un segundo a otro: se
+        // compara sin ella, para que antes/después no dependa del reloj.
+        const clock = (text) => String(text).replace(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}/g, '<fecha-hora>');
         return {
-            txt: S.buildSegLines().join('\n'),
-            excel: JSON.stringify(rows),
+            txt: clock(S.buildSegLines().join('\n')),
+            excel: clock(JSON.stringify(rows)),
             excelCausalityCells: rows.map((row) => [row[naranjoIndex], row[karchIndex]]),
-            csv: S.buildFollowupCsv(S.buildFollowupVisitExportModel()),
+            csv: clock(S.buildFollowupCsv(S.buildFollowupVisitExportModel())),
             v2: v2,
             eaBlock: JSON.stringify(S.buildEaActBlockSnapshot())
         };
