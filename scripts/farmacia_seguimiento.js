@@ -1587,6 +1587,13 @@
         var presentElement = byId('fhSeguimientoEaPresente');
         var present = presentElement && presentElement.value ? presentElement.value : 'no_consta';
         if (section) section.classList.toggle('hidden', present !== 'si');
+        // Sin presencia declarada no hay evaluación posible: los cuestionarios
+        // y el resumen quedan inactivos (ocultos) junto con la sección, no solo
+        // deshabilitados. La explicación en español permanece visible.
+        ['modNaranjo', 'modKarchLasagna', 'modResumenCausalidad'].forEach(function (id) {
+            var module = byId(id);
+            if (module) module.classList.toggle('hidden', present !== 'si');
+        });
         var noCausality = byId('fhSeguimientoEaNoCausalidad');
         if (noCausality) noCausality.classList.toggle('hidden', present === 'si');
         var episodeSelect = byId('fhCausalityEpisode');
@@ -1612,7 +1619,7 @@
             eaCausalityStateText('resumenNaranjo', 'No evaluado');
             eaCausalityStateText('resumenKl', 'No evaluado');
             var inactiveFinal = byId('fhCausalidadFinal');
-            if (inactiveFinal) inactiveFinal.disabled = true;
+            if (inactiveFinal) { inactiveFinal.value = 'No evaluada'; inactiveFinal.disabled = true; }
             return;
         }
 
@@ -3708,6 +3715,15 @@
         eaSyncSeqCounters();
         currentFollowupVisit.causality_by_suspect = currentFollowupVisit.causality_by_suspect && typeof currentFollowupVisit.causality_by_suspect === 'object'
             ? cloneEvaluationState(currentFollowupVisit.causality_by_suspect, {}) : {};
+
+        /* La restitución reconstruye el contexto de edición nuevo: el borrador
+           legacy de la visita NO se proyecta sobre el control final ni sobre
+           los cuestionarios G0. La valoración final documentada del contexto
+           restituido es «No evaluada». La referencia de edición visible se
+           conserva para poder registrar de forma fail-closed: sin marca viva
+           en el módulo, tocar un chip no acredita ninguna respuesta. */
+        var restoredFinalControl = byId('fhCausalidadFinal');
+        if (restoredFinalControl) restoredFinalControl.value = 'No evaluada';
 
         var restoredLines = Array.isArray(state.canonical_lines) ? cloneEvaluationState(state.canonical_lines, []) : [];
         var selectedLine = state.selected_line && typeof state.selected_line === 'object' ? cloneEvaluationState(state.selected_line, null) : null;
