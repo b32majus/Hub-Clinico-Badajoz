@@ -1,0 +1,21 @@
+{
+  "schema": "metis.train/v1",
+  "train": "FH-EA-03 · Causalidad G0 independiente EA×sospechoso×método en Seguimiento + corrección R1 (5 unidades)",
+  "units": [
+    {
+      "ticket": "docs/metis/fh-ea03-p2-prep1-c11-r1-amendment-guard.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea03-p2-prep2-causality-state-module.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea03-p2-prep2-causality-editor-ui.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea03-p2-prep4-causality-status-rules.md"
+    },
+    {
+      "ticket": "docs/metis/fh-ea03-p2-prep4-causality-export-guards.md"
+    }
+  ]
+}
