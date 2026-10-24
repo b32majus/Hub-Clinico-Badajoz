@@ -796,6 +796,9 @@
      *     `next` debe ser exactamente una observación incorporada del acto
      *     actual. Toda observación incorporada con `amendment` exige su
      *     revisión explícita: no se admite omitir `previous`.
+     *   - Una observación incorporada con `revision` entera mayor que 1 exige
+     *     `amendment` explícito (C11); el rechazo no confunde la revisión del
+     *     acto F4.4 (`envelope.revision`), que no se inspecciona aquí.
      *   - Se reemplaza únicamente `payload.followup.adverse_events` por la
      *     representación R1 `{ patientRef, actId, present, adverse_events,
      *     occurredAt? }` (fecha común sólo si la envelope la aporta) y se
@@ -985,6 +988,11 @@
                     if (!linked) {
                         return fail('MISSING_REVISION', 'Una observación con amendment exige su revisión explícita.');
                     }
+                } else if (isIntegerAtLeast(observation.revision, 2)) {
+                    // C11: una corrección de una observación incorporada no
+                    // puede declarar revisión > 1 sin motivo explícito. La
+                    // revisión del acto F4.4 (envelope.revision) es otra cosa.
+                    return fail('MISSING_AMENDMENT', 'Una observación corregida con revisión mayor que 1 exige amendment explícito.');
                 }
             }
 
