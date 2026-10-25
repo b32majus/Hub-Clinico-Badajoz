@@ -29,6 +29,12 @@
  *     elemento aporta identidad, pareja episodio-medicamento, método y acto
  *     coherentes con la ficha. Los campos ausentes o centinelas escalares se
  *     conservan sin convertirlos en asociaciones.
+ *   - La identidad propia de una evaluación es sólo su `evaluation_id`
+ *     (FH-EA-B02): dos evaluaciones distintas del array `evaluations` de la
+ *     MISMA observación no pueden reutilizarla. El método, el resultado, el
+ *     sospechoso y el orden no la determinan. Reevaluar en un acto posterior
+ *     crea una evaluación nueva con identidad nueva; no se compara la
+ *     identidad entre observaciones, actos ni revisiones.
  *
  * Reglas:
  *   - Las fichas del mismo paciente y del acto actual con estado
@@ -186,6 +192,23 @@
         return null;
     }
 
+    // FH-EA-B02: la identidad propia de una evaluación es su `evaluation_id`.
+    // Método, resultado, sospechoso y orden no la determinan ni la sustituyen,
+    // de modo que dos evaluaciones distintas de la MISMA observación no pueden
+    // reutilizarla. Sólo se comparan las identidades del array declarado por
+    // esa observación: no se cruzan observaciones, actos ni revisiones, porque
+    // esa frontera exige un contrato propio y todavía no está autorizada.
+    function findDuplicateEvaluationId(evaluations) {
+        var declaredEvaluationIds = [];
+        for (var index = 0; index < evaluations.length; index += 1) {
+            if (containsString(declaredEvaluationIds, evaluations[index].evaluation_id)) {
+                return evaluations[index].evaluation_id;
+            }
+            declaredEvaluationIds.push(evaluations[index].evaluation_id);
+        }
+        return null;
+    }
+
     function validateClinicalAssociations(observation) {
         var index;
         if (hasOwn(observation, 'suspicions') && Array.isArray(observation.suspicions)) {
@@ -202,6 +225,11 @@
                 if (evaluationError) {
                     return evaluationError;
                 }
+            }
+            // La identidad duplicada se comprueba después de las referencias
+            // inválidas para conservar su precedencia de error.
+            if (findDuplicateEvaluationId(observation.evaluations) !== null) {
+                return fail('DUPLICATE_EVALUATION_ID', 'Dos evaluaciones distintas de la misma observación no pueden compartir evaluation_id.');
             }
         }
         return null;
