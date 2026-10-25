@@ -6,6 +6,16 @@
 
 ---
 
+## FH-BRIDGE-C2a · núcleo tipado 166 columnas — publicado (25-10-2026)
+
+**ESTADO:** [issue #845](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/845) CLOSED/completed; [PR #846](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/846) MERGED en `promueve/nexus-v4@2862cd26a7cac69b840eaaf163c7fcc19f8416be`. CI postmerge [Nexus deterministic gates](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40239700726) y [Pages](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40239699935) SUCCESS. **Implementado en código puro, sin cableado UI ni QA Excel Windows, no lectura longitudinal y NO PILOTO.**
+
+**Entregado:** 4 archivos nuevos — esquema raw EA 2.1 draft 166 columnas (152 V2 + 14), codec v1/v2/manifest por rol, core productor/validador/decoder y test focal. Rechazo de líneas inactivas y tratamientos no identificables; cardinalidad EA por manifiesto y observación; orden lógico S/E preservado. 56/56 focales, 49/49 smoke; V2 legacy y suites EA PASS. Solo datos sintéticos.
+
+**Gobernanza documental:** WO-DOC [#847](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/847), [decisión Bridge raw-first](../architecture/FH_BRIDGE_RAW_MANUAL_FIRST_DECISION_20261025.md) y [C1 con adenda ratificada](../contracts/FH_BRIDGE_RAW_EA_0N_C1_FORMAT_CANDIDATE_20261025.md). **PENDIENTES, WOs diferentes:** C2b conexión Seguimiento→Bridge; C3a lector raw/Data Port; C3b pegado/guardar/reabrir Excel Windows; decisión posterior de adopción y retirada/ocultación de WO8. El Processor relacional no es dependencia obligatoria de esta ruta raw. **NO TOCA:** worktree documental WIP #842, V2, WO8, F4.4 ni `main`.
+
+---
+
 ## FH-EA-B02 · Corrección publicada y WO documental #838 (25-10-2026)
 
 **ESTADO TÉCNICO:** [WO #836](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/836)/[PR #837](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/837) MERGED `c1d3ef608fdff6580fd6e9ca9352b374c440aec6` en `promueve/nexus-v4`. DIA Pi/Gentle-AI-ODD test RED/implementación GREEN; auditoría independiente Cora **OK tras REHACER 1 solo del test**. Dos rutas publicadas: `modules/farmacia_ea_invariants.js` y `tools/farmacia_ea_b02_evaluation_identity_check.mjs`. Rechaza `evaluation_id` duplicado dentro del array de evaluaciones de una misma observación; ambas APIs puras, precedencia de errores conservada. B01+B02 PASS, R1 5/5, T01 69/69 y seis oráculos EA PASS; [Nexus postmerge](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40196534936) y [Pages postmerge](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40196534129) SUCCESS. **RDD nativo bloqueado `managed_assets_outdated` antes de START, no acreditado.** Reevaluación D06 válida requiere IDs nuevos; tolerancia entre actos/observaciones es límite técnico NO aprobado clínicamente. Sin QA navegador, persistencia/readback ni piloto.
