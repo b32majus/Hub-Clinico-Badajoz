@@ -515,6 +515,133 @@ addIncorporatedEa({ description: 'EA dos', suspects: [] });
 check(api.getEaSingularExportBlockReason() !== '' && api.getEaSingularExportBlockReason().includes('2 EA incorporados'), 'I · CSV con 2 EA sigue bloqueado por la guardia singular anterior');
 check(api.getEaV2CopyBlockReason() !== '' && api.getEaV2CopyBlockReason().includes('no representa la cobertura EA'), 'I · Export V2 conserva su frontera EA sin cambios');
 
+/* ─── P1-A · límite de celda Excel (32767) antes de copiar ──────────────── */
+// Corrección del REHACER 1 (Cora): una celda de Excel admite como máximo 32767
+// caracteres. La copia manual WO8 debe validar TODAS las celdas de TODAS las
+// filas finales, después del saneamiento y antes de tocar el portapapeles, y
+// negarse de forma visible sin truncar. El guard es propio del destino Excel y
+// no debe bloquear el TXT JARA.
+
+const EXCEL_CELL_LIMIT = 32767;
+const EXCEL_COMMON_PREFIX = 'COMÚN: '.length;
+const maxCellLength = (produced) => Math.max(...produced.flat().map((cell) => String(cell === null || cell === undefined ? '' : cell).length));
+const excelLimitGuard = (produced) => (typeof api.getEaManualExcelCellBlockReason === 'function'
+  ? api.getEaManualExcelCellBlockReason(produced)
+  : '');
+
+check(typeof api.getEaManualExcelCellBlockReason === 'function',
+  'P1-A · el guard de límite de celda Excel está expuesto (getEaManualExcelCellBlockReason)');
+
+// Adversario reproducido por la auditoría: descripción de EA de 34000
+// caracteres con dos líneas dispensadas.
+buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1A-OVER', dispense: ['LINE-A', 'LINE-B'] });
+api.setEaPresent('si');
+addIncorporatedEa({ description: 'x'.repeat(34000), suspects: [] });
+const overRows = rows();
+const overMax = maxCellLength(overRows);
+check(overRows.length === 2 && overMax > EXCEL_CELL_LIMIT,
+  'P1-A · el adversario produce una celda WO8 por encima del límite de Excel (' + overMax + ' > ' + EXCEL_CELL_LIMIT + ')');
+check(excelLimitGuard(overRows) !== '', 'P1-A · el guard de Excel bloquea cuando una celda final supera 32767');
+check(/32767/.test(excelLimitGuard(overRows)), 'P1-A · el mensaje de bloqueo declara el límite de Excel excedido');
+check(/no se ha copiado nada/i.test(excelLimitGuard(overRows)), 'P1-A · el mensaje de bloqueo declara que no se copió nada');
+check(at(overRows[0], 'ea_descripcion').length === EXCEL_COMMON_PREFIX + 34000,
+  'P1-A · la proyección no trunca: la celda conserva el texto íntegro y el exceso se bloquea, no se recorta');
+
+// Separación de guardias: el límite del libro no puede bloquear el informe de
+// texto, que no tiene ese límite.
+check(manualReason() === '',
+  'P1-A · el límite de Excel es un guard propio del destino: la validación clínica compartida NO bloquea');
+const overJara = jaraText();
+check(countOccurrences(overJara, 'x'.repeat(34000)) === 1,
+  'P1-A · TXT JARA no se bloquea por el límite de Excel y conserva la descripción íntegra una vez');
+
+const seguimientoSourceP1A = read('scripts/farmacia_seguimiento.js');
+check(/var rows = buildFollowupExcelRows\(model\);[\s\S]{0,400}guardEaManualExcelRows\(rows\)[\s\S]{0,400}copyTSVRowsToClipboard/.test(seguimientoSourceP1A),
+  'P1-A · el botón Excel valida las filas finales después de construirlas y antes de tocar el portapapeles');
+
+// Fronteras exactas: 32767 cabe, 32768 se bloquea.
+buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1A-LIMIT', dispense: ['LINE-A'] });
+api.setEaPresent('si');
+addIncorporatedEa({ description: 'y'.repeat(EXCEL_CELL_LIMIT - EXCEL_COMMON_PREFIX), suspects: [] });
+const atLimitRows = rows();
+check(maxCellLength(atLimitRows) === EXCEL_CELL_LIMIT,
+  'P1-A · frontera positiva: la celda final alcanza exactamente ' + EXCEL_CELL_LIMIT + ' caracteres');
+check(excelLimitGuard(atLimitRows) === '', 'P1-A · frontera positiva: exactamente 32767 no bloquea');
+
+buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1A-LIMIT1', dispense: ['LINE-A'] });
+api.setEaPresent('si');
+addIncorporatedEa({ description: 'z'.repeat(EXCEL_CELL_LIMIT - EXCEL_COMMON_PREFIX + 1), suspects: [] });
+const overLimitRows = rows();
+check(maxCellLength(overLimitRows) === EXCEL_CELL_LIMIT + 1,
+  'P1-A · frontera negativa: la celda final alcanza ' + (EXCEL_CELL_LIMIT + 1) + ' caracteres');
+check(excelLimitGuard(overLimitRows) !== '', 'P1-A · frontera negativa: 32768 bloquea');
+check(excelLimitGuard([]) === '' && excelLimitGuard([[ '', '' ]]) === '',
+  'P1-A · sin filas o con celdas vacías el guard de Excel no bloquea');
+
+/* ─── P1-B · identidad del sospechoso en TXT con homónimos ───────────────── */
+// Corrección del REHACER 1 (Cora): el bloque EA del TXT debe llevar nombre
+// legible Y referencia explícita `line:<id>` u `other:<uid>` de cada
+// sospechoso vigente, para que dos medicamentos homónimos no se confundan.
+
+const eaBlockOf = (text) => {
+  const start = text.indexOf('--- EA 1 ---');
+  const end = text.indexOf('--- PROMs de la visita ---');
+  return start < 0 ? '' : text.slice(start, end);
+};
+
+buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1B', dispense: ['LINE-A'] });
+api.setEaPresent('si');
+api.addFollowupOtherDrug();
+const homonymOne = api.getFollowupOtherDrugs()[0].uid;
+api.updateFollowupOtherDrug(homonymOne, 'farmaco', 'Mismo nombre');
+api.addFollowupOtherDrug();
+const homonymTwo = api.getFollowupOtherDrugs()[1].uid;
+api.updateFollowupOtherDrug(homonymTwo, 'farmaco', 'Mismo nombre');
+addIncorporatedEa({ description: 'EA con homónimos', suspects: ['other:' + homonymTwo] });
+const homonymBlock = eaBlockOf(jaraText());
+check(homonymBlock !== '', 'P1-B · el bloque EA del TXT existe para inspeccionar sus sospechosos');
+check(homonymBlock.includes('Mismo nombre'), 'P1-B · el bloque EA del TXT conserva el nombre legible del sospechoso');
+check(homonymBlock.includes('other:' + homonymTwo),
+  'P1-B · el bloque EA del TXT incluye la referencia explícita other:<uid> del sospechoso marcado');
+check(!homonymBlock.includes('other:' + homonymOne),
+  'P1-B · el bloque EA del TXT no menciona el homónimo NO marcado');
+
+buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1B-LINE', dispense: ['LINE-A'] });
+api.setEaPresent('si');
+addIncorporatedEa({ description: 'EA con línea explícita', suspects: ['line:LINE-A'] });
+const lineBlock = eaBlockOf(jaraText());
+check(lineBlock.includes('line:LINE-A'),
+  'P1-B · el bloque EA del TXT incluye la referencia explícita line:<linea_id> del sospechoso marcado');
+const lineIdentifiers = fragments(at(rows()[0], 'ea_id')).map((fragment) => fragment.content).join(' ');
+check(lineIdentifiers.length > 0 && !lineBlock.includes('other:'),
+  'P1-B · una referencia de línea no se presenta como referencia externa, sin inventar vínculos');
+
+// Ausencia explícita: sin sospechoso no se fabrica ninguna referencia.
+buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1B-ABSENT', dispense: ['LINE-A'] });
+api.setEaPresent('si');
+addIncorporatedEa({ description: 'EA sin sospechoso', suspects: [] });
+const absentBlock = eaBlockOf(jaraText());
+check(/Medicamentos sospechosos explícitos: Sin sospechoso seleccionado/.test(absentBlock) && !/line:|other:/.test(absentBlock.split('Medicamentos sospechosos explícitos:')[1] || ''),
+  'P1-B · sin sospechoso declarado se mantiene la ausencia explícita, sin referencias inventadas');
+
+// Fuente no verificable: la referencia se conserva rotulada, nunca como
+// sospecha vigente silenciosa.
+api.restoreEvaluationState({
+  current_visit: {
+    cip: 'CIP-FH-EA-MANUAL-01-P1B-PENDING',
+    adverse_event: { present: 'si', severity: '', resolved: 'no_consta', corrected: 'no_consta', observations: '', suspect_ids: [], causality_editing_id: '' },
+    adverse_events: [
+      { episode_id: 'FH-EA-EP-7001', observation_id: 'FH-EA-OBS-7001', suspect_ids: ['other:seg-pendiente'], status: 'incorporated', description: 'EA con fuente externa no verificada', evolution: 'no_consta', severity: '', expanded: false }
+    ]
+  },
+  related_treatments: [{ uid: 'seg-pendiente', farmaco: 'Fármaco restituido', relationType: 'Exposición' }]
+});
+const pendingBlock = eaBlockOf(jaraText());
+check(/other:seg-pendiente\s+\(fuente no verificada\)/.test(pendingBlock),
+  'P1-B · con la fuente no verificable el TXT conserva la referencia y declara el estado pendiente');
+check(manualReason() === '',
+  'P1-B · una referencia externa pendiente no bloquea las salidas manuales (el bloqueo es de la asociación a línea dispensada)');
+
 /* ─── Alcance negativo: ni persistencia ni schema nuevo ──────────────────── */
 
 const seguimientoSource = read('scripts/farmacia_seguimiento.js');

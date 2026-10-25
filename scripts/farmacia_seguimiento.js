@@ -2366,6 +2366,26 @@
         }).join('; ');
     }
 
+    // REHACER 1 (P1-B): el informe de texto debe identificar de forma
+    // inequívoca a cada sospechoso vigente con su referencia explícita
+    // `line:<linea_id>` u `other:<uid>`, porque dos medicamentos distintos
+    // pueden compartir nombre y el nombre legible por sí solo no los distingue.
+    // No infiere causalidad ni cambia la asociación: solo rotula la referencia
+    // ya marcada. La ausencia y el estado de fuente no verificada se conservan.
+    function eaManualEventSuspectReferences(event) {
+        var suspects = Array.isArray(event.suspect_ids) ? event.suspect_ids.slice() : [];
+        if (!suspects.length) return EA_MANUAL_UNASSOCIATED_SUSPECT;
+        var candidatesById = {};
+        getEaNamedDrugCandidates().forEach(function (candidate) { candidatesById[candidate.id] = candidate.label; });
+        return suspects.map(function (suspectId) {
+            if (eaSuspectMarkIsPending(event.episode_id, suspectId)) {
+                return suspectId + ' ' + EA_MANUAL_UNVERIFIED_SOURCE_LABEL;
+            }
+            var label = candidatesById[suspectId];
+            return label ? label + ' (' + suspectId + ')' : suspectId;
+        }).join('; ');
+    }
+
     function eaManualEventSeverity(event) {
         var severity = String(event.severity || '').trim();
         return 'Gravedad: ' + (severity || 'No consta') + ' · Evolución: ' + eaEvolutionLabel(event.evolution);
@@ -2450,6 +2470,35 @@
 
     function guardEaManualOutputs() {
         var reason = eaManualOutputsBlockReason();
+        syncEaExportGuardNotice(reason);
+        return !reason;
+    }
+
+    // REHACER 1 (P1-A): una celda de Excel admite como máximo 32767 caracteres.
+    // Es un guard propio del DESTINO libro, deliberadamente separado de la
+    // validación clínica compartida para no bloquear el informe TXT, que no
+    // tiene ese límite. Se aplica sobre las celdas finales ya saneadas y antes
+    // de tocar el portapapeles: ante un exceso se niega de forma visible y
+    // nunca se trunca ni se copia un TSV fuera de especificación.
+    var EA_MANUAL_EXCEL_CELL_LIMIT = 32767;
+
+    function eaManualExcelCellBlockReason(rows) {
+        if (!Array.isArray(rows)) return '';
+        for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+            var row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+            for (var cellIndex = 0; cellIndex < row.length; cellIndex += 1) {
+                var value = row[cellIndex];
+                var length = String(value === null || value === undefined ? '' : value).length;
+                if (length > EA_MANUAL_EXCEL_CELL_LIMIT) {
+                    return 'Copia no realizada: una celda de la fila ' + (rowIndex + 1) + ' tiene ' + length + ' caracteres y supera el límite de ' + EA_MANUAL_EXCEL_CELL_LIMIT + ' de Excel, así que la fila no se puede transferir sin truncar datos clínicos. Divida el acto o abrevie el texto de ese EA. No se ha copiado nada.';
+                }
+            }
+        }
+        return '';
+    }
+
+    function guardEaManualExcelRows(rows) {
+        var reason = eaManualExcelCellBlockReason(rows);
         syncEaExportGuardNotice(reason);
         return !reason;
     }
@@ -3889,7 +3938,7 @@
                 lines.push('Descripción: ' + textOrDash(event.description));
                 lines.push('Gravedad: ' + textOrDash(String(event.severity || '').trim() || 'No consta'));
                 lines.push('Evolución: ' + eaEvolutionLabel(event.evolution));
-                lines.push('Medicamentos sospechosos explícitos: ' + eaManualEventSuspectNames(event));
+                lines.push('Medicamentos sospechosos explícitos: ' + eaManualEventSuspectReferences(event));
                 lines.push('Causalidad Naranjo: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
                 lines.push('Causalidad Karch-Lasagna: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
                 lines.push('Acción registrada: ' + EA_MANUAL_NO_ACTION);
@@ -4288,6 +4337,7 @@
         buildEaActBlockSnapshot: buildEaActBlockSnapshot,
         getEaSingularExportBlockReason: eaSingularExportBlockReason,
         getEaManualExportBlockReason: eaManualOutputsBlockReason,
+        getEaManualExcelCellBlockReason: eaManualExcelCellBlockReason,
         setEaEpisodeSuspect: setEaEpisodeSuspect,
         getEaV2CopyBlockReason: eaV2CopyBlockReason,
         refreshEaCandidates: updateSuspectDrugSelector,
@@ -4447,6 +4497,10 @@
                 if (!exp) return;
                 var model = buildFollowupVisitExportModel();
                 var rows = buildFollowupExcelRows(model);
+                /* REHACER 1 (P1-A): el destino libro tiene su propio límite de
+                   celda; se valida aquí, después del saneamiento y antes de
+                   tocar el portapapeles. */
+                if (!guardEaManualExcelRows(rows)) return;
                 var sheetName = exp.getServiceSheetName(model && model.common_visit.servicio || '') || 'hoja correspondiente';
                 exp.copyTSVRowsToClipboard(rows, { sheetName: sheetName });
             });

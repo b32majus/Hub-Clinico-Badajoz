@@ -179,8 +179,15 @@ try {
     assert.ok(/Gravedad: Grave/.test(jara) && /Evolución: En seguimiento/.test(jara), 'TXT JARA keeps explicit severity and evolution');
     assert.ok(jara.includes('Causalidad Naranjo: No evaluada') && jara.includes('Causalidad Karch-Lasagna: No evaluada'), 'TXT JARA never exports the provisional G0 editors as a formal assessment');
     assert.ok(jara.includes('Medicamentos sospechosos explícitos:'), 'TXT JARA declares the explicit suspects');
+    // REHACER 1 (P1-B): cada sospechoso vigente lleva su referencia explícita
+    // junto al nombre legible, para que dos medicamentos homónimos no se
+    // confundan dentro del bloque EA.
+    eventsAfterEa3.forEach((event, index) => {
+        event.suspects.forEach((suspectId) => assert.ok(jara.includes(`(${suspectId})`), `TXT JARA identifies the explicit reference ${suspectId} of EA ${index + 1}`));
+    });
+    assert.ok(jara.includes('Medicamentos sospechosos explícitos: Sin sospechoso seleccionado'), 'TXT JARA keeps the explicit absence when no suspect is marked');
     assert.ok(!(await guardNotice()).visible, 'TXT JARA: no refusal notice after a successful copy');
-    ok('TXT JARA copy: one report per visit, each EA once, with identity, severity/evolution and explicit suspects');
+    ok('TXT JARA copy: one report per visit, each EA once, with identity, severity/evolution and explicit suspect references');
 
     // ─── Botones reales: Excel WO8 manual ─────────────────────────────────
     const layout = await page.evaluate(() => ({
@@ -228,6 +235,26 @@ try {
     assert.ok(csvGuard.visible && csvGuard.text.includes('3 EA incorporados') && csvGuard.text.includes('no se exporta solo el primer EA'), 'CSV keeps the previous singular frontier and refuses 0..N');
     assert.deepEqual(downloads, [], 'no file download fired while the CSV export is blocked');
     ok('CSV still refuses the 0..N collection without downloading anything');
+
+    // ─── REHACER 1 (P1-A): límite de celda Excel sin copia ni truncado ────
+    const clipboardBeforeOverflow = await clipboardText();
+    assert.ok(clipboardBeforeOverflow.split('\n').filter((row) => row.trim() !== '').length === 2, 'the clipboard holds the previous successful copy before the overflow attempt');
+    await page.click('#fhSegAddEaBtn');
+    const overflowCard = page.locator('#fhSegEaList .ea-t01-card').last();
+    await overflowCard.locator('[data-ea-field="description"]').fill('L'.repeat(34000));
+    await overflowCard.getByRole('button', { name: 'Incorporar al acto' }).click();
+    await page.click('#fhSegExcelExportBtn');
+    await page.waitForTimeout(250);
+    const overflowGuard = await guardNotice();
+    assert.ok(overflowGuard.visible, 'Excel cell limit: visible refusal notice');
+    assert.ok(overflowGuard.text.includes('32767'), 'Excel cell limit: the refusal declares the exceeded Excel limit');
+    assert.ok(/no se ha copiado nada/i.test(overflowGuard.text), 'Excel cell limit: the refusal declares that nothing was copied');
+    assert.equal(await clipboardText(), clipboardBeforeOverflow, 'Excel cell limit: the clipboard stays byte-identical, no partial TSV and no truncation');
+    await page.click('#fhSegExportTxt');
+    await page.waitForTimeout(250);
+    const jaraWithOverflow = await clipboardText();
+    assert.ok(jaraWithOverflow.includes('L'.repeat(34000)), 'Excel cell limit does not block the text report: JARA keeps the full description');
+    ok('Excel cell limit refused visibly without copying or truncating, while the text report stayed available');
 
     await page.evaluate(() => window.scrollTo(0, 0));
     writeFileSync(path.join(screenshotDir, 'FH_EA_MANUAL_01_seguimiento_1440x900.png'), await page.screenshot({ fullPage: false }));
