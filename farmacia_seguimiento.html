@@ -111,6 +111,23 @@
             grid-template-columns: minmax(0, 1fr);
         }
     }
+    /* Editor G0 de causalidad: sin contexto de episodio/sospechoso los
+       controles quedan visiblemente inactivos. */
+    #modSeguimientoCausalidad .causality-chip:disabled,
+    #modSeguimientoCausalidad .causality-chip[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    #modSeguimientoCausalidad .causality-chip--active:disabled {
+        background: #94A3B8;
+        border-color: #94A3B8;
+        color: #FFFFFF;
+    }
+    #modSeguimientoCausalidad select:disabled {
+        background: #F1F5F9;
+        color: #94A3B8;
+        cursor: not-allowed;
+    }
     </style>
 </head>
         <body>
@@ -370,7 +387,13 @@
     <div class="hidden" id="fhSegEaSospechosos"></div>
 </section>
 <section class="dashboard-card hidden" id="modSeguimientoCausalidad"><h2 class="section-title"><i class="fas fa-calculator"></i> Análisis de causalidad</h2>
-<div class="causality-section hidden" id="modNaranjo" title="Algoritmo de Naranjo">
+<div class="form-grid" id="fhCausalityContextRow">
+    <div class="form-group"><label for="fhCausalityEpisode">Episodio adverso de esta visita</label><select class="form-select" id="fhCausalityEpisode" disabled><option value="">Seleccionar episodio adverso…</option></select></div>
+    <div class="form-group"><label for="fhCausalitySuspect">Medicamento sospechoso del episodio</label><select class="form-select" id="fhCausalitySuspect" disabled><option value="">Seleccionar sospechoso...</option></select></div>
+</div>
+<div id="fhCausalityContextoVacio" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span></span></div>
+<div id="fhCausalityAvisoProvisional" class="notice-box notice-box--warning hidden"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Resultado provisional calculado con el algoritmo existente a partir de las respuestas registradas en esta edición. No constituye una evaluación clínica formal registrada ni forma parte del acto preparado.</span></div>
+<div class="causality-section" id="modNaranjo" title="Algoritmo de Naranjo">
     <h2 class="section-title section-title--with-subtitle">
         <i class="fas fa-calculator"></i>
         <span class="section-title__text-group">
@@ -380,28 +403,28 @@
     </h2>
     <div class="causality-result-grid causality-result-grid--top">
         <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoNaranjo">—</span></div>
-        <div class="info-field"><span class="info-field__label">Puntuación</span><span class="info-field__value" id="naranjoScore">0</span></div>
-        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="naranjoCategoria">Dudosa</span></div>
+        <div class="info-field"><span class="info-field__label">Puntuación</span><span class="info-field__value" id="naranjoScore">—</span></div>
+        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="naranjoCategoria">No evaluado</span></div>
     </div>
     <p class="causality-help-text">Seleccione la opción más adecuada para cada criterio.</p>
     <details class="causality-details" open>
         <summary class="causality-summary"><i class="fas fa-chevron-right causality-summary__icon" aria-hidden="true"></i> Criterios de evaluación</summary>
         <div class="causality-question-list">
-            <div class="causality-question"><label>1. Reacción previamente descrita</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ1"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>2. Evento aparece después de administrar el fármaco</label><span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ2"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>3. Mejora tras retirar fármaco o administrar antagonista</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ3"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>4. Reaparición tras readministración</label><span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ4"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>5. Existen causas alternativas</label><span class="causality-score-hint">Sí -1 · No +2 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ5"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>6. Reaparición con placebo</label><span class="causality-score-hint">Sí -1 · No +1 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ6"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>7. Concentraciones tóxicas detectadas</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ7"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>8. Relación dosis-respuesta</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ8"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>9. Reacción similar previa</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ9"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
-            <div class="causality-question"><label>10. Evidencia objetiva</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ10"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>1. Reacción previamente descrita</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ1"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>2. Evento aparece después de administrar el fármaco</label><span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ2"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>3. Mejora tras retirar fármaco o administrar antagonista</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ3"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>4. Reaparición tras readministración</label><span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ4"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>5. Existen causas alternativas</label><span class="causality-score-hint">Sí -1 · No +2 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ5"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>6. Reaparición con placebo</label><span class="causality-score-hint">Sí -1 · No +1 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ6"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>7. Concentraciones tóxicas detectadas</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ7"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>8. Relación dosis-respuesta</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ8"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>9. Reacción similar previa</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ9"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
+            <div class="causality-question"><label>10. Evidencia objetiva</label><span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span><div class="causality-chip-group" data-answer-id="naranjoQ10"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="desconocido">Desconocido</button></div></div>
         </div>
     </details>
     <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
 </div>
-<div class="causality-section hidden" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
+<div class="causality-section" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
     <h2 class="section-title section-title--with-subtitle">
         <i class="fas fa-project-diagram"></i>
         <span class="section-title__text-group">
@@ -411,29 +434,29 @@
     </h2>
     <div class="causality-result-grid causality-result-grid--top">
         <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoKl">—</span></div>
-        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No clasificable</span></div>
+        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No evaluado</span></div>
     </div>
     <p class="causality-help-text">Seleccione la opción más adecuada para cada criterio.</p>
     <details class="causality-details" open>
         <summary class="causality-summary"><i class="fas fa-chevron-right causality-summary__icon" aria-hidden="true"></i> Criterios de evaluación</summary>
         <div class="causality-question-list">
-            <div class="causality-question"><label>1. Intervalo temporal compatible</label><div class="causality-chip-group" data-answer-id="klTemporal"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
-            <div class="causality-question"><label>2. Evento conocido para medicamento/clase</label><div class="causality-chip-group" data-answer-id="klConocido"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
-            <div class="causality-question"><label>3. Existe explicación alternativa</label><div class="causality-chip-group" data-answer-id="klAlternativa"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
-            <div class="causality-question"><label>4. Se suspendió el medicamento</label><div class="causality-chip-group" data-answer-id="klSuspendido"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
-            <div class="causality-question"><label>5. Mejoró tras suspensión</label><div class="causality-chip-group" data-answer-id="klMejoraRetirada"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
-            <div class="causality-question"><label>6. Hubo readministración</label><div class="causality-chip-group" data-answer-id="klReadministracion"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
-            <div class="causality-question"><label>7. Reapareció tras readministración</label><div class="causality-chip-group" data-answer-id="klReaparece"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip causality-chip--active" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>1. Intervalo temporal compatible</label><div class="causality-chip-group" data-answer-id="klTemporal"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>2. Evento conocido para medicamento/clase</label><div class="causality-chip-group" data-answer-id="klConocido"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>3. Existe explicación alternativa</label><div class="causality-chip-group" data-answer-id="klAlternativa"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>4. Se suspendió el medicamento</label><div class="causality-chip-group" data-answer-id="klSuspendido"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>5. Mejoró tras suspensión</label><div class="causality-chip-group" data-answer-id="klMejoraRetirada"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>6. Hubo readministración</label><div class="causality-chip-group" data-answer-id="klReadministracion"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
+            <div class="causality-question"><label>7. Reapareció tras readministración</label><div class="causality-chip-group" data-answer-id="klReaparece"><button type="button" class="causality-chip" data-value="si">Sí</button><button type="button" class="causality-chip" data-value="no">No</button><button type="button" class="causality-chip" data-value="no_se_sabe">No se sabe</button><button type="button" class="causality-chip" data-value="no_aplica">No aplica</button></div></div>
         </div>
     </details>
     <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
 </div>
-<div class="hidden" id="modResumenCausalidad" title="Resumen de causalidad">
+<div id="modResumenCausalidad" title="Resumen de causalidad">
     <h2 class="section-title"><i class="fas fa-notes-medical"></i> Resumen de causalidad</h2>
     <div class="info-grid">
         <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoResumen">—</span></div>
-        <div class="info-field"><span class="info-field__label">Naranjo</span><span class="info-field__value" id="resumenNaranjo">0 · Dudosa</span></div>
-        <div class="info-field"><span class="info-field__label">Karch-Lasagna</span><span class="info-field__value" id="resumenKl">No clasificable</span></div>
+        <div class="info-field"><span class="info-field__label">Naranjo</span><span class="info-field__value" id="resumenNaranjo">No evaluado</span></div>
+        <div class="info-field"><span class="info-field__label">Karch-Lasagna</span><span class="info-field__value" id="resumenKl">No evaluado</span></div>
     </div>
     <div class="form-grid"><div class="form-group"><label for="fhCausalidadFinal">Causalidad final farmacéutica</label><select class="form-select" id="fhCausalidadFinal"><option value="No evaluada">No evaluada</option><option value="Dudosa / sin relación">Dudosa / sin relación</option><option value="Posible">Posible</option><option value="Probable">Probable</option><option value="Definida">Definida</option><option value="No clasificable">No clasificable</option></select></div></div>
     <p class="causality-help-text">Puedes apoyarte en Naranjo y Karch-Lasagna para registrar la valoración final.</p>
@@ -463,6 +486,7 @@
     <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
     <script src="scripts/farmacia_export_v2_followup_active_lines_adapter.js?v=20260803-followup-active-lines-adapter"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_seguimiento_ea_causality_state.js?v=20261024-fh-ea03-causality-state"></script>
     <script src="scripts/farmacia_seguimiento.js?v=20261018-fh-ea-t01-r1"></script>
         </body>
         </html>

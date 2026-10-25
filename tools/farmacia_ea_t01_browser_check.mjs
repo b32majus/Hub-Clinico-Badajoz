@@ -291,13 +291,21 @@ function captureTwoEa(page) {
         assert.ok(transient.transient && transient.withId === 0, 'EA card controls stay outside the patient draft envelope');
         ok('negative persistence proof: no EA content in sessionStorage/localStorage/IndexedDB and no envelope reuse');
 
-        // Causalidad independiente y no duplicada.
-        const causality = await page.evaluate(() => ({
-            hidden: document.getElementById('modSeguimientoCausalidad').classList.contains('hidden'),
-            titles: (document.getElementById('modSeguimientoEa').textContent.match(/Análisis de causalidad/g) || []).length,
-            duplicatedQuestionnaires: document.querySelectorAll('#fhSegEaList .causality-chip-group, #fhSegEaList #modNaranjo, #fhSegEaList #modKarchLasagna').length
-        }));
-        assert.ok(causality.hidden, 'causality section stays independent (hidden without suspect selection, T03/T04 out of scope)');
+        // Causalidad independiente y no duplicada. Con el editor G0 la sección
+        // se muestra al haber EA documentados, pero sigue siendo una sección
+        // independiente: fuera del bloque EA y sin cuestionarios por tarjeta.
+        const causality = await page.evaluate(() => {
+            const section = document.getElementById('modSeguimientoCausalidad');
+            const eaBlock = document.getElementById('modSeguimientoEa');
+            return {
+                visible: !section.classList.contains('hidden'),
+                independent: !eaBlock.contains(section),
+                titles: (eaBlock.textContent.match(/Análisis de causalidad/g) || []).length,
+                duplicatedQuestionnaires: document.querySelectorAll('#fhSegEaList .causality-chip-group, #fhSegEaList #modNaranjo, #fhSegEaList #modKarchLasagna').length
+            };
+        });
+        assert.ok(causality.visible, 'causality section is visible with documented EA (G0 editor active)');
+        assert.ok(causality.independent, 'causality section stays independent (outside the EA block)');
         assert.equal(causality.titles, 0, 'no causality questionnaire duplicated inside EA cards');
         assert.equal(causality.duplicatedQuestionnaires, 0, 'no Naranjo/Karch triggers per EA card');
         ok('causality remains an independent section, never duplicated per EA card');
