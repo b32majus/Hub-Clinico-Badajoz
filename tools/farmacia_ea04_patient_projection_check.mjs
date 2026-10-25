@@ -121,15 +121,20 @@ function main() {
         return result.error.code;
     }
 
-    // Igual que `bad` pero para entradas deliberadamente no clonables (un
-    // valor función no puede fotografiarse con structuredClone).
+    // Igual que `bad` pero para entradas deliberadamente no clonables: un valor
+    // función no puede fotografiarse con structuredClone, y una propiedad
+    // accessor no debe invocarse ni para comprobarla.
     function badUnclonable(input, code) {
         const result = local(project(input));
         assert.equal(result?.ok, false, 'debía rechazar la proyección');
+        assert.equal(typeof result.error?.code, 'string', 'el fallo debe traer código estructurado');
+        assert.equal(typeof result.error?.message, 'string', 'el fallo debe traer mensaje');
+        assert.ok(result.error.message.length > 0, 'el mensaje de fallo no puede estar vacío');
         assert.equal(result.error?.code, code, 'código de fallo inesperado');
         for (const key of ['episodes', 'uniqueEpisodeCount', 'observationCount', 'patientHasDocumentedEa']) {
             assert.equal(result[key], undefined, `un fallo no devuelve proyección parcial (${key})`);
         }
+        return result.error.code;
     }
 
     // --- 0 EA: nada que proyectar y ninguna inferencia de estado.
@@ -372,6 +377,91 @@ function main() {
         })]
     })]), 'DUPLICATE_EVALUATION_ID');
 
+    // --- REHACER 1 · Colisión longitudinal entre actos: dos actos distintos no
+    // pueden declarar el MISMO episodio como NUEVO. R1 valida cada acto por
+    // separado y B01 sólo detecta duplicados dentro de un acto; la frontera
+    // entre actos es responsabilidad de esta proyección.
+    const crossActCollision = request([
+        act({ adverse_events: [ea({ observation_id: 'OBS-1', episode_id: 'EP-SAME' })] }),
+        act({
+            actId: 'ACT-B',
+            adverse_events: [ea({ actId: 'ACT-B', observation_id: 'OBS-2', episode_id: 'EP-SAME', description: 'Prurito' })]
+        })
+    ]);
+    bad(crossActCollision, 'DUPLICATE_NEW_EPISODE_ID_ACROSS_ACTS');
+    // El orden de transporte no cambia la conclusión.
+    bad(request([
+        crossActCollision.acts[1],
+        crossActCollision.acts[0]
+    ]), 'DUPLICATE_NEW_EPISODE_ID_ACROSS_ACTS');
+    // Una recurrencia también declara episodio NUEVO: dos recurrencias
+    // independientes con el mismo episode_id colisionan.
+    bad(request([
+        act({ adverse_events: [ea({ observation_id: 'OBS-1', episode_id: 'E1' })] }),
+        act({
+            actId: 'ACT-B',
+            adverse_events: [ea({
+                actId: 'ACT-B', observation_id: 'OBS-2', episode_id: 'E2',
+                basis: refOf(ea({ observation_id: 'OBS-1', episode_id: 'E1' })),
+                evolution: 'recurrence', description: 'Cefalea recurrente'
+            })],
+            history: [ea({ observation_id: 'OBS-1', episode_id: 'E1' })]
+        }),
+        act({
+            actId: 'ACT-C',
+            adverse_events: [ea({
+                actId: 'ACT-C', observation_id: 'OBS-3', episode_id: 'E2',
+                basis: refOf(ea({ observation_id: 'OBS-1', episode_id: 'E1' })),
+                evolution: 'recurrence', description: 'Cefalea recurrente de nuevo'
+            })],
+            history: [ea({ observation_id: 'OBS-1', episode_id: 'E1' })]
+        })
+    ]), 'DUPLICATE_NEW_EPISODE_ID_ACROSS_ACTS');
+
+    // --- REHACER 1 · `patientRef` debe ser identidad inmutable de la operación:
+    // propiedad PROPIA de DATOS, leída una sola vez. Un accessor no se invoca
+    // nunca y una propiedad heredada no es un dato explícito.
+    let patientRefReads = 0;
+    const accessorRequest = {
+        get patientRef() {
+            patientRefReads += 1;
+            return patientRefReads === 1 ? 'PAT-A' : patientRefReads === 2 ? 'PAT-B' : 'PAT-C';
+        },
+        acts: [act({ adverse_events: [ea({ patientRef: 'PAT-B', observation_id: 'OBS-1', episode_id: 'E1' })] })]
+    };
+    badUnclonable(accessorRequest, 'INVALID_PATIENT_REF');
+    assert.equal(patientRefReads, 0, 'la proyección no debe invocar el getter de patientRef');
+
+    // Accessor estable y válido: sigue sin ser dato propio.
+    let stableReads = 0;
+    badUnclonable({
+        get patientRef() {
+            stableReads += 1;
+            return PATIENT;
+        },
+        acts: [act({ adverse_events: [ea({})] })]
+    }, 'INVALID_PATIENT_REF');
+    assert.equal(stableReads, 0, 'un accessor válido tampoco se invoca');
+
+    // Propiedad heredada: no es identidad explícita del paciente.
+    badUnclonable(Object.create({ patientRef: PATIENT }), 'INVALID_PATIENT_REF');
+    badUnclonable(Object.create({ acts: [act({ adverse_events: [ea({})] })] }), 'INVALID_PATIENT_REF');
+    // `patientRef` propio y `acts` sólo en el prototipo: tampoco es fuente explícita.
+    badUnclonable(
+        Object.assign(Object.create({ acts: [act({ adverse_events: [ea({})] })] }), { patientRef: PATIENT }),
+        'INVALID_ACTS'
+    );
+    // Un accessor en `acts` se rechaza igual, sin invocarlo.
+    let actsReads = 0;
+    badUnclonable({
+        patientRef: PATIENT,
+        get acts() {
+            actsReads += 1;
+            return [act({ adverse_events: [ea({})] })];
+        }
+    }, 'INVALID_ACTS');
+    assert.equal(actsReads, 0, 'la proyección no debe invocar el getter de acts');
+
     // --- Entradas malformadas: error tipado, sin proyección parcial.
     bad(null, 'INVALID_REQUEST');
     bad([], 'INVALID_REQUEST');
@@ -421,6 +511,8 @@ function main() {
     console.log('PASS ausencia / undefined / null distinguidos y conservados');
     console.log('PASS aislamiento A/B, duplicados, estado no incorporado y estructuras no soportadas');
     console.log('PASS pureza profunda y ausencia de proyección parcial');
+    console.log('PASS colisión de episodio nuevo entre actos rechazada, agrupación legítima conservada');
+    console.log('PASS patientRef inmutable: propiedad propia de datos, sin getters ni herencia');
     console.log('PASS farmacia_ea04_patient_projection_check');
 }
 

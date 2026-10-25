@@ -34,12 +34,22 @@
  * `HubTools.farmaciaEaInvariants.validateObservations`. Si ese validador no
  * está disponible, la proyección falla cerrada: no reimplementa sus reglas.
  *
+ * Identidad de la operación: `patientRef` y `acts` deben ser propiedades
+ * PROPIAS DE DATOS de la petición. Se leen una sola vez y ese valor estable se
+ * usa para validar los actos y para producir el resultado. Un accessor no se
+ * invoca y una propiedad heredada no se acepta: la proyección nunca puede
+ * etiquetar observaciones de un paciente con la identidad de otro.
+ *
  * Reglas de esta unidad:
  *   - Un episodio se agrupa por `episode_id`; el mismo episodio observado en
  *     dos actos cuenta UNA vez como episodio y DOS como observaciones.
- *   - Una recurrencia explícita es un episodio nuevo. `relatedEpisodeId` sólo
- *     se proyecta si la fuente lo declara literalmente; no se deduce de
- *     `basis`, texto, medicamento ni orden.
+ *   - Un mismo `episode_id` declarado como episodio NUEVO por dos actos
+ *     distintos es una colisión longitudinal: falla cerrada, porque R1 sólo
+ *     comprueba esa identidad dentro de un acto. Se considera «nuevo»
+ *     exactamente como R1: con `evolution:'recurrence'` o sin `basis` propia.
+ *   - Una recurrencia explícita es un episodio nuevo respecto de su `basis`.
+ *     `relatedEpisodeId` sólo se proyecta si la fuente lo declara
+ *     literalmente; no se deduce de `basis`, texto, medicamento ni orden.
  *   - Varias sospechas o varias líneas dispensadas en un acto no multiplican
  *     episodios ni observaciones.
  *   - No se etiqueta ninguna observación como «última» ni ningún episodio como
@@ -83,6 +93,32 @@
 
     function unsupportedStructure() {
         throw new Error('UNSUPPORTED_STRUCTURE');
+    }
+
+    // Lee una propiedad PROPIA que sea descriptor de DATOS. Devuelve `null` si
+    // la propiedad no existe, está heredada o es un accessor; un getter nunca
+    // se invoca. La identidad de paciente y la colección de actos no pueden
+    // venir de la cadena de prototipos ni de código que cambie entre lecturas.
+    function ownDataProperty(object, key) {
+        var descriptor = Object.getOwnPropertyDescriptor(object, key);
+        if (!descriptor) {
+            return null;
+        }
+        if (!Object.prototype.hasOwnProperty.call(descriptor, 'value')) {
+            return null;
+        }
+        return { value: descriptor.value };
+    }
+
+    // Espejo exacto de la frontera publicada de R1 (`declaresNewEpisode`): una
+    // ficha declara episodio NUEVO si declara recurrencia o si no trae `basis`
+    // propia. Continuación, resolución y revisión conservan el episodio de su
+    // `basis` y no cuentan como declaración nueva.
+    function declaresNewEpisode(event) {
+        if (hasOwn(event, 'evolution') && event.evolution === 'recurrence') {
+            return true;
+        }
+        return !hasOwn(event, 'basis');
     }
 
     // Copia profunda de árboles planos/arrays/escalares. Preserva claves
@@ -141,11 +177,13 @@
     ];
 
     // Valida sólo la estructura propia de esta unidad (acto, estado
-    // incorporado, identidad de acto y unicidad de observación entre actos).
-    // Todo lo demás pertenece al validador publicado.
+    // incorporado, identidad de acto, unicidad de observación entre actos y
+    // unicidad de declaración de episodio NUEVO entre actos). Todo lo demás
+    // pertenece al validador publicado.
     function inspectActs(acts) {
         var actIds = [];
         var observationIds = [];
+        var newEpisodeDeclarations = [];
 
         for (var actIndex = 0; actIndex < acts.length; actIndex += 1) {
             var act = acts[actIndex];
@@ -181,6 +219,22 @@
                         return fail('DUPLICATE_OBSERVATION_ID', 'Una observación reutiliza observation_id entre actos de la misma proyección.');
                     }
                     observationIds.push(event.observation_id);
+                }
+                // R1 sólo comprueba la identidad de episodio nuevo dentro de un
+                // acto (B01). Dos actos distintos que declaran el mismo
+                // episodio como nuevo no pueden fusionarse por coincidencia de
+                // ID: sería inventar continuidad longitudinal.
+                if (isNonEmptyString(event.episode_id) && declaresNewEpisode(event)) {
+                    for (var declarationIndex = 0; declarationIndex < newEpisodeDeclarations.length; declarationIndex += 1) {
+                        var declaration = newEpisodeDeclarations[declarationIndex];
+                        if (declaration.episode_id === event.episode_id && declaration.actId !== act.actId) {
+                            return fail(
+                                'DUPLICATE_NEW_EPISODE_ID_ACROSS_ACTS',
+                                'Dos actos distintos declaran el mismo episodio como nuevo; sin referencia explícita no se pueden agrupar.'
+                            );
+                        }
+                    }
+                    newEpisodeDeclarations.push({ episode_id: event.episode_id, actId: act.actId });
                 }
             }
         }
@@ -254,10 +308,22 @@
             if (!isRecord(request)) {
                 return fail('INVALID_REQUEST', 'La petición debe ser un objeto explícito.');
             }
-            if (!isNonEmptyString(request.patientRef)) {
+            // Identidad estable de la operación: se lee UNA sola vez desde un
+            // descriptor propio de datos y ese valor se reutiliza siempre.
+            var patientRefProperty = ownDataProperty(request, 'patientRef');
+            if (patientRefProperty === null) {
+                return fail('INVALID_PATIENT_REF', 'patientRef debe ser una propiedad propia de datos, sin getter ni herencia.');
+            }
+            var patientRef = patientRefProperty.value;
+            if (!isNonEmptyString(patientRef)) {
                 return fail('INVALID_PATIENT_REF', 'patientRef debe ser un string propio no vacío.');
             }
-            if (!Array.isArray(request.acts)) {
+            var actsProperty = ownDataProperty(request, 'acts');
+            if (actsProperty === null) {
+                return fail('INVALID_ACTS', 'acts debe ser una propiedad propia de datos, sin getter ni herencia.');
+            }
+            var requestActs = actsProperty.value;
+            if (!Array.isArray(requestActs)) {
                 return fail('INVALID_ACTS', 'acts debe ser un array explícito de actos.');
             }
             var invariants = HubTools.farmaciaEaInvariants;
@@ -267,7 +333,7 @@
 
             var acts;
             try {
-                acts = cloneStructure(request.acts, []);
+                acts = cloneStructure(requestActs, []);
             } catch (problem) {
                 return fail('UNSUPPORTED_STRUCTURE', 'La petición contiene una estructura no soportada.');
             }
@@ -281,7 +347,7 @@
             for (var actIndex = 0; actIndex < acts.length; actIndex += 1) {
                 var act = acts[actIndex];
                 var validation = invariants.validateObservations({
-                    patientRef: request.patientRef,
+                    patientRef: patientRef,
                     actId: act.actId,
                     present: act.present,
                     adverse_events: act.adverse_events,
@@ -305,7 +371,7 @@
                 }
             }
 
-            return assembleProjection(request.patientRef, validated);
+            return assembleProjection(patientRef, validated);
         } catch (problem) {
             return fail('INVALID_REQUEST', 'La proyección no se pudo completar.');
         }
