@@ -353,6 +353,17 @@
      * descripción explícita. Sin `basis`, una ficha incorporada solo puede ser
      * nueva, con episodio no presente en historia y descripción explícita.
      *
+     * Identidad de episodio nuevo (FH-EA-B01): dentro del acto actual, dos
+     * episodios NUEVOS distintos no pueden compartir `episode_id`, porque un
+     * episodio es una identidad y no puede presentarse a la vez como dos
+     * episodios nuevos. Declaran episodio nuevo las fichas incorporadas sin
+     * `basis` y las recurrencias expresas, cuyo episodio ya es nuevo por
+     * definición. Continuación, resolución y revisión conservan el episodio
+     * histórico de su `basis` y no son episodios nuevos, por lo que quedan
+     * fuera de esta comprobación. La regla compara sólo la identidad declarada:
+     * nunca descripciones ni medicamentos, y no genera, corrige ni deduce
+     * `episode_id`, fechas, gravedad, sospechosos ni causalidad.
+     *
      * Éxito: `{ ok: true, representation: { patientRef, actId, present,
      * adverse_events }, retained, history, selections }`. La representación
      * contiene solo las incorporadas del acto actual; `retained` conserva los
@@ -405,6 +416,33 @@
 
     function isEvolutionToken(value) {
         return value === 'continuation' || value === 'resolution' || value === 'recurrence';
+    }
+
+    // Una ficha incorporada declara un episodio NUEVO cuando no se apoya en una
+    // observación histórica (`basis`) o cuando se declara recurrencia, que por
+    // definición aporta un episodio nuevo. Continuación, resolución y revisión
+    // conservan el episodio de su `basis`.
+    function declaresNewEpisode(event) {
+        if (hasOwn(event, 'evolution') && event.evolution === 'recurrence') {
+            return true;
+        }
+        return !hasOwn(event, 'basis');
+    }
+
+    // Busca dos episodios nuevos distintos dentro del mismo acto que reutilicen
+    // la misma identidad de episodio. Sólo compara `episode_id` declarado.
+    function findDuplicateNewEpisodeId(events) {
+        var declaredEpisodeIds = [];
+        for (var index = 0; index < events.length; index += 1) {
+            if (!declaresNewEpisode(events[index])) {
+                continue;
+            }
+            if (containsString(declaredEpisodeIds, events[index].episode_id)) {
+                return events[index].episode_id;
+            }
+            declaredEpisodeIds.push(events[index].episode_id);
+        }
+        return null;
     }
 
     function validateObservations(request) {
@@ -587,6 +625,13 @@
             }
             if (request.present !== 'si' && incorporated.length > 0) {
                 return fail('STATE_CONTRADICTION', 'no y no_consta no admiten observaciones incorporadas del acto actual.');
+            }
+
+            // FH-EA-B01: dos episodios nuevos distintos del mismo acto no
+            // pueden compartir identidad de episodio. Se comprueba después de
+            // los rechazos previos para no alterar su precedencia.
+            if (findDuplicateNewEpisodeId(incorporated) !== null) {
+                return fail('DUPLICATE_NEW_EPISODE_ID', 'Dos episodios nuevos distintos del mismo acto no pueden compartir episode_id.');
             }
 
             var representationEvents;
