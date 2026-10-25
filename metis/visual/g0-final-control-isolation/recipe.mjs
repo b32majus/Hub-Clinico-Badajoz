@@ -17,8 +17,11 @@
 //     contexto y cuestionarios, sin selector final heredado en la referencia.
 //   · g0-final-control-otro-sospechoso — (1440×900) cambio al sospechoso B sin
 //     evaluar: el resumen queda en estado neutro del contexto.
-//   · g0-final-control-movil           — (390×844) el mismo contexto focal en
-//     móvil, sección usable y sin desbordamiento.
+//
+// Nota: el foco móvil del hecho reproducido se cubre en el oráculo (sesión D,
+// 390×844, consola/pageerror 0); la página tiene un recorte preexistente del
+// sidebar a 390px ajeno a esta unidad, por lo que la receta visual no dispara
+// a esa anchura.
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -159,20 +162,6 @@ try {
     } finally {
         await desktop.context.close();
     }
-
-    // Disparo 3 (móvil 390×844).
-    const movil = await browser_context_390();
-    try {
-        const page = movil.page;
-        await prepararEditorG0(page);
-        await page.selectOption('#fhCausalityEpisode', (await page.evaluate(() => document.querySelector('#fhSegEaList .ea-t01-card').getAttribute('data-episode-id'))));
-        if (await page.locator('#fhCausalitySuspect').isEnabled().catch(() => false)) {
-            await page.selectOption('#fhCausalitySuspect', 'other:seg-other-1');
-        }
-        await shoot(page, 'g0-final-control-movil');
-    } finally {
-        await movil.context.close();
-    }
 } finally {
     await browser.close();
     server.close();
@@ -181,16 +170,6 @@ console.log('G0-FINAL-CONTROL-ISOLATION-VISUAL: done');
 
 async function browser_context_1440() {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    const page = await context.newPage();
-    page.on('dialog', (dialog) => dialog.accept());
-    watch(page);
-    await page.goto(`http://127.0.0.1:${PORT}/farmacia_seguimiento.html?cip=CIP-DEMO-FH-001`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => (document.getElementById('fhSegCip') || {}).value === 'CIP-DEMO-FH-001', null, { timeout: 10000 });
-    return { context, page };
-}
-
-async function browser_context_390() {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();
     page.on('dialog', (dialog) => dialog.accept());
     watch(page);

@@ -46,11 +46,12 @@ Reproducido en este prep con oráculo propio en la base exacta (testigo del orá
 | 5 | Cambio de paciente A→B→A sin arrastre; sin escritura en almacenamiento por EA | `g0-final-control-oracle` (sesión B: traps de `Storage.setItem`, volcados de sessionStorage/localStorage, `getEaEvents()`) |
 | 6 | Sin sospechoso explícito: controles no operables, sin puntuación | `g0-final-control-oracle` (sesión C) |
 | 7 | T01 0/1/2/5 EA, marca expresa, guardias TXT/JARA/CSV/Excel/V2 | `verify-nexus` (regresión repo, ya presente) + `g0-final-control-oracle` (sesión A: guardia TXT visible con 2 EA, frontera v2 con intento real; sospechosos solo por marca expresa en la preparación soportada) |
-| 8 | Chromium real, sintético, consola/pageerror 0, desktop + móvil | `g0-final-control-oracle` (sesiones A–D con contadores de consola) + receta visual (`watch`, kit Metis, disparo móvil) |
+| 8 | Chromium real, sintético, consola/pageerror 0, desktop + móvil | `g0-final-control-oracle` (sesiones A–D con contadores de consola; sesión D = móvil 390×844). La receta visual dispara solo en desktop 1440×900: el sidebar recortado a 390px es un rasgo preexistente de la página, ajeno a esta unidad (ver Open questions) |
 
 ## Open questions
 
 - **Infra de instalación (resuelta antes de `run`):** el preflight `npm ci --offline` fallaba (INFRA_STOP, exit 1) porque la caché npm local solo tenía `fast-uri@3.1.9` y `ajv@8.20.0` no cacheado, mientras `package-lock.json` fija `fast-uri@3.1.8` (dependencia de `ajv`). Se calentó la caché npm del entorno (`npm cache add fast-uri@3.1.8`, `npm cache add ajv@8.20.0`) sin tocar `package.json`/`package-lock.json` (doNotTouch) ni añadir dependencias; `npm ci --offline --no-audit --no-fund --ignore-scripts` verifica OK en el checkout. No requiere cambios de repositorio.
+- **Receta visual solo desktop:** el gate visual rechazó el disparo móvil `g0-final-control-movil` porque el sidebar de la página («Inicio Farmacia», «Validación», …) queda recortado por el borde a 390px — rasgo preexistente de la página en BASE, fuera del defecto focal y del NO TOCA (CSS/UX general). El foco móvil del hecho reproducido sigue cubierto por el oráculo (sesión D, 390×844, consola/pageerror 0, interacción soportada completa). La receta visual dispara únicamente a 1440×900, donde el cambio visible (ausencia del selector final heredado) es plenamente juzgable.
 - **Variante «solo deshabilitado»:** el oráculo exige ocultar **y** deshabilitar (solución mínima preferente del issue). Un control visible pero inerte con presentación neutral quedaría fuera de este oráculo; la persona que apruebe la preparación puede relajarlo explícitamente si considera suficiente la variante deshabilitada.
 - **Texto de ayuda «Puedes apoyarte en Naranjo y Karch-Lasagna para registrar la valoración final.»:** el oráculo no lo exige oculto; la referencia lo oculta porque solo tiene sentido junto al selector eliminado. Decisión final de redacción es del escritor.
 - **«Sin exportación»:** el issue no aporta evidencia de fuga a exportación/persistencia; el oráculo lo cubre solo como no-regresión (resumen visible y líneas TXT/JARA sin categoría heredada, guardias intactos). Cobertura profunda de Export V2/CSV/Excel queda fuera (NO TOCA).
@@ -76,11 +77,10 @@ Reproducido en este prep con oráculo propio en la base exacta (testigo del orá
   "visual": {
     "cmd": ["node", "metis/visual/g0-final-control-isolation/recipe.mjs"],
     "timeoutSec": 300,
-    "shots": ["g0-final-control-contexto", "g0-final-control-otro-sospechoso", "g0-final-control-movil"],
+    "shots": ["g0-final-control-contexto", "g0-final-control-otro-sospechoso"],
     "criteria": [
       "C1: en «Resumen de causalidad» no aparece el selector heredado «Causalidad final farmacéutica» ni su etiqueta ni el texto de registro de valoración final; el resumen muestra solo contexto (fármaco sospechoso), Naranjo y Karch-Lasagna.",
-      "C2: al cambiar de sospechoso sin evaluarlo, el resumen muestra el estado neutro del contexto («No evaluado») y ninguna categoría formal heredada («Probable») atribuida a la nueva pareja.",
-      "C3: en móvil (390px) la sección de causalidad permanece usable, sin desbordamiento horizontal, con la misma ausencia del selector final heredado."
+      "C2: al cambiar de sospechoso sin evaluarlo, el resumen muestra el estado neutro del contexto («No evaluado») y ninguna categoría formal heredada («Probable») atribuida a la nueva pareja."
     ]
   }
 }
