@@ -1,6 +1,17 @@
-/* FH Bridge raw EA 0..N typed transport C2a.
+/* FH Bridge raw EA 0..N typed transport C2a-R1.
  * Pure draft: NOT a production exporter, XLSX reader, F4.4 carrier or storage.
- * Old V2 core and WO8 are deliberately unchanged. */
+ * Old V2 core and WO8 are deliberately unchanged.
+ *
+ * Integrity contract (C1 adenda ratificada 25-10-2026):
+ *  - A followup line is an ACTIVE line. Suspended/inactive or incoherent lines
+ *    are rejected both when building a set and when validating imported rows,
+ *    because a manually edited workbook has no trusted producer upstream.
+ *  - The act row carries a TECHNICAL manifest with transport cardinality
+ *    (lines, observations, suspicions, evaluations). Each observation declares
+ *    the cardinality of its own association rows. Counts are independent of
+ *    row_count/row_index, so deleting rows and renumbering is detected.
+ *  - Counts are consistency metadata, NOT authenticity: a coherent rewrite of
+ *    an unsigned editable workbook cannot be detected and is not claimed. */
 (function (root) {
  'use strict';
  var VERSION='2.1.0-draft.1';
@@ -11,6 +22,9 @@
  var ROLES=['validation','first_visit_line','followup_act','followup_line',
    'ea_observation','ea_suspicion','ea_evaluation'];
  var EA_ROLES=['ea_observation','ea_suspicion','ea_evaluation'];
+ var EA_INDEX_FIELDS=['ea_episode_id','ea_observation_id','ea_related_episode_id',
+   'ea_basis_observation_id','ea_medication_ref','ea_evaluation_id',
+   'ea_evaluation_method','ea_record_status','ea_evaluation_status'];
  var LIMIT=32767;
  var REQUIRED=['bridge_status','event_schema_version','row_schema_version',
   'event_id','source_event_id','row_id','row_role','row_index','row_count','event_type',
@@ -31,6 +45,18 @@
    'suspension_reason','suspension_effective_date','line_observations',
    'adherence_collection_status','adherence_instrument','adherence_result',
    'adherence_answers_json'];
+ // Published V2 follow-up adapter semantics, expressed over the typed columns.
+ var LINE_ROLES=['principal','additional'];
+ var PLACEHOLDERS=['—','no informado'];
+ var LINE_REQUIRED_TEXT=['line_id','treatment_id','line_role','line_status_at_event'];
+ var LINE_SNAPSHOT_TEXT=['line_drug_name','line_active_ingredient','line_presentation',
+   'line_dose_text','line_route','line_schedule_code','line_schedule_label',
+   'line_schedule_other_text','line_selected_drug_id','line_catalog_source',
+   'line_national_code','line_registration_number'];
+ var MANIFEST_CODES={lines:'EXPECTED_LINE_COUNT_MISMATCH',
+   observations:'EXPECTED_OBSERVATION_COUNT_MISMATCH',
+   suspicions:'EXPECTED_SUSPICION_COUNT_MISMATCH',
+   evaluations:'EXPECTED_EVALUATION_COUNT_MISMATCH'};
  var COLS=EXTRA.slice();
  var DEFINITIONS=null;
  var EVENT_FIELDS=null;
@@ -46,13 +72,23 @@
    if (v===null||Object.prototype.toString.call(v)!=='[object Object]')return false;
    var p=Object.getPrototypeOf(v);return p===null||Object.getPrototypeOf(p)===null;
  }
+ function normalizedKey(v) {
+   if (v===null||v===undefined)return '';
+   return String(v).trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ }
+ function isPlaceholder(v) {
+   return typeof v==='string'&&PLACEHOLDERS.indexOf(normalizedKey(v))!==-1;
+ }
  function deps(){
    var v=root.FarmaciaExportV2Core;
    var c=root.FarmaciaBridgeEaTypedCodec;
    var r=root.HubTools&&root.HubTools.farmaciaEaInvariants;
    if(!v||!Array.isArray(v.ROW_COLUMNS)||v.ROW_COLUMNS.length!==152||
       v.EVENT_SCHEMA_VERSION!=='2.0.0-draft.1')error('CORE_DEPENDENCY','Published V2 core required');
-   if(!c||c.VERSION!=='fh-ea-typed-json/1')error('CODEC_DEPENDENCY','Typed EA codec required');
+   if(!c||c.VERSION!=='fh-ea-typed-json/1'||c.OBSERVATION_CODEC!=='fh-ea-typed-json/2'||
+      c.MANIFEST_CODEC!=='fh-ea-bridge-manifest/1'||typeof c.decodeObservation!=='function'||
+      typeof c.decodeManifest!=='function')
+     error('CODEC_DEPENDENCY','Versioned typed EA codec required');
    if(!r||typeof r.validateObservations!=='function'||typeof r.validateNewEvents!=='function')
      error('R1_DEPENDENCY','Published EA invariants required');
    return {v:v,c:c,r:r};
@@ -84,6 +120,52 @@
    return false;
  }
  function failValidation(msg,errors){error('INVALID_ROW',msg,errors);}
+ // Line invariants of the published V2 follow-up adapter, over typed columns.
+ function lineInvariants(line,errors) {
+   LINE_REQUIRED_TEXT.forEach(function(field){
+     if(!text(line[field])) errors.push({code:'MISSING_REQUIRED',field:field});
+     else if(isPlaceholder(line[field])) errors.push({code:'PLACEHOLDER_NOT_ALLOWED',field:field});
+   });
+   if(typeof line.is_primary_line!=='boolean') errors.push({code:'MISSING_REQUIRED',field:'is_primary_line'});
+   if(typeof line.active_at_event!=='boolean') errors.push({code:'MISSING_REQUIRED',field:'active_at_event'});
+   else if(line.active_at_event!==true) errors.push({code:'FOLLOWUP_LINE_MUST_BE_ACTIVE',field:'active_at_event'});
+   if(text(line.line_status_at_event)&&line.line_status_at_event!=='active')
+     errors.push({code:'FOLLOWUP_LINE_STATUS',field:'line_status_at_event'});
+   if(text(line.line_role)&&LINE_ROLES.indexOf(line.line_role)===-1)
+     errors.push({code:'INVALID_LINE_ROLE',field:'line_role'});
+   if(text(line.line_role)&&LINE_ROLES.indexOf(line.line_role)!==-1&&
+      typeof line.is_primary_line==='boolean'&&
+      ((line.line_role==='principal')!==line.is_primary_line))
+     errors.push({code:'INVALID_PRIMARY_COHERENCE',field:'line_role'});
+   var identifiable=[line.line_drug_name,line.line_active_ingredient].some(function(v){
+     return text(v)&&!isPlaceholder(v);
+   });
+   if(!identifiable) errors.push({code:'LINE_NOT_IDENTIFIABLE'});
+   LINE_SNAPSHOT_TEXT.forEach(function(field){
+     if(isPlaceholder(line[field])) errors.push({code:'PLACEHOLDER_NOT_ALLOWED',field:field});
+   });
+ }
+ // row_id is technical identity: <encoded source>::<row_role>::<encoded key>.
+ // It is parsed BEFORE any decoding so a malformed cell fails closed.
+ function parseRowId(row) {
+   if(!text(row.row_id)||!text(row.row_role)) return null;
+   var parts=String(row.row_id).split('::');
+   if(parts.length!==3) return null;
+   var decoded=[];
+   for(var i=0;i<3;i++) {
+     if(!parts[i]) return null;
+     var value;
+     try{value=decodeURIComponent(parts[i]);}catch(e){return null;}
+     if(encodeURIComponent(value)!==parts[i]) return null;
+     decoded.push(value);
+   }
+   return {source:decoded[0],role:decoded[1],key:decoded[2]};
+ }
+ function associationKey(parsed) {
+   var match=/^(.*)-([SE])(\d+)$/.exec(parsed.key);
+   if(!match) return null;
+   return {observationId:match[1],field:match[2]==='S'?'suspicions':'evaluations',index:Number(match[3])};
+ }
  function validateRow(row) {
    try{
     var d=init(),errors=[];
@@ -103,6 +185,20 @@
     if(!Number.isInteger(row.row_index)||row.row_index<1||!Number.isInteger(row.row_count)||row.row_count<1
        ||row.row_index>row.row_count)errors.push({code:'INVALID_ROW_COUNT'});
     if(row.bridge_status!=='PENDIENTE')errors.push({code:'INVALID_BRIDGE_STATUS'});
+    var parsedId=parseRowId(row);
+    if(!parsedId) errors.push({code:'INVALID_ROW_ID'});
+    else {
+      if(parsedId.role!==row.row_role) errors.push({code:'ROW_ID_ROLE_MISMATCH'});
+      if(parsedId.source!==row.source_event_id) errors.push({code:'ROW_ID_SOURCE_MISMATCH'});
+      if(row.row_role==='ea_observation'&&parsedId.key!==row.ea_observation_id)
+        errors.push({code:'ROW_ID_KEY_MISMATCH'});
+      if(row.row_role==='ea_suspicion'||row.row_role==='ea_evaluation'){
+        var association=associationKey(parsedId);
+        if(!association||association.observationId!==row.ea_observation_id||
+           association.field!==(row.row_role==='ea_suspicion'?'suspicions':'evaluations'))
+          errors.push({code:'ASSOCIATION_INDEX_MISMATCH'});
+      }
+    }
     d.v.FIELD_DEFINITIONS.forEach(function(def){
       if(def.name==='event_schema_version'||def.name==='row_schema_version'||def.name==='row_role')return;
       if(!fieldTypeValid(def.name,row[def.name],def))errors.push({code:'INVALID_TYPE',field:def.name});
@@ -113,17 +209,19 @@
       errors.push({code:'INVALID_EA_PRESENT'});
     if(row.ea_record_status!==null&&row.ea_record_status!=='incorporated')
       errors.push({code:'INVALID_EA_STATUS'});
-    if(row.ea_payload_codec!==null&&row.ea_payload_codec!==d.c.VERSION)
-      errors.push({code:'INVALID_EA_CODEC'});
     if(EA_ROLES.includes(row.row_role)){
-      if(row.ea_payload_codec!==d.c.VERSION||typeof row.ea_payload_json!=='string')
-        errors.push({code:'MISSING_EA_PAYLOAD'});
+      var expectedCodec=row.row_role==='ea_observation'?d.c.OBSERVATION_CODEC:d.c.VERSION;
+      if(row.ea_payload_codec!==expectedCodec||typeof row.ea_payload_json!=='string')
+        errors.push({code:'INVALID_EA_CODEC',field:'ea_payload_codec'});
       if(!text(row.ea_episode_id)||!text(row.ea_observation_id))
         errors.push({code:'INVALID_EA_ID'});
       if(row.ea_present!==null||row.line_id!==null)errors.push({code:'MIXED_ROLE_FIELDS'});
       if(!errors.length){
         try{
-          var payload=d.c.decode(row.ea_payload_json);
+          var decoded=row.row_role==='ea_observation'
+            ?d.c.decodeObservation(row.ea_payload_json)
+            :{value:d.c.decode(row.ea_payload_json),associations:null};
+          var payload=decoded.value;
           var expected={patientRef:row.fh_patient_ref,episode_id:row.ea_episode_id};
           if(row.row_role==='ea_observation') {
             expected.actId=row.fh_act_id;
@@ -159,7 +257,6 @@
                 errors.push({code:'EVALUATION_INDEX_MISMATCH'});
               var st=own(payload,'status')?payload.status:null;
               if(st!==null&&st!=='completado')errors.push({code:'EVALUATION_NOT_FINAL'});
-              if(own(payload,'status')&&st!== 'completado')errors.push({code:'EVALUATION_NOT_FINAL'});
               if(row.ea_evaluation_status!==(st||null))errors.push({code:'EVALUATION_STATUS_MISMATCH'});
             } else if(row.ea_evaluation_id!==null||row.ea_evaluation_method!==null||
                row.ea_evaluation_status!==null) errors.push({code:'MIXED_ROLE_FIELDS'});
@@ -167,19 +264,24 @@
         }catch(e){errors.push({code:e.code||'INVALID_EA_PAYLOAD'});}
       }
     } else {
-      if(row.ea_payload_json!==null||row.ea_payload_codec!==null||row.ea_episode_id!==null||
-         row.ea_observation_id!==null||row.ea_medication_ref!==null||
-         row.ea_related_episode_id!==null||row.ea_basis_observation_id!==null||
-         row.ea_evaluation_id!==null||row.ea_evaluation_method!==null||
-         row.ea_evaluation_status!==null||row.ea_record_status!==null)
-        errors.push({code:'UNEXPECTED_EA_PAYLOAD'});
       if(row.row_role==='followup_act'){
         if(!['si','no','no_consta'].includes(row.ea_present)||row.line_id!==null)
           errors.push({code:'INVALID_FOLLOWUP_ACT'});
+        if(row.ea_payload_codec!==d.c.MANIFEST_CODEC||typeof row.ea_payload_json!=='string')
+          errors.push({code:'INVALID_ACT_MANIFEST',field:'ea_payload_codec'});
+        else {
+          try{d.c.decodeManifest(row.ea_payload_json);}
+          catch(e){errors.push({code:'INVALID_ACT_MANIFEST',details:e.code||'INVALID_MANIFEST'});}
+        }
+        EA_INDEX_FIELDS.forEach(function(field){
+          if(row[field]!==null)errors.push({code:'MIXED_ROLE_FIELDS',field:field});
+        });
       }else{
         if(row.ea_present!==null)errors.push({code:'UNEXPECTED_EA_PRESENT'});
-        if(row.row_role==='followup_line'&&!text(row.line_id))
-          errors.push({code:'MISSING_LINE_ID'});
+        if(row.ea_payload_json!==null||row.ea_payload_codec!==null||
+           EA_INDEX_FIELDS.some(function(field){return row[field]!==null;}))
+          errors.push({code:'UNEXPECTED_EA_PAYLOAD'});
+        if(row.row_role==='followup_line') lineInvariants(row,errors);
       }
     }
     if(!text(row.row_id)||!text(row.source_event_id)||!text(row.event_id)||
@@ -191,8 +293,10 @@
  function validateRowSet(rows){
    try{
     var d=init(),errors=[],seenRows=Object.create(null),obs=Object.create(null),links=[];
+    var obsAssociations=Object.create(null),associationIndexes=Object.create(null);
     if(!Array.isArray(rows)||!rows.length)return {valid:false,errors:[{code:'EMPTY_ROW_SET'}]};
-    var first=rows[0], actRows=0,seenLine=Object.create(null);
+    var first=rows[0], actRows=0,seenLine=Object.create(null),primaryCount=0;
+    var counts={lines:0,observations:0,suspicions:0,evaluations:0};
     rows.forEach(function(row,i){
       var v=validateRow(row);
       v.errors.forEach(function(err){errors.push(Object.assign({row:i+1},err));});
@@ -210,31 +314,73 @@
       });
       if(row.row_role==='followup_act'){actRows++;if(i!==0)errors.push({code:'ACT_NOT_FIRST'});}
       if(row.row_role==='followup_line'){
+        counts.lines++;
+        if(row.is_primary_line===true)primaryCount++;
         if(seenLine[row.line_id])errors.push({code:'DUPLICATE_LINE_ID'});
         seenLine[row.line_id]=true;
       }
       if(row.row_role==='ea_observation'){
+        counts.observations++;
         if(obs[row.ea_observation_id])errors.push({code:'DUPLICATE_OBSERVATION_ID'});
         obs[row.ea_observation_id]=row;
+        try{
+          obsAssociations[row.ea_observation_id]=
+            d.c.decodeObservation(row.ea_payload_json).associations;
+        }catch(e){/* already reported by validateRow */}
       }
-      if(row.row_role==='ea_suspicion'||row.row_role==='ea_evaluation')links.push(row);
+      if(row.row_role==='ea_suspicion'||row.row_role==='ea_evaluation'){
+        if(row.row_role==='ea_suspicion')counts.suspicions++;
+        else counts.evaluations++;
+        links.push({row:row,index:i+1});
+        var parsed=parseRowId(row);
+        var association=parsed?associationKey(parsed):null;
+        if(association){
+          var bucket=JSON.stringify([association.observationId,association.field]);
+          if(!associationIndexes[bucket])associationIndexes[bucket]=[];
+          associationIndexes[bucket].push(association.index);
+        }
+      }
     });
+    if(primaryCount>1)errors.push({code:'MULTIPLE_PRIMARY_LINES',actual:primaryCount});
     if(actRows!==1||!plain(first)||first.row_role!=='followup_act')errors.push({code:'FOLLOWUP_ACT_CARDINALITY'});
-    if(plain(first)){
-      // The new version must not weaken the published semantic checks for
-      // dates, enums and V2 common-event fields.
-      var previousEvent={};
-      EVENT_FIELDS.forEach(function(k){if(first[k]!==null)previousEvent[k]=first[k];});
-      previousEvent.event_schema_version=d.v.EVENT_SCHEMA_VERSION;
-      var verifiedEvent=d.v.validateEvent(previousEvent);
-      if(!verifiedEvent.valid)errors.push({code:'INVALID_V2_EVENT_CONTEXT',details:verifiedEvent.errors});
-      var n=rows.filter(function(x){return plain(x)&&x.row_role==='ea_observation';}).length;
-      if((first.ea_present==='si')!==(n>0))errors.push({code:'EA_STATE_CONTRADICTION'});
-      if(rows.some(function(x){return !plain(x)||x.source_event_id!==first.source_event_id||
-        x.event_type!=='pharmacy_followup';}))errors.push({code:'MULTI_EVENT'});
+    if(plain(first)&&first.row_role==='followup_act'&&typeof first.ea_payload_json==='string'){
+      var manifest=null;
+      try{manifest=d.c.decodeManifest(first.ea_payload_json);}catch(e){manifest=null;}
+      if(!manifest)errors.push({code:'INVALID_ACT_MANIFEST'});
+      else Object.keys(MANIFEST_CODES).forEach(function(key){
+        if(manifest[key]!==counts[key])
+          errors.push({code:MANIFEST_CODES[key],expected:manifest[key],actual:counts[key]});
+      });
     }
+    // Declared per-observation cardinality is the proof that association rows
+    // were not silently dropped or injected, independently of row_count.
+    Object.keys(obsAssociations).forEach(function(observationId){
+      var declared=obsAssociations[observationId];
+      [['suspicions','EXPECTED_SUSPICION_COUNT_MISMATCH'],
+       ['evaluations','EXPECTED_EVALUATION_COUNT_MISMATCH']].forEach(function(entry){
+        var field=entry[0],code=entry[1];
+        var actual=(associationIndexes[JSON.stringify([observationId,field])]||[]).length;
+        if(!own(declared,field)){
+          if(actual>0)errors.push({code:'UNDECLARED_ASSOCIATION_ARRAY',id:observationId,field:field});
+          return;
+        }
+        if(declared[field].count!==actual)
+          errors.push({code:code,id:observationId,expected:declared[field].count,actual:actual});
+      });
+    });
+    Object.keys(associationIndexes).forEach(function(bucket){
+      var indexes=associationIndexes[bucket].slice().sort(function(a,b){return a-b;});
+      for(var i=0;i<indexes.length;i++){
+        if(i>0&&indexes[i]===indexes[i-1]){
+          errors.push({code:'ASSOCIATION_INDEX_DUPLICATE',id:bucket,index:indexes[i]});
+          continue;
+        }
+        if(indexes[i]!==i)errors.push({code:'ASSOCIATION_INDEX_GAP',id:bucket,expected:i,actual:indexes[i]});
+      }
+    });
     var evaluationIds=Object.create(null);
-    links.forEach(function(row) {
+    links.forEach(function(entry) {
+      var row=entry.row;
       if(row.row_role==='ea_evaluation'){
         var scopedKey=JSON.stringify([row.ea_observation_id,row.ea_evaluation_id]);
         if(evaluationIds[scopedKey])errors.push({code:'DUPLICATE_EVALUATION_ID'});
@@ -243,14 +389,20 @@
       var target=obs[row.ea_observation_id];
       if(!target||target.ea_episode_id!==row.ea_episode_id)
         errors.push({code:'ORPHAN_EA_ASSOCIATION',id:row.ea_observation_id});
-      else {
-        try {
-          var event=d.c.decode(target.ea_payload_json);
-          var targetField=row.row_role==='ea_suspicion'?'suspicions':'evaluations';
-          if(!Array.isArray(event[targetField]))errors.push({code:'UNDECLARED_ASSOCIATION_ARRAY'});
-        }catch(e){errors.push({code:e.code||'INVALID_EA_PAYLOAD'});}
-      }
     });
+    if(plain(first)){
+      // The new version must not weaken the published semantic checks for
+      // dates, enums and V2 common-event fields.
+      var previousEvent={};
+      EVENT_FIELDS.forEach(function(k){if(first[k]!==null)previousEvent[k]=first[k];});
+      previousEvent.event_schema_version=d.v.EVENT_SCHEMA_VERSION;
+      var verifiedEvent=d.v.validateEvent(previousEvent);
+      if(!verifiedEvent.valid)errors.push({code:'INVALID_V2_EVENT_CONTEXT',details:verifiedEvent.errors});
+      var n=counts.observations;
+      if((first.ea_present==='si')!==(n>0))errors.push({code:'EA_STATE_CONTRADICTION'});
+      if(rows.some(function(x){return !plain(x)||x.source_event_id!==first.source_event_id||
+        x.event_type!=='pharmacy_followup';}))errors.push({code:'MULTI_EVENT'});
+    }
     return {valid:errors.length===0,errors:errors};
    }catch(e){return {valid:false,errors:[{code:e.code||'VALIDATION_EXCEPTION'}]};}
  }
@@ -343,30 +495,47 @@
      if(keysSeen[r.row_id])error('DUPLICATE_ROW_ID','Duplicate transport row identity');
      keysSeen[r.row_id]=true;items.push(r);
    }
+   // The act row is created first and receives the technical manifest at the end.
    add('followup_act','act',{ea_present:input.present});
-   var lineSeen=Object.create(null);
-   input.activeLines.forEach(function(line,i){
-     if(!plain(line)||!text(line.rowKey)||!text(line.line_id))
-       error('INVALID_LINE','Each line requires explicit rowKey and line_id');
+   var lineSeen=Object.create(null),primaryCount=0;
+   input.activeLines.forEach(function(line){
+     if(!plain(line))error('INVALID_LINE','Each line must be an explicit record');
+     if(!text(line.rowKey))error('INVALID_LINE','Each line requires an explicit rowKey');
+     if(isPlaceholder(line.rowKey))error('PLACEHOLDER_NOT_ALLOWED','Line rowKey cannot be a placeholder');
+     Object.keys(line).forEach(function(k){if(!LINE_FIELDS.includes(k))error('UNKNOWN_LINE_FIELD','Unexpected '+k);});
+     var problems=[];
+     lineInvariants(line,problems);
+     if(problems.length)error(problems[0].code,'Line invariants failed',problems);
      if(lineSeen[line.line_id])error('DUPLICATE_LINE_ID','Line ID reused');
      lineSeen[line.line_id]=true;
-     Object.keys(line).forEach(function(k){if(!LINE_FIELDS.includes(k))error('UNKNOWN_LINE_FIELD','Unexpected '+k);});
+     if(line.is_primary_line===true)primaryCount++;
      var fields={};Object.keys(line).forEach(function(k){if(k!=='rowKey')fields[k]=line[k];});
      add('followup_line',line.rowKey,fields);
    });
-   checked.representation.adverse_events.forEach(function(obs,oi){
+   if(primaryCount>1)error('MULTIPLE_PRIMARY_LINES','At most one primary line per act');
+   checked.representation.adverse_events.forEach(function(obs){
      // R1 has already validated and deep-copied the actual incorporated act.
-     // Store association entities in separate rows; preserve the array
-     // marker ([]/absent/null/scalar) on the observation itself.
+     // Association arrays travel as their own rows; the observed declares only
+     // how many rows it owns and never loses the shape of the clinical field.
      var reduced=clonePlain(obs);
-     if(Array.isArray(reduced.suspicions))reduced.suspicions=[];
-     if(Array.isArray(reduced.evaluations))reduced.evaluations=[];
+     var declared={};
+     ['suspicions','evaluations'].forEach(function(field){
+       if(!own(reduced,field))return;
+       if(Array.isArray(reduced[field])){
+         declared[field]={count:reduced[field].length};
+         delete reduced[field];
+         return;
+       }
+       // absent / own undefined / null / scalar markers stay inside the
+       // clinical entity untouched: the typed codec already preserves them.
+     });
      var common={ea_episode_id:obs.episode_id,ea_observation_id:obs.observation_id};
      add('ea_observation',obs.observation_id,Object.assign({},common,{
        ea_record_status:'incorporated',
        ea_related_episode_id:own(obs,'relatedEpisodeId')?obs.relatedEpisodeId:null,
        ea_basis_observation_id:own(obs,'basis')&&plain(obs.basis)?obs.basis.observation_id:null,
-       ea_payload_codec:d.c.VERSION,ea_payload_json:d.c.encode(reduced)
+       ea_payload_codec:d.c.OBSERVATION_CODEC,
+       ea_payload_json:d.c.encodeObservation(reduced,declared)
      }));
      if(Array.isArray(obs.suspicions))obs.suspicions.forEach(function(s,j){
        // Association records carry observation identity from their containing
@@ -387,6 +556,15 @@
        }));
      });
    });
+   var manifest={evaluations:0,lines:0,observations:0,suspicions:0};
+   items.forEach(function(item){
+     if(item.row_role==='followup_line')manifest.lines++;
+     else if(item.row_role==='ea_observation')manifest.observations++;
+     else if(item.row_role==='ea_suspicion')manifest.suspicions++;
+     else if(item.row_role==='ea_evaluation')manifest.evaluations++;
+   });
+   items[0].ea_payload_codec=d.c.MANIFEST_CODEC;
+   items[0].ea_payload_json=d.c.encodeManifest(manifest);
    var rows=items.map(function(item,i){return createRow(item,items.length,i);});
    var result=validateRowSet(rows);
    if(!result.valid)error('INVALID_ROW_SET','New typed group invalid',result.errors);
@@ -400,14 +578,17 @@
    var first=rows[0],byId=Object.create(null),observations=[],lines=[];
    rows.forEach(function(row){
      if(row.row_role==='followup_line'){
+       var parsed=parseRowId(row);
+       if(!parsed)error('INVALID_ROW_ID','Unreadable transport identity');
        var line={};LINE_FIELDS.forEach(function(k){
          if(k!=='rowKey'&&own(row,k)&&row[k]!==null)line[k]=clonePlain(row[k]);
        });
-       line.rowKey=decodeURIComponent(row.row_id.split('::').pop());
+       line.rowKey=parsed.key;
        lines.push(line);
      }
      if(row.row_role==='ea_observation'){
-       var obs=d.c.decode(row.ea_payload_json);
+       var envelope=d.c.decodeObservation(row.ea_payload_json);
+       var obs=envelope.value;
        if(byId[obs.observation_id])error('DUPLICATE_OBSERVATION_ID','Identity reused');
        byId[obs.observation_id]=obs;observations.push(obs);
      }
@@ -436,6 +617,7 @@
  init();
  root.FarmaciaBridgeRawEaV21Core=Object.freeze({
    VERSION:VERSION,ROW_COLUMNS:Object.freeze(COLS.slice()),ROW_ROLES:Object.freeze(ROLES.slice()),
+   LINE_ROLES:Object.freeze(LINE_ROLES.slice()),PLACEHOLDERS:Object.freeze(PLACEHOLDERS.slice()),
    validateRow:validateRow,validateRowSet:validateRowSet,buildFollowupRows:buildFollowupRows,
    serializeRowsToTsv:serializeRowsToTsv,parseTsvRows:parseTsvRows,decodeFollowupRows:decodeFollowupRows
  });

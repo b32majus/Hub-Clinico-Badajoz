@@ -255,4 +255,387 @@ test('no real persistence claim and no mutating inputs',()=>{
  assert.equal(x.adverse_events[0].description,before);
  assert.equal(Object.hasOwn(core,'writeExcel'),false);
 });
+/* =====================================================================
+ * C2a-R1 · integridad declarada (adenda C1 ratificada 25-10-2026).
+ * Manifiesto tecnico de cardinalidad en la fila de acto, envoltorio de
+ * observacion v2 y forma exacta de las asociaciones. Ningun recuento
+ * transporta dato clinico: solo cardinalidad de transporte.
+ * ===================================================================== */
+const OBS_CODEC = 'fh-ea-typed-json/2';
+const ENTITY_CODEC = 'fh-ea-typed-json/1';
+const MANIFEST_CODEC = 'fh-ea-bridge-manifest/1';
+function reindex(rows) {
+ return rows.map((r, i) => Object.assign({}, r, { row_index: i + 1, row_count: rows.length }));
+}
+function dropAt(rows, index) { return reindex(rows.filter((r, i) => i !== index)); }
+function manifestOf(rows) { return codec.decodeManifest(rows[0].ea_payload_json); }
+function setManifest(rows, next) {
+ rows[0].ea_payload_json = codec.encodeManifest(next);
+ rows[0].ea_payload_codec = MANIFEST_CODEC;
+ return rows;
+}
+function errorCodes(rows) { return core.validateRowSet(rows).errors.map(e => e.code); }
+function reencodeObservation(envelope) {
+ const entity = structuredClone(envelope.value);
+ for (const field of Object.keys(envelope.associations)) delete entity[field];
+ return codec.encodeObservation(entity, envelope.associations);
+}
+function expectSetCode(label, rows, code) {
+ const found = errorCodes(rows);
+ assert.ok(found.includes(code), label + ': se esperaba ' + code + ' y llego ' + JSON.stringify(found.slice(0, 6)));
+}
+function rowOf(rows, role, matcher) {
+ return rows.filter(r => r.row_role === role).find(r => (matcher ? matcher(r) : true));
+}
+
+// ---- P1-A: lineas activas, identidad y coherencia ----
+test('R1 P1-A a suspended line is rejected when building', () => {
+ const x = input();
+ x.activeLines = [Object.assign(line('LINE-A'), { line_status_at_event: 'suspended', active_at_event: false })];
+ reject('FOLLOWUP_LINE_MUST_BE_ACTIVE', () => core.buildFollowupRows(x));
+});
+test('R1 P1-A a line that declares itself inactive is rejected', () => {
+ const x = input();
+ x.activeLines = [Object.assign(line('LINE-A'), { active_at_event: false })];
+ reject('FOLLOWUP_LINE_MUST_BE_ACTIVE', () => core.buildFollowupRows(x));
+});
+test('R1 P1-A a non-active status is rejected even when flagged active', () => {
+ const x = input();
+ x.activeLines = [Object.assign(line('LINE-A'), { line_status_at_event: 'inactive' })];
+ reject('FOLLOWUP_LINE_STATUS', () => core.buildFollowupRows(x));
+});
+test('R1 P1-A primary role and primary flag must be coherent', () => {
+ const x = input();
+ x.activeLines = [Object.assign(line('LINE-A'), { line_role: 'principal', is_primary_line: false })];
+ reject('INVALID_PRIMARY_COHERENCE', () => core.buildFollowupRows(x));
+ const y = input();
+ y.activeLines = [Object.assign(line('LINE-A'), { line_role: 'additional', is_primary_line: true })];
+ reject('INVALID_PRIMARY_COHERENCE', () => core.buildFollowupRows(y));
+});
+test('R1 P1-A at most one primary line per act', () => {
+ const x = input();
+ x.activeLines = [
+  Object.assign(line('LINE-A'), { line_role: 'principal', is_primary_line: true }),
+  Object.assign(line('LINE-B'), { line_role: 'principal', is_primary_line: true })];
+ reject('MULTIPLE_PRIMARY_LINES', () => core.buildFollowupRows(x));
+});
+test('R1 P1-A a line without drug identity is rejected', () => {
+ const x = input();
+ x.activeLines = [Object.assign(line('LINE-A'), { line_drug_name: null, line_active_ingredient: null })];
+ reject('LINE_NOT_IDENTIFIABLE', () => core.buildFollowupRows(x));
+ const y = input();
+ y.activeLines = [Object.assign(line('LINE-A'), { line_drug_name: '—' })];
+ reject('LINE_NOT_IDENTIFIABLE', () => core.buildFollowupRows(y));
+});
+test('R1 P1-A required line identity fields cannot be blank', () => {
+ for (const field of ['line_id', 'treatment_id', 'line_role', 'line_status_at_event']) {
+  const x = input();
+  x.activeLines = [Object.assign(line('LINE-A'), { [field]: null })];
+  reject('MISSING_REQUIRED', () => core.buildFollowupRows(x));
+ }
+});
+test('R1 P1-A unknown line role and legacy placeholders are rejected', () => {
+ const x = input();
+ x.activeLines = [Object.assign(line('LINE-A'), { line_role: 'other' })];
+ reject('INVALID_LINE_ROLE', () => core.buildFollowupRows(x));
+ const y = input();
+ y.activeLines = [Object.assign(line('LINE-A'), { line_dose_text: '  No informado ' })];
+ reject('PLACEHOLDER_NOT_ALLOWED', () => core.buildFollowupRows(y));
+});
+test('R1 P1-A imported rows repeat the same line invariants', () => {
+ const rows = core.buildFollowupRows(richInput());
+ const suspended = structuredClone(rows);
+ rowOf(suspended, 'followup_line').active_at_event = false;
+ expectSetCode('active_at_event', suspended, 'FOLLOWUP_LINE_MUST_BE_ACTIVE');
+ const incoherent = structuredClone(rows);
+ const lineRow = rowOf(incoherent, 'followup_line');
+ lineRow.line_role = 'principal';
+ lineRow.is_primary_line = false;
+ expectSetCode('primary coherence', incoherent, 'INVALID_PRIMARY_COHERENCE');
+ const unidentifiable = structuredClone(rows);
+ const other = rowOf(unidentifiable, 'followup_line');
+ other.line_drug_name = null;
+ other.line_active_ingredient = null;
+ expectSetCode('identifiability', unidentifiable, 'LINE_NOT_IDENTIFIABLE');
+ reject('INVALID_ROW_SET', () => core.decodeFollowupRows(suspended));
+});
+test('R1 P1-A zero lines stay valid, with and without EA', () => {
+ const withEa = input();
+ withEa.activeLines = [];
+ const rowsEa = core.buildFollowupRows(withEa);
+ assert.equal(rowsEa.filter(r => r.row_role === 'followup_line').length, 0);
+ assert.equal(manifestOf(rowsEa).lines, 0);
+ const empty = input();
+ empty.activeLines = [];
+ empty.present = 'no_consta';
+ empty.adverse_events = [];
+ const rowsEmpty = core.buildFollowupRows(empty);
+ assert.equal(rowsEmpty.length, 1);
+ const emptyManifest = manifestOf(rowsEmpty);
+ for (const [key, value] of Object.entries({ evaluations: 0, lines: 0, observations: 0, suspicions: 0 })) {
+  assert.equal(emptyManifest[key], value, key);
+ }
+});
+
+// ---- P1-B: manifiesto, cardinalidad y renumeracion ----
+test('R1 P1-B the act row declares a technical manifest only', () => {
+ const rows = core.buildFollowupRows(richInput());
+ assert.equal(rows[0].row_role, 'followup_act');
+ assert.equal(rows[0].ea_payload_codec, MANIFEST_CODEC);
+ const m = manifestOf(rows);
+ assert.deepEqual(Object.keys(m).sort(), ['evaluations', 'lines', 'observations', 'suspicions']);
+ for (const key of Object.keys(m)) assert.equal(Number.isInteger(m[key]) && m[key] >= 0, true, key);
+ assert.equal(m.evaluations, 1); assert.equal(m.lines, 2);
+ assert.equal(m.observations, 3); assert.equal(m.suspicions, 3);
+ assert.ok(!/paciente|patient|dose|dosis|grave|severity/i.test(rows[0].ea_payload_json));
+});
+test('R1 P1-B deleting the last suspicion with renumbering is blocked', () => {
+ const rows = core.buildFollowupRows(richInput());
+ const suspectRows = rows.map((r, i) => [r, i]).filter(([r]) => r.row_role === 'ea_suspicion');
+ const last = suspectRows[suspectRows.length - 1][1];
+ const altered = dropAt(rows, last);
+ assert.equal(altered.length, rows.length - 1);
+ assert.equal(altered[0].row_count, altered.length);
+ expectSetCode('last suspicion', altered, 'EXPECTED_SUSPICION_COUNT_MISMATCH');
+ reject('INVALID_ROW_SET', () => core.decodeFollowupRows(altered));
+});
+test('R1 P1-B deleting a middle suspicion with renumbering is blocked', () => {
+ const x = richInput();
+ x.adverse_events[0].suspicions.push(sup('EP-1', 'EXT-02'));
+ const rows = core.buildFollowupRows(x);
+ const first = rows.findIndex(r => r.row_role === 'ea_suspicion');
+ const altered = dropAt(rows, first);
+ expectSetCode('middle suspicion', altered, 'EXPECTED_SUSPICION_COUNT_MISMATCH');
+ assert.ok(errorCodes(altered).includes('ASSOCIATION_INDEX_GAP'));
+});
+test('R1 P1-B deleting evaluations, observations or lines is blocked', () => {
+ const rows = core.buildFollowupRows(richInput());
+ const evalRows = rows.findIndex(r => r.row_role === 'ea_evaluation');
+ expectSetCode('evaluation', dropAt(rows, evalRows), 'EXPECTED_EVALUATION_COUNT_MISMATCH');
+ const obsRows = rows.findIndex(r => r.row_role === 'ea_observation');
+ expectSetCode('observation', dropAt(rows, obsRows), 'EXPECTED_OBSERVATION_COUNT_MISMATCH');
+ const lineRows = rows.findIndex(r => r.row_role === 'followup_line');
+ expectSetCode('line', dropAt(rows, lineRows), 'EXPECTED_LINE_COUNT_MISMATCH');
+});
+test('R1 P1-B injecting lines, observations or suspicions is blocked', () => {
+ const rows = core.buildFollowupRows(richInput());
+ const lineRow = structuredClone(rows.find(r => r.row_role === 'followup_line'));
+ const injectedLine = reindex([...rows, Object.assign(lineRow, { row_id: 'EV-A-SRC::followup_line::INJECTED',
+  line_id: 'LINE-INJ', treatment_id: 'TR-INJ' })]);
+ expectSetCode('injected line', injectedLine, 'EXPECTED_LINE_COUNT_MISMATCH');
+ const obsRow = structuredClone(rows.find(r => r.row_role === 'ea_observation'));
+ const envelope = codec.decodeObservation(obsRow.ea_payload_json);
+ envelope.value.observation_id = 'OBS-9';
+ envelope.value.episode_id = 'EP-9';
+ const injectedObs = reindex([...rows, Object.assign(obsRow, {
+  row_id: 'EV-A-SRC::ea_observation::OBS-9', ea_observation_id: 'OBS-9', ea_episode_id: 'EP-9',
+  ea_payload_json: reencodeObservation(envelope)
+ })]);
+ expectSetCode('injected observation', injectedObs, 'EXPECTED_OBSERVATION_COUNT_MISMATCH');
+ const base = input();
+ base.adverse_events[0].suspicions = [];
+ const clean = core.buildFollowupRows(base);
+ const template = structuredClone(rows.find(r => r.row_role === 'ea_suspicion'));
+ const injectedSuspicion = reindex([...clean, template]);
+ expectSetCode('injected suspicion', injectedSuspicion, 'EXPECTED_SUSPICION_COUNT_MISMATCH');
+});
+test('R1 P1-B a tampered manifest is rejected', () => {
+ const rows = core.buildFollowupRows(richInput());
+ const altered = structuredClone(rows);
+ setManifest(altered, Object.assign(manifestOf(altered), { observations: 4 }));
+ expectSetCode('manifest observation count', altered, 'EXPECTED_OBSERVATION_COUNT_MISMATCH');
+ const broken = structuredClone(rows);
+ broken[0].ea_payload_json = '{"lines":"dos"}';
+ assert.ok(errorCodes(broken).includes('INVALID_ACT_MANIFEST'));
+ const missing = structuredClone(rows);
+ missing[0].ea_payload_json = '{"lines":2,"observations":3,"suspicions":3}';
+ assert.ok(errorCodes(missing).includes('INVALID_ACT_MANIFEST'));
+});
+test('R1 P1-B association suffix indexes must be contiguous and unique', () => {
+ const x = richInput();
+ x.adverse_events[0].suspicions.push(sup('EP-1', 'EXT-02'));
+ const rows = core.buildFollowupRows(x);
+ const suspect = rows.filter(r => r.row_role === 'ea_suspicion');
+ const duplicated = structuredClone(rows);
+ const target = duplicated.filter(r => r.row_role === 'ea_suspicion')[1];
+ target.row_id = target.row_id.replace(/-S1$/, '-S00');
+ assert.ok(errorCodes(duplicated).includes('ASSOCIATION_INDEX_DUPLICATE'));
+ const sourceMismatch = structuredClone(rows);
+ sourceMismatch.find(r => r.row_role === 'ea_suspicion').row_id = 'OTRO::ea_suspicion::OBS-1-S0';
+ assert.ok(errorCodes(sourceMismatch).includes('ROW_ID_SOURCE_MISMATCH'));
+ assert.equal(suspect.length >= 2, true);
+});
+test('R1 P1-B a coherent rewrite of rows and manifest stays a known limit', () => {
+ // Limitacion declarada: un libro editable sin firma no autentica el origen.
+ // Este test fija el limite para que ninguna promesa futura lo contradiga.
+ const rows = core.buildFollowupRows(richInput());
+ const withoutLast = dropAt(rows, rows.length - 1);
+ const rewritten = structuredClone(withoutLast);
+ const lastObservation = rewritten[rewritten.length - 1];
+ const envelope = codec.decodeObservation(lastObservation.ea_payload_json);
+ envelope.associations.suspicions = { count: 0 };
+ lastObservation.ea_payload_json = reencodeObservation(envelope);
+ setManifest(rewritten, { evaluations: 1, lines: 2, observations: 3, suspicions: 2 });
+ assert.equal(core.validateRowSet(rewritten).valid, true);
+ const back = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(rewritten)));
+ assert.equal(back.adverse_events.reduce((n, o) => n + (Array.isArray(o.suspicions) ? o.suspicions.length : 0), 0), 2);
+});
+test('R1 P1-B association cardinality is declared per observation', () => {
+ const rows = core.buildFollowupRows(richInput());
+ const obs = rows.find(r => r.row_role === 'ea_observation');
+ const envelope = codec.decodeObservation(obs.ea_payload_json);
+ assert.equal(envelope.associations.suspicions.count, 1);
+ assert.equal(envelope.associations.evaluations.count, 1);
+ // The stored clinical entity never embeds the association arrays.
+ const stored = JSON.parse(obs.ea_payload_json);
+ assert.equal(Object.hasOwn(stored.value, 'suspicions'), false);
+ assert.equal(Object.hasOwn(stored.value, 'evaluations'), false);
+ assert.equal(stored.associations.suspicions.count, 1);
+});
+
+// ---- P1-B: forma exacta de asociaciones ----
+test('R1 P1-B association shape is preserved: absent, undefined, null, empty, present', () => {
+ const x = input();
+ x.adverse_events = [observation(1), observation(2), observation(3), observation(4), observation(5)];
+ x.adverse_events[0].suspicions = undefined;
+ x.adverse_events[1].suspicions = null;
+ x.adverse_events[2].suspicions = [];
+ x.adverse_events[3].suspicions = [sup('EP-4', 'EXT-04')];
+ const rows = core.buildFollowupRows(x);
+ const back = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(rows)));
+ assert.equal(Object.hasOwn(back.adverse_events[0], 'suspicions'), true);
+ assert.equal(back.adverse_events[0].suspicions, undefined);
+ assert.equal(Object.hasOwn(back.adverse_events[1], 'suspicions'), true);
+ assert.equal(back.adverse_events[1].suspicions, null);
+ assert.equal(Array.isArray(back.adverse_events[2].suspicions), true);
+ assert.equal(back.adverse_events[2].suspicions.length, 0);
+ assert.equal(back.adverse_events[3].suspicions[0].medicationRef, 'EXT-04');
+ assert.equal(Object.hasOwn(back.adverse_events[4], 'suspicions'), false);
+});
+test('R1 P1-B a non-array association marker authorizes no rows', () => {
+ const x = input();
+ x.adverse_events[0].suspicions = 'no_consta';
+ const rows = core.buildFollowupRows(x);
+ const back = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(rows)));
+ assert.equal(back.adverse_events[0].suspicions, 'no_consta');
+ const template = structuredClone(rows.find(r => r.row_role === 'ea_observation'));
+ assert.equal(template.ea_payload_codec, OBS_CODEC);
+});
+
+// ---- Identidad longitudinal y espacios C1 ----
+test('R1 two observations of the same episode in different acts stay distinct', () => {
+ const actA = input('EV-A', 'PAT-A', 'ACT-A');
+ const rowsA = core.buildFollowupRows(actA);
+ const historyEntry = { patientRef: 'PAT-A', actId: 'ACT-A', episode_id: 'EP-1', observation_id: 'OBS-1', status: 'incorporated' };
+ const actB = { event: event('EV-B', 'PAT-A'), patientRef: 'PAT-A', actId: 'ACT-B', present: 'si',
+  activeLines: [], history: [historyEntry], selections: [],
+  adverse_events: [Object.assign(observation(2, 'EP-1', 'ACT-B'), { basis: Object.assign({}, historyEntry), evolution: 'continuation' })] };
+ const rowsB = core.buildFollowupRows(actB);
+ const backB = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(rowsB)));
+ assert.equal(backB.adverse_events[0].observation_id, 'OBS-2');
+ assert.equal(backB.adverse_events[0].episode_id, 'EP-1');
+ assert.equal(backB.adverse_events[0].basis.observation_id, 'OBS-1');
+ assert.equal(core.validateRowSet(rowsA).valid, true);
+ assert.equal(manifestOf(rowsB).observations, 1);
+});
+test('R1 explicit recurrence is carried, never inferred', () => {
+ const historyEntry = { patientRef: 'PAT-A', actId: 'ACT-A', episode_id: 'EP-1', observation_id: 'OBS-1', status: 'incorporated' };
+ const recurrence = { event: event('EV-B', 'PAT-A'), patientRef: 'PAT-A', actId: 'ACT-B', present: 'si',
+  activeLines: [], history: [historyEntry], selections: [],
+  adverse_events: [Object.assign(observation(2, 'EP-9', 'ACT-B'), {
+   basis: Object.assign({}, historyEntry), evolution: 'recurrence', description: 'Recurrencia sintetica',
+   relatedEpisodeId: 'EP-1' })] };
+ const rows = core.buildFollowupRows(recurrence);
+ const back = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(rows)));
+ assert.equal(back.adverse_events[0].relatedEpisodeId, 'EP-1');
+ assert.equal(rows.find(r => r.row_role === 'ea_observation').ea_related_episode_id, 'EP-1');
+ const withoutBasis = structuredClone(recurrence);
+ delete withoutBasis.adverse_events[0].basis;
+ assert.throws(() => core.buildFollowupRows(withoutBasis), e => e.code === 'MISSING_BASIS');
+});
+test('R1 the codec is versioned per role and never reinterpreted', () => {
+ const rows = core.buildFollowupRows(richInput());
+ assert.equal(rows[0].ea_payload_codec, MANIFEST_CODEC);
+ assert.equal(rowOf(rows, 'ea_observation').ea_payload_codec, OBS_CODEC);
+ for (const role of ['ea_suspicion', 'ea_evaluation']) {
+  assert.equal(rowOf(rows, role).ea_payload_codec, ENTITY_CODEC, role);
+ }
+ const downgraded = structuredClone(rows);
+ rowOf(downgraded, 'ea_observation').ea_payload_codec = ENTITY_CODEC;
+ expectSetCode('observation downgraded', downgraded, 'INVALID_EA_CODEC');
+ const lineWithPayload = structuredClone(rows);
+ Object.assign(rowOf(lineWithPayload, 'followup_line'), {
+  ea_payload_codec: MANIFEST_CODEC, ea_payload_json: '{}' });
+ expectSetCode('line payload', lineWithPayload, 'UNEXPECTED_EA_PAYLOAD');
+});
+
+// ---- P2 / P3 ----
+test('R1 P2-C both schemas have distinct identity and columns', () => {
+ assert.notEqual(newSchema['$id'], baseSchema['$id']);
+ assert.notEqual(newSchema.title, baseSchema.title);
+ const registry = new Map([[baseSchema['$id'], baseSchema], [newSchema['$id'], newSchema]]);
+ assert.equal(registry.size, 2);
+ assert.equal(newSchema.properties.ea_payload_codec.enum.includes(MANIFEST_CODEC), true);
+ assert.equal(newSchema.properties.ea_payload_codec.enum.includes(OBS_CODEC), true);
+ assert.equal(newSchema.properties.ea_payload_codec.enum.includes(ENTITY_CODEC), true);
+});
+test('R1 P3-G the schema constrains line and act rows by role', () => {
+ const branches = (newSchema.allOf || []).filter(entry => entry.if && entry.if.properties && entry.if.properties.row_role);
+ const byRole = role => branches.find(entry => {
+  const constValue = entry.if.properties.row_role.const;
+  if (constValue === role) return true;
+  const enumValues = entry.if.properties.row_role.enum;
+  return Array.isArray(enumValues) && enumValues.includes(role);
+ });
+ const lineBranch = byRole('followup_line');
+ assert.ok(lineBranch, 'followup_line branch');
+ assert.equal(lineBranch.then.properties.line_status_at_event.const, 'active');
+ assert.equal(lineBranch.then.properties.active_at_event.const, true);
+ assert.equal(lineBranch.then.properties.is_primary_line.type, 'boolean');
+ assert.deepEqual(Array.from(lineBranch.then.properties.line_role.enum), ['principal', 'additional']);
+ for (const field of ['line_id', 'treatment_id', 'line_role', 'line_status_at_event', 'active_at_event', 'is_primary_line']) {
+  assert.ok(lineBranch.then.required.includes(field), field);
+ }
+ const actBranch = byRole('followup_act');
+ assert.ok(actBranch, 'followup_act branch');
+ assert.equal(actBranch.then.properties.ea_payload_codec.const, MANIFEST_CODEC);
+ const obsBranch = byRole('ea_observation');
+ assert.equal(obsBranch.then.properties.ea_payload_codec.const, OBS_CODEC);
+});
+test('R1 P3-E one single EVALUATION_NOT_FINAL per cause', () => {
+ const rows = structuredClone(core.buildFollowupRows(richInput()));
+ const evaluation = rowOf(rows, 'ea_evaluation');
+ const payload = codec.decode(evaluation.ea_payload_json);
+ payload.status = 'borrador';
+ evaluation.ea_payload_json = codec.encode(payload);
+ evaluation.ea_evaluation_status = 'borrador';
+ const codes = core.validateRow(evaluation).errors.map(e => e.code);
+ assert.equal(codes.filter(c => c === 'EVALUATION_NOT_FINAL').length, 1, JSON.stringify(codes));
+});
+test('R1 P3-F malformed row_id fails closed with a typed error', () => {
+ for (const badId of ['SRC::followup_line::%', 'SRC::followup_line', '::followup_line::K', 'A::B::C::D']) {
+  const rows = structuredClone(core.buildFollowupRows(richInput()));
+  const lineRow = rowOf(rows, 'followup_line');
+  lineRow.row_id = badId;
+  const result = core.validateRowSet(rows);
+  assert.equal(result.valid, false, badId);
+  assert.ok(result.errors.some(e => e.code === 'INVALID_ROW_ID'), badId + ' -> ' + JSON.stringify(result.errors.map(e => e.code)));
+  assert.throws(() => core.decodeFollowupRows(rows), e => e.code === 'INVALID_ROW_SET', badId);
+ }
+ const roleMismatch = structuredClone(core.buildFollowupRows(richInput()));
+ rowOf(roleMismatch, 'followup_line').row_id = 'EV-A-SRC::validation::KEY';
+ assert.ok(errorCodes(roleMismatch).includes('ROW_ID_ROLE_MISMATCH'));
+ const sourceMismatch = structuredClone(core.buildFollowupRows(richInput()));
+ rowOf(sourceMismatch, 'followup_line').row_id = 'OTRA-FUENTE::followup_line::LINE-A';
+ assert.ok(errorCodes(sourceMismatch).includes('ROW_ID_SOURCE_MISMATCH'));
+});
+test('R1 association index gaps cannot hide behind unique row identifiers', () => {
+ const x = richInput();
+ x.adverse_events[0].suspicions.push(sup('EP-1', 'EXT-02'));
+ const rows = core.buildFollowupRows(x);
+ const changed = structuredClone(rows);
+ const second = changed.filter(r => r.row_role === 'ea_suspicion')[1];
+ second.row_id = second.row_id.replace(/-S1$/, '-S2');
+ assert.ok(errorCodes(changed).includes('ASSOCIATION_INDEX_GAP'));
+});
 if (!process.exitCode) console.log('C2A FOCAL PASS '+count);

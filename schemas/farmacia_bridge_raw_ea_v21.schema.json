@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://promueve.example/schemas/farmacia_export_row_v2.schema.json",
-  "title": "Farmacia export row v2 candidate",
+  "$id": "https://promueve.example/schemas/farmacia_bridge_raw_ea_v21.schema.json",
+  "title": "Farmacia Bridge raw EA v2.1 typed row candidate",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -50,6 +50,201 @@
         "suspension_effective_date": {
           "$ref": "#/$defs/niso"
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "row_role": {
+            "const": "followup_act"
+          }
+        },
+        "required": [
+          "row_role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ea_present": {
+            "enum": [
+              "si",
+              "no",
+              "no_consta"
+            ]
+          },
+          "ea_payload_codec": {
+            "const": "fh-ea-bridge-manifest/1"
+          },
+          "ea_payload_json": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "ea_present",
+          "ea_payload_codec",
+          "ea_payload_json"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "row_role": {
+            "const": "followup_line"
+          }
+        },
+        "required": [
+          "row_role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "line_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "treatment_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "line_role": {
+            "enum": [
+              "principal",
+              "additional"
+            ]
+          },
+          "is_primary_line": {
+            "type": "boolean"
+          },
+          "line_status_at_event": {
+            "const": "active"
+          },
+          "active_at_event": {
+            "const": true
+          },
+          "ea_present": {
+            "type": "null"
+          },
+          "ea_payload_codec": {
+            "type": "null"
+          },
+          "ea_payload_json": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "line_id",
+          "treatment_id",
+          "line_role",
+          "is_primary_line",
+          "line_status_at_event",
+          "active_at_event"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "row_role": {
+            "const": "ea_observation"
+          }
+        },
+        "required": [
+          "row_role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ea_record_status": {
+            "const": "incorporated"
+          },
+          "ea_payload_codec": {
+            "const": "fh-ea-typed-json/2"
+          },
+          "ea_payload_json": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "ea_episode_id",
+          "ea_observation_id",
+          "ea_record_status",
+          "ea_payload_codec",
+          "ea_payload_json"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "row_role": {
+            "enum": [
+              "ea_suspicion",
+              "ea_evaluation"
+            ]
+          }
+        },
+        "required": [
+          "row_role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ea_payload_codec": {
+            "const": "fh-ea-typed-json/1"
+          },
+          "ea_payload_json": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "ea_episode_id",
+          "ea_observation_id",
+          "ea_medication_ref",
+          "ea_payload_codec",
+          "ea_payload_json"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "row_role": {
+            "const": "ea_evaluation"
+          }
+        },
+        "required": [
+          "row_role"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ea_evaluation_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "ea_evaluation_method": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "ea_evaluation_status": {
+            "enum": [
+              "completado",
+              null
+            ]
+          }
+        },
+        "required": [
+          "ea_evaluation_id",
+          "ea_evaluation_method"
+        ]
       }
     }
   ],
@@ -786,6 +981,8 @@
       ],
       "enum": [
         "fh-ea-typed-json/1",
+        "fh-ea-typed-json/2",
+        "fh-ea-bridge-manifest/1",
         null
       ]
     },
