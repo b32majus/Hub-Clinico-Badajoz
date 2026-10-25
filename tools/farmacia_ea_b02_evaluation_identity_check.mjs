@@ -12,10 +12,16 @@ import vm from 'node:vm';
 // orden no la determinan ni la suplen.
 //
 // Lo NO tocado por este check, y que aquí se fija como límite de alcance:
-//   - no se comparan `evaluation_id` entre observaciones distintas, entre
-//     actos distintos ni entre revisiones históricas: B02 no implanta
-//     deduplicación global y no convierte una reevaluación legítima en un
-//     duplicado;
+//   - la reevaluación posterior clínicamente válida (D06) aporta identidades
+//     de evaluación NUEVAS y conserva la historia sin sobrescribirla; se
+//     comprueba aparte y sin tolerar ninguna identidad repetida;
+//   - la tolerancia a un `evaluation_id` repetido entre actos, entre
+//     observaciones distintas o entre revisiones históricas es una FRONTERA
+//     TÉCNICA declarada, no una conducta clínica correcta: B02 no implanta
+//     deduplicación global porque falta el contrato específico y la frontera
+//     de lectura persistida. Se comprueba en su propio bloque, separada de la
+//     reevaluación válida, para que una deduplicación global futura tenga que
+//     cambiar ese test y su contrato a conciencia;
 //   - los rechazos previos de evaluación (identidad ausente, paciente,
 //     episodio o acto incoherentes) conservan su código y su precedencia
 //     sobre el rechazo nuevo;
@@ -349,26 +355,15 @@ function main() {
         );
     }
 
-    // --- 6. Frontera de alcance: B02 no implanta deduplicación global.
-    //
-    // El mismo `evaluation_id` en observaciones distintas del mismo acto no es
-    // un duplicado de B02: la identidad se evalúa por observación, y comparar
-    // entre observaciones exigiría un contrato específico y la frontera de
-    // lectura persistida que este ticket no autoriza.
     const observationsSurface = surfaces[1];
-    const crossObservation = good(
-        observationsSurface,
-        [
-            observation({ observation_id: 'OBS-1', evaluations: [evaluation({ evaluation_id: 'EVAL-1' })] }),
-            observation({ observation_id: 'OBS-2', episode_id: 'EP-2', evaluations: [evaluation({ evaluation_id: 'EVAL-1', episode_id: 'EP-2' })] })
-        ],
-        'identidad de evaluación no se compara entre observaciones'
-    );
-    assert.equal(crossObservation.representation.adverse_events.length, 2, 'ambas observaciones se conservan');
 
-    // Visita posterior: la historia conserva sus evaluaciones y el acto actual
-    // aporta una reevaluación NUEVA con identidad propia (D06: reevaluar crea
-    // una evaluación nueva, no sobrescribe la anterior).
+    // --- 6. Reevaluación posterior clínicamente válida (D06).
+    //
+    // En una visita posterior el profesional reevalúa el MISMO episodio y debe
+    // aportar identidades de evaluación NUEVAS: reevaluar crea una evaluación
+    // nueva, no sobrescribe ni reutiliza la anterior. Este bloque es el
+    // contrato clínico y por eso NO tolera ninguna identidad repetida entre la
+    // historia y el acto actual.
     const historyObservation = observation({
         actId: 'ACT-0',
         observation_id: 'OBS-H1',
@@ -383,49 +378,116 @@ function main() {
         basis,
         evaluations
     });
-    const reuseAcrossActs = {
+    const clinicallyValidLaterVisit = {
         patientRef: PATIENT,
         actId: ACT,
         present: 'si',
         history: [historyObservation],
         selections: [basis],
         adverse_events: [reevaluation([
-            evaluation({ evaluation_id: 'EVAL-1', actId: ACT }),
-            evaluation({ evaluation_id: 'EVAL-2', actId: ACT, method: 'karch_lasagna' })
+            evaluation({ evaluation_id: 'EVAL-2', actId: ACT }),
+            evaluation({ evaluation_id: 'EVAL-3', actId: ACT, method: 'karch_lasagna' })
         ])]
     };
-    const reuseBefore = structuredClone(reuseAcrossActs);
-    const reuseResult = observationsSurface.validate(reuseAcrossActs);
+    const laterVisitBefore = structuredClone(clinicallyValidLaterVisit);
+    const laterVisitResult = observationsSurface.validate(clinicallyValidLaterVisit);
     assert.equal(
-        reuseResult?.ok,
+        laterVisitResult?.ok,
         true,
-        `una reevaluación posterior con identidad nueva debe admitirse: ${JSON.stringify(reuseResult?.error ?? null)}`
+        `una reevaluación posterior con identidades nuevas debe admitirse: ${JSON.stringify(laterVisitResult?.error ?? null)}`
     );
-    assert.equal(reuseResult.history.length, 1, 'la historia se conserva');
-    assert.equal(
-        reuseResult.history[0].evaluations[0].evaluation_id,
-        'EVAL-1',
-        'la evaluación histórica no se sobrescribe'
+    assert.equal(laterVisitResult.history.length, 1, 'la historia se conserva');
+    assert.deepEqual(
+        local(laterVisitResult.history[0].evaluations.map(item => item.evaluation_id)),
+        ['EVAL-1'],
+        'la evaluación histórica no se sobrescribe ni cambia de identidad'
     );
     assert.deepEqual(
-        local(reuseResult.representation.adverse_events[0].evaluations.map(item => item.evaluation_id)),
-        ['EVAL-1', 'EVAL-2'],
-        'el acto actual conserva la reevaluación con identidad propia'
+        local(laterVisitResult.representation.adverse_events[0].evaluations.map(item => item.evaluation_id)),
+        ['EVAL-2', 'EVAL-3'],
+        'el acto actual aporta exclusivamente identidades de evaluación nuevas'
     );
-    assert.deepEqual(reuseAcrossActs, reuseBefore, 'la validación aceptada no muta la entrada');
+    // La conducta clínica válida no se apoya en tolerar identidades repetidas:
+    // historia y acto actual no comparten ninguna identidad de evaluación.
+    const laterVisitIdentities = [
+        ...laterVisitResult.history[0].evaluations.map(item => item.evaluation_id),
+        ...laterVisitResult.representation.adverse_events[0].evaluations.map(item => item.evaluation_id)
+    ];
+    assert.equal(
+        new Set(laterVisitIdentities).size,
+        laterVisitIdentities.length,
+        'la reevaluación válida no reutiliza ninguna identidad de evaluación'
+    );
+    assert.deepEqual(clinicallyValidLaterVisit, laterVisitBefore, 'la validación aceptada no muta la entrada');
 
-    // La nueva identidad repetida en el acto actual sigue rechazándose.
-    const reuseRejected = observationsSurface.validate({
-        ...reuseAcrossActs,
+    // La identidad nueva repetida dentro del acto actual sigue rechazándose.
+    const laterVisitRepeated = observationsSurface.validate({
+        ...clinicallyValidLaterVisit,
         adverse_events: [reevaluation([
             evaluation({ evaluation_id: 'EVAL-2', actId: ACT }),
             evaluation({ evaluation_id: 'EVAL-2', actId: ACT, method: 'karch_lasagna' })
         ])]
     });
-    assert.equal(reuseRejected?.ok, false, 'la reevaluación con identidad nueva repetida se rechaza');
-    assert.equal(reuseRejected.error.code, DUPLICATE_EVALUATION_CODE, 'el rechazo usa el código estructurado');
+    assert.equal(laterVisitRepeated?.ok, false, 'la reevaluación con identidad nueva repetida se rechaza');
+    assert.equal(laterVisitRepeated.error.code, DUPLICATE_EVALUATION_CODE, 'el rechazo usa el código estructurado');
 
-    // --- 7. Aislamiento: entradas y salidas profundamente desconectadas, sin
+    // --- 7. Frontera técnica documentada: NO es validez clínica.
+    //
+    // B02 compara identidades sólo dentro del array `evaluations` de una misma
+    // observación. Reutilizar un `evaluation_id` entre actos, entre
+    // observaciones distintas o entre revisiones históricas NO se rechaza hoy:
+    // falta el contrato específico y la frontera de lectura persistida. Este
+    // bloque fija esa tolerancia como límite técnico explícito —no como
+    // conducta clínica correcta— y la deja separada de la reevaluación válida
+    // del bloque anterior, que no reutiliza identidades.
+    const crossActBoundary = observationsSurface.validate({
+        ...clinicallyValidLaterVisit,
+        adverse_events: [reevaluation([
+            evaluation({ evaluation_id: 'EVAL-1', actId: ACT }),
+            evaluation({ evaluation_id: 'EVAL-3', actId: ACT, method: 'karch_lasagna' })
+        ])]
+    });
+    assert.equal(
+        crossActBoundary?.ok,
+        true,
+        'frontera técnica: la identidad no se compara entre actos'
+    );
+    assert.deepEqual(
+        local(crossActBoundary.representation.adverse_events[0].evaluations.map(item => item.evaluation_id)),
+        ['EVAL-1', 'EVAL-3'],
+        'la tolerancia entre actos no altera los datos aportados'
+    );
+    assert.equal(crossActBoundary.error, undefined, 'la tolerancia entre actos no produce código de error');
+
+    // La frontera está exactamente en el array de UNA observación: la misma
+    // petición se rechaza cuando la identidad se repite dentro del acto actual.
+    const withinActStillRejected = observationsSurface.validate({
+        ...clinicallyValidLaterVisit,
+        adverse_events: [reevaluation([
+            evaluation({ evaluation_id: 'EVAL-1', actId: ACT }),
+            evaluation({ evaluation_id: 'EVAL-1', actId: ACT, method: 'karch_lasagna' })
+        ])]
+    });
+    assert.equal(withinActStillRejected?.ok, false, 'la identidad repetida dentro de una observación sigue rechazándose');
+    assert.equal(
+        withinActStillRejected.error.code,
+        DUPLICATE_EVALUATION_CODE,
+        'el rechazo dentro de la observación usa el mismo código estructurado'
+    );
+
+    // Misma forma, dos observaciones del mismo acto con la identidad repetida:
+    // tampoco se comparan entre observaciones.
+    const crossObservation = good(
+        observationsSurface,
+        [
+            observation({ observation_id: 'OBS-1', evaluations: [evaluation({ evaluation_id: 'EVAL-1' })] }),
+            observation({ observation_id: 'OBS-2', episode_id: 'EP-2', evaluations: [evaluation({ evaluation_id: 'EVAL-1', episode_id: 'EP-2' })] })
+        ],
+        'frontera técnica: identidad no se compara entre observaciones'
+    );
+    assert.equal(crossObservation.representation.adverse_events.length, 2, 'ambas observaciones se conservan');
+
+    // --- 8. Aislamiento: entradas y salidas profundamente desconectadas, sin
     // estado oculto entre llamadas ni entre pacientes.
     const isolated = {
         patientRef: PATIENT,
@@ -502,7 +564,8 @@ function main() {
     console.log('PASS método, resultado y sospechoso no determinan la identidad de evaluación');
     console.log('PASS 0/1/2/5 EA y 0/1/2 evaluaciones con identidades propias, sin límite artificial');
     console.log('PASS precedencia de rechazos previos de evaluación y de la ficha contenedora');
-    console.log('PASS reevaluación posterior con identidad nueva conservada, sin deduplicación global');
+    console.log('PASS reevaluación posterior clínicamente válida con identidades nuevas e historia intacta');
+    console.log('PASS frontera técnica declarada y separada: la identidad no se compara entre actos ni observaciones');
     console.log('PASS ausencias, centinelas, borradores, sospechosos y aislamiento profundo conservados');
     console.log('PASS farmacia_ea_b02_evaluation_identity_check');
 }
