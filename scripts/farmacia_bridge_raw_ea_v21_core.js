@@ -593,8 +593,15 @@
        byId[obs.observation_id]=obs;observations.push(obs);
      }
    });
-   rows.forEach(function(row) {
-     if(row.row_role!=='ea_suspicion'&&row.row_role!=='ea_evaluation')return;
+   // S/E suffixes identify logical array positions. Excel row order is only
+   // transport order and must not silently reorder clinical associations.
+   var associationRows=rows.filter(function(row){
+     return row.row_role==='ea_suspicion'||row.row_role==='ea_evaluation';
+   });
+   associationRows.sort(function(a,b){
+     return associationKey(parseRowId(a)).index-associationKey(parseRowId(b)).index;
+   });
+   associationRows.forEach(function(row) {
      var obs=byId[row.ea_observation_id],p=d.c.decode(row.ea_payload_json);
      var name=row.row_role==='ea_suspicion'?'suspicions':'evaluations';
      if(!obs||!Array.isArray(obs[name]))error('INVALID_ROW_SET','Missing explicit association array');

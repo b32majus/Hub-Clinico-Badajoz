@@ -638,4 +638,33 @@ test('R1 association index gaps cannot hide behind unique row identifiers', () =
  second.row_id = second.row_id.replace(/-S1$/, '-S2');
  assert.ok(errorCodes(changed).includes('ASSOCIATION_INDEX_GAP'));
 });
+// P2-H: the numbered association key is logical array position, never TSV row_index.
+test('P2-H swapped suspicion rows preserve declared S0..S2 clinical order', () => {
+ const x = richInput();
+ x.adverse_events[0].suspicions.push(sup('EP-1', 'MED-BETA'), sup('EP-1', 'MED-GAMMA'));
+ const rows = core.buildFollowupRows(x);
+ const altered = structuredClone(rows);
+ const indexes = altered.map((r,i) => (r.row_role === 'ea_suspicion' && r.ea_observation_id === 'OBS-1') ? i : -1).filter(i => i >= 0);
+ assert.equal(indexes.length, 3);
+ [altered[indexes[0]], altered[indexes[2]]] = [altered[indexes[2]], altered[indexes[0]]];
+ const reordered = reindex(altered);
+ assert.equal(core.validateRowSet(reordered).valid, true);
+ const back = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(reordered)));
+ assert.deepEqual(Array.from(back.adverse_events[0].suspicions.map(s => s.medicationRef)),
+  ['LINE-A', 'MED-BETA', 'MED-GAMMA']);
+});
+test('P2-H swapped evaluation rows preserve declared E0..E1 clinical order', () => {
+ const x = richInput();
+ x.adverse_events[0].evaluations.push(evaln('EVAL-2', 'EP-1', 'MED-BETA'));
+ const rows = core.buildFollowupRows(x);
+ const altered = structuredClone(rows);
+ const indexes = altered.map((r,i) => (r.row_role === 'ea_evaluation' && r.ea_observation_id === 'OBS-1') ? i : -1).filter(i => i >= 0);
+ assert.equal(indexes.length, 2);
+ [altered[indexes[0]], altered[indexes[1]]] = [altered[indexes[1]], altered[indexes[0]]];
+ const reordered = reindex(altered);
+ assert.equal(core.validateRowSet(reordered).valid, true);
+ const back = core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(reordered)));
+ assert.deepEqual(Array.from(back.adverse_events[0].evaluations.map(e => e.evaluation_id)),
+  ['EVAL-1', 'EVAL-2']);
+});
 if (!process.exitCode) console.log('C2A FOCAL PASS '+count);
