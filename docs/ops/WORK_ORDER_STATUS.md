@@ -1,8 +1,16 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-25 — FH EA B01 #831/PR #832 MERGED `b3c5634`, CI/Pages postmerge SUCCESS; ruta rápida DIA/Metis WO #833 en preparación documental; NO piloto.
+**Última actualización:** 2026-10-25 — FH EA B01 #831/#832 y B02 #836/#837 MERGED; ruta rápida DIA/Metis WO #833 publicada por PR #834/#835; CI/Pages postmerge B02 SUCCESS; C pendiente, NO piloto.
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
+
+---
+
+## FH-EA-B02 · Corrección publicada y WO documental #838 (25-10-2026)
+
+**ESTADO TÉCNICO:** [WO #836](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/836)/[PR #837](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/837) MERGED `c1d3ef608fdff6580fd6e9ca9352b374c440aec6` en `promueve/nexus-v4`. DIA Pi/Gentle-AI-ODD test RED/implementación GREEN; auditoría independiente Cora **OK tras REHACER 1 solo del test**. Dos rutas publicadas: `modules/farmacia_ea_invariants.js` y `tools/farmacia_ea_b02_evaluation_identity_check.mjs`. Rechaza `evaluation_id` duplicado dentro del array de evaluaciones de una misma observación; ambas APIs puras, precedencia de errores conservada. B01+B02 PASS, R1 5/5, T01 69/69 y seis oráculos EA PASS; [Nexus postmerge](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40196534936) y [Pages postmerge](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40196534129) SUCCESS. **RDD nativo bloqueado `managed_assets_outdated` antes de START, no acreditado.** Reevaluación D06 válida requiere IDs nuevos; tolerancia entre actos/observaciones es límite técnico NO aprobado clínicamente. Sin QA navegador, persistencia/readback ni piloto.
+
+**WO-DOC [#838](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/838) con `status:approved`:** objetivo reconciliar B02 en `INDEX`, estado y plan EA vivo sin reabrir el dominio ni inventar capacidad de lectura. **BASE/HEAD esperado** `promueve/nexus-v4@c1d3ef608fdff6580fd6e9ca9352b374c440aec6`; **preflight:** GitHub remoto exacto, raíz local limpia, #837 MERGED, CI/Pages postmerge SUCCESS. **RUTAS:** exclusivamente `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y `docs/ops/PLAN_FH_EA_0N_MULTISURFACE_DESTINATIONS_20261017.md`. **NO TOCA:** código/tests, Spec, G0, G2, F4.4/F4.5, adapters, datos reales, `main`, ramas/worktrees ajenos. **QA:** solo tres Markdown, enlaces relativos válidos y SHAs/CI publicados contrastados, `git diff --check` y CI PR condicionante. **REVERSIÓN:** conservar rama y revert documental solo bajo nueva autorización; sin reset/clean/force-push/borrados. **POLÍTICA GIT:** push, PR y merge condicionados a issue aprobada, HEAD y BASE exactos, CI completa SUCCESS, `CLEAN`; estado de PR documental comprobar en GitHub, no inferir del texto de esta WO. **OUTPUT:** SHA merge documental, postmerge CI/Pages y cierre de issues completadas.
 
 ---
 
