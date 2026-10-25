@@ -50,6 +50,7 @@ Reproducido en este prep con oráculo propio en la base exacta (testigo del orá
 
 ## Open questions
 
+- **Infra de instalación (resuelta antes de `run`):** el preflight `npm ci --offline` fallaba (INFRA_STOP, exit 1) porque la caché npm local solo tenía `fast-uri@3.1.9` y `ajv@8.20.0` no cacheado, mientras `package-lock.json` fija `fast-uri@3.1.8` (dependencia de `ajv`). Se calentó la caché npm del entorno (`npm cache add fast-uri@3.1.8`, `npm cache add ajv@8.20.0`) sin tocar `package.json`/`package-lock.json` (doNotTouch) ni añadir dependencias; `npm ci --offline --no-audit --no-fund --ignore-scripts` verifica OK en el checkout. No requiere cambios de repositorio.
 - **Variante «solo deshabilitado»:** el oráculo exige ocultar **y** deshabilitar (solución mínima preferente del issue). Un control visible pero inerte con presentación neutral quedaría fuera de este oráculo; la persona que apruebe la preparación puede relajarlo explícitamente si considera suficiente la variante deshabilitada.
 - **Texto de ayuda «Puedes apoyarte en Naranjo y Karch-Lasagna para registrar la valoración final.»:** el oráculo no lo exige oculto; la referencia lo oculta porque solo tiene sentido junto al selector eliminado. Decisión final de redacción es del escritor.
 - **«Sin exportación»:** el issue no aporta evidencia de fuga a exportación/persistencia; el oráculo lo cubre solo como no-regresión (resumen visible y líneas TXT/JARA sin categoría heredada, guardias intactos). Cobertura profunda de Export V2/CSV/Excel queda fuera (NO TOCA).
