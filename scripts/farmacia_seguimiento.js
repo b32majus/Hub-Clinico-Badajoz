@@ -2316,6 +2316,219 @@
         return '';
     }
 
+    // FH-EA-MANUAL-01: proyección EA 0..N de las DOS salidas manuales de
+    // Seguimiento (TXT JARA y Excel WO8 manual). La proyección es local: nunca
+    // muta currentFollowupVisit.adverse_events ni el estado de sospechosos, y
+    // no decide causalidad. La asociación explícita `line:<linea_id>` solo
+    // distribuye el EA a la parte específica si la línea está realmente
+    // dispensada y la marca de sospecha sigue siendo verificable.
+    var EA_MANUAL_SCOPE_COMMON = 'COMÚN';
+    var EA_MANUAL_FRAGMENT_SEPARATOR = ' | ';
+    var EA_MANUAL_UNASSOCIATED_SUSPECT = 'Sin sospechoso seleccionado';
+    var EA_MANUAL_NO_ACTION = 'No consta';
+    var EA_MANUAL_CAUSALITY_NOT_EVALUATED = 'No evaluada';
+    var EA_MANUAL_UNVERIFIED_SOURCE_LABEL = '(fuente no verificada)';
+
+    // El separador de fragmentos es ' | '; cualquier '|' o '\' del contenido
+    // se escapa para que la celda siga siendo un único campo TSV inequívoco.
+    function eaManualEscapeCellText(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/\\/g, '\\\\')
+            .replace(/\|/g, '\\|');
+    }
+
+    function eaManualScopeLabel(lineId) {
+        return lineId ? 'LÍNEA ' + lineId : EA_MANUAL_SCOPE_COMMON;
+    }
+
+    function eaManualEventIdentity(event) {
+        return String(event.episode_id || '') + '/' + String(event.observation_id || '');
+    }
+
+    function eaManualEventSuspectIds(event) {
+        var suspects = Array.isArray(event.suspect_ids) ? event.suspect_ids.slice() : [];
+        return suspects.length ? suspects.join('; ') : EA_MANUAL_UNASSOCIATED_SUSPECT;
+    }
+
+    // La etiqueta de un sospechoso solo se usa si su fuente es verificable; si
+    // no lo es se conserva la referencia explícita y se declara que no está
+    // verificada, sin reasociar por nombre ni inventar identidad.
+    function eaManualEventSuspectNames(event) {
+        var suspects = Array.isArray(event.suspect_ids) ? event.suspect_ids.slice() : [];
+        if (!suspects.length) return EA_MANUAL_UNASSOCIATED_SUSPECT;
+        var candidatesById = {};
+        getEaNamedDrugCandidates().forEach(function (candidate) { candidatesById[candidate.id] = candidate.label; });
+        return suspects.map(function (suspectId) {
+            if (eaSuspectMarkIsPending(event.episode_id, suspectId)) {
+                return suspectId + ' ' + EA_MANUAL_UNVERIFIED_SOURCE_LABEL;
+            }
+            return candidatesById[suspectId] || suspectId;
+        }).join('; ');
+    }
+
+    // REHACER 1 (P1-B): el informe de texto debe identificar de forma
+    // inequívoca a cada sospechoso vigente con su referencia explícita
+    // `line:<linea_id>` u `other:<uid>`, porque dos medicamentos distintos
+    // pueden compartir nombre y el nombre legible por sí solo no los distingue.
+    // No infiere causalidad ni cambia la asociación: solo rotula la referencia
+    // ya marcada. La ausencia y el estado de fuente no verificada se conservan.
+    function eaManualEventSuspectReferences(event) {
+        var suspects = Array.isArray(event.suspect_ids) ? event.suspect_ids.slice() : [];
+        if (!suspects.length) return EA_MANUAL_UNASSOCIATED_SUSPECT;
+        var candidatesById = {};
+        getEaNamedDrugCandidates().forEach(function (candidate) { candidatesById[candidate.id] = candidate.label; });
+        return suspects.map(function (suspectId) {
+            if (eaSuspectMarkIsPending(event.episode_id, suspectId)) {
+                return suspectId + ' ' + EA_MANUAL_UNVERIFIED_SOURCE_LABEL;
+            }
+            var label = candidatesById[suspectId];
+            return label ? label + ' (' + suspectId + ')' : suspectId;
+        }).join('; ');
+    }
+
+    function eaManualEventSeverity(event) {
+        var severity = String(event.severity || '').trim();
+        return 'Gravedad: ' + (severity || 'No consta') + ' · Evolución: ' + eaEvolutionLabel(event.evolution);
+    }
+
+    function eaManualEventFieldText(event, field) {
+        if (field === 'identity') return eaManualEventIdentity(event);
+        if (field === 'description') return String(event.description || '');
+        if (field === 'severity') return eaManualEventSeverity(event);
+        if (field === 'suspect_ids') return eaManualEventSuspectIds(event);
+        if (field === 'suspect_names') return eaManualEventSuspectNames(event);
+        if (field === 'causality_naranjo' || field === 'causality_karch') return EA_MANUAL_CAUSALITY_NOT_EVALUATED;
+        if (field === 'action') return EA_MANUAL_NO_ACTION;
+        return '';
+    }
+
+    // Un fragmento por EA y ámbito, en el orden COMÚN → LÍNEA <id>: cada celda
+    // G lleva exactamente un fragmento por EA, de modo que el fragmento i de
+    // cada columna describe el mismo EA y su identidad, descripción,
+    // gravedad/evolución y sospechosos quedan alineados sin agrupar ni
+    // deduplicar. El separador ' | ' queda reservado al límite entre
+    // fragmentos, y el contenido se escapa para que la celda siga siendo un
+    // único campo TSV inequívoco.
+    function eaManualCellText(entries) {
+        return entries.map(function (entry) {
+            return entry.scope + ': ' + eaManualEscapeCellText(entry.text);
+        }).join(EA_MANUAL_FRAGMENT_SEPARATOR);
+    }
+
+    // Clasificación local EA → parte común / específica de cada fila. Reglas:
+    //  · sospechoso `line:<id>` de una línea realmente dispensada y con marca
+    //    verificable → parte específica de esa línea (puede ser más de una);
+    //  · cualquier otro EA (sin sospechoso, `other:<uid>` explícito, línea
+    //    histórica o no dispensada) → parte común de TODAS las filas;
+    //  · una asociación explícita a una línea dispensada cuya fuente no puede
+    //    verificarse no se reasocia: la proyección falla cerrada.
+    function buildEaManualProjection() {
+        var incorporated = eaIncorporatedEvents();
+        var dispensed = currentFollowupVisit && Array.isArray(currentFollowupVisit.dispensed_line_ids)
+            ? currentFollowupVisit.dispensed_line_ids.slice() : [];
+        var projection = { common: [], byLine: {}, blockReason: '' };
+        dispensed.forEach(function (lineId) { projection.byLine[lineId] = []; });
+        incorporated.forEach(function (event) {
+            var explicitLines = [];
+            var unverifiable = [];
+            (Array.isArray(event.suspect_ids) ? event.suspect_ids : []).forEach(function (suspectId) {
+                if (String(suspectId).indexOf('line:') !== 0) return;
+                var lineId = String(suspectId).slice('line:'.length);
+                if (dispensed.indexOf(lineId) < 0) return;
+                if (eaSuspectMarkIsPending(event.episode_id, suspectId)) { unverifiable.push(suspectId); return; }
+                if (explicitLines.indexOf(lineId) < 0) explicitLines.push(lineId);
+            });
+            if (unverifiable.length && !projection.blockReason) {
+                projection.blockReason = 'Exportación no realizada: la asociación explícita de un EA con una línea dispensada está pendiente de reconciliación (fuente ausente o identidad modificada) y el EA no puede clasificarse fielmente entre la parte común y la específica de cada fila. Reconcilie la sospecha desvinculando y volviendo a marcar; no se ha copiado nada.';
+            }
+            if (explicitLines.length) {
+                explicitLines.forEach(function (lineId) { projection.byLine[lineId].push(String(event.episode_id)); });
+            } else {
+                projection.common.push(String(event.episode_id));
+            }
+        });
+        return projection;
+    }
+
+    // Frontera de las DOS salidas manuales (#FH-EA-MANUAL-01): representan la
+    // colección EA 0..N, así que dejan de bloquear por recuento. Siguen
+    // fallando cerradas la presencia contradictoria, el «Sí» sin EA y la
+    // asociación explícita no verificable. La guardia singular anterior
+    // (eaSingularExportBlockReason) queda intacta para CSV y Export V2.
+    function eaManualOutputsBlockReason() {
+        var presentEl = byId('fhSeguimientoEaPresente');
+        var present = presentEl && presentEl.value ? presentEl.value : 'no_consta';
+        var incorporated = eaIncorporatedEvents();
+        if (present === 'si' && incorporated.length === 0) {
+            return 'Exportación no realizada: el acto declara «Sí» pero no tiene EA incorporados, así que la representación preparada no lleva ningún EA. No se ha copiado ni entregado nada.';
+        }
+        if (present !== 'si' && incorporated.length) {
+            return 'Exportación no realizada: el acto tiene EA incorporados sin presencia «Sí»; concilie el acto antes de exportar.';
+        }
+        return buildEaManualProjection().blockReason;
+    }
+
+    function guardEaManualOutputs() {
+        var reason = eaManualOutputsBlockReason();
+        syncEaExportGuardNotice(reason);
+        return !reason;
+    }
+
+    // REHACER 1 (P1-A): una celda de Excel admite como máximo 32767 caracteres.
+    // Es un guard propio del DESTINO libro, deliberadamente separado de la
+    // validación clínica compartida para no bloquear el informe TXT, que no
+    // tiene ese límite. Se aplica sobre las celdas finales ya saneadas y antes
+    // de tocar el portapapeles: ante un exceso se niega de forma visible y
+    // nunca se trunca ni se copia un TSV fuera de especificación.
+    var EA_MANUAL_EXCEL_CELL_LIMIT = 32767;
+
+    function eaManualExcelCellBlockReason(rows) {
+        if (!Array.isArray(rows)) return '';
+        for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+            var row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+            for (var cellIndex = 0; cellIndex < row.length; cellIndex += 1) {
+                var value = row[cellIndex];
+                var length = String(value === null || value === undefined ? '' : value).length;
+                if (length > EA_MANUAL_EXCEL_CELL_LIMIT) {
+                    return 'Copia no realizada: una celda de la fila ' + (rowIndex + 1) + ' tiene ' + length + ' caracteres y supera el límite de ' + EA_MANUAL_EXCEL_CELL_LIMIT + ' de Excel, así que la fila no se puede transferir sin truncar datos clínicos. Divida el acto o abrevie el texto de ese EA. No se ha copiado nada.';
+                }
+            }
+        }
+        return '';
+    }
+
+    function guardEaManualExcelRows(rows) {
+        var reason = eaManualExcelCellBlockReason(rows);
+        syncEaExportGuardNotice(reason);
+        return !reason;
+    }
+
+    // Objeto EA de UNA fila WO8: parte común primero y después la parte
+    // específica de esa línea dispensada. Respeta las claves que ya consume
+    // FarmaciaExcelRowExport (ea_id, descripcion, gravedad, farmaco_sospechoso_*,
+    // causalidad_*, accion) sin tocar el esquema de 62 columnas.
+    function buildEaManualRowEaObject(projection, lineId) {
+        var common = projection.common.map(findEaEvent).filter(Boolean);
+        var specific = (projection.byLine[lineId] || []).map(findEaEvent).filter(Boolean);
+        var entries = common.map(function (event) { return { scope: EA_MANUAL_SCOPE_COMMON, event: event }; })
+            .concat(specific.map(function (event) { return { scope: eaManualScopeLabel(lineId), event: event }; }));
+        function cell(field) {
+            return eaManualCellText(entries.map(function (entry) {
+                return { scope: entry.scope, text: eaManualEventFieldText(entry.event, field) };
+            }));
+        }
+        return {
+            ea_id: cell('identity'),
+            descripcion: cell('description'),
+            gravedad: cell('severity'),
+            farmaco_sospechoso_id: cell('suspect_ids'),
+            farmaco_sospechoso_nombre: cell('suspect_names'),
+            causalidad_naranjo: cell('causality_naranjo'),
+            causalidad_karch: cell('causality_karch'),
+            accion: cell('action')
+        };
+    }
+
     function syncEaExportGuardNotice(reason) {
         var notice = byId('fhSegEaExportGuardNotice');
         if (!notice) return;
@@ -3623,11 +3836,17 @@
         return parts.join(' | ');
     }
 
-    function buildFollowupExcelRows(model) {
+    function buildFollowupExcelRows(model, options) {
         var exp = window.FarmaciaExcelRowExport;
         if (!exp || !model) return [];
+        /* CSV conserva la proyección EA singular anterior (fuera de alcance de
+           esta unidad): lo pide explícitamente con eaLegacyProjection. */
+        var legacyEaProjection = !!(options && options.eaLegacyProjection === true);
+        var incorporatedEa = eaIncorporatedEvents();
+        var labelledEaProjection = !legacyEaProjection && incorporatedEa.length > 0;
+        var eaProjection = labelledEaProjection ? buildEaManualProjection() : null;
         var patient = Object.assign({}, currentSegPatient || {}, { cip: model.common_visit.cip, servicio: model.common_visit.servicio, patologia: model.common_visit.patologia });
-        var ea = buildAggregatedAdverseEvent(model);
+        var ea = labelledEaProjection ? null : buildAggregatedAdverseEvent(model);
         var hayEa = model.adverse_event.present === 'si' ? true : (model.adverse_event.present === 'no' ? false : null);
         return model.dispensed_lines.map(function (item) {
             var therapeutic = resolveLineTherapeuticOutput(item);
@@ -3638,11 +3857,12 @@
                 pauta_label: therapeutic.pauta_label,
                 pauta_otro_texto: therapeutic.pauta_otro_texto
             });
+            var efectoAdverso = labelledEaProjection ? buildEaManualRowEaObject(eaProjection, item.line_id) : ea;
             var context = exp.buildContextFromSeguimiento(patient, {
                 tipoActo: 'seguimiento', visitaId: model.common_visit.visit_id, lineaActual: line,
                 fechaActo: model.common_visit.fecha, profesional: model.common_visit.profesional,
                 createdAt: model.common_visit.generated_at, updatedAt: model.common_visit.generated_at,
-                efectoAdverso: ea, hayEa: hayEa,
+                efectoAdverso: efectoAdverso, hayEa: hayEa,
                 proms: { morisky_green: item.morisky_result, dlqi: model.common_visit.dlqi, eva_dolor: model.common_visit.eva_dolor },
                 observaciones: lineControl(item, 'fhSegObservacionesLinea'),
                 observacionesGenerales: buildGeneralObservations(model), demoFlag: true
@@ -3657,7 +3877,9 @@
     function buildFollowupCsv(model) {
         var exp = window.FarmaciaExcelRowExport;
         if (!exp) return '';
-        return [exp.WO8_COLUMNS].concat(buildFollowupExcelRows(model)).map(function (row) { return row.map(csvCell).join(','); }).join('\n');
+        /* El CSV no entra en el alcance manual: conserva su proyección EA
+           singular anterior y su guardia (eaSingularExportBlockReason). */
+        return [exp.WO8_COLUMNS].concat(buildFollowupExcelRows(model, { eaLegacyProjection: true })).map(function (row) { return row.map(csvCell).join(','); }).join('\n');
     }
 
     function buildSegLines() {
@@ -3696,14 +3918,43 @@
         model.related_treatments.forEach(function (item) { lines.push('other:' + item.uid + ': ' + textOrDash(item.farmaco || item.principioActivo) + ' · ' + item.relationType); });
         lines.push('');
         lines.push('VISITA DE SEGUIMIENTO — EFECTOS ADVERSOS');
-        lines.push('- Efecto adverso desde última visita: ' + textOrDash(model.adverse_event.present));
-        lines.push('- Gravedad: ' + textOrDash(model.adverse_event.severity));
-        lines.push('- Resuelto: ' + textOrDash(model.adverse_event.resolved));
-        lines.push('- Acción: ' + textOrDash(model.adverse_event.corrected));
-        lines.push('- Observaciones: ' + textOrDash(model.adverse_event.observations));
-        model.causalities.forEach(function (item) {
-            lines.push('Causalidad ' + item.suspect_id + ' (' + item.suspect_label + '): ' + (item.evaluated ? 'Naranjo ' + item.naranjo_score + ' · ' + item.naranjo_category + ' | Karch ' + item.karch_category + ' | Final ' + item.final_assessment : 'No evaluada'));
-        });
+        var incorporatedEa = eaIncorporatedEvents();
+        if (incorporatedEa.length) {
+            /* FH-EA-MANUAL-01: un informe por visita con los EA incorporados
+               0..N, cada uno UNA sola vez y con su identidad explícita. La
+               sospecha explícita no se redacta como causalidad y las
+               evaluaciones G0 en edición no se exportan como resultado. */
+            var projection = buildEaManualProjection();
+            lines.push('- Presencia declarada en el acto: ' + textOrDash(model.adverse_event.present));
+            lines.push('- EA incorporados en esta visita: ' + incorporatedEa.length);
+            incorporatedEa.forEach(function (event, index) {
+                var scopeLabels = [];
+                if (projection.common.indexOf(String(event.episode_id)) >= 0) scopeLabels.push(EA_MANUAL_SCOPE_COMMON);
+                Object.keys(projection.byLine).forEach(function (lineId) {
+                    if (projection.byLine[lineId].indexOf(String(event.episode_id)) >= 0) scopeLabels.push(eaManualScopeLabel(lineId));
+                });
+                lines.push('--- EA ' + (index + 1) + ' ---');
+                lines.push('Identidad: episodio ' + textOrDash(event.episode_id) + ' · observación ' + textOrDash(event.observation_id));
+                lines.push('Descripción: ' + textOrDash(event.description));
+                lines.push('Gravedad: ' + textOrDash(String(event.severity || '').trim() || 'No consta'));
+                lines.push('Evolución: ' + eaEvolutionLabel(event.evolution));
+                lines.push('Medicamentos sospechosos explícitos: ' + eaManualEventSuspectReferences(event));
+                lines.push('Causalidad Naranjo: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
+                lines.push('Causalidad Karch-Lasagna: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
+                lines.push('Acción registrada: ' + EA_MANUAL_NO_ACTION);
+                lines.push('Ámbito en las salidas por fila: ' + (scopeLabels.length ? scopeLabels.join(', ') : 'Sin distribución por línea'));
+                lines.push('');
+            });
+        } else {
+            lines.push('- Efecto adverso desde última visita: ' + textOrDash(model.adverse_event.present));
+            lines.push('- Gravedad: ' + textOrDash(model.adverse_event.severity));
+            lines.push('- Resuelto: ' + textOrDash(model.adverse_event.resolved));
+            lines.push('- Acción: ' + textOrDash(model.adverse_event.corrected));
+            lines.push('- Observaciones: ' + textOrDash(model.adverse_event.observations));
+            model.causalities.forEach(function (item) {
+                lines.push('Causalidad ' + item.suspect_id + ' (' + item.suspect_label + '): ' + (item.evaluated ? 'Naranjo ' + item.naranjo_score + ' · ' + item.naranjo_category + ' | Karch ' + item.karch_category + ' | Final ' + item.final_assessment : 'No evaluada'));
+            });
+        }
         lines.push('');
         lines.push('--- PROMs de la visita ---');
         lines.push('PROMs seguimiento: ' + textOrDash(model.common_visit.proms_selection));
@@ -4085,6 +4336,9 @@
         setEaEventExpanded: setEaEventExpanded,
         buildEaActBlockSnapshot: buildEaActBlockSnapshot,
         getEaSingularExportBlockReason: eaSingularExportBlockReason,
+        getEaManualExportBlockReason: eaManualOutputsBlockReason,
+        getEaManualExcelCellBlockReason: eaManualExcelCellBlockReason,
+        setEaEpisodeSuspect: setEaEpisodeSuspect,
         getEaV2CopyBlockReason: eaV2CopyBlockReason,
         refreshEaCandidates: updateSuspectDrugSelector,
         setEaPresent: function (value) { var el = byId('fhSeguimientoEaPresente'); if (!el) return; el.value = value; toggleFollowupEaFlow(); },
@@ -4221,9 +4475,9 @@
 
         const exportTxt = document.getElementById('fhSegExportTxt');
         if (exportTxt) exportTxt.addEventListener('click', () => {
-            /* T01 (#795): frontera de salidas singulares — negarse de forma
-               visible cuando el formato no puede representar 0..N. */
-            if (!guardEaSingularExport()) return;
+            /* FH-EA-MANUAL-01: el TXT JARA representa la colección EA 0..N
+               (un informe por visita); conserva el fallo cerrado visible. */
+            if (!guardEaManualOutputs()) return;
             F.copyTextToClipboard(buildSegLines().join('\n'), 'Texto JARA copiado al portapapeles.');
         });
 
@@ -4238,11 +4492,15 @@
             var btn = document.getElementById('fhSegExcelExportBtn');
             if (!btn) return;
             btn.addEventListener('click', function () {
-                if (!guardEaSingularExport()) return;
+                if (!guardEaManualOutputs()) return;
                 var exp = window.FarmaciaExcelRowExport;
                 if (!exp) return;
                 var model = buildFollowupVisitExportModel();
                 var rows = buildFollowupExcelRows(model);
+                /* REHACER 1 (P1-A): el destino libro tiene su propio límite de
+                   celda; se valida aquí, después del saneamiento y antes de
+                   tocar el portapapeles. */
+                if (!guardEaManualExcelRows(rows)) return;
                 var sheetName = exp.getServiceSheetName(model && model.common_visit.servicio || '') || 'hoja correspondiente';
                 exp.copyTSVRowsToClipboard(rows, { sheetName: sheetName });
             });

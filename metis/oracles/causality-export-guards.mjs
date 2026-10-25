@@ -30,14 +30,26 @@
 //     puntuación/categoría formal; la proyección v2 falla cerrada o sale
 //     limpia. En BASE el borrador entra como «Naranjo <n> · <categoría>» en
 //     TXT/CSV/Excel (defecto reproducido).
-//   · Negativo de cardinalidad conservado: con 2 EA incorporados y borrador,
-//     los intentos reales de exportar (botones TXT/CSV/Excel) y de copiar v2
-//     mantienen el bloqueo visible y NO pierden los borradores en memoria.
+//   · Cardinalidad 2 EA con borrador (contrato manual FH-EA-MANUAL-01): el
+//     TXT/JARA copia UN informe íntegro del acto con los EA 0..N, cada uno UNA
+//     sola vez, con identidad y referencias explícitas y causalidad «No
+//     evaluada»; el Excel WO8 manual copia exactamente UNA fila por línea
+//     dispensada con sus 62 celdas, sin crear filas por EA y sin confundir el
+//     ámbito COMÚN/LÍNEA con causalidad; el CSV conserva su guardia singular
+//     visible y ninguna salida descarga un archivo; la copia v2 conserva su
+//     negativa por cobertura EA. Los intentos no pierden los borradores en
+//     memoria.
 //
 // En BASE este oráculo es RED por capacidad ausente (aserciones, no
 // excepciones): el aviso está oculto con contexto en edición sin interacción
 // y el borrador G0 se exporta como causalidad evaluada en la visita
 // reconstituida.
+//
+// Alineación de expectativas (WO FH-EA-MANUAL-02): la expectativa anterior de
+// la sesión 3 —TXT y Excel bloqueados con 2 EA— quedó obsoleta cuando el
+// contrato aprobado pasó esas dos salidas a exportación manual completa
+// EA 0..N. Este oráculo la sustituye por la entrega manual real a través del
+// portapapeles; no cambia producto, contrato, fixture ni motor Metis.
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -112,8 +124,12 @@ const EP = 'FH-EA-EP-0001';
 const DRUG_LABEL = 'Medicamento Alfa Sintético';
 const RESTORED_LINE_ID = 'SYN-EXPORT-GUARDS-L1';
 
-async function openPage() {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+async function openPage(options) {
+    const contextOptions = { viewport: { width: 1440, height: 900 } };
+    // Las salidas manuales TXT/JARA y Excel copian al portapapeles: la
+    // evidencia de entrega se lee con permisos concedidos al contexto.
+    if (options && options.clipboard) contextOptions.permissions = ['clipboard-read', 'clipboard-write'];
+    const context = await browser.newContext(contextOptions);
     const page = await context.newPage();
     page.on('dialog', (dialog) => dialog.accept());
     const consoleErrors = [];
@@ -155,6 +171,31 @@ async function selectAndDispenseFirstLine(page) {
         const excel = document.getElementById('fhSegExcelExportBtn');
         return txt && !txt.disabled && csv && !csv.disabled && excel && !excel.disabled;
     }, null, { timeout: 5000 });
+}
+
+const CLIPBOARD_RESET = '__FH_EA_CLIPBOARD_RESET__';
+
+async function resetClipboard(page) {
+    await page.bringToFront();
+    await page.evaluate((marker) => navigator.clipboard.writeText(marker), CLIPBOARD_RESET);
+}
+
+async function waitForClipboardText(page, predicate, description) {
+    await page.bringToFront();
+    const deadline = Date.now() + 10000;
+    let last = '';
+    for (;;) {
+        last = String(await page.evaluate(() => navigator.clipboard.readText()));
+        if (predicate(last)) return last;
+        if (Date.now() > deadline) {
+            throw new Error(`${description}: el portapapeles no contiene la entrega esperada (valor observado: ${JSON.stringify(last.slice(0, 200))})`);
+        }
+        await page.waitForTimeout(100);
+    }
+}
+
+function countOccurrences(text, needle) {
+    return String(text).split(needle).length - 1;
 }
 
 // Lectura estructural de las representaciones por el seam soportado de solo
@@ -373,11 +414,13 @@ async function storagesAreFreeOfCausality(page) {
     }
 }
 
-// ─── Sesión 3 · negativo de cardinalidad conservado: 2 EA + borrador, los ────
-//     intentos reales de exportar mantienen el bloqueo sin perder borradores.
+// ─── Sesión 3 · cardinalidad 2 EA: TXT/JARA y Excel manual entregan el acto ──
+//     completo (cada EA una vez, una fila por dispensación, causalidad sin
+//     evaluar), mientras el CSV conserva su guardia singular visible y la
+//     copia v2 su negativa por cobertura EA.
 
 {
-    const { context, page, consoleErrors, pageErrors } = await openPage();
+    const { context, page, consoleErrors, pageErrors } = await openPage({ clipboard: true });
     try {
         await page.selectOption('#fhSeguimientoEaPresente', 'si');
         await page.waitForSelector('#fhSegEaZone:not(.hidden)');
@@ -397,21 +440,73 @@ async function storagesAreFreeOfCausality(page) {
         await page.click('#modNaranjo .causality-chip-group[data-answer-id="naranjoQ1"] .causality-chip[data-value="si"]');
         await selectAndDispenseFirstLine(page);
 
-        // ── Intento real de exportar TXT/CSV/Excel: bloqueo de cardinalidad ──
+        const downloads = [];
+        page.on('download', (download) => downloads.push(download.suggestedFilename()));
+        const columns = await page.evaluate(() => window.FarmaciaExcelRowExport.WO8_COLUMNS.slice());
+        const eaEvents = await page.evaluate(() => window.FarmaciaSeguimiento.getEaEvents().map((event) => ({
+            episode: String(event.episode_id || ''),
+            observation: String(event.observation_id || '')
+        })));
+        assert.equal(eaEvents.length, 2, 'dos EA incorporados en el flujo soportado');
+        assert.equal(columns.length, 62, 'el contrato WO8 conserva sus 62 columnas');
+
+        // ── TXT/JARA: UN informe íntegro del acto con la colección EA 0..N ──
+        await resetClipboard(page);
         await page.click('#fhSegExportTxt');
-        await page.waitForTimeout(150);
-        let notice = page.locator('#fhSegEaExportGuardNotice');
-        assert.ok(await notice.isVisible(), 'el intento de exportar TXT con 2 EA mantiene el bloqueo visible');
-        let noticeText = (await notice.textContent()).trim();
-        assert.ok(/2 EA incorporados/.test(noticeText), 'el aviso de bloqueo explica la cardinalidad 0..N del formato singular');
-        assert.ok(/Exportación no realizada/.test(noticeText), 'el aviso declara que no se ha entregado nada');
+        const txt = await waitForClipboardText(page, (text) => text !== CLIPBOARD_RESET, 'la copia TXT/JARA con dos EA');
+        assert.ok(txt.startsWith('=== INFORME DE SEGUIMIENTO FARMACIA ==='), 'el TXT/JARA copia UN informe del acto desde su cabecera');
+        assert.ok(txt.indexOf('=== FIN DEL INFORME ===') !== -1, 'el informe copiado está completo');
+        assert.ok(txt.indexOf('- EA incorporados en esta visita: 2') !== -1, 'el informe declara los 2 EA incorporados del acto');
+        assert.equal(countOccurrences(txt, 'Identidad: episodio'), 2, 'cada EA aparece una sola vez en el informe copiado');
+        eaEvents.forEach((event, index) => {
+            assert.equal(countOccurrences(txt, 'Identidad: episodio ' + event.episode + ' · observación ' + event.observation), 1,
+                'el EA ' + (index + 1) + ' conserva su identidad explícita una única vez');
+        });
+        assert.ok(txt.indexOf('Medicamentos sospechosos explícitos: Sin sospechoso seleccionado') !== -1, 'el EA sin sospecha expresa conserva la referencia explícita de ausencia');
+        assert.ok(/Medicamentos sospechosos explícitos: [^\n]*other:seg-other-1/.test(txt), 'el EA con sospecha expresa conserva su referencia inequívoca');
+        assert.equal(countOccurrences(txt, 'Causalidad Naranjo: No evaluada'), 2, 'cada EA declara la causalidad Naranjo como no evaluada');
+        assert.equal(countOccurrences(txt, 'Causalidad Karch-Lasagna: No evaluada'), 2, 'cada EA declara la causalidad Karch-Lasagna como no evaluada');
+        assert.ok(!/Naranjo\s+\d/.test(txt), 'el borrador Naranjo no se copia como causalidad evaluada');
+        assert.ok(!FORMAL_CATEGORY.test(txt), 'el informe copiado no presenta ninguna categoría formal de causalidad');
+        assert.ok(!/Valoración final/.test(txt), 'el informe copiado no presenta ninguna valoración final heredada');
+        ok('cardinality 2 EA: TXT/JARA copies one complete act report with each EA once, explicit identities/references and no formal causality');
+
+        // ── Excel WO8 manual: UNA fila por línea dispensada, 62 celdas ──
+        await resetClipboard(page);
+        await page.click('#fhSegExcelExportBtn');
+        const tsv = await waitForClipboardText(page, (text) => text !== CLIPBOARD_RESET, 'la copia Excel WO8 manual con dos EA');
+        const dispensedRows = tsv.split('\n').filter((line) => line.trim() !== '');
+        assert.equal(dispensedRows.length, 1, 'el Excel manual copia UNA fila por línea dispensada, sin crear filas por EA');
+        const naranjoIndex = columns.indexOf('causalidad_naranjo');
+        const karchIndex = columns.indexOf('causalidad_karch');
+        const eaIdIndex = columns.indexOf('ea_id');
+        assert.ok(naranjoIndex >= 0 && karchIndex >= 0 && eaIdIndex >= 0, 'el contrato WO8 conserva las columnas EA y de causalidad');
+        dispensedRows.forEach((line) => {
+            const cells = line.split('\t');
+            assert.equal(cells.length, 62, 'la fila WO8 manual conserva exactamente 62 celdas');
+            for (const index of [naranjoIndex, karchIndex]) {
+                const fragments = cells[index].split(' | ');
+                assert.equal(fragments.length, 2, 'la celda de causalidad lleva un fragmento por EA, no una fila por EA');
+                assert.ok(fragments.every((fragment) => /^(COMÚN|LÍNEA .+): No evaluada$/.test(fragment)), 'la causalidad de cada EA sigue sin evaluar (el ámbito COMÚN/LÍNEA no se confunde con causalidad)');
+            }
+            assert.ok(/\bCOMÚN: /.test(cells[eaIdIndex]), 'la celda EA declara el ámbito COMÚN explícitamente');
+            eaEvents.forEach((event) => {
+                assert.ok(cells[eaIdIndex].indexOf(event.episode + '/' + event.observation) !== -1,
+                    'la fila dispensada conserva la identidad de cada EA del acto (una sola fila, dos EA)');
+            });
+        });
+        ok('cardinality 2 EA: the WO8 manual Excel copies one row per dispensed line with 62 cells and causality not evaluated per EA');
+
+        // ── CSV singular: guardia visible y ninguna descarga con 2 EA ──
+        const notice = page.locator('#fhSegEaExportGuardNotice');
         await page.click('#fhSegExportCsv');
         await page.waitForTimeout(150);
         assert.ok(await notice.isVisible(), 'el intento de exportar CSV con 2 EA mantiene el bloqueo visible');
-        await page.click('#fhSegExcelExportBtn');
-        await page.waitForTimeout(150);
-        assert.ok(await notice.isVisible(), 'el intento de exportar Excel con 2 EA mantiene el bloqueo visible');
-        ok('negative: with two incorporated EA the real TXT/CSV/Excel export attempts stay visibly blocked (cardinality guard preserved)');
+        const noticeText = (await notice.textContent()).trim();
+        assert.ok(/2 EA incorporados/.test(noticeText), 'el aviso explica la cardinalidad 0..N del formato singular CSV');
+        assert.ok(/Exportación no realizada/.test(noticeText), 'el aviso de CSV declara que no se ha entregado nada');
+        assert.deepEqual(downloads, [], 'ninguna salida con dos EA descarga un archivo');
+        ok('negative: with two incorporated EA the CSV attempt stays visibly blocked and delivers no download (singular guard preserved)');
 
         // ── Intento real de copia v2: bloqueo por cobertura EA ──
         await page.click('#fhSegExportV2Btn');

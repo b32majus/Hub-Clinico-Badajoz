@@ -10,10 +10,12 @@
 //   · Snapshot desacoplado con identidades únicas y estables.
 //   · Prueba negativa de persistencia: ninguna ruta T01 escribe contenido EA
 //     en sessionStorage/localStorage/IndexedDB (trampas instaladas en vivo).
-//   · Frontera de exportación singular: TXT/CSV/Excel se niegan de forma
-//     visible ante 2 EA incorporados; ninguna descarga se dispara. La copia
-//     estructurada demo (v2) también se niega: su proyección no lleva el
-//     bloque EA.
+//   · FH-EA-MANUAL-01: las DOS salidas manuales representan la colección EA
+//     0..N — ante 2 EA incorporados el TXT JARA copia un informe por visita
+//     con cada EA exactamente una vez y el Excel WO8 manual copia una fila
+//     por fármaco dispensado. El CSV conserva la frontera singular anterior
+//     (se niega de forma visible y sin descarga) y la copia estructurada demo
+//     (v2) sigue negándose: su proyección no lleva el bloque EA.
 //   · act_date solo cuando el profesional registra la fecha; el
 //     autorrelleno de inicialización no cuenta como registro.
 //   · Causalidad independiente y no duplicada; sin reclamos de «guardado».
@@ -326,10 +328,13 @@ function captureTwoEa(page) {
     }
 }
 
-// ─── Sesión B: contradicción «Sí»→«No» y frontera de exportación singular ───
+// ─── Sesión B: contradicción «Sí»→«No», CSV singular y salidas manuales 0..N ─
 
 {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    // FH-EA-MANUAL-01: el testigo lee el portapapeles real tras la copia
+    // soportada de TXT JARA y de la fila Excel WO8 manual.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const page = await context.newPage();
     page.on('dialog', (dialog) => dialog.accept());
     const consoleErrors = [];
@@ -357,21 +362,61 @@ function captureTwoEa(page) {
         assert.ok(!Object.prototype.hasOwnProperty.call(snapshotAfter, 'act_date'), 'session B never records the act date: auto-filled value stays out of the snapshot (SPEC-03)');
         ok('contradiction «Sí»→«No/No consta» blocked with explanation and no data deletion');
 
-        // Frontera de exportación singular: habilitar las salidas y negarse.
+        // FH-EA-MANUAL-01: habilitar las salidas. El CSV conserva la frontera
+        // singular anterior; TXT JARA y Excel WO8 manual representan 0..N.
         await page.selectOption('#fhSegDispensado', 'si');
         await page.waitForFunction(() => !document.getElementById('fhSegExportTxt').disabled, null, { timeout: 5000 });
-        for (const buttonId of ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn']) {
-            await page.click('#' + buttonId);
-            await page.waitForTimeout(150);
-            const guard = await page.evaluate(() => ({
-                visible: !document.getElementById('fhSegEaExportGuardNotice').classList.contains('hidden'),
-                text: document.getElementById('fhSegEaExportGuardNotice').textContent
-            }));
-            assert.ok(guard.visible, `${buttonId}: visible fail-closed refusal`);
-            assert.ok(guard.text.includes('2 EA incorporados') && guard.text.includes('no se exporta solo el primer EA'), `${buttonId}: refusal declares 0..N instead of truncating`);
-        }
-        assert.deepEqual(downloads, [], 'no file download fired while the singular export is blocked');
-        ok('singular exports (TXT/JARA, CSV, Excel) visibly refuse 0..N without truncation or download');
+        const guardNotice = () => page.evaluate(() => ({
+            visible: !document.getElementById('fhSegEaExportGuardNotice').classList.contains('hidden'),
+            text: document.getElementById('fhSegEaExportGuardNotice').textContent
+        }));
+        const countIn = (haystack, needle) => haystack.split(needle).length - 1;
+        const clipboardText = () => page.evaluate(() => navigator.clipboard.readText());
+        const exportSnapshot = await page.evaluate(() => ({
+            dispensedLines: window.FarmaciaSeguimiento.buildFollowupVisitExportModel().dispensed_lines.map((item) => item.line_id),
+            identities: window.FarmaciaSeguimiento.buildEaActBlockSnapshot().events.flatMap((event) => [event.episode_id, event.observation_id]),
+            columns: window.FarmaciaExcelRowExport.WO8_COLUMNS.length,
+            eaColumn: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('ea_descripcion'),
+            lineColumn: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('linea_id')
+        }));
+
+        // CSV: fuera del alcance manual, mantiene el fallo cerrado singular.
+        await page.click('#fhSegExportCsv');
+        await page.waitForTimeout(150);
+        const csvGuard = await guardNotice();
+        assert.ok(csvGuard.visible, 'fhSegExportCsv: visible fail-closed refusal');
+        assert.ok(csvGuard.text.includes('2 EA incorporados') && csvGuard.text.includes('no se exporta solo el primer EA'), 'fhSegExportCsv: refusal declares 0..N instead of truncating');
+        assert.deepEqual(downloads, [], 'no file download fired while the singular CSV export is blocked');
+        ok('CSV keeps the previous singular frontier: visibly refuses 0..N without download');
+
+        // TXT JARA manual: no se niega; un informe por visita, cada EA una vez.
+        await page.click('#fhSegExportTxt');
+        await page.waitForTimeout(250);
+        const jaraManual = await clipboardText();
+        assert.ok(jaraManual.includes('VISITA DE SEGUIMIENTO — EFECTOS ADVERSOS'), 'TXT JARA keeps the adverse-event report section');
+        assert.equal(countIn(jaraManual, EA_TEXTS[0]), 1, 'TXT JARA: first incorporated EA appears exactly once (one report per visit)');
+        assert.equal(countIn(jaraManual, EA_TEXTS[1]), 1, 'TXT JARA: second incorporated EA appears exactly once (one report per visit)');
+        exportSnapshot.identities.forEach((identity) => assert.ok(jaraManual.includes(identity), `TXT JARA preserves the explicit EA identity ${identity}`));
+        assert.ok(!jaraManual.includes('no se exporta solo el primer EA'), 'TXT JARA no longer refuses the 0..N collection');
+        assert.ok(!(await guardNotice()).visible, 'TXT JARA: no refusal notice after a successful copy');
+        ok('TXT JARA manual carries one visit report with each of the two EA exactly once');
+
+        // Excel WO8 manual: una fila TSV por fármaco efectivamente dispensado.
+        assert.ok(exportSnapshot.dispensedLines.length >= 1, 'the witnessed act has at least one effectively dispensed line');
+        await page.click('#fhSegExcelExportBtn');
+        await page.waitForTimeout(250);
+        const excelTsv = await clipboardText();
+        const tsvRows = excelTsv.split('\n').filter((row) => row.trim() !== '');
+        assert.equal(tsvRows.length, exportSnapshot.dispensedLines.length, 'Excel WO8 manual: exactly one TSV row per dispensed drug line (never one row per EA)');
+        const tsvCells = tsvRows.map((row) => row.split('\t'));
+        tsvCells.forEach((cells, index) => assert.equal(cells.length, exportSnapshot.columns, `Excel row ${index + 1} keeps the 62 canonical WO8 cells`));
+        assert.deepEqual(tsvCells.map((cells) => cells[exportSnapshot.lineColumn]), exportSnapshot.dispensedLines, 'Excel WO8 manual: row identity/order matches the dispensed lines');
+        tsvCells.forEach((cells, index) => {
+            assert.ok(cells[exportSnapshot.eaColumn].includes(EA_TEXTS[0]) && cells[exportSnapshot.eaColumn].includes(EA_TEXTS[1]), `Excel row ${index + 1}: both incorporated EA are projected, none truncated`);
+            assert.equal(countIn(cells[exportSnapshot.eaColumn], EA_TEXTS[0]), 1, `Excel row ${index + 1}: first EA written once per row`);
+        });
+        assert.ok(!(await guardNotice()).visible, 'Excel WO8 manual: no refusal notice after a successful copy');
+        ok('Excel WO8 manual copies exactly one row per dispensed line with the full 0..N EA projection');
 
         // C-088 SPEC-02: la copia estructurada demo (v2) también se niega de
         // forma visible con cobertura EA (su proyección no lleva el bloque
