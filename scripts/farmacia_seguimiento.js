@@ -1599,7 +1599,32 @@
         notice.classList.toggle('hidden', !visible);
     }
 
+    // La «Causalidad final farmacéutica» heredada no forma parte del editor G0
+    // provisional: la captura aceptada valora por EA × sospechoso × método ×
+    // acto y no admite trasladar una categoría formal entre parejas. El control
+    // heredado (con su etiqueta y el texto de apoyo que solo tiene sentido a su
+    // lado) se oculta y deshabilita aquí, y permanece siempre en el estado
+    // clínicamente neutro «No evaluada».
+    function hideEaCausalityLegacyFinalControl() {
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (!finalAssessment) return;
+        finalAssessment.value = 'No evaluada';
+        finalAssessment.disabled = true;
+        var container = finalAssessment.closest ? (finalAssessment.closest('.form-grid') || finalAssessment.closest('.form-group')) : null;
+        if (container) {
+            container.classList.add('hidden');
+            container.setAttribute('aria-hidden', 'true');
+        }
+        var summary = byId('modResumenCausalidad');
+        var help = summary && summary.querySelector ? summary.querySelector('.causality-help-text') : null;
+        if (help) {
+            help.classList.add('hidden');
+            help.setAttribute('aria-hidden', 'true');
+        }
+    }
+
     function refreshEaCausalityEditor() {
+        hideEaCausalityLegacyFinalControl();
         var section = byId('modSeguimientoCausalidad');
         var presentElement = byId('fhSeguimientoEaPresente');
         var present = presentElement && presentElement.value ? presentElement.value : 'no_consta';
@@ -1642,8 +1667,6 @@
             eaCausalityStateText('fhSeguimientoEaContextoResumen', '—');
             eaCausalityStateText('resumenNaranjo', 'No evaluado');
             eaCausalityStateText('resumenKl', 'No evaluado');
-            var inactiveFinal = byId('fhCausalidadFinal');
-            if (inactiveFinal) { inactiveFinal.value = 'No evaluada'; inactiveFinal.disabled = true; }
             return;
         }
 
@@ -1702,8 +1725,6 @@
         eaCausalityStateText('fhSeguimientoEaContextoNaranjo', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoKl', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoResumen', contextLabel);
-        var finalAssessment = byId('fhCausalidadFinal');
-        if (finalAssessment) finalAssessment.disabled = !editing;
     }
 
     function selectEaCausalityEpisode(episodeId) {
