@@ -28,8 +28,18 @@
 //   4. Sin sospechoso explícito: controles de causalidad no operables y
 //      ninguna puntuación calculada por ausencia o nombre de fármaco
 //      (regresión).
-//   5. Guardias de exportación TXT/JARA y copia v2 ante 2 EA incorporados
-//      intactos; sospechosos solo por marca expresa (regresión).
+//   5. Entrega manual con 2 EA incorporados (contrato FH-EA-MANUAL-01): la
+//      copia TXT/JARA lleva UN informe íntegro del acto con cada EA una sola
+//      vez, identidad y referencias explícitas y causalidad «No evaluada», sin
+//      categorías formales heredadas ni borradores G0, y sin guardia falsa; la
+//      copia v2 conserva su negativa visible por cobertura EA. Sospechosos solo
+//      por marca expresa (regresión).
+//
+// Alineación de expectativas (WO FH-EA-MANUAL-02): la expectativa anterior de
+// esta sesión —TXT/JARA bloqueado con 2 EA— quedó obsoleta cuando el contrato
+// aprobado pasó el TXT y el Excel manual a exportación completa EA 0..N. Este
+// oráculo la sustituye por la entrega manual real a través del portapapeles;
+// no cambia producto, contrato, fixture ni motor Metis.
 //
 // En BASE este oráculo es RED por el hecho reproducido arriba (aserción, no
 // excepción): la interacción soportada A `Probable` → B muestra indebidamente
@@ -104,6 +114,28 @@ const failures = [];
 function ok(name) { passed += 1; console.log(`PASS ${name}`); }
 function bad(name, detail) { failures.push(name); console.log(`FAIL ${name}${detail ? ' — ' + detail : ''}`); }
 function resourceNoise(text) { return text.indexOf('Failed to load resource') !== -1; }
+
+const CLIPBOARD_RESET = '__FH_EA_G0_CLIPBOARD_RESET__';
+// Categoría formal de causalidad: nunca debe entregarse en la salida manual.
+const FORMAL_CATEGORY = /\b(Posible|Probable|Definida|Cierta)\b/;
+
+async function waitForClipboardText(page, predicate, description) {
+    await page.bringToFront();
+    const deadline = Date.now() + 10000;
+    let last = '';
+    for (;;) {
+        last = String(await page.evaluate(() => navigator.clipboard.readText()));
+        if (predicate(last)) return last;
+        if (Date.now() > deadline) {
+            throw new Error(`${description}: el portapapeles no contiene la entrega esperada (valor observado: ${JSON.stringify(last.slice(0, 200))})`);
+        }
+        await page.waitForTimeout(100);
+    }
+}
+
+function countOccurrences(text, needle) {
+    return String(text).split(needle).length - 1;
+}
 
 const ALFA = 'other:seg-other-1';
 const BETA = 'other:seg-other-2';
@@ -219,7 +251,8 @@ async function prepararEditorG0(page, { episodios, marcarBeta = true }) {
 // ─── Sesión A (desktop 1440×900): hecho reproducido, aislamiento y guardias ──
 
 {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    // La evidencia de entrega manual se lee del portapapeles real.
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['clipboard-read', 'clipboard-write'] });
     const page = await context.newPage();
     page.on('dialog', (dialog) => dialog.accept());
     const consoleErrors = [];
@@ -292,28 +325,39 @@ async function prepararEditorG0(page, { episodios, marcarBeta = true }) {
         }
         ok('G0 causality editing performs no browser storage writes (regression)');
 
-        // ── Regresión (ya en BASE): guardias de exportación intactos con 2 EA ──
+        // ── Entrega manual real con 2 EA (contrato FH-EA-MANUAL-01) ────────
         // Interacción soportada previa: seleccionar y dispensar una línea para
-        // que los botones de exportación estén operables (igual que QA manual).
+        // que las salidas manuales estén operables (igual que QA manual).
         await page.locator('.seg-line-card__control').first().check();
         await page.selectOption('#fhSegDispensado', 'si');
         await page.waitForFunction(() => {
             const txt = document.getElementById('fhSegExportTxt');
             return txt && !txt.disabled;
         }, null, { timeout: 5000 });
+        await page.evaluate((marker) => navigator.clipboard.writeText(marker), CLIPBOARD_RESET);
         await page.click('#fhSegExportTxt');
+        const txt = await waitForClipboardText(page, (text) => text !== CLIPBOARD_RESET, 'la copia TXT/JARA con dos EA');
+        assert.ok(txt.startsWith('=== INFORME DE SEGUIMIENTO FARMACIA ==='), 'el TXT/JARA copia UN informe íntegro del acto');
+        assert.ok(txt.indexOf('=== FIN DEL INFORME ===') !== -1, 'el informe copiado está completo');
+        assert.ok(txt.indexOf('- EA incorporados en esta visita: 2') !== -1, 'el informe copiado declara los 2 EA incorporados del acto');
+        assert.equal(countOccurrences(txt, 'Identidad: episodio'), 2, 'cada EA aparece una sola vez en la entrega TXT/JARA');
+        assert.equal(countOccurrences(txt, 'Causalidad Naranjo: No evaluada'), 2, 'cada EA se entrega con la causalidad Naranjo sin evaluar');
+        assert.equal(countOccurrences(txt, 'Causalidad Karch-Lasagna: No evaluada'), 2, 'cada EA se entrega con la causalidad Karch-Lasagna sin evaluar');
+        assert.ok(!/Naranjo\s+\d/.test(txt), 'los borradores G0 en edición no se entregan como causalidad evaluada');
+        assert.ok(!FORMAL_CATEGORY.test(txt), 'la entrega TXT/JARA no presenta ninguna categoría formal heredada');
+        assert.ok(!/Valoración final/.test(txt), 'ninguna valoración final heredada se entrega con el acto');
         const guardia = await page.evaluate(() => {
             const notice = document.getElementById('fhSegEaExportGuardNotice');
             return { visible: notice && !notice.classList.contains('hidden'), text: notice ? notice.textContent : '' };
         });
-        assert.ok(guardia.visible, 'TXT/JARA ante 2 EA incorporados: guardia de exportación visible');
-        assert.ok(guardia.text.indexOf('Exportación no realizada') !== -1, 'la guardia niega la entrega de forma visible');
+        assert.ok(!guardia.visible, 'la entrega TXT/JARA con 2 EA no se acompaña de un bloqueo visible (no hay guardia falsa)');
+        ok('manual delivery with 2 EA: the TXT/JARA copy carries the full act report without inherited formal categories or G0 drafts');
         const v2 = await page.evaluate(() => window.FarmaciaSeguimiento.getEaV2CopyBlockReason());
         assert.ok(v2.indexOf('No se ha copiado nada') !== -1, 'la frontera EA de la copia estructurada v2 sigue activa con cobertura EA');
         await page.click('#fhSegExportV2Btn');
         const v2Status = await page.evaluate(() => (document.getElementById('fhSegExportV2Status') || {}).textContent || '');
         assert.ok(v2Status.indexOf('Copia no realizada') !== -1, 'el intento real de copia v2 se niega de forma visible con cobertura EA');
-        ok('export guards TXT/JARA + v2 unchanged with 2 incorporated EA (regression)');
+        ok('v2 copy with EA coverage stays visibly blocked (regression)');
 
         assert.deepEqual(pageErrors, [], 'pageerror');
         assert.deepEqual(consoleErrors.filter(t => !resourceNoise(t)), [], 'console.error');
