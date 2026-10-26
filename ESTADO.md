@@ -25,6 +25,15 @@ Una página. La verdad del producto es GitHub `promueve/nexus-v4` (cabeza al red
 - G2 y JIT: abandonados, no se fusionan (preservados con tags `archive/*`). C3a (Metis): parada.
 - Control Plane / form-builder / V5: diferidos por el Freeze (24-09).
 
+## Seguimiento (epics)
+
+Cada epic agrupa sus issues con lista de tareas; GitHub marca la casilla al cerrarse cada issue. Los `Closes #N` cierran solos porque la rama por defecto es ahora `promueve/nexus-v4`.
+
+- [#860 FH · EA 0..N](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/860) · [#858 FH · Bridge raw y entrega F4.5/F4.6](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/858) · [#861 FH · Estadísticas e informes](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/861)
+- [#862 FH · Renovaciones y recogidas](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/862) · [#859 FH · Catálogo/CIMA y QA de Cáceres](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/859)
+- [#865 Reuma · pendientes y entrega](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/865) · [#857 Dermatología · módulo](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/857)
+- [#864 Plataforma · F6/F7 y almacenamiento](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/864) · [#863 Orden y deuda técnica](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/863) · [#856 Cáceres · circuito asistencial](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/856)
+
 ## Dónde mirar
 - Decisiones: `docs/DECISIONES.md` · Ideas: `docs/IDEAS.md` · Preguntas sin resolver: `docs/PREGUNTAS_ABIERTAS.md`
 - Catálogo de documentos: `docs/MAPA.md` · Variables por hospital: `docs/INVENTARIO_VARIABLES.md`
