@@ -58,7 +58,7 @@ Newly discovered debt stays separate from the requested change unless current au
 
 ## Documentation / memory
 
-Reconcile live project docs only when the accepted work changes durable project state. Engram/conversation memory is auxiliary and never authority for current HEAD, branch, PR or frontier state.
+Reconcile live project docs only when the accepted work changes durable project state, and do it in the same PR as the change; do not open separate post-merge documentation PRs or WO/amendment/verdict documents. One issue per feature carries its task checklist (see `docs/agents/issue-tracker.md`). Engram/conversation memory is auxiliary and never authority for current HEAD, branch, PR or frontier state.
 
 
 ## Conditional Visual/UX v1 for future Free/Standard units
