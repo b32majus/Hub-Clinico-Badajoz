@@ -1,8 +1,22 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-25 — FH EA B01 #831/#832 y B02 #836/#837 MERGED; ruta rápida DIA/Metis WO #833 publicada por PR #834/#835; CI/Pages postmerge B02 SUCCESS; C pendiente, NO piloto.
+**Última actualización:** 2026-10-26 — C2b #849/#850 MERGED con CI/Pages SUCCESS; solo demo sintética. C3a/C3b, readback y piloto pendientes.
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
+
+---
+
+## FH-BRIDGE-C2b · copia manual raw EA 0..N desde Seguimiento — publicado (26-10-2026)
+
+**ESTADO:** [issue técnica #849](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/849) CLOSED/completed; [PR técnica #850](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/850) MERGED a `promueve/nexus-v4@b564500dc8b166e8b85503d6fa1c360022d7fbae`. [CI Nexus postmerge](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40250518687) SUCCESS y [Pages postmerge](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/40250518120) SUCCESS. Reconciliación documental separada [#851](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/851).
+
+**Entregado:** 5 rutas de producto. Acción nueva de copia TSV **Bridge raw 166 columnas** en Seguimiento, independiente de V2 (152) y WO8 (62), apoyada en core C2a. Fuente de identidades de acto/paciente/visita **exclusivamente sintética y explícita en demo**; todos los EA incorporados, sospechosos seleccionados y líneas activas declaradas se proyectan sin inferir causalidad, exposición ni pauta. La operación valida antes de copiar y señala únicamente **preparado para transferencia manual**; portapapeles no es guardado. TXT JARA/CSV/Excel legado y `main` intactos.
+
+**Acreditado:** Metis pilot-9.7 `PR_READY` con evaluador PASS, 0 correcciones, Node y navegador con interacción soportada PASS, `verify:nexus` PASS; rama técnica de publicación reproduce exactamente los 5 blobs del candidato y pasó `verify:nexus` tras `npm ci --offline`. CI PR y CI/Pages postmerge verdes. **No** se ha verificado pegado/guardado/cierre/reapertura en Excel Windows ni lectura por Data Port.
+
+**Deuda no bloqueante registrada:** (F1) botón Bridge inicialmente sin atributo HTML `disabled`, controlador sigue fallando cerrado; (F2) checker focal nuevo aún no registrado en scripts `verify:*`, cubierto por oráculos Metis en este ticket; (F3) solapamiento visual preexistente campo CIP/botón búsqueda. No se declara corregida ninguna.
+
+**Límites y siguientes WOs:** C2b es **apta solo para demo sintética**, NO para piloto clínico. F4.4 real / metadatos reales no acreditados; Reader raw de 166 y Data Port **C3a pendiente**, Excel Windows ida/vuelta **C3b pendiente**, decisión de retirar o sustituir WO8 pospuesta hasta roundtrip demostrado. La estructura publicada de C2a permanece sin cambios. El plan WIP #842 y el contrato C1 no se editan en esta reconciliación.
 
 ---
 
@@ -12,7 +26,7 @@
 
 **Entregado:** 4 archivos nuevos — esquema raw EA 2.1 draft 166 columnas (152 V2 + 14), codec v1/v2/manifest por rol, core productor/validador/decoder y test focal. Rechazo de líneas inactivas y tratamientos no identificables; cardinalidad EA por manifiesto y observación; orden lógico S/E preservado. 56/56 focales, 49/49 smoke; V2 legacy y suites EA PASS. Solo datos sintéticos.
 
-**Gobernanza documental:** WO-DOC [#847](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/847), [decisión Bridge raw-first](../architecture/FH_BRIDGE_RAW_MANUAL_FIRST_DECISION_20261025.md) y [C1 con adenda ratificada](../contracts/FH_BRIDGE_RAW_EA_0N_C1_FORMAT_CANDIDATE_20261025.md). **PENDIENTES, WOs diferentes:** C2b conexión Seguimiento→Bridge; C3a lector raw/Data Port; C3b pegado/guardar/reabrir Excel Windows; decisión posterior de adopción y retirada/ocultación de WO8. El Processor relacional no es dependencia obligatoria de esta ruta raw. **NO TOCA:** worktree documental WIP #842, V2, WO8, F4.4 ni `main`.
+**Gobernanza documental:** WO-DOC [#847](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/847), [decisión Bridge raw-first](../architecture/FH_BRIDGE_RAW_MANUAL_FIRST_DECISION_20261025.md) y [C1 con adenda ratificada](../contracts/FH_BRIDGE_RAW_EA_0N_C1_FORMAT_CANDIDATE_20261025.md). **C2b YA PUBLICADA SOLO DEMO (#849/#850). PENDIENTES, WOs diferentes:** C3a lector raw/Data Port; C3b pegado/guardar/reabrir Excel Windows; decisión posterior de adopción y retirada/ocultación de WO8. El Processor relacional no es dependencia obligatoria de esta ruta raw. **NO TOCA:** worktree documental WIP #842, V2, WO8, F4.4 ni `main`.
 
 ---
 
