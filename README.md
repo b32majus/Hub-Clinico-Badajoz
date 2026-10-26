@@ -18,6 +18,8 @@ Aplicación clínica local-first para flujos de Reumatología, Enfermería y Far
 
 El estado vivo, los HEADs publicados y las fronteras entre recovery, snapshot Cáceres y paquete externo se documentan en [`docs/INDEX.md`](docs/INDEX.md).
 
+> **Estado en una página:** [`ESTADO.md`](ESTADO.md). Decisiones, ideas y preguntas abiertas: [`docs/DECISIONES.md`](docs/DECISIONES.md), [`docs/IDEAS.md`](docs/IDEAS.md), [`docs/PREGUNTAS_ABIERTAS.md`](docs/PREGUNTAS_ABIERTAS.md).
+
 ## Stack actual
 
 - HTML, CSS y JavaScript vanilla.

@@ -1,5 +1,7 @@
 # Índice documental maestro — Hub Clínico Badajoz / PROMueve Nexus
 
+> **Resumen de una página:** [`ESTADO.md`](../ESTADO.md). Catálogo de documentos: [`MAPA.md`](MAPA.md).
+
 | Metadato | Valor |
 | --- | --- |
 | Última actualización | 2026-10-26 — FH-BRIDGE-C2b publicado solo para demo sintética en Seguimiento; CI/Pages SUCCESS; C3a/C3b, persistencia y piloto pendientes |
