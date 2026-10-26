@@ -339,10 +339,38 @@
         return null;
     }
 
+    function declaredBridgeRawDemoContext(cip) {
+        var provider = window.FarmaciaBridgeRawEaV21DemoContext;
+        var normalized = String(cip || '').trim();
+        if (!normalized || !provider || provider.PROVIDER_VERSION !== '1.0.0-draft.1' || typeof provider.getContext !== 'function') return null;
+        try {
+            return provider.getContext('followupAct', normalized);
+        } catch (error) {
+            return null;
+        }
+    }
+
     function createFollowupVisit(cip) {
+        var declaredDemo = declaredBridgeRawDemoContext(cip);
         currentFollowupVisit = {
             cip: String(cip || '').trim(),
-            visit_id: 'FH-VISIT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+            /* En demo la identidad de visita se vincula EXPLÍCITAMENTE al crear
+               el acto: la visita abierta adopta el visitId declarado por la
+               fuente de identidad y conserva el vínculo para rechazar
+               cualquier desajuste posterior. Sin identidad declarada se
+               mantiene el identificador local de la visita. */
+            visit_id: declaredDemo && declaredDemo.visitId
+                ? declaredDemo.visitId
+                : 'FH-VISIT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+            bridge_raw_act_identity: declaredDemo ? {
+                identifierValue: declaredDemo.identifierValue,
+                actId: declaredDemo.actId,
+                patientRef: declaredDemo.patientRef,
+                visitId: declaredDemo.visitId,
+                eventId: declaredDemo.eventId,
+                sourceEventId: declaredDemo.sourceEventId,
+                demoFlag: true
+            } : null,
             created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
             selected_line_ids: [], dispensed_line_ids: [], editing_line_id: '', line_state: {},
             adverse_event: { present: 'no_consta', severity: '', resolved: 'no_consta', corrected: 'no_consta', observations: '', suspect_ids: [], causality_editing_id: '' },
@@ -4210,6 +4238,140 @@
         return buildFollowupV2Projection(getFollowupV2TechnicalContext());
     }
 
+    // ── C2b: copia manual Bridge raw EA 0..N (demo, transferencia manual) ──
+    // La identidad de acto/paciente y la visita NO se derivan de la UI: se
+    // leen de la fuente demo declarada y se contrastan con el acto abierto.
+    function failFollowupBridgeRaw(code, message, details) {
+        throw new FollowupV2BridgeError(code, message, details);
+    }
+
+    function getFollowupBridgeRawActContext() {
+        var provider = window.FarmaciaBridgeRawEaV21DemoContext;
+        if (!provider || provider.PROVIDER_VERSION !== '1.0.0-draft.1' || typeof provider.getContext !== 'function') {
+            failFollowupBridgeRaw('BRIDGE_RAW_PROVIDER_UNAVAILABLE', 'No está disponible la fuente de identidad declarada del acto.');
+        }
+        var cip = visibleFollowupCip();
+        var context = provider.getContext('followupAct', cip);
+        if (!context) {
+            failFollowupBridgeRaw('BRIDGE_RAW_IDENTITY_UNAVAILABLE', 'No existe identidad declarada para este paciente.');
+        }
+        if (!currentFollowupVisit) {
+            failFollowupBridgeRaw('BRIDGE_RAW_VISIT_UNAVAILABLE', 'No hay una visita de seguimiento abierta.');
+        }
+        if (String(currentFollowupVisit.cip || '').trim() !== cip) {
+            failFollowupBridgeRaw('BRIDGE_RAW_CIP_MISMATCH', 'El paciente visible no coincide con el acto abierto.');
+        }
+        var bound = currentFollowupVisit.bridge_raw_act_identity;
+        if (!bound) {
+            failFollowupBridgeRaw('BRIDGE_RAW_IDENTITY_UNAVAILABLE', 'El acto abierto no está vinculado a una identidad declarada.');
+        }
+        if (bound.identifierValue !== context.identifierValue ||
+            bound.actId !== context.actId ||
+            bound.patientRef !== context.patientRef) {
+            failFollowupBridgeRaw('BRIDGE_RAW_IDENTITY_MISMATCH', 'La identidad del acto cambió respecto a la vinculada al abrirlo.');
+        }
+        if (String(currentFollowupVisit.visit_id || '') !== String(context.visitId || '') ||
+            bound.visitId !== context.visitId) {
+            failFollowupBridgeRaw('BRIDGE_RAW_VISIT_MISMATCH', 'La visita declarada no coincide con la visita abierta.');
+        }
+        return context;
+    }
+
+    function bridgeRawErrorMessage(error) {
+        if (error && error.message) return String(error.message);
+        return 'no se pudo preparar la copia.';
+    }
+
+    function bridgeRawSuspectSourceBlockReason(event) {
+        if (!event || event.status !== 'incorporated') return '';
+        var refs = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+        if (!refs.length) return '';
+        var candidates = getEaNamedDrugCandidates();
+        var ids = candidates.map(function (candidate) { return candidate.id; });
+        for (var index = 0; index < refs.length; index += 1) {
+            var ref = refs[index];
+            if (ids.indexOf(ref) < 0 || eaSuspectMarkIsPending(event.episode_id, ref)) {
+                return 'el sospechoso ' + ref + ' no tiene una fuente verificable en este episodio.';
+            }
+        }
+        return '';
+    }
+
+    function buildFollowupBridgeRawProjectionFromCurrentContext() {
+        var adapter = window.FarmaciaBridgeRawEaV21FollowupAdapter;
+        if (!adapter || adapter.ADAPTER_VERSION !== '1.0.0-draft.1' || typeof adapter.buildFollowupRawProjection !== 'function') {
+            failFollowupBridgeRaw('BRIDGE_RAW_ADAPTER_UNAVAILABLE', 'El adaptador Bridge raw C2b no está cargado.');
+        }
+        var context = getFollowupBridgeRawActContext();
+        var presentEl = byId('fhSeguimientoEaPresente');
+        var present = presentEl && presentEl.value ? presentEl.value : 'no_consta';
+        var events = cloneEvaluationState(eaEventsCollection(), []);
+        for (var index = 0; index < events.length; index += 1) {
+            var blockReason = bridgeRawSuspectSourceBlockReason(events[index]);
+            if (blockReason) failFollowupBridgeRaw('BRIDGE_RAW_SUSPECT_UNVERIFIED', blockReason);
+        }
+        return adapter.buildFollowupRawProjection({
+            context: context,
+            present: present,
+            adverseEvents: events,
+            history: [],
+            selections: []
+        });
+    }
+
+    function getFollowupBridgeRawCopyBlockReason() {
+        try {
+            buildFollowupBridgeRawProjectionFromCurrentContext();
+            return '';
+        } catch (error) {
+            return 'No se pudo copiar: ' + bridgeRawErrorMessage(error);
+        }
+    }
+
+    var followupBridgeRawCopyInFlight = false;
+
+    function updateFollowupBridgeRawExportAvailability() {
+        var button = byId('fhSegExportBridgeRawBtn');
+        var status = byId('fhSegExportBridgeRawStatus');
+        if (!button) return;
+        try {
+            getFollowupBridgeRawActContext();
+            button.disabled = followupBridgeRawCopyInFlight;
+            if (status && status.textContent.indexOf('Copia no disponible:') === 0) status.textContent = '';
+        } catch (error) {
+            button.disabled = true;
+            if (status) status.textContent = 'Copia no disponible: ' + bridgeRawErrorMessage(error);
+        }
+    }
+
+    async function handleFollowupBridgeRawExport() {
+        if (followupBridgeRawCopyInFlight) return;
+        var button = byId('fhSegExportBridgeRawBtn');
+        var status = byId('fhSegExportBridgeRawStatus');
+        var projection;
+        // La validación completa (identidad, fichas incorporadas, líneas,
+        // representabilidad) ocurre ANTES de tocar el portapapeles. Cualquier
+        // rechazo deja el portapapeles intacto y no declara éxito.
+        try {
+            projection = buildFollowupBridgeRawProjectionFromCurrentContext();
+        } catch (error) {
+            if (status) status.textContent = 'No se pudo copiar: ' + bridgeRawErrorMessage(error);
+            return;
+        }
+        followupBridgeRawCopyInFlight = true;
+        if (button) button.disabled = true;
+        if (status) status.textContent = 'Preparando copia...';
+        try {
+            await copyFollowupV2TsvExact(projection.tsv);
+            if (status) status.textContent = 'Preparado para transferencia manual: ' + projection.rows.length + ' fila(s) copiadas al portapapeles.';
+        } catch (error) {
+            if (status) status.textContent = 'No se pudo copiar: el portapapeles no está disponible o la copia no se confirmó.';
+        } finally {
+            followupBridgeRawCopyInFlight = false;
+            updateFollowupBridgeRawExportAvailability();
+        }
+    }
+
     var followupV2CopyInFlight = false;
 
     async function copyFollowupV2TsvExact(tsv) {
@@ -4352,7 +4514,10 @@
         buildFollowupV2Input: buildFollowupV2Input,
         buildFollowupV2Projection: buildFollowupV2Projection,
         getFollowupV2TechnicalContext: getFollowupV2TechnicalContext,
-        buildFollowupV2ProjectionFromCurrentContext: buildFollowupV2ProjectionFromCurrentContext
+        buildFollowupV2ProjectionFromCurrentContext: buildFollowupV2ProjectionFromCurrentContext,
+        getFollowupBridgeRawActContext: getFollowupBridgeRawActContext,
+        getFollowupBridgeRawCopyBlockReason: getFollowupBridgeRawCopyBlockReason,
+        buildFollowupBridgeRawProjectionFromCurrentContext: buildFollowupBridgeRawProjectionFromCurrentContext
     };
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -4364,10 +4529,15 @@
         if (v2Cip) {
             v2Cip.addEventListener('input', updateFollowupV2ExportAvailability);
             v2Cip.addEventListener('change', updateFollowupV2ExportAvailability);
+            v2Cip.addEventListener('input', updateFollowupBridgeRawExportAvailability);
+            v2Cip.addEventListener('change', updateFollowupBridgeRawExportAvailability);
         }
         updateFollowupV2ExportAvailability();
+        updateFollowupBridgeRawExportAvailability();
         var exportV2 = byId('fhSegExportV2Btn');
         if (exportV2) exportV2.addEventListener('click', handleFollowupV2Export);
+        var exportBridgeRaw = byId('fhSegExportBridgeRawBtn');
+        if (exportBridgeRaw) exportBridgeRaw.addEventListener('click', handleFollowupBridgeRawExport);
         initCipSearch();
         initSegServicioPatologiaSync();
         initSegDrugAutocomplete();
