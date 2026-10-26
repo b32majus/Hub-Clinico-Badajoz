@@ -471,6 +471,11 @@
     <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhSegExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
     <p class="search-card__hint">Prepara una copia de los datos para demostrar futuras integraciones. Esta acción no envía información a otros sistemas ni la guarda automáticamente. Uso exclusivo con datos sintéticos.</p>
     <p id="fhSegExportV2Status" role="status" aria-live="polite"></p>
+    <div class="form-actions" data-export-version="bridge-raw-c2b">
+        <button type="button" class="btn btn-secondary" id="fhSegExportBridgeRawBtn"><i class="fas fa-exchange-alt" aria-hidden="true"></i> Copiar Bridge raw EA 0..N (demo, transferencia manual)</button>
+    </div>
+    <p class="search-card__hint">Bridge raw EA 0..N: copia local preparada para transferencia MANUAL. No guarda, no persiste y no envía nada a Farmacia. Uso exclusivo con datos sintéticos.</p>
+    <p id="fhSegExportBridgeRawStatus" class="search-card__hint" role="status" aria-live="polite">Estado de la copia: sin preparar.</p>
 </section>
                 </main>
             </div>
@@ -486,6 +491,14 @@
     <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
     <script src="scripts/farmacia_export_v2_followup_active_lines_adapter.js?v=20260803-followup-active-lines-adapter"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
+    <script src="modules/hubTools.js?v=20260306l"></script>
+    <script src="modules/farmacia_act_contract.js?v=20261025-fh-bridge-c2b"></script>
+    <script src="modules/farmacia_act_payloads.js?v=20261025-fh-bridge-c2b"></script>
+    <script src="modules/farmacia_ea_invariants.js?v=20261025-fh-bridge-c2b"></script>
+    <script src="scripts/farmacia_bridge_ea_typed_codec.js?v=20261025-fh-bridge-c2b"></script>
+    <script src="scripts/farmacia_bridge_raw_ea_v21_core.js?v=20261025-fh-bridge-c2b"></script>
+    <script src="scripts/farmacia_bridge_raw_ea_v21_demo_context.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_bridge_raw_ea_v21_followup_adapter.js?v=1.0.0-draft.1"></script>
     <script src="scripts/farmacia_seguimiento_ea_causality_state.js?v=20261024-fh-ea03-causality-state"></script>
     <script src="scripts/farmacia_seguimiento.js?v=20261018-fh-ea-t01-r1"></script>
         </body>
