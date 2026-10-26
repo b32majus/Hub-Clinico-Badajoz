@@ -35,9 +35,9 @@ REN-OPEN-001…008: ver `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACI
 - Medicación especial (ensayo, compasivo, extranjera; SIL-REV-020): requiere discovery.
 - «Revisión de línea» en el tipo de movimiento de Seguimiento: Sil pidió eliminarla o redefinirla; sin decisión de redefinición.
 
-## EA (tras la reunión del 27-10 con las farmacéuticas de Cáceres)
-- ¿Se cierra «EA v1 demo» = guardar en Bridge → reabrir → ver los EA en el Dashboard?
-- ¿Se hace continuidad/recurrencia (T02/T03) y estadísticas EA, o solo si las farmacéuticas lo piden?
+## EA
+- Decidido el 27-10: se cierra «EA v1 demo» (ver `docs/DECISIONES.md`).
+- Continuidad/recurrencia (T02/T03) y exportación longitudinal: se piden después, con uso real.
 - Perfiles FHIR/openEHR: decisión del SES. FEDRA: autorización SES/AEMPS.
 
 ## Infraestructura (SES)
