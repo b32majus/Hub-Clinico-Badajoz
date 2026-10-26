@@ -5,7 +5,7 @@ Issues/specs/work orders live in GitHub for `b32majus/Hub-Clinico-Badajoz`. Use 
 ## Repository rules
 
 - Read an issue together with all comments before treating it as executable authority.
-- `status:approved` is the PROMueve execution/publication prerequisite for opening a PR; it is independent from Matt triage labels.
+- One issue per feature, with its task checklist and a 5–10 line description of the result a human can test. No separate approval issue per PR: `status:approved` is no longer a prerequisite for opening a PR (legacy label, independent from Matt triage labels).
 - Creating/mutating issues, pushing, opening a PR, merging or deploying still requires the explicit authority of the current issue/instruction.
 - Pull requests are **not** a feature-request/triage surface.
 - A review result never grants publication authority.

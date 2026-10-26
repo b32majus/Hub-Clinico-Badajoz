@@ -18,7 +18,7 @@ La documentación existe para que una tercera persona pueda localizar, sin depen
 1. La autoridad vigente de cada cambio es el issue/WO/spec aceptado en GitHub live; este estándar ordena cómo se documenta, no qué se decide.
 2. El orden de verdad operativo es el fijado por `AGENTS.md` y `docs/INDEX.md` (GitHub live → INDEX → tablero WO → documentos vivos → memoria auxiliar).
 3. Un documento vivo debe declarar: estado, fecha, issue/WO de origen y base (rama/SHA cuando sea material).
-4. Cuando cambia el estado real del proyecto, se reconcilian `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y el documento vivo afectado, dentro del alcance o como tarea documental separada.
+4. Cuando cambia el estado real del proyecto, se reconcilian `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y el documento vivo afectado, en la misma PR que cambia el estado. No se abren PRs documentales posmerge separadas.
 5. Los documentos históricos se preservan como evidencia; no se reescriben para simular estado actual.
 
 ## 3. Estados de madurez obligatorios
