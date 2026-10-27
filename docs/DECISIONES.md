@@ -14,7 +14,7 @@ Estados: **VIGENTE**, **SUSTITUIDA** (con por qué), **HISTÓRICA** (contexto de
 | 26-10 | Origen del core: Dermatología, Digestivo y la Farmacia actual salen de Cáceres; Reuma sale de Mérida-Badajoz y es teórico (sin validar con equipos) | Sil, 26-10 | VIGENTE |
 | 26-10 | Prioridades: 1) cerrar el módulo de efectos adversos; 2) corregir las auditorías de Sil (Farmacia ya; Reuma, solo seguridad y errores); 3) desarrollo real de Reuma tras las revisiones de proceso | Sil, 26-10 | VIGENTE |
 | 26-10 | No pulir Reuma (UX, cosmético) antes de las conclusiones de Mérida (empezó 26-10) y Badajoz (06-11) | Sil, 26-10 | VIGENTE |
-| 26-10 | Módulo EA congelado hasta la reunión con las farmacéuticas de Cáceres (27-10) | Sil/Claude, 26-10 | VIGENTE hasta la reunión |
+| 27-10 | EA **no** se congela: se cierra «EA v1 demo» reflejando el modelo nuevo en Dashboard del paciente, Quick View y Estadísticas (ya existentes); después guardar/reabrir por Bridge. Las farmacéuticas pidieron EA; no se espera feedback. Las reparaciones de FH van a continuación | Sil, 27-10 | VIGENTE |
 | 26-10 | G2 (autoridad de paciente + IndexedDB) y JIT quedan abandonados: no se fusionan, solo se preservan. C3a (Metis) parada | Sil, 26-10 | VIGENTE |
 | 26-10 | Metis solo para trabajo grande, de riesgo y desatendido; lo atendido va directo o por DIA. Versión de Metis congelada durante cada funcionalidad | Sil, 26-10 | VIGENTE |
 | 26-10 | Seguimiento por issues + etiquetas + epics con lista de tareas + `ESTADO.md`; el tablero Project queda como vista opcional posterior | Sil, 26-10 | VIGENTE |

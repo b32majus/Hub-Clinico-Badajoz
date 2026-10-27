@@ -13,17 +13,26 @@ Una página. La verdad del producto es GitHub `promueve/nexus-v4` (cabeza al red
 | **Plataforma** | Home multiservicio, registry/profile/manifest. Un único perfil de despliegue (`BAD` sintético) |
 
 ## En curso (máx. 1)
-- **EA 0..N de Farmacia, congelado** hasta la reunión con las farmacéuticas de Cáceres (27-10). Propuesta pendiente de confirmar: cerrar «EA v1 demo» = guardar en Bridge → reabrir → ver EA en el Dashboard del paciente.
+- **EA 0..N de Farmacia: cerrar «EA v1 demo»** (decidido 27-10; las farmacéuticas lo pidieron, el problema fue la ejecución). Las tres superficies que ya existen —Dashboard del paciente, Quick View y Estadísticas— aún leen el modelo antiguo de EA; el modelo nuevo (`modules/farmacia_ea_patient_projection.js`) no lo usa ninguna pantalla. Tramo 1: conectarlas con un fixture sintético. Tramo 2: guardar en Bridge → reabrir en Excel Windows (lo prueba Sil). Seguimiento en [#860](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/860).
 
 ## Siguiente (máx. 3)
-1. Decidir el corte de EA tras la reunión del 27-10.
-2. Corregir las auditorías de Sil: Farmacia primero; Reuma, solo seguridad y errores.
+1. Reparaciones de FH de las auditorías de Sil, de menor a mayor esfuerzo: etiquetas DLQI del Quick View; «Revisión de línea»; Dashboard FH (quitar «Copiar fila Excel FH» y «Vista completa», añadir comorbilidades); «Inducción solicitada» ≠ «validada»; simplificación de Validación (#645); PROMs por patología.
+2. Reuma: solo seguridad y errores hasta las revisiones de proceso.
 3. Desarrollo real de Reuma **después** de las revisiones de proceso (Mérida desde el 26-10; Badajoz desde el 06-11).
 
 ## Aparcado
 - Bridge C3–C5 (lector, guardar/reabrir, Processor relacional) hasta decidir el corte EA.
 - G2 y JIT: abandonados, no se fusionan (preservados con tags `archive/*`). C3a (Metis): parada.
 - Control Plane / form-builder / V5: diferidos por el Freeze (24-09).
+
+## Seguimiento (epics)
+
+Cada epic agrupa sus issues con lista de tareas; GitHub marca la casilla al cerrarse cada issue. Los `Closes #N` cierran solos porque la rama por defecto es ahora `promueve/nexus-v4`.
+
+- [#860 FH · EA 0..N](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/860) · [#858 FH · Bridge raw y entrega F4.5/F4.6](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/858) · [#861 FH · Estadísticas e informes](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/861)
+- [#862 FH · Renovaciones y recogidas](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/862) · [#859 FH · Catálogo/CIMA y QA de Cáceres](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/859)
+- [#865 Reuma · pendientes y entrega](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/865) · [#857 Dermatología · módulo](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/857)
+- [#864 Plataforma · F6/F7 y almacenamiento](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/864) · [#863 Orden y deuda técnica](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/863) · [#856 Cáceres · circuito asistencial](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/856)
 
 ## Dónde mirar
 - Decisiones: `docs/DECISIONES.md` · Ideas: `docs/IDEAS.md` · Preguntas sin resolver: `docs/PREGUNTAS_ABIERTAS.md`
