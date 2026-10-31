@@ -30,7 +30,7 @@ function test(name, callback) {
     console.log(`PASS ${name}`);
 }
 
-const CONTRACT_VERSION = '2.0.0';
+const CONTRACT_VERSION = '2.1.0';
 const ENVELOPE_KEYS = ['outcome', 'value', 'errorCode', 'completeness', 'provenance', 'scope'];
 const PROVENANCE_KEYS = ['source_kind', 'contract_version', 'source_version', 'patient_id', 'event_ids'];
 const IDENTIFIER_SYSTEM = 'urn:cip:synthetic';
@@ -340,7 +340,7 @@ const happyResolved = happyInstance.resolvePatient(IDENTIFIER_SYSTEM, 'CIP-A');
  * Case 1 — module contracts                                          *
  * ------------------------------------------------------------------ */
 
-test('module publishes a frozen contract at version 2.0.0', () => {
+test('module publishes a frozen contract at version 2.1.0', () => {
     assert.equal(contract.CONTRACT_VERSION, CONTRACT_VERSION);
     assert.equal(typeof contract.create, 'function');
     assert.ok(Object.isFrozen(contract), 'published contract must be frozen');
