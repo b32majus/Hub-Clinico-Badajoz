@@ -638,6 +638,90 @@
         var container = document.getElementById('adverseEventsContainer');
         if (!container) return;
         F.clearChildren(container);
+        // Modelo de EA del paciente de la sesión: un fallo de lectura se declara y
+        // cualquier otro estado sigue por el camino antiguo mientras dure la
+        // transición. Nunca se dice «activo».
+        var ea = patient.ea_episodes;
+        var eaEmptyState = function (text) {
+            var stateEl = document.createElement('div');
+            stateEl.className = 'empty-state';
+            var stateIcon = document.createElement('i');
+            stateIcon.className = 'fas fa-info-circle';
+            stateIcon.setAttribute('aria-hidden', 'true');
+            stateEl.appendChild(stateIcon);
+            stateEl.appendChild(document.createTextNode(text));
+            return stateEl;
+        };
+        if (ea && ea.status === 'error') {
+            container.appendChild(eaEmptyState('No se pudieron leer los registros de EA'));
+            return;
+        }
+        if (ea && ea.status === 'ok') {
+            var farmaciaEaScreenModel = window.HubTools && window.HubTools.farmaciaEaScreenModel;
+            var eaView = null;
+            if (farmaciaEaScreenModel && typeof farmaciaEaScreenModel.dashboardView === 'function') {
+                try {
+                    eaView = farmaciaEaScreenModel.dashboardView(ea.model);
+                } catch (eaProblem) {
+                    eaView = null;
+                }
+            }
+            if (!eaView || eaView.ok !== true) {
+                container.appendChild(eaEmptyState('No se pudieron leer los registros de EA'));
+                return;
+            }
+            if (eaView.empty) {
+                container.appendChild(eaEmptyState(eaView.empty));
+                return;
+            }
+            var eaCards = Array.isArray(eaView.cards) ? eaView.cards : [];
+            for (var ci = 0; ci < eaCards.length; ci++) {
+                var eaCard = eaCards[ci];
+                var eaCardEl = document.createElement('div');
+                eaCardEl.className = 'adverse-event-card';
+                var eaHeaderEl = document.createElement('div');
+                eaHeaderEl.className = 'adverse-event-card__header';
+                var eaIconEl = document.createElement('span');
+                eaIconEl.className = 'adverse-event-card__icon';
+                var eaIconI = document.createElement('i');
+                eaIconI.className = 'fas fa-exclamation-triangle';
+                eaIconI.setAttribute('aria-hidden', 'true');
+                eaIconEl.appendChild(eaIconI);
+                eaHeaderEl.appendChild(eaIconEl);
+                var eaNameEl = document.createElement('span');
+                eaNameEl.className = 'adverse-event-card__name';
+                eaNameEl.textContent = eaCard.title;
+                eaHeaderEl.appendChild(eaNameEl);
+                eaCardEl.appendChild(eaHeaderEl);
+                var eaDetailEl = document.createElement('div');
+                eaDetailEl.className = 'adverse-event-card__detail';
+                var eaFieldRows = [{ label: 'Estado', value: eaCard.statusText }];
+                var eaRows = Array.isArray(eaCard.rows) ? eaCard.rows : [];
+                for (var ri = 0; ri < eaRows.length; ri++) {
+                    eaFieldRows.push({ label: eaRows[ri].label, value: eaRows[ri].value });
+                }
+                var eaObservations = Array.isArray(eaCard.observations) ? eaCard.observations : [];
+                for (var oi = 0; oi < eaObservations.length; oi++) {
+                    eaFieldRows.push({ label: 'Registro', value: eaObservations[oi] });
+                }
+                for (var fi2 = 0; fi2 < eaFieldRows.length; fi2++) {
+                    var eaFieldRow = document.createElement('div');
+                    eaFieldRow.className = 'adverse-event-card__detail-row';
+                    var eaFieldLabel = document.createElement('span');
+                    eaFieldLabel.className = 'adverse-event-card__detail-label';
+                    eaFieldLabel.textContent = eaFieldRows[fi2].label + ':';
+                    var eaFieldValue = document.createElement('span');
+                    eaFieldValue.className = 'adverse-event-card__detail-value';
+                    eaFieldValue.textContent = eaFieldRows[fi2].value;
+                    eaFieldRow.appendChild(eaFieldLabel);
+                    eaFieldRow.appendChild(eaFieldValue);
+                    eaDetailEl.appendChild(eaFieldRow);
+                }
+                eaCardEl.appendChild(eaDetailEl);
+                container.appendChild(eaCardEl);
+            }
+            return;
+        }
         var events = patient.eventos_adversos || [];
         if (events.length === 0) {
             var emptyEl = document.createElement('div');
