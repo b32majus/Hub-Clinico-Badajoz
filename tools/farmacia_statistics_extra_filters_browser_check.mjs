@@ -4,6 +4,10 @@
 // quick filter "Gravedad de EA registrada" (#qf-gravedad, contract #685,
 // closed) and the ninth quick filter "Movimiento terapéutico registrado"
 // (#qf-movimiento, contract #686, closed).
+// D3c-2 (#867, decisión de Sil 29-10-2026): el filtro de gravedad (#685) y
+// el filtro EA antiguo se retiran; EA sale del modelo nuevo (ver
+// tools/farmacia_ea_statistics_browser_check.mjs). Este libro no tiene filas
+// 166: sus pacientes son EA «No registrado». Queda el oráculo de movimiento.
 // Synthetic data only. Supported interactions only (selectOption/click on the
 // real controls, Inicio upload + statistics popup flow, download parsing).
 // No DOM forcing, no readonly tampering, no traps.
@@ -24,10 +28,8 @@ const core = globalThis.FarmaciaExportV2Core;
 
 const RAW_COUNT = 4;
 const DEMO_COUNT = 3;
-const SEV_GRAVE = 'Grave';
+const SEV_GRAVE = 'Grave'; // severidades del fixture sintético (el filtro de gravedad se retiró en D3c-2)
 const SEV_LEVE = 'Leve';
-const EXPECTED_DEMO_SEVERITIES = ['leve', 'moderado'].sort();
-const EXPECTED_RAW_SEVERITIES = [SEV_GRAVE, SEV_LEVE].sort();
 
 function loadPlaywrightFromNpx() {
     for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
@@ -80,7 +82,7 @@ function fixture(name) {
 //                not become an option.
 //                One 'no_change_recorded' movement row + one row without
 //                movement data → no movement option at all.
-// Expected gravedad options: exactly ['Grave', 'Leve'].
+// (Severity data stays in the workbook; the gravedad filter is retired in D3c-2.)
 // Expected movimiento options (raw): exactly ['schedule_change', 'suspension'].
 const PATIENTS = [
     {
@@ -242,10 +244,6 @@ async function openStatistics(parent) {
     return child;
 }
 
-async function gravedadOptions(page) {
-    return page.locator('#qf-gravedad option').evaluateAll(options => options.map(option => option.value));
-}
-
 async function movimientoOptions(page) {
     return page.locator('#qf-movimiento option').evaluateAll(options => options.map(option => option.value));
 }
@@ -287,41 +285,14 @@ try {
     await waitForMode(demo, 'demo', DEMO_COUNT);
 
     try {
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 9, 'nine quick-filter groups');
-        assert.equal(await demo.locator('#qf-gravedad').getAttribute('data-quick-filter'), 'gravedad');
-        assert.equal((await demo.locator('label[for="qf-gravedad"]').textContent()).trim(), 'Gravedad de EA registrada');
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 10, 'ten quick-filter groups');
+        assert.equal(await demo.locator('#qf-gravedad').count(), 0, 'gravedad filter retired (D3c-2)');
         assert.equal(await demo.locator('#qf-movimiento').getAttribute('data-quick-filter'), 'movimiento');
         assert.equal((await demo.locator('label[for="qf-movimiento"]').textContent()).trim(), 'Movimiento terapéutico registrado');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-gravedad', 'qf-movimiento'], 'controls appended at the end');
-        ok('demo: ninth control present, labelled, appended last');
-    } catch (error) { bad('demo: ninth control present, labelled, appended last', error.message); }
-
-    try {
-        const options = await gravedadOptions(demo);
-        assert.equal(options[0], '', 'Todas base option');
-        assert.deepEqual(options.slice(1), EXPECTED_DEMO_SEVERITIES, 'exactly the explicit demo severities, sorted');
-        assert(!options.slice(1).includes('No registrado'), 'no fabricated No registrado option');
-        assert(!options.slice(1).includes('not_recorded'), 'no not_recorded option');
-        assert(!options.slice(1).some(value => value.trim() === ''), 'no empty-severity option');
-        ok('demo: gravedad options = explicit severities only (leve, moderado)');
-    } catch (error) { bad('demo: gravedad options = explicit severities only (leve, moderado)', error.message); }
-
-    try {
-        await demo.locator('#qf-gravedad').selectOption('leve');
-        await demo.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
-        assert.equal(await filteredCount(demo), 1, 'demo cohort filtered to 1');
-        assert.match(await demo.locator('#filter-result-count').textContent(), /1 de 3 pacientes/);
-        assert.match(await demo.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*1/, 'KPI reflects filtered cohort');
-        assert.equal(await demo.locator('#patients-table tbody tr').count(), 1, 'table rows filtered');
-        assert.match(await demo.locator('#patients-table tbody').innerText(), /CIP-DEMO-FH-001/);
-        assert.doesNotMatch(await demo.locator('#patients-table tbody').innerText(), /CIP-DEMO-FH-004/);
-        assert.match(await demo.locator('#cohort-pills').textContent(), /Gravedad de EA registrada: leve/);
-        await demo.locator('#qf-gravedad').selectOption('');
-        await demo.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 3);
-        assert.match(await demo.locator('#filter-result-count').textContent(), /Mostrando todos los pacientes \(3\)/);
-        ok('demo: severity selection filters cohort/counter/KPI/table/chip; Todas restores');
-    } catch (error) { bad('demo: severity selection filters cohort/counter/KPI/table/chip; Todas restores', error.message); }
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento'], 'movimiento stays last');
+        ok('demo: movimiento control present, labelled, last; no gravedad');
+    } catch (error) { bad('demo: movimiento control present, labelled, last; no gravedad', error.message); }
 
     try {
         const options = await movimientoOptions(demo);
@@ -366,84 +337,12 @@ try {
     const child = await openStatistics(parent);
 
     try {
-        const options = await gravedadOptions(child);
-        assert.deepEqual(options.slice(1), EXPECTED_RAW_SEVERITIES, 'raw: exactly the two explicit present severities');
-        assert(!options.slice(1).includes('Moderado'), 'raw: not_recorded severity does not become an option');
-        assert(!options.slice(1).some(value => value.trim() === ''), 'raw: empty severity does not become an option');
-        assert(!options.slice(1).includes('No registrado'), 'raw: no fabricated No registrado option');
-        ok('raw: gravedad options = explicit present severities only (Grave, Leve)');
-    } catch (error) { bad('raw: gravedad options = explicit present severities only (Grave, Leve)', error.message); }
-
-    try {
-        await child.locator('#qf-gravedad').selectOption(SEV_GRAVE);
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
-        assert.equal(await filteredCount(child), 2, 'Grave cohort is 2 patients');
-        assert.match(await child.locator('#filter-result-count').textContent(), /2 de 4 pacientes/);
-        assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*2/);
-        const ids = await tableIdentifiers(child);
-        assert.deepEqual(ids.sort(), ['CIP-GRAV-01', 'CIP-GRAV-02'], 'CIP-GRAV-01 with two present Grave EA appears once; absent+Grave (03) and present+empty (04) excluded');
-        assert.match(await child.locator('#cohort-pills').textContent(), new RegExp(`Gravedad de EA registrada: ${SEV_GRAVE}`));
-        ok('raw: Grave selection counts a two-EA patient once; absent+Grave and present+empty never match');
-    } catch (error) { bad('raw: Grave selection counts a two-EA patient once; absent+Grave and present+empty never match', error.message); }
-
-    try {
-        await child.locator('#qf-gravedad').selectOption(SEV_LEVE);
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
-        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-02'], 'Leve selects only the patient with an explicit present Leve EA');
-        ok('raw: different severity enables a different selection (Leve → only CIP-GRAV-02)');
-    } catch (error) { bad('raw: different severity enables a different selection (Leve → only CIP-GRAV-02)', error.message); }
-
-    try {
-        // AND semantics with the existing EA-presence filter: CIP-GRAV-04 is
-        // present but its severity is empty, so gravedad=Grave must exclude it.
-        await child.locator('#qf-gravedad').selectOption('');
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 4);
-        await child.locator('#qf-ea').selectOption('present');
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 3);
-        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-01', 'CIP-GRAV-02', 'CIP-GRAV-04'], 'EA presence alone includes the empty-severity patient');
-        await child.locator('#qf-gravedad').selectOption(SEV_GRAVE);
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
-        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-01', 'CIP-GRAV-02'], 'present+empty severity is excluded by gravedad=Grave despite EA-presence');
-        assert.equal(await child.locator('#qf-ea').inputValue(), 'present', 'EA-presence selection preserved');
-        ok('raw: EA-presence AND gravedad intersect; present+empty patient excluded only by gravedad');
-    } catch (error) { bad('raw: EA-presence AND gravedad intersect; present+empty patient excluded only by gravedad', error.message); }
-
-    try {
-        // Servicio AND gravedad: one population shared by counter/KPI/table/charts/CSV.
-        await child.locator('#qf-ea').selectOption('');
-        await child.locator('#qf-servicio').selectOption('Dermatología');
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
-        assert.equal(await filteredCount(child), 2, 'Servicio AND gravedad cohort is 2');
-        assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*2/);
-        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-01', 'CIP-GRAV-02']);
-        const chartText = await child.locator('#chart-riesgos-content').innerText();
-        assert.match(chartText, /Gravedad explícita/, 'gravedad chart block rendered');
-        assert.match(chartText, /Grave\s*2/, 'chart counts patients per severity (Grave: 2 patients)');
-        assert.match(chartText, /Leve\s*1/, 'chart counts patients per severity (Leve: 1 patient)');
-        assert.doesNotMatch(chartText, /Grave\s*3/, 'chart never counts the same patient twice for one severity');
-        const csvIds = await exportedCsvIdentifiers(child);
-        assert.deepEqual(csvIds, ['CIP-GRAV-01', 'CIP-GRAV-02'], 'CSV membership equals the filtered population');
-        ok('raw: Servicio AND gravedad produce the same population in counter/KPI/table/charts/CSV');
-    } catch (error) { bad('raw: Servicio AND gravedad produce the same population in counter/KPI/table/charts/CSV', error.message); }
-
-    try {
-        // Chip removal is coherent: removing gravedad keeps the Servicio filter.
-        await child.locator('button[aria-label="Quitar filtro Gravedad de EA registrada"]').click();
-        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 3
-            && document.getElementById('qf-gravedad').value === '');
-        assert.equal(await child.locator('#qf-servicio').inputValue(), 'Dermatología', 'Servicio selection survives gravedad chip removal');
-        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-01', 'CIP-GRAV-02', 'CIP-GRAV-04'], 'remaining population is the Servicio-only cohort');
-        ok('raw: gravedad chip removal clears only gravedad and keeps other filters');
-    } catch (error) { bad('raw: gravedad chip removal clears only gravedad and keeps other filters', error.message); }
-
-    try {
         // Zero matches: informative empty state, export disabled, no download.
-        // Cardiología (only CIP-GRAV-03, whose Grave EA is absent) combined
-        // with an explicit present Leve severity has no possible match — and
-        // would only match if absent severities leaked into the predicate.
+        // Cardiología (only CIP-GRAV-03, a brand change without an explicit
+        // movement act) combined with schedule_change has no possible match.
         await child.locator('#qf-servicio').selectOption('Cardiología');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
-        await child.locator('#qf-gravedad').selectOption(SEV_LEVE);
+        await child.locator('#qf-movimiento').selectOption('schedule_change');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 0);
         assert.equal(await child.locator('#no-results-message.hidden').count(), 0, 'empty state visible');
         assert.match(await child.locator('#no-results-message').innerText(), /No hay pacientes que coincidan/);
@@ -471,7 +370,7 @@ try {
 
     try {
         await child.locator('#qf-servicio').selectOption('');
-        await child.locator('#qf-gravedad').selectOption('');
+        await child.locator('#qf-movimiento').selectOption('');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 4);
         await child.locator('#qf-movimiento').selectOption('schedule_change');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
@@ -494,7 +393,7 @@ try {
         // patient events; no causal linking).
         await child.locator('#qf-movimiento').selectOption('schedule_change');
         await child.locator('#qf-servicio').selectOption('Dermatología');
-        await child.locator('#qf-ea').selectOption('present');
+        await child.locator('#qf-ea').selectOption('not_recorded');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
         assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-01', 'CIP-GRAV-02'], 'Servicio AND EA AND movimiento cohort');
         assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*2/);
@@ -510,11 +409,6 @@ try {
         assert.match(chartText, /Movimientos explícitos/, 'movimientos chart block still rendered for the final cohort');
         assert.match(chartText, /schedule_change\s*1/, 'movement chart counts only the final cohort (schedule_change: 1 patient)');
         assert.doesNotMatch(chartText, /schedule_change\s*2/, 'movement chart reflects the narrowing (schedule_change was 2 before principio)');
-        const severityChartText = await child.locator('#chart-riesgos-content').innerText();
-        assert.match(severityChartText, /Gravedad explícita/, 'gravedad chart block rendered for the final cohort');
-        assert.match(severityChartText, /Grave\s*1/, 'severity chart counts the final cohort (Grave: 1 patient)');
-        assert.match(severityChartText, /Leve\s*1/, 'severity chart counts the final cohort (Leve: 1 patient)');
-        assert.doesNotMatch(severityChartText, /Grave\s*2/, 'severity chart reflects the narrowing (Grave was 2 before principio)');
         const csvIds = await exportedCsvIdentifiers(child);
         assert.deepEqual(csvIds, ['CIP-GRAV-02'], 'CSV membership equals the filtered population');
         ok('raw: MOV AND EA AND principio activo AND servicio produce exactly that cohort in table/KPI/charts/CSV');
@@ -525,7 +419,7 @@ try {
         await child.locator('#qf-movimiento').selectOption('');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
         assert.equal(await child.locator('#qf-servicio').inputValue(), 'Dermatología', 'Servicio selection survives movimiento clearing');
-        assert.equal(await child.locator('#qf-ea').inputValue(), 'present', 'EA selection survives movimiento clearing');
+        assert.equal(await child.locator('#qf-ea').inputValue(), 'not_recorded', 'EA selection survives movimiento clearing');
         assert.equal(await child.locator('#qf-principio').inputValue(), 'Molécula sintética G-02', 'Principio activo selection survives movimiento clearing');
         await child.locator('#qf-movimiento').selectOption('schedule_change');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
@@ -533,13 +427,14 @@ try {
         await child.waitForFunction(() => document.getElementById('qf-movimiento').value === '');
         assert.equal(await filteredCount(child), 1, 'movimiento chip removal keeps the intersection of the remaining filters');
         assert.equal(await child.locator('#qf-servicio').inputValue(), 'Dermatología', 'Servicio selection survives movimiento chip removal');
-        assert.equal(await child.locator('#qf-ea').inputValue(), 'present', 'EA selection survives movimiento chip removal');
+        assert.equal(await child.locator('#qf-ea').inputValue(), 'not_recorded', 'EA selection survives movimiento chip removal');
         assert.equal(await child.locator('#qf-principio').inputValue(), 'Molécula sintética G-02', 'Principio activo selection survives movimiento chip removal');
         // Return to the zero-match empty state so the following "Limpiar
-        // filtros" case runs against the same precondition as before U2
-        // (Cardiología patient has no EA present and no explicit movement).
+        // filtros" case runs against an empty precondition (Cardiología
+        // patient has no explicit movement).
         await child.locator('#qf-principio').selectOption('');
         await child.locator('#qf-servicio').selectOption('Cardiología');
+        await child.locator('#qf-movimiento').selectOption('schedule_change');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 0);
         ok('raw: selecting/clearing/removing movimiento never clears the other filters');
     } catch (error) { bad('raw: selecting/clearing/removing movimiento never clears the other filters', error.message); }
@@ -548,17 +443,13 @@ try {
         // Clear filters returns the initial state on every surface.
         await child.locator('#empty-clear-filters').click();
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 4);
-        assert.equal(await child.locator('#qf-gravedad').inputValue(), '');
         assert.equal(await child.locator('#qf-movimiento').inputValue(), '');
         assert.equal(await child.locator('#qf-servicio').inputValue(), '');
         assert.equal(await child.locator('#qf-ea').inputValue(), '');
         assert.match(await child.locator('#cohort-pills').textContent(), /Sin filtros activos/);
         assert.match(await child.locator('#filter-result-count').textContent(), /Mostrando todos los pacientes \(4\)/);
-        const chartText = await child.locator('#chart-riesgos-content').innerText();
-        assert.match(chartText, /Grave\s*2/, 'unfiltered chart: CIP-GRAV-01 counted once for Grave (2 patients with Grave)');
-        assert.doesNotMatch(chartText, /Grave\s*3/, 'unfiltered chart: no event-level double count for Grave');
-        ok('raw: Limpiar filtros returns to the initial state; severity chart counts patients once');
-    } catch (error) { bad('raw: Limpiar filtros returns to the initial state; severity chart counts patients once', error.message); }
+        ok('raw: Limpiar filtros returns to the initial state');
+    } catch (error) { bad('raw: Limpiar filtros returns to the initial state', error.message); }
 
     const filteredNoise = consoleErrors.filter(t => !resourceNoise(t));
     try {

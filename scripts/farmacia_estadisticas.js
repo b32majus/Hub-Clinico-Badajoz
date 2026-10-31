@@ -62,12 +62,9 @@
             careStatus: patient.care_status || 'not_recorded',
             validationResult: patient.latest_validation && patient.latest_validation.validation_result || 'not_recorded',
             adherenceResult: present(adherence.result) ? String(adherence.result) : 'not_recorded',
-            adverseStatus: patient.adverse_event_overall_status || 'not_recorded',
+            adverseStatus: Cohort.eaCategory(patient),
             promInstruments: unique(latestProms.map(function (prom) { return prom.instrument; })),
-            movementTypes: unique((patient.therapeutic_movements || []).map(function (movement) { return movement.type; })),
-            adverseSeverities: unique((patient.adverse_events || []).filter(function (event) {
-                return event.status === 'present';
-            }).map(function (event) { return event.severity; }))
+            movementTypes: unique((patient.therapeutic_movements || []).map(function (movement) { return movement.type; }))
         };
     }
 
@@ -176,8 +173,30 @@
     }
 
     function adverseLabel(value) {
-        var labels = { present: 'Presente', absent: 'Ausencia registrada', not_recorded: 'No registrado' };
+        var labels = {
+            episodes: 'Con episodios registrados',
+            no_episodes: 'Sin episodios registrados',
+            not_recorded: 'No registrado',
+            error: 'Error de lectura'
+        };
         return labels[value] || text(value);
+    }
+
+    // Filtros EA declarados en la página, en el vocabulario del modelo puro.
+    // Sólo se envían las claves presentes: nunca se completa lo no declarado.
+    function eaFiltersOf(filters) {
+        var declared = {};
+        if (present(filters && filters.ea_sospechoso)) declared.suspect = filters.ea_sospechoso;
+        if (present(filters && filters.ea_metodo)) declared.method = filters.ea_metodo;
+        return declared;
+    }
+
+    function eaRecords(items) {
+        return (items || []).map(function (item) { return item.record; });
+    }
+
+    function eaSummaryOf(items) {
+        return Cohort.eaSummary(eaRecords(items), eaFiltersOf(currentFilters));
     }
 
     function explicitMovementTypes(types) {
@@ -187,7 +206,7 @@
     }
 
     function deriveFilterOptions() {
-        var values = { servicio: [], patologia: [], farmaco: [], principio: [], estado: [], ea: [], adherencia: [], gravedad: [], movimiento: [] };
+        var values = { servicio: [], patologia: [], farmaco: [], principio: [], estado: [], ea: [], adherencia: [], movimiento: [] };
         allPatients.forEach(function (item) {
             values.servicio = values.servicio.concat(item.profile.services);
             values.patologia = values.patologia.concat(item.profile.pathologies);
@@ -196,10 +215,12 @@
             values.estado.push(item.profile.careStatus);
             values.ea.push(item.profile.adverseStatus);
             values.adherencia.push(item.profile.adherenceResult);
-            values.gravedad = values.gravedad.concat(item.profile.adverseSeverities);
             values.movimiento = values.movimiento.concat(explicitMovementTypes(item.profile.movementTypes));
         });
         Object.keys(values).forEach(function (key) { values[key] = unique(values[key]); });
+        var eaOptions = Cohort.eaFilterOptions(eaRecords(allPatients));
+        values.ea_sospechoso = eaOptions.suspects;
+        values.ea_metodo = eaOptions.methods;
         return values;
     }
 
@@ -223,7 +244,8 @@
         fillSelect('qf-patologia', options.patologia, 'Todas');
         fillSelect('qf-farmaco', options.farmaco, 'Todos');
         fillSelect('qf-principio', options.principio, 'Todos');
-        fillSelect('qf-gravedad', options.gravedad, 'Todas');
+        fillSelect('qf-ea_sospechoso', options.ea_sospechoso, 'Todos');
+        fillSelect('qf-ea_metodo', options.ea_metodo, 'Todos');
         fillSelect('qf-movimiento', options.movimiento, 'Todos');
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
         fillSelect('qf-ea', options.ea, 'Todos', adverseLabel);
@@ -242,15 +264,16 @@
 
     function matches(item, filters) {
         var profile = item.profile;
+        var eaFilters = eaFiltersOf(filters);
         if (filters.servicio && profile.services.indexOf(filters.servicio) === -1) return false;
         if (filters.patologia && profile.pathologies.indexOf(filters.patologia) === -1) return false;
         if (filters.farmaco && profile.drugNames.indexOf(filters.farmaco) === -1 && profile.activeIngredients.indexOf(filters.farmaco) === -1) return false;
         if (filters.principio && profile.activeIngredients.indexOf(filters.principio) === -1) return false;
-        if (filters.gravedad && profile.adverseSeverities.indexOf(filters.gravedad) === -1) return false;
         if (filters.movimiento && profile.movementTypes.indexOf(filters.movimiento) === -1) return false;
         if (filters.estado && profile.careStatus !== filters.estado) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
+        if (Object.keys(eaFilters).length && !Cohort.eaMatches(item.record, eaFilters)) return false;
         return true;
     }
 
@@ -274,18 +297,16 @@
         var services = [];
         var pathologies = [];
         var drugs = [];
-        var adverseCount = 0;
         filteredPatients.forEach(function (item) {
             services = services.concat(item.profile.services.filter(function (value) { return value.toLowerCase() !== 'farmacia'; }));
             pathologies = pathologies.concat(item.profile.pathologies);
             drugs = drugs.concat(item.profile.activeIngredients);
-            if (item.profile.adverseStatus === 'present') adverseCount += 1;
         });
         setText('summary-pacientes', String(filteredPatients.length));
         setText('summary-servicios', String(unique(services).length));
         setText('summary-patologias', String(unique(pathologies).length));
         setText('summary-farmacos', String(unique(drugs).length));
-        setText('summary-ea', String(adverseCount));
+        setText('summary-ea', String(eaSummaryOf(filteredPatients).patientsWithEpisodes));
     }
 
     function renderKpis() {
@@ -293,13 +314,12 @@
         if (!container) return;
         clearChildren(container);
         var values = {
-            active: 0, prom: 0, adherence: 0, adverse: 0, pending: 0
+            active: 0, prom: 0, adherence: 0, pending: 0
         };
         filteredPatients.forEach(function (item) {
             if (item.profile.activeLines.length) values.active += 1;
             if ((item.record.proms || []).length) values.prom += 1;
             if (item.profile.adherenceResult !== 'not_recorded') values.adherence += 1;
-            if (item.profile.adverseStatus === 'present') values.adverse += 1;
             if (item.profile.validationResult === 'pending') values.pending += 1;
         });
         var cards = [
@@ -307,7 +327,7 @@
             ['stats-kpi-card--green', 'fa-syringe', 'Tratamiento activo explícito', values.active],
             ['stats-kpi-card--orange', 'fa-clipboard-check', 'PROM registrado', values.prom],
             ['stats-kpi-card--purple', 'fa-list-check', 'Adherencia registrada', values.adherence],
-            ['stats-kpi-card--yellow', 'fa-exclamation-circle', 'EA presentes', values.adverse],
+            ['stats-kpi-card--yellow', 'fa-exclamation-circle', 'Pacientes con EA registrado', eaSummaryOf(filteredPatients).patientsWithEpisodes],
             ['stats-kpi-card--red', 'fa-clock', 'Validación pendiente explícita', values.pending]
         ];
         cards.forEach(function (data) {
@@ -331,7 +351,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', gravedad: 'Gravedad de EA registrada', movimiento: 'Movimiento terapéutico registrado' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
@@ -362,6 +382,14 @@
             unique(getter(item) || []).forEach(function (value) { counts[value] = (counts[value] || 0) + 1; });
         });
         return Object.keys(counts).map(function (label) { return { label: label, value: counts[label] }; })
+            .sort(function (left, right) { return right.value - left.value || compareText(left.label, right.label); });
+    }
+
+    // Conteos ya agregados por el modelo EA: sólo lo observado (> 0), ordenado
+    // por valor descendente y después por etiqueta.
+    function countPairs(counts) {
+        return Object.keys(counts || {}).filter(function (label) { return counts[label] > 0; })
+            .map(function (label) { return { label: label, value: counts[label] }; })
             .sort(function (left, right) { return right.value - left.value || compareText(left.label, right.label); });
     }
 
@@ -470,9 +498,18 @@
         }
         if (risks) {
             clearChildren(risks);
+            var summary = eaSummaryOf(filteredPatients);
+            var denominators = el('p', 'stats-ea-denominators', 'Pacientes con episodios: '
+                + summary.patientsWithEpisodes + ' de ' + summary.patientsTotal
+                + ' · Episodios: ' + summary.episodes + ' · Observaciones: ' + summary.observations);
+            denominators.setAttribute('data-stats-ea-denominators', '');
+            risks.appendChild(denominators);
             var risksGrid = el('div', 'stats-donut-grid');
-            risksGrid.appendChild(donutGroup('EA present / absent / not_recorded', countValues(filteredPatients, function (item) { return [item.profile.adverseStatus]; })));
-            risksGrid.appendChild(donutGroup('Gravedad explícita', countValues(filteredPatients, function (item) { return item.profile.adverseSeverities; })));
+            risksGrid.appendChild(donutGroup('EA por paciente', countPairs(summary.categories).map(function (item) {
+                return { label: adverseLabel(item.label), value: item.value };
+            })));
+            risksGrid.appendChild(chartGroup('Último estado registrado (episodios)', countPairs(summary.states)));
+            risksGrid.appendChild(chartGroup('Sospechosos (episodios)', countPairs(summary.suspects)));
             risks.appendChild(risksGrid);
         }
     }
@@ -525,9 +562,14 @@
                 ? text(patient.clinical_activity.instrument) + ' ' + text(patient.clinical_activity.value, '') : 'No registrado'));
             var adherenceClass = profile.adherenceResult === 'not_recorded' ? 'stats-badge--pendiente' : 'stats-badge--bajo';
             row.appendChild(el('td')).appendChild(badge(profile.adherenceResult === 'multiple' ? 'Múltiple' : (profile.adherenceResult === 'not_recorded' ? 'No registrado' : profile.adherenceResult), adherenceClass));
-            var adverseClass = profile.adverseStatus === 'present' ? 'stats-badge--alto'
-                : (profile.adverseStatus === 'absent' ? 'stats-badge--no' : 'stats-badge--pendiente');
-            row.appendChild(el('td')).appendChild(badge(adverseLabel(profile.adverseStatus), adverseClass));
+            if (profile.adverseStatus === 'episodes') {
+                var eaEpisodes = patient.ea_episodes.model.episodes;
+                var openEpisodes = eaEpisodes.filter(function (episode) { return episode.closed !== true; }).length;
+                row.appendChild(el('td')).appendChild(badge(eaEpisodes.length
+                    + (eaEpisodes.length === 1 ? ' episodio' : ' episodios') + ' · ' + openEpisodes + ' sin cierre', 'stats-badge--alto'));
+            } else {
+                row.appendChild(el('td')).appendChild(badge(adverseLabel(profile.adverseStatus), 'stats-badge--pendiente'));
+            }
             var validationClass = profile.validationResult === 'validated'
                 ? 'stats-badge--validado' : (profile.validationResult === 'denied' ? 'stats-badge--alto' : 'stats-badge--pendiente');
             row.appendChild(el('td')).appendChild(badge(careLabel(profile.validationResult), validationClass));

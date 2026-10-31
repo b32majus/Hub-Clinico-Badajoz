@@ -443,6 +443,27 @@
         return result === 'validated' || result === 'denied' || result === 'pending' ? result : 'not_recorded';
     }
 
+    // EA 0..N por paciente: envelope V2 tal cual se lee, traducido por el modelo
+    // de pantalla. Ausente ≠ NO: sin contrato o sin modelo se declara
+    // `unavailable`, nunca «sin EA».
+    function patientEaEpisodes(dataPort, patientId) {
+        var contractModule = root.FarmaciaPatientReadContractV2;
+        var screenModel = root.HubTools && root.HubTools.farmaciaEaScreenModel;
+        if (!contractModule || typeof contractModule.create !== 'function'
+            || !screenModel || typeof screenModel.fromEnvelope !== 'function') {
+            return { status: 'unavailable' };
+        }
+        try {
+            var contract = contractModule.create({ source: dataPort });
+            if (!contract || typeof contract.readAdverseEventEpisodes !== 'function') {
+                return { status: 'unavailable' };
+            }
+            return screenModel.fromEnvelope(contract.readAdverseEventEpisodes(patientId));
+        } catch (problem) {
+            return { status: 'error' };
+        }
+    }
+
     function rawPatient(dataPort, summary, metadata) {
         var patientId = summary.patient_id;
         var projection = dataPort.getPatientProjection(patientId) || {};
@@ -463,6 +484,8 @@
         var warnings = Array.isArray(projection.warnings) ? clone(projection.warnings) : [];
         var latestRequest = normalizeRequest(requestValidation.latest_request);
         var latestValidation = normalizeValidation(requestValidation.latest_validation);
+        var eaEpisodes = patientEaEpisodes(dataPort, patientId);
+        var eaSuspectLabelMap = eaEpisodes.status === 'ok' ? eaSuspectLabels(eaEpisodes.model, lines) : {};
         return {
             stats_schema_version: VERSION,
             source_mode: 'raw',
@@ -506,7 +529,9 @@
                     source_sheet: event.source_sheet,
                     source_table: event.source_table
                 };
-            })
+            }),
+            ea_episodes: eaEpisodes,
+            ea_suspect_labels: eaSuspectLabelMap
         };
     }
 
@@ -530,6 +555,222 @@
             return compareText(left.primary_identifier_value, right.primary_identifier_value)
                 || compareText(left.patient_id, right.patient_id);
         });
+    }
+
+    // --- EA 0..N en Estadísticas (Tramo D3c-1, issue #867) --------------------
+    // Funciones puras: no mutan sus entradas, no completan huecos y nunca dicen
+    // «activo». El sospechoso se muestra con el nombre de fármaco de UNA línea
+    // declarada con ese `line_id`; si no hay un nombre único, la referencia tal
+    // cual. Ausente ≠ NO: sin modelo nuevo un paciente es `not_recorded`.
+    var EA_FILTER_KEYS = ['suspect', 'method'];
+    var EA_UNDETERMINED_STATE = 'último estado no determinable';
+    var EA_NO_EVOLUTION_STATE = 'sin evolución indicada';
+
+    function eaModelOf(record) {
+        var envelope = record && typeof record === 'object' ? record.ea_episodes : null;
+        return envelope && typeof envelope === 'object' && envelope.status === 'ok'
+            && envelope.model && typeof envelope.model === 'object' ? envelope.model : null;
+    }
+
+    function eaEpisodesOf(record) {
+        var model = eaModelOf(record);
+        return model && Array.isArray(model.episodes) ? model.episodes : null;
+    }
+
+    // Etiqueta declarada de una referencia: el nombre de fármaco único de sus
+    // líneas o, si no hay ninguno o hay varios distintos, la referencia.
+    function eaLineLabel(lines, ref) {
+        var names = [];
+        (lines || []).forEach(function (line) {
+            if (!line || line.line_id !== ref || !present(line.drug_name)) return;
+            var name = String(line.drug_name);
+            if (names.indexOf(name) === -1) names.push(name);
+        });
+        return names.length === 1 ? names[0] : ref;
+    }
+
+    function eaLabelOf(ref, labels) {
+        return labels && own(labels, ref) && present(labels[ref]) ? String(labels[ref]) : ref;
+    }
+
+    // Referencias declaradas por el modelo, en orden de primera aparición: las
+    // de `suspects` de cada episodio y las de `medicationRef` de cada evaluación.
+    function eaSuspectRefs(model) {
+        var refs = [];
+        var seen = Object.create(null);
+        var episodes = model && Array.isArray(model.episodes) ? model.episodes : [];
+        episodes.forEach(function (episode) {
+            (Array.isArray(episode && episode.suspects) ? episode.suspects : []).forEach(function (ref) {
+                if (!present(ref) || seen[ref]) return;
+                seen[ref] = true;
+                refs.push(ref);
+            });
+            (Array.isArray(episode && episode.observations) ? episode.observations : []).forEach(function (observation) {
+                var evaluations = Array.isArray(observation && observation.evaluations) ? observation.evaluations : [];
+                evaluations.forEach(function (evaluation) {
+                    var ref = evaluation && evaluation.medicationRef;
+                    if (!present(ref) || seen[ref]) return;
+                    seen[ref] = true;
+                    refs.push(ref);
+                });
+            });
+        });
+        return refs;
+    }
+
+    function eaSuspectLabels(model, lines) {
+        var labels = {};
+        eaSuspectRefs(model).forEach(function (ref) {
+            labels[ref] = eaLineLabel(lines, ref);
+        });
+        return labels;
+    }
+
+    function eaCategory(record) {
+        var envelope = record && typeof record === 'object' ? record.ea_episodes : null;
+        if (!envelope || typeof envelope !== 'object') return 'not_recorded';
+        if (envelope.status === 'error') return 'error';
+        if (envelope.status !== 'ok') return 'not_recorded';
+        var episodes = eaEpisodesOf(record);
+        if (!episodes) return 'error';
+        return episodes.length ? 'episodes' : 'no_episodes';
+    }
+
+    function eaStateLabelOf(episode) {
+        if (episode && episode.ambiguous === true) return EA_UNDETERMINED_STATE;
+        var label = episode && episode.stateLabel;
+        return present(label) ? String(label) : EA_NO_EVOLUTION_STATE;
+    }
+
+    function eaFilterOptions(records) {
+        var suspects = [];
+        var methods = [];
+        var suspectSeen = Object.create(null);
+        var methodSeen = Object.create(null);
+        (records || []).forEach(function (record) {
+            if (eaCategory(record) !== 'episodes') return;
+            var labels = record.ea_suspect_labels;
+            eaEpisodesOf(record).forEach(function (episode) {
+                (Array.isArray(episode && episode.suspects) ? episode.suspects : []).forEach(function (ref) {
+                    if (!present(ref)) return;
+                    var label = eaLabelOf(ref, labels);
+                    if (suspectSeen[label]) return;
+                    suspectSeen[label] = true;
+                    suspects.push(label);
+                });
+                (Array.isArray(episode && episode.methods) ? episode.methods : []).forEach(function (method) {
+                    if (!present(method) || methodSeen[method]) return;
+                    methodSeen[method] = true;
+                    methods.push(String(method));
+                });
+            });
+        });
+        return { suspects: suspects.sort(compareText), methods: methods.sort(compareText) };
+    }
+
+    function eaIsPlainFilters(value) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+        var prototype = Object.getPrototypeOf(value);
+        return prototype === null || Object.getPrototypeOf(prototype) === null;
+    }
+
+    // Filtros EA: ausentes equivalen a `{}`; en otro caso sólo `suspect` y/o
+    // `method`, ambos strings no vacíos. Nunca se completa lo que no se declara.
+    function eaReadFilters(filters) {
+        if (filters === undefined) return { suspect: null, method: null };
+        if (!eaIsPlainFilters(filters)) throw new TypeError('EA_FILTER_INVALID');
+        var keys = Object.keys(filters);
+        for (var index = 0; index < keys.length; index += 1) {
+            if (EA_FILTER_KEYS.indexOf(keys[index]) === -1) throw new TypeError('EA_FILTER_INVALID');
+            if (typeof filters[keys[index]] !== 'string' || !present(filters[keys[index]])) {
+                throw new TypeError('EA_FILTER_INVALID');
+            }
+        }
+        return {
+            suspect: own(filters, 'suspect') ? filters.suspect : null,
+            method: own(filters, 'method') ? filters.method : null
+        };
+    }
+
+    function eaEpisodeMatches(episode, suspect, method, labels) {
+        if (!episode || typeof episode !== 'object') return false;
+        if (suspect === null && method === null) return true;
+        var declaredSuspects = Array.isArray(episode.suspects) ? episode.suspects : [];
+        if (method === null) {
+            return declaredSuspects.some(function (ref) {
+                return present(ref) && eaLabelOf(ref, labels) === suspect;
+            });
+        }
+        if (suspect === null) {
+            var declaredMethods = Array.isArray(episode.methods) ? episode.methods : [];
+            return declaredMethods.indexOf(method) !== -1;
+        }
+        var observations = Array.isArray(episode.observations) ? episode.observations : [];
+        return observations.some(function (observation) {
+            var evaluations = Array.isArray(observation && observation.evaluations) ? observation.evaluations : [];
+            return evaluations.some(function (evaluation) {
+                return evaluation && evaluation.method === method
+                    && present(evaluation.medicationRef)
+                    && eaLabelOf(evaluation.medicationRef, labels) === suspect;
+            });
+        });
+    }
+
+    function eaMatches(record, filters) {
+        var declared = eaReadFilters(filters);
+        if (declared.suspect === null && declared.method === null) return true;
+        if (eaCategory(record) !== 'episodes') return false;
+        var labels = record.ea_suspect_labels;
+        return eaEpisodesOf(record).some(function (episode) {
+            return eaEpisodeMatches(episode, declared.suspect, declared.method, labels);
+        });
+    }
+
+    // Tres denominadores (pacientes / episodios / observaciones) sobre los
+    // episodios que cumplen; las categorías cuentan TODOS los registros.
+    function eaSummary(records, filters) {
+        var declared = eaReadFilters(filters);
+        var list = Array.isArray(records) ? records : [];
+        var categories = { episodes: 0, no_episodes: 0, not_recorded: 0, error: 0 };
+        var states = {};
+        var suspects = {};
+        var patientsWithEpisodes = 0;
+        var episodes = 0;
+        var observations = 0;
+        list.forEach(function (record) {
+            categories[eaCategory(record)] += 1;
+            var recordEpisodes = eaEpisodesOf(record);
+            if (!recordEpisodes) return;
+            var labels = record && record.ea_suspect_labels;
+            var matched = recordEpisodes.filter(function (episode) {
+                return eaEpisodeMatches(episode, declared.suspect, declared.method, labels);
+            });
+            if (!matched.length) return;
+            patientsWithEpisodes += 1;
+            episodes += matched.length;
+            matched.forEach(function (episode) {
+                observations += Array.isArray(episode.observations) ? episode.observations.length : 0;
+                var stateKey = eaStateLabelOf(episode);
+                states[stateKey] = (states[stateKey] || 0) + 1;
+                var seenLabels = Object.create(null);
+                (Array.isArray(episode.suspects) ? episode.suspects : []).forEach(function (ref) {
+                    if (!present(ref)) return;
+                    var label = eaLabelOf(ref, labels);
+                    if (seenLabels[label]) return;
+                    seenLabels[label] = true;
+                    suspects[label] = (suspects[label] || 0) + 1;
+                });
+            });
+        });
+        return {
+            patientsTotal: list.length,
+            patientsWithEpisodes: patientsWithEpisodes,
+            episodes: episodes,
+            observations: observations,
+            categories: categories,
+            states: states,
+            suspects: suspects
+        };
     }
 
     function demoEvent(type, date, index) {
@@ -758,6 +999,11 @@
         buildRawCohort: buildRawCohort,
         buildDemoCohort: buildDemoCohort,
         buildCsvRows: buildCsvRows,
-        serializeCsv: serializeCsv
+        serializeCsv: serializeCsv,
+        eaSuspectLabels: eaSuspectLabels,
+        eaCategory: eaCategory,
+        eaFilterOptions: eaFilterOptions,
+        eaMatches: eaMatches,
+        eaSummary: eaSummary
     });
 })(typeof window !== 'undefined' ? window : globalThis);

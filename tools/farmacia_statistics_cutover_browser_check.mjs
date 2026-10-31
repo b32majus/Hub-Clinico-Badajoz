@@ -301,8 +301,11 @@ try {
   assert.doesNotMatch(await child.locator('#chart-evolucion-content').innerText(), /PROM-HISTÓRICO/, 'PROM chart excludes historical instruments');
   assert.match(await child.locator('#chart-tratamiento-content').innerText(), /schedule_change[\s\S]*suspension/, 'movement chart retains explicit changes and structured suspension');
   assert.doesNotMatch(await child.locator('#chart-tratamiento-content').innerText(), /no_change_recorded/, 'movement chart excludes explicit absence of change');
-  assert.match(await child.locator('#chart-riesgos-content').innerText(), /present \/ absent \/ not_recorded/);
-  assert.deepEqual(await child.locator('#qf-ea option').evaluateAll(options => options.slice(1).map(option => option.value).sort()), ['absent', 'not_recorded', 'present']);
+  // D3c-2 (#867): EA en Estadísticas sale del modelo nuevo; este libro 152 no
+  // tiene filas 166, así que todos sus pacientes son «No registrado» (≠ sin EA).
+  assert.match(await child.locator('#chart-riesgos-content').innerText(), /EA por paciente[\s\S]*No registrado\s*55/);
+  assert.doesNotMatch(await child.locator('#chart-riesgos-content').innerText(), /present \/ absent|Gravedad/);
+  assert.deepEqual(await child.locator('#qf-ea option').evaluateAll(options => options.slice(1).map(option => option.value).sort()), ['not_recorded']);
   assert((await child.locator('#qf-adherencia option').evaluateAll(options => options.slice(1).map(option => option.value))).includes('multiple'));
 
   for (const id of ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado']) {
@@ -314,9 +317,8 @@ try {
     await child.locator('#clear-quick-filters').click();
     await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 55);
   }
-  await child.locator('#qf-ea').selectOption('absent');
-  await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
-  assert.match(await child.locator('#patients-table tbody').innerText(), /CIP-STAT-002/);
+  await child.locator('#qf-ea').selectOption('not_recorded');
+  await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 55);
   await child.locator('#clear-quick-filters').click();
   await child.locator('#qf-adherencia').selectOption('multiple');
   await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
