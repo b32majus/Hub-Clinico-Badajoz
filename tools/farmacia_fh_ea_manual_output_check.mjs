@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// A3 (#871): un «otro fármaco» activo (tipo por defecto o Concomitante) es una línea de la visita y se sospecha como `line:<id>`. Este check prueba las referencias `other:<uid>`, que siguen siendo las de los tratamientos NO activos: cada alta nace como histórico.
 // tools/farmacia_fh_ea_manual_output_check.mjs
 // FH-EA-MANUAL-01 — proyección EA 0..N en las DOS salidas manuales de
 // Seguimiento: TXT JARA (un informe por visita) y Excel WO8 manual (una fila
@@ -296,7 +297,7 @@ const eaC1 = addIncorporatedEa({ description: 'EA de la línea A', severity: 'Mo
 const eaC2 = addIncorporatedEa({ description: 'EA de la línea B', severity: 'Leve', evolution: 'si', suspects: ['line:LINE-B'] });
 const eaC3 = addIncorporatedEa({ description: 'EA compartido', severity: 'Grave', evolution: 'no', suspects: ['line:LINE-A', 'line:LINE-B'] });
 const eaC4 = addIncorporatedEa({ description: 'EA sin sospechoso', suspects: [] });
-api.addFollowupOtherDrug();
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico');
 const otherUid = api.getFollowupOtherDrugs()[0].uid;
 // Un sospechoso externo solo puede marcarse si el tratamiento tiene nombre
 // real (G0 nunca ofrece etiquetas técnicas de relleno).
@@ -591,10 +592,10 @@ const eaBlockOf = (text) => {
 
 buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1B', dispense: ['LINE-A'] });
 api.setEaPresent('si');
-api.addFollowupOtherDrug();
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico');
 const homonymOne = api.getFollowupOtherDrugs()[0].uid;
 api.updateFollowupOtherDrug(homonymOne, 'farmaco', 'Mismo nombre');
-api.addFollowupOtherDrug();
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico');
 const homonymTwo = api.getFollowupOtherDrugs()[1].uid;
 api.updateFollowupOtherDrug(homonymTwo, 'farmaco', 'Mismo nombre');
 addIncorporatedEa({ description: 'EA con homónimos', suspects: ['other:' + homonymTwo] });

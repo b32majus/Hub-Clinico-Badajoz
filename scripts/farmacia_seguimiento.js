@@ -654,8 +654,135 @@
             sourceType: '',
             fechaInicio: '',
             fechaFin: '',
-            motivo: ''
+            motivo: '',
+            line_id: '',
+            treatment_id: ''
         };
+    }
+
+    // #871 A3: un «otro fármaco» ACTIVO (línea existente o concomitante) es la
+    // misma entidad que el primer fármaco: una línea de ESTA visita. La línea
+    // es una proyección sincronizada de lo que el clínico escribió; nunca se
+    // infiere pauta, dosis, vía ni fecha de inicio.
+    function followupOtherDrugIsActiveLine(drug) {
+        if (!drug) return false;
+        return drug.relationType === 'Tratamiento activo previo / línea existente' ||
+            drug.relationType === 'Concomitante';
+    }
+
+    function followupOtherDrugDisplayName(drug) {
+        return drug ? firstNonEmpty(drug.farmaco, drug.principioActivo) : '';
+    }
+
+    function applyOtherDrugLineFields(line, drug) {
+        var display = followupOtherDrugDisplayName(drug);
+        line.farmaco_nombre = drug.farmaco || '';
+        line.principio_activo = drug.principioActivo || '';
+        line.presentacion = drug.presentacion || '';
+        line.dosis_texto = drug.dosis || '';
+        line.via = drug.via || '';
+        line.pauta_label = drug.pauta || '';
+        line.pauta_codigo = drug.pautaCodigo || '';
+        line.pauta_otro_texto = drug.pautaOtro || '';
+        line.codigo_nacional = drug.codigoNacional || '';
+        line.nregistro = drug.nregistro || '';
+        line.selected_drug_id = drug.selectedDrugId || '';
+        line.source_type = drug.sourceType || '';
+        line.nombre_linea = display;
+        line.nombre_comercial = drug.farmaco || '';
+        line.fuente = 'seguimiento_otro_farmaco';
+        line.candidate_explicit = true;
+        return display;
+    }
+
+    function createOtherDrugLine(drug) {
+        if (!drug.line_id) {
+            var identity = followupSessionLineIdentity(currentBiologicLines);
+            drug.line_id = identity.lineId;
+            drug.treatment_id = identity.treatmentId;
+        }
+        var line = normalizeBiologicLine({
+            linea_id: drug.line_id,
+            tratamiento_id_principal: drug.treatment_id || '',
+            farmaco_nombre: drug.farmaco || '',
+            principio_activo: drug.principioActivo || '',
+            presentacion: drug.presentacion || '',
+            dosis_texto: drug.dosis || '',
+            via: drug.via || '',
+            pauta_label: drug.pauta || '',
+            pauta_codigo: drug.pautaCodigo || '',
+            pauta_otro_texto: drug.pautaOtro || '',
+            codigo_nacional: drug.codigoNacional || '',
+            nregistro: drug.nregistro || '',
+            selected_drug_id: drug.selectedDrugId || '',
+            source_type: drug.sourceType || '',
+            fuente: 'seguimiento_otro_farmaco',
+            candidate_explicit: true
+        }, { cip: currentFollowupVisit.cip }, { estado_linea: 'active', tipo_relacion: 'additional' });
+        line.session_new = true;
+        line.other_uid = drug.uid;
+        applyOtherDrugLineFields(line, drug);
+        return line;
+    }
+
+    function findProjectedOtherDrugLine(drug) {
+        if (!drug || !drug.line_id) return null;
+        for (var i = 0; i < currentBiologicLines.length; i += 1) {
+            if (currentBiologicLines[i].linea_id === drug.line_id) return currentBiologicLines[i];
+        }
+        return null;
+    }
+
+    function removeOtherDrugLine(drug) {
+        var line = findProjectedOtherDrugLine(drug);
+        if (!line || !currentFollowupVisit) return true;
+        var lineId = line.linea_id;
+        if (currentFollowupVisit.selected_line_ids.indexOf(lineId) >= 0 &&
+            toggleBiologicLineSelection(lineId, false) === false) {
+            return false;
+        }
+        currentBiologicLines = currentBiologicLines.filter(function (item) { return item.linea_id !== lineId; });
+        currentFollowupVisit.dispensed_line_ids = currentFollowupVisit.dispensed_line_ids.filter(function (id) { return id !== lineId; });
+        delete currentFollowupVisit.line_state[lineId];
+        if (currentFollowupVisit.line_recorded) delete currentFollowupVisit.line_recorded[lineId];
+        if (currentFollowupVisit.editing_line_id === lineId) currentFollowupVisit.editing_line_id = '';
+        // Desmarcar la línea ya repintó la lista antes de retirarla del
+        // modelo: hay que volver a pintar para que la tarjeta desaparezca.
+        renderBiologicLineCards();
+        syncEditorOptions();
+        return true;
+    }
+
+    function syncOtherDrugLines() {
+        if (!currentFollowupVisit) return false;
+        var structural = false;
+        followupOtherDrugs.forEach(function (drug) {
+            var active = followupOtherDrugIsActiveLine(drug);
+            var line = findProjectedOtherDrugLine(drug);
+            if (active && !line) {
+                if (!followupOtherDrugDisplayName(drug)) return;
+                var created = createOtherDrugLine(drug);
+                currentBiologicLines.push(created);
+                toggleBiologicLineSelection(created.linea_id, true);
+                structural = true;
+                return;
+            }
+            if (!active) {
+                if (line && removeOtherDrugLine(drug) !== false) structural = true;
+                return;
+            }
+            if (line) {
+                var previousName = line.nombre_linea || '';
+                if (applyOtherDrugLineFields(line, drug) !== previousName) structural = true;
+            }
+        });
+        if (structural) {
+            renderBiologicLineCards();
+            syncEditorOptions();
+            updateSuspectDrugSelector();
+            updateFollowupBridgeRawExportAvailability();
+        }
+        return structural;
     }
 
     function followupEmptyState() {
@@ -667,9 +794,14 @@
     // de una sospecha ya declarada expresamente en una ficha EA. Requiere
     // desvincularlo antes de sustituir nombre o identificadores de fármaco.
     function hasEaEpisodeSuspectForOtherDrug(uid) {
-        var suspectId = 'other:' + uid;
+        var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+        var suspectIds = ['other:' + uid];
+        // #871 A3: un fármaco activo proyectado es sospechoso por su línea.
+        if (drug && drug.line_id) suspectIds.push('line:' + drug.line_id);
         return eaEventsCollection().some(function (event) {
-            return Array.isArray(event.suspect_ids) && event.suspect_ids.indexOf(suspectId) >= 0;
+            return Array.isArray(event.suspect_ids) && suspectIds.some(function (suspectId) {
+                return event.suspect_ids.indexOf(suspectId) >= 0;
+            });
         });
     }
 
@@ -681,6 +813,22 @@
 
     function updateFollowupOtherDrug(uid, key, value) {
         var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+        // #871 A3: cambiar entre activo y no activo crea o retira la línea de
+        // la visita. Detrás de una sospecha explícita el tipo no se puede
+        // cambiar, y perder una línea con datos exige confirmación: en ambos
+        // casos se restaura la lista visible sin mutar nada.
+        if (drug && key === 'relationType' &&
+            followupOtherDrugIsActiveLine(drug) !== followupOtherDrugIsActiveLine({ relationType: value })) {
+            if (hasEaEpisodeSuspectForOtherDrug(uid)) {
+                window.alert('Este medicamento está marcado como sospechoso en una ficha EA. Desvincúlelo antes de cambiar su tipo.');
+                renderFollowupOtherDrugs();
+                return false;
+            }
+            if (!followupOtherDrugIsActiveLine({ relationType: value }) && removeOtherDrugLine(drug) === false) {
+                renderFollowupOtherDrugs();
+                return false;
+            }
+        }
         // Solo los campos de identidad del fármaco quedan bloqueados detrás de
         // una sospecha explícita; dosis, vía, pauta y demás datos no
         // identitarios permanecen editables.
@@ -697,6 +845,7 @@
             return item;
         });
         updateSuspectDrugSelector();
+        syncOtherDrugLines();
         return true;
     }
 
@@ -759,6 +908,9 @@
         }
         var linked = currentFollowupVisit && (currentFollowupVisit.adverse_event.suspect_ids.indexOf(suspectId) >= 0 || currentFollowupVisit.causality_by_suspect[suspectId]);
         if (linked && !window.confirm(RELATED_DISCARD_MESSAGE)) return false;
+        // #871 A3: retirar la línea proyectada antes de eliminar el fármaco y
+        // no borrar nada si el clínico no confirma la pérdida de sus datos.
+        if (removeOtherDrugLine(drug) === false) return false;
         var C = getCatalog();
         if (C && C.clearSnapshot) C.clearSnapshot(followupCatalogContext('', uid));
         followupOtherDrugs = followupOtherDrugs.filter(function (item) { return item.uid !== uid; });
@@ -1002,6 +1154,7 @@
         });
         if (contextValid && C && typeof C.selectDrug === 'function') C.selectDrug(d, context, reconciled);
         updateSuspectDrugSelector();
+        syncOtherDrugLines();
     }
 
     function clearOtherDrugDropdown(dropdownId) {
@@ -1097,7 +1250,16 @@
             seenIds[id] = true;
             var cat = 'Biológico no clasificado';
             var linePriority = 6;
-            if (line.estado_linea === 'active') {
+            // #871 A3: la línea proyectada de un «otro fármaco» conserva la
+            // categoría y la prioridad que ese fármaco tenía como other:<uid>.
+            var linkedDrug = null;
+            if (line.other_uid) {
+                linkedDrug = followupOtherDrugs.find(function (drug) { return drug.uid === line.other_uid; }) || null;
+            }
+            if (linkedDrug) {
+                cat = normalizeFollowupDrugCategory(linkedDrug.relationType);
+                linePriority = mapOtherDrugToContract(linkedDrug).tipo_relacion === 'concomitante' ? 3 : 4;
+            } else if (line.estado_linea === 'active') {
                 cat = 'Biológico activo';
                 linePriority = line.es_principal ? 1 : 2;
             } else if (line.estado_linea === 'validated_not_started') {
@@ -1122,6 +1284,9 @@
         });
         // Añadir todos los otros fármacos (existentes, concomitantes, históricos, exposiciones)
         followupOtherDrugs.forEach(function (drug) {
+            // #871 A3: un fármaco con línea proyectada vigente ya sale como
+            // line:<id>; nunca se duplica como other:<uid>.
+            if (findProjectedOtherDrugLine(drug)) return;
             var name = drug.farmaco || drug.principioActivo || 'Tratamiento relacionado ' + drug.uid;
             var oid = 'other:' + drug.uid;
             if (seenIds[oid]) return;
@@ -3738,8 +3903,15 @@
         clearSegDrugAutocompleteDropdown();
     }
 
+    // #871 A3: la línea proyectada de un «otro fármaco» no es el primer
+    // tratamiento: no esconde el buscador de «Tratamiento actual» ni bloquea
+    // su registro.
+    function followupHasSessionLineWithoutOtherDrug() {
+        return currentBiologicLines.some(function (line) { return line && !line.other_uid; });
+    }
+
     function syncSegDrugAutocompleteVisibility() {
-        if (currentBiologicLines.length) {
+        if (followupHasSessionLineWithoutOtherDrug()) {
             hideSegDrugAutocomplete();
         } else {
             showSegDrugAutocomplete();
@@ -3832,12 +4004,14 @@
 
     function followupSessionLineIdentity(existingLines) {
         var actId = followupActIdentityId();
-        if (!actId) return { lineId: 'FH-SES-L0001', treatmentId: '' };
+        var lines = Array.isArray(existingLines) ? existingLines : [];
         var highest = 0;
-        (Array.isArray(existingLines) ? existingLines : []).forEach(function (line) {
-            var match = String(line && line.linea_id || '').match(/-LIN-(\d+)$/);
+        lines.forEach(function (line) {
+            var lineId = String(line && line.linea_id || '');
+            var match = lineId.match(/-LIN-(\d+)$/) || lineId.match(/^FH-SES-L(\d+)$/);
             if (match && Number(match[1]) > highest) highest = Number(match[1]);
         });
+        if (!actId) return { lineId: 'FH-SES-L' + String(highest + 1).padStart(4, '0'), treatmentId: '' };
         var sequence = String(highest + 1).padStart(4, '0');
         return { lineId: actId + '-LIN-' + sequence, treatmentId: actId + '-TRT-' + sequence };
     }
@@ -3846,7 +4020,7 @@
         var C = getCatalog();
         if (!C || !drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         // Main follow-up catalog registration is only available for a manually registered treatment.
-        if (currentBiologicLines.length) return;
+        if (followupHasSessionLineWithoutOtherDrug()) return;
         var helper = getTreatmentHelper();
         var context = followupCatalogContext('seguimiento.tratamiento');
         var contextValid = typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
@@ -4410,7 +4584,13 @@
             },
             evaluated_lines: evaluated,
             dispensed_lines: evaluated.filter(function (item) { return item.dispensed; }),
-            related_treatments: followupOtherDrugs.map(function (drug) { return Object.assign({ uid: drug.uid }, mapOtherDrugToContract(drug), JSON.parse(JSON.stringify(drug))); }),
+            // #871 A3: un «otro fármaco» con línea seleccionada viaja como
+            // followup_line; no se duplica en tratamientos relacionados. Los
+            // no seleccionados o no activos siguen aquí (no se pierde lo
+            // registrado).
+            related_treatments: followupOtherDrugs.filter(function (drug) {
+                return !(drug.line_id && currentFollowupVisit.selected_line_ids.indexOf(drug.line_id) >= 0);
+            }).map(function (drug) { return Object.assign({ uid: drug.uid }, mapOtherDrugToContract(drug), JSON.parse(JSON.stringify(drug))); }),
             adverse_event: adverse,
             /* T01 (#795): bloque EA 0..N desacoplado del acto en edición. */
             ea_block: buildEaActBlockSnapshot(),
@@ -4693,6 +4873,9 @@
             return restored;
         });
         followupOtherDrugs = Array.isArray(state.related_treatments) ? cloneEvaluationState(state.related_treatments, []) : [];
+        // #871 A3: el estado restituido mantiene sincronizada la proyección de
+        // cada «otro fármaco» activo sobre las líneas de la visita.
+        syncOtherDrugLines();
 
         renderFollowupOtherDrugs();
         renderBiologicLineCards();

@@ -115,6 +115,14 @@ if (!existsSync(artifactsDir)) mkdirSync(artifactsDir, { recursive: true });
 const browser = await chromium.launch({ executablePath: chromiumExecutable(), headless: true });
 let passed = 0;
 const failures = [];
+// A3 (#871): un «otro fármaco» activo (tipo por defecto o Concomitante) es una
+// línea de la visita y se sospecha como `line:<id>`. Este check prueba la
+// identidad de las referencias `other:<uid>`, que siguen siendo las de los
+// tratamientos NO activos: cada alta nace como histórico.
+async function addOtherDrugCard(page) {
+    await page.click('#btnSegAddOtherDrug');
+    await page.locator('#segOtrosFarmacosList .other-drug-card').last().locator('select').first().selectOption('Biológico previo/histórico');
+}
 function ok(name) { passed += 1; console.log(`PASS ${name}`); }
 function bad(name, detail) { failures.push(name); console.log(`FAIL ${name}${detail ? ' — ' + detail : ''}`); }
 
@@ -179,8 +187,8 @@ const SYNTH_CATALOG_GAMMA = {
 
         // Alta de «Otros fármacos» con nombres reales por controles reales:
         // las casillas aparecen en TODAS las tarjetas, sin preselección.
-        await page.click('#btnSegAddOtherDrug');
-        await page.click('#btnSegAddOtherDrug');
+        await addOtherDrugCard(page);
+        await addOtherDrugCard(page);
         const drugs = page.locator('#segOtrosFarmacosList .other-drug-card');
         await drugs.nth(0).locator('input[data-field="farmaco"]').fill('Medicamento Alfa Sintético');
         await drugs.nth(1).locator('input[data-field="farmaco"]').fill('Medicamento Beta Sintético');
@@ -269,7 +277,7 @@ const SYNTH_CATALOG_GAMMA = {
 
         // Selección de catálogo sobre un candidato NO marcado: permitida y
         // refresca las casillas (la fuente de candidatos no es solo el nombre).
-        await page.click('#btnSegAddOtherDrug');
+        await addOtherDrugCard(page);
         await drugs.nth(2).locator('input[data-field="farmaco"]').fill('Medicamento Gamma Sintético');
         const selection = await page.evaluate(() =>
             window.FarmaciaSeguimiento.applyCatalogSelectionToOtherDrug('seg-other-3', {
@@ -379,7 +387,7 @@ const SYNTH_CATALOG_GAMMA = {
             window.FarmaciaSeguimiento.restoreEvaluationState(state);
         });
         assert.equal(await cards.nth(1).locator('.ea-suspect-list label').filter({ hasText: 'pendiente de reconciliación' }).count(), 1, 'restored mark without a session fingerprint stays pending');
-        assert.ok(!(await cards.nth(1).locator('.ea-suspect-list').textContent()).includes('— Biológico previo/histórico'), 'unverified identity is never presented as a current suspect');
+        assert.ok(!(await cards.nth(1).locator('.ea-suspect-list label').filter({ hasText: 'pendiente de reconciliación' }).first().textContent()).includes('— Biológico previo/histórico'), 'unverified identity is never presented as a current suspect');
         assert.deepEqual((await page.evaluate(() => window.FarmaciaSeguimiento.getEaEvents()))[1].suspect_ids, ['other:seg-other-3'], 'reference preserved anchored to its id');
         ok('(c) mark without registered fingerprint is shown pending, never as a verified current suspect');
 
@@ -607,7 +615,7 @@ const SYNTH_CATALOG_GAMMA = {
         await captureIncorporatedEa(page, 'EA Gamma 02B sintético');
 
         // ── Caso 1: pérdida de fuente y reaparición EXACTA idéntica ───────
-        await page.click('#btnSegAddOtherDrug');
+        await addOtherDrugCard(page);
         const drugsC = page.locator('#segOtrosFarmacosList .other-drug-card');
         await drugsC.nth(0).locator('input[data-field="farmaco"]').fill('Medicamento Gamma Sintético');
         await chipList.locator('input[type="checkbox"]').first().click();
@@ -668,7 +676,7 @@ const SYNTH_CATALOG_GAMMA = {
         ok('C1: absent source sets pending irreversibly; identical source return never auto-restores; only unmark + explicit re-mark reconciles (QA del seam, no recorrido UI)');
 
         // ── Caso 2: cambiar SOLO sourceType (Otros) por el seam ───────────
-        await page.click('#btnSegAddOtherDrug');
+        await addOtherDrugCard(page);
         await drugsC.nth(1).locator('input[data-field="farmaco"]').fill('Medicamento Iota Sintético');
         const iotaSelection = await page.evaluate(() =>
             window.FarmaciaSeguimiento.applyCatalogSelectionToOtherDrug('seg-other-2', {

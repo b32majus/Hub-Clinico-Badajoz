@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// A3 (#871): un «otro fármaco» activo (tipo por defecto o Concomitante) es una línea de la visita y se sospecha como `line:<id>`. Este check prueba las referencias `other:<uid>`, que siguen siendo las de los tratamientos NO activos: cada alta nace como histórico.
 // Focused contract check for WO-FH-PR57C-EA-CAUSALITY-BY-SUSPECT-01.
 import fs from 'fs';
 import path from 'path';
@@ -87,7 +88,7 @@ check(node('fhCausalidadFinal').value === 'Probable', 'explicit final assessment
 api.setCausalityEditor('line:L3');
 check(groups.get('naranjoQ2').querySelector('.causality-chip--active').getAttribute('data-value') === 'no' && node('klCategoria').textContent === 'Improbable', 'distinct L3 Naranjo and Karch state restores exactly');
 
-api.addFollowupOtherDrug(); const uid = api.getFollowupOtherDrugs()[0].uid; const relatedId = `other:${uid}`;
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico'); const uid = api.getFollowupOtherDrugs()[0].uid; const relatedId = `other:${uid}`;
 const farmacoInput = rendered().find((el) => el.getAttribute?.('data-field') === 'farmaco' && el.getAttribute('data-uid') === uid);
 farmacoInput.value = 'Relacionado A'; farmacoInput.dispatchEvent(new sandbox.Event('input'));
 const candidateLabel = () => node('fhSeguimientoEaSuspectCandidates').children.find((label) => label.children[0].value === relatedId);
@@ -98,7 +99,7 @@ check(api.getFollowupOtherDrugs()[0].uid === uid && api.getCurrentVisit().causal
 api.applyCatalogSelectionToOtherDrug(uid, { drug_id: 'CIMA-RELATED', nombre_comercial: 'Relacionado catálogo', source_type: 'CIMA' });
 check(api.getFollowupOtherDrugs()[0].uid === uid && api.getCurrentVisit().adverse_event.suspect_ids.includes(relatedId) && api.getCurrentVisit().causality_by_suspect[relatedId].karch_answers.conocido === 'si' && api.getCurrentVisit().adverse_event.causality_editing_id === relatedId && candidateLabel().children[1].textContent.includes('Relacionado catálogo') && causalOption().textContent.includes('Relacionado catálogo'), 'concrete catalog selection immediately refreshes labels without changing causal identity or state');
 
-api.addFollowupOtherDrug(); const cleanUid = api.getFollowupOtherDrugs()[1].uid; api.toggleEaSuspect(`other:${cleanUid}`, true); const beforeClean = confirmCalls.length; api.toggleEaSuspect(`other:${cleanUid}`, false);
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico'); const cleanUid = api.getFollowupOtherDrugs()[1].uid; api.toggleEaSuspect(`other:${cleanUid}`, true); const beforeClean = confirmCalls.length; api.toggleEaSuspect(`other:${cleanUid}`, false);
 check(confirmCalls.length === beforeClean && !api.getCurrentVisit().causality_by_suspect[`other:${cleanUid}`], 'clean suspect unmarks immediately and removes clean state');
 api.setCausalityEditor('line:L2'); confirmations = [false]; check(!api.toggleEaSuspect('line:L2', false) && api.getCurrentVisit().adverse_event.suspect_ids.includes('line:L2'), 'dirty unmark cancel preserves selection, editor and data');
 confirmations = [true]; check(api.toggleEaSuspect('line:L2', false) && !api.getCurrentVisit().causality_by_suspect['line:L2'], 'dirty unmark accept removes ID and causality entry');
