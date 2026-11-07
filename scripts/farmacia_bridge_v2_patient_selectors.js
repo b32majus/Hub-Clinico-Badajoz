@@ -43,6 +43,32 @@
         return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
     }
 
+    function hasText(value) {
+        return value !== null && value !== undefined && String(value).trim() !== '';
+    }
+
+    function cloneOrNull(value) {
+        return value === undefined ? null : clone(value);
+    }
+
+    // #877: la fila 166 no cambia. El estado vigente de la línea se calcula
+    // aquí, en un único punto: una optimización (new_*) pasa a ser el
+    // tratamiento actual de la visita siguiente; sin optimización se lee la
+    // foto de la línea (line_*). Dosis y pauta se resuelven por separado, pero
+    // la pauta viaja siempre en bloque (código, etiqueta y texto libre).
+    function currentLineState(row) {
+        var source = isObject(row) ? row : {};
+        var doseFromNew = hasText(source.new_dose_text);
+        var scheduleFromNew = hasText(source.new_schedule_code) || hasText(source.new_schedule_other_text);
+        return {
+            dose_text: cloneOrNull(doseFromNew ? source.new_dose_text : source.line_dose_text),
+            schedule_code: cloneOrNull(scheduleFromNew ? source.new_schedule_code : source.line_schedule_code),
+            schedule_label: cloneOrNull(scheduleFromNew ? source.new_schedule_label : source.line_schedule_label),
+            schedule_other_text: cloneOrNull(scheduleFromNew ? source.new_schedule_other_text : source.line_schedule_other_text),
+            optimized: doseFromNew || scheduleFromNew
+        };
+    }
+
     function normalizeStoredIdentifierComponent(value, field, context) {
         if (typeof value !== 'string') {
             throw new TypeError('IDENTIFIER_COMPONENT_TYPE: ' + field + ' debe ser string (' + context + ').');
@@ -342,7 +368,8 @@
                             physical_row_number: physicalRow.physical_row_number,
                             treatment_id: clone(row.treatment_id),
                             line_id: clone(row.line_id),
-                            snapshot: clone(row)
+                            snapshot: clone(row),
+                            current_line: currentLineState(row)
                         }
                     };
                     var previous = latest[row.line_id];

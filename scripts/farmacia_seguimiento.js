@@ -275,7 +275,8 @@
             estado_linea: overrides.estado_linea || canonicalLineStatus(line.estado_linea),
             tipo_relacion: overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion),
             es_principal: (overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion)) === 'primary',
-            tratamiento_id_principal: line.tratamiento_id_principal || line.id || ''
+            tratamiento_id_principal: line.tratamiento_id_principal || line.id || '',
+            optimizado: line.optimizado === true
         };
     }
 
@@ -3367,6 +3368,11 @@
             if (line.session_new === true) {
                 body.appendChild(createElement('span', 'seg-line-card__meta', 'Registrada en esta visita · aún no está en el libro'));
             }
+            if (line.optimizado === true) {
+                var optimizedMeta = createElement('span', 'seg-line-card__meta', 'Optimizada en la visita anterior');
+                optimizedMeta.dataset.lineOptimized = '';
+                body.appendChild(optimizedMeta);
+            }
             card.appendChild(control);
             card.appendChild(body);
             container.appendChild(card);
@@ -3507,6 +3513,18 @@
 
     function applySelectedBiologicLine() {
         var line = getCurrentSelectedLine();
+        // #877: la insignia solo aparece cuando la dosis/pauta vigente vino de
+        // una optimización de la visita anterior. Sin línea, nunca se muestra.
+        // `.status-badge` fija su propio display, así que además de `hidden` se
+        // alterna la utilidad `.hidden` del proyecto: es lo que realmente la oculta.
+        var optimizedBadge = document.getElementById('fhSegOptimizadoBadge');
+        if (optimizedBadge) {
+            var optimizedHidden = !line || line.optimizado !== true;
+            optimizedBadge.hidden = optimizedHidden;
+            if (optimizedBadge.classList && typeof optimizedBadge.classList.toggle === 'function') {
+                optimizedBadge.classList.toggle('hidden', optimizedHidden);
+            }
+        }
         var helper = getTreatmentHelper();
         var C = window.FarmaciaCatalog;
         var snap = line && C && C.getSnapshot ? C.getSnapshot(followupCatalogContext('seguimiento.tratamiento')) : null;

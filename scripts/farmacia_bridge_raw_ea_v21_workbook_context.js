@@ -124,6 +124,7 @@
     (Array.isArray(lines) ? lines : []).forEach(function (entry) {
       if (!plain(entry)) return;
       var snapshot = plain(entry.snapshot) ? entry.snapshot : {};
+      var current = plain(entry.current_line) ? entry.current_line : null;
       if (snapshot.active_at_event !== true) return;
       if (snapshot.line_status_at_event !== 'active') return;
       active.push({
@@ -136,11 +137,13 @@
         drugName: declared(snapshot.line_drug_name),
         activeIngredient: declared(snapshot.line_active_ingredient),
         presentation: declared(snapshot.line_presentation),
-        doseText: declared(snapshot.line_dose_text),
+        // #877: la fila 166 de la visita siguiente declara el tratamiento
+        // vigente (lo optimizado en `line_*`), no la foto cruda anterior.
+        doseText: declared(current ? current.dose_text : snapshot.line_dose_text),
         route: declared(snapshot.line_route),
-        scheduleCode: declared(snapshot.line_schedule_code),
-        scheduleLabel: declared(snapshot.line_schedule_label),
-        scheduleOtherText: declared(snapshot.line_schedule_other_text),
+        scheduleCode: declared(current ? current.schedule_code : snapshot.line_schedule_code),
+        scheduleLabel: declared(current ? current.schedule_label : snapshot.line_schedule_label),
+        scheduleOtherText: declared(current ? current.schedule_other_text : snapshot.line_schedule_other_text),
         selectedDrugId: declared(snapshot.line_selected_drug_id),
         catalogSource: declared(snapshot.line_catalog_source),
         nationalCode: declared(snapshot.line_national_code),
