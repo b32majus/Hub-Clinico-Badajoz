@@ -48,6 +48,11 @@ Aquí viven las ideas **no decididas**. No se convierten en issue hasta que se d
 - SIL-REV-018 B (PROM, validación, causalidad), C (dosis/vía/pauta), D (ventana temporal, líneas simultáneas) y E (sexo/edad/comorbilidades/actividad).
 - PDF de informes; filtros guardados y compartidos V2; indicadores del proyecto.
 
+## Seguimiento de Farmacia (EA)
+- Pantalla con el detalle de la evaluación de causalidad al abrir un episodio (puntuación, categoría, valoración final); hoy solo se ve el método.
+- «Cambiar fármaco» en la primera visita (hoy no se deshace sin recargar) y alta de más líneas desde pantalla.
+- Columnas EA en el CSV de Estadísticas y cosmética del Dashboard (etiquetas cortadas).
+
 ## Dermatología
 - Módulo base, HS y PsO longitudinales (IHS4, Hurley, PROs por acordar), solicitud Derma→FH, VHB (pauta completa ≠ suficiente para iniciar), eccema de manos (a la espera del equipo).
 
