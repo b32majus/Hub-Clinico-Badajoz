@@ -169,6 +169,10 @@
 
     function lineFromSnapshot(entry) {
         var snapshot = entry && entry.snapshot || {};
+        // #877: la línea vigente viene calculada en un único punto (selectors).
+        // Sin ese estado se lee la foto cruda, como antes.
+        var current = entry && entry.current_line !== null && typeof entry.current_line === 'object'
+            && !Array.isArray(entry.current_line) ? entry.current_line : null;
         var explicitlyActive = snapshot.active_at_event === true;
         var explicitlyInactive = snapshot.active_at_event === false;
         var suppliedStatus = present(snapshot.line_status_at_event) ? String(snapshot.line_status_at_event) : '';
@@ -181,13 +185,15 @@
             nombre_comercial: snapshot.line_drug_name || '',
             principio_activo: snapshot.line_active_ingredient || '',
             presentacion: firstPresent(snapshot.line_presentation),
-            dosis: firstPresent(snapshot.line_dose_text),
-            dosis_texto: firstPresent(snapshot.line_dose_text),
+            dosis: firstPresent(current ? current.dose_text : snapshot.line_dose_text),
+            dosis_texto: firstPresent(current ? current.dose_text : snapshot.line_dose_text),
             via: snapshot.line_route || '',
-            pauta: firstPresent(snapshot.line_schedule_label, snapshot.line_schedule_other_text),
-            pauta_codigo: snapshot.line_schedule_code || '',
-            pauta_label: snapshot.line_schedule_label || '',
-            pauta_otro_texto: snapshot.line_schedule_other_text || '',
+            pauta: current
+                ? firstPresent(current.schedule_label, current.schedule_other_text)
+                : firstPresent(snapshot.line_schedule_label, snapshot.line_schedule_other_text),
+            pauta_codigo: (current ? current.schedule_code : snapshot.line_schedule_code) || '',
+            pauta_label: (current ? current.schedule_label : snapshot.line_schedule_label) || '',
+            pauta_otro_texto: (current ? current.schedule_other_text : snapshot.line_schedule_other_text) || '',
             tipo_relacion: snapshot.line_role || 'unknown',
             es_principal: snapshot.is_primary_line === true,
             estado_linea: status,
@@ -196,7 +202,8 @@
             source_type: snapshot.line_catalog_source || '',
             codigo_nacional: snapshot.line_national_code || '',
             nregistro: snapshot.line_registration_number || '',
-            candidate_explicit: true
+            candidate_explicit: true,
+            optimizado: !!(entry.current_line && entry.current_line.optimized === true)
         };
     }
 
