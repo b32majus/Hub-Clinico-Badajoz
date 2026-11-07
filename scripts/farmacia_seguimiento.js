@@ -3820,6 +3820,28 @@
         segAutocompleteActiveIndex = -1;
     }
 
+    // #870 A2: la línea registrada en ESTA visita lleva la identidad del acto,
+    // igual que los episodios y observaciones EA (`<actId>-LIN-0001`,
+    // `<actId>-TRT-0001`). Sin identidad de acto se conserva el formato
+    // anterior (la copia 166 ya queda bloqueada por otra razón).
+    function followupActIdentityId() {
+        var bound = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
+        if (!bound || typeof bound.actId !== 'string') return '';
+        return bound.actId.trim();
+    }
+
+    function followupSessionLineIdentity(existingLines) {
+        var actId = followupActIdentityId();
+        if (!actId) return { lineId: 'FH-SES-L0001', treatmentId: '' };
+        var highest = 0;
+        (Array.isArray(existingLines) ? existingLines : []).forEach(function (line) {
+            var match = String(line && line.linea_id || '').match(/-LIN-(\d+)$/);
+            if (match && Number(match[1]) > highest) highest = Number(match[1]);
+        });
+        var sequence = String(highest + 1).padStart(4, '0');
+        return { lineId: actId + '-LIN-' + sequence, treatmentId: actId + '-TRT-' + sequence };
+    }
+
     function selectDrugSeg(drug) {
         var C = getCatalog();
         if (!C || !drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
@@ -3876,8 +3898,10 @@
         // visita. Nunca es un alta ni una validación, y no se infiere pauta,
         // dosis ni fecha de inicio.
         if (currentFollowupVisit) {
+            var sessionLineIdentity = followupSessionLineIdentity(currentBiologicLines);
             var sessionLineSource = {
-                linea_id: 'FH-SES-L0001',
+                linea_id: sessionLineIdentity.lineId,
+                tratamiento_id_principal: sessionLineIdentity.treatmentId,
                 farmaco_nombre: reconciled.values.farmaco_nombre || '',
                 principio_activo: reconciled.values.principio_activo || '',
                 presentacion: reconciled.values.presentacion || '',
@@ -3894,7 +3918,7 @@
             var sessionLine = normalizeBiologicLine(sessionLineSource, { cip: currentFollowupVisit.cip }, { estado_linea: 'active', tipo_relacion: 'primary' });
             sessionLine.session_new = true;
             currentBiologicLines.push(sessionLine);
-            toggleBiologicLineSelection('FH-SES-L0001', true);
+            toggleBiologicLineSelection(sessionLineIdentity.lineId, true);
             syncSegDrugAutocompleteVisibility();
             updateFollowupBridgeRawExportAvailability();
         }
@@ -4865,17 +4889,72 @@
         return context;
     }
 
-    function getFollowupBridgeRawActContext() {
-        // Una línea registrada en esta visita y aún no declarada en el libro no
-        // es representable en el formato 166 (solo admite líneas del libro).
-        if (currentFollowupVisit && Array.isArray(currentFollowupVisit.selected_line_ids)) {
-            currentFollowupVisit.selected_line_ids.forEach(function (selectedLineId) {
-                var sessionLine = currentBiologicLines.find(function (item) { return item.linea_id === selectedLineId; });
-                if (sessionLine && sessionLine.session_new === true) {
-                    failFollowupBridgeRaw('BRIDGE_RAW_LINE_NOT_IN_WORKBOOK', 'la línea ' + (sessionLine.farmaco_nombre || sessionLine.nombre_linea) + ' aún no está en el libro; dala de alta en el libro antes de copiar las filas.');
-                }
-            });
+    // #870 A2: las líneas registradas en ESTA visita todavía no están
+    // declaradas en el libro; viajan como una `followup_line` más del
+    // seguimiento con la misma foto que emite `buildActContext`. Lo que la
+    // línea no tiene viaja a null: nunca se infiere pauta, dosis, vía ni
+    // fecha de inicio.
+    function followupBridgeRawSessionLines() {
+        if (!currentFollowupVisit || !Array.isArray(currentFollowupVisit.selected_line_ids)) return [];
+        var selected = currentFollowupVisit.selected_line_ids;
+        return currentBiologicLines.filter(function (line) {
+            return line && line.session_new === true && selected.indexOf(line.linea_id) >= 0;
+        });
+    }
+
+    function bridgeRawLineText(value) {
+        var text = cleanExportToken(value);
+        return text ? text : null;
+    }
+
+    function bridgeRawLineIsPrimary(line) {
+        return !!line && (line.isPrimaryLine === true || line.lineRole === 'principal');
+    }
+
+    function bridgeRawSessionLineFields(line, context) {
+        var drugName = bridgeRawLineText(line.farmaco_nombre);
+        var activeIngredient = bridgeRawLineText(line.principio_activo);
+        if (!drugName && !activeIngredient) {
+            failFollowupBridgeRaw('BRIDGE_RAW_LINE_INCOMPLETE', 'la línea ' + line.linea_id + ' no tiene fármaco.');
         }
+        var isPrimary = line.tipo_relacion === 'primary';
+        return {
+            rowKey: context.actId + ':' + line.linea_id,
+            treatmentId: line.tratamiento_id_principal,
+            lineId: line.linea_id,
+            lineRole: isPrimary ? 'principal' : 'additional',
+            isPrimaryLine: isPrimary,
+            lineStatusAtEvent: 'active',
+            activeAtEvent: true,
+            drugName: drugName,
+            activeIngredient: activeIngredient,
+            presentation: bridgeRawLineText(line.presentacion),
+            doseText: bridgeRawLineText(line.dosis_texto),
+            route: bridgeRawLineText(line.via),
+            scheduleCode: bridgeRawLineText(line.pauta_codigo),
+            scheduleLabel: bridgeRawLineText(line.pauta_label),
+            scheduleOtherText: bridgeRawLineText(line.pauta_otro_texto),
+            selectedDrugId: bridgeRawLineText(line.selected_drug_id),
+            catalogSource: bridgeRawLineText(line.source_type),
+            nationalCode: bridgeRawLineText(line.codigo_nacional),
+            registrationNumber: bridgeRawLineText(line.nregistro)
+        };
+    }
+
+    function appendFollowupBridgeRawSessionLines(context, sessionLines) {
+        if (!context || !Array.isArray(context.activeLines)) return context;
+        var lines = context.activeLines;
+        sessionLines.forEach(function (line) {
+            if (line.tipo_relacion === 'primary' && lines.some(bridgeRawLineIsPrimary)) {
+                failFollowupBridgeRaw('BRIDGE_RAW_MULTIPLE_PRIMARY', 'hay más de una línea principal en el acto; revisa las líneas de la visita.');
+            }
+            lines.push(bridgeRawSessionLineFields(line, context));
+        });
+        return context;
+    }
+
+    function getFollowupBridgeRawActContext() {
+        var sessionLines = followupBridgeRawSessionLines();
         var cip = visibleFollowupCip();
         var openIdentity = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
         if (openIdentity && openIdentity.source === 'workbook') {
@@ -4913,14 +4992,21 @@
             if (!workbookContext || typeof workbookContext.buildActContext !== 'function') {
                 failFollowupBridgeRaw('BRIDGE_RAW_PROVIDER_UNAVAILABLE', 'No está disponible la fuente de identidad declarada del acto.');
             }
-            return applyFollowupDeclaredDisplayLabels(workbookContext.buildActContext(openIdentity.identity, {
+            // Las líneas de la visita no están declaradas en el libro: se
+            // añaden después, ya con la identidad del acto emitida.
+            var sessionLineIds = sessionLines.map(function (line) { return line.linea_id; });
+            var declaredSelection = (currentFollowupVisit.selected_line_ids || []).filter(function (lineId) {
+                return sessionLineIds.indexOf(lineId) < 0;
+            });
+            var actContext = applyFollowupDeclaredDisplayLabels(workbookContext.buildActContext(openIdentity.identity, {
                 actId: openIdentity.actId,
                 eventId: openIdentity.eventId,
                 sourceEventId: openIdentity.sourceEventId,
                 visitId: openIdentity.visitId,
                 visitDate: visitDate,
                 recordedAt: new Date().toISOString()
-            }, currentFollowupVisit.selected_line_ids || []));
+            }, declaredSelection));
+            return appendFollowupBridgeRawSessionLines(actContext, sessionLines);
         }
         if (currentFollowupVisit && currentFollowupVisit.bridge_raw_identity_block) {
             var block = currentFollowupVisit.bridge_raw_identity_block;
@@ -4956,7 +5042,11 @@
             bound.visitId !== context.visitId) {
             failFollowupBridgeRaw('BRIDGE_RAW_VISIT_MISMATCH', 'La visita declarada no coincide con la visita abierta.');
         }
-        return context;
+        // El proveedor demo declara su propio contexto: se copia antes de
+        // añadir las líneas de esta visita.
+        var visitContext = Object.assign({}, context);
+        visitContext.activeLines = Array.isArray(context.activeLines) ? context.activeLines.slice() : context.activeLines;
+        return appendFollowupBridgeRawSessionLines(visitContext, sessionLines);
     }
 
     function bridgeRawErrorMessage(error) {

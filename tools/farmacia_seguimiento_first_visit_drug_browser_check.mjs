@@ -4,8 +4,7 @@
 //    elige su fármaco en el buscador y queda como LÍNEA de esta visita
 //    («ya en tratamiento»; nunca alta ni validación).
 //  - Esa línea sirve como sospechoso en EA y aparece en el texto JARA.
-//  - «Copiar filas Excel FH» se bloquea con motivo claro: la línea aún no
-//    está en el libro (el formato 166 solo admite líneas declaradas).
+//  - La copia 166 de esa línea la cubre el check de A2 (#870).
 // Solo datos sintéticos. Ejecutar con un PATH que exponga Playwright.
 
 import assert from 'node:assert/strict';
@@ -17,7 +16,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CIP = 'CIP-DEMO-FH-002';
-const SESSION_LINE = 'FH-SES-L0001';
+// A2 (#870): la línea de la visita lleva la identidad del acto.
+const SESSION_LINE = 'ACT-DEMO-FH-002-LIN-0001';
 
 function loadPlaywrightFromNpx() {
     for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
@@ -134,17 +134,8 @@ try {
         assert.ok(jara.includes(drugName), 'JARA nombra el fármaco');
     });
 
-    await test('«Copiar filas Excel FH» bloqueado con motivo: la línea aún no está en el libro', async () => {
-        await page.evaluate(() => navigator.clipboard.writeText('SIN-TOCAR'));
-        const button = page.locator('#fhSegExportBridgeRawBtn');
-        if (await button.isEnabled()) await button.click();
-        await page.waitForTimeout(250);
-        assert.ok(await button.isDisabled(), 'botón deshabilitado');
-        const status = await page.locator('#fhSegExportBridgeRawStatus').innerText();
-        assert.ok(/aún no está en el libro/i.test(status), 'motivo visible: ' + status);
-        assert.ok(status.includes(drugName), 'el motivo nombra el fármaco');
-        assert.equal(await page.evaluate(() => navigator.clipboard.readText()), 'SIN-TOCAR', 'portapapeles intacto');
-    });
+    // A2 (#870): la copia 166 ya no se bloquea; la cubre
+    // farmacia_seguimiento_new_line_166_browser_check.mjs.
 
     await test('pacientes demo con líneas no cambian: FH-001 sigue con su línea BIO-FH-001-L1 y sin aviso', async () => {
         await page.goto(base + 'farmacia_seguimiento.html?cip=CIP-DEMO-FH-001', { waitUntil: 'load' });

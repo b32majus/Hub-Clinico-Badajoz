@@ -83,7 +83,7 @@ page.on('pageerror', (error) => consoleErrors.push(String(error)));
 
 
 
-const SUSPECT = 'line:FH-SES-L0001';
+const SUSPECT = 'line:ACT-DEMO-FH-002-LIN-0001';
 const cards = () => page.locator('#fhSegEaList .ea-t01-card');
 const jara = async () => {
     await page.evaluate(() => navigator.clipboard.writeText(''));
