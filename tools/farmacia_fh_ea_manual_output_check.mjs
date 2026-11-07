@@ -457,10 +457,8 @@ check(/reconcilia/i.test(failClosedReason), 'F · el mensaje identifica la recon
 const seguimientoSourceForWiring = read('scripts/farmacia_seguimiento.js');
 check(/const exportTxt = document\.getElementById\('fhSegExportTxt'\)[\s\S]{0,400}guardEaManualOutputs\(\)/.test(seguimientoSourceForWiring),
   'F · el botón TXT JARA consulta la guardia manual ANTES de construir y copiar');
-check(/var btn = document\.getElementById\('fhSegExcelExportBtn'\)[\s\S]{0,300}guardEaManualOutputs\(\)/.test(seguimientoSourceForWiring),
-  'F · el botón Excel WO8 consulta la guardia manual ANTES de construir y copiar');
-check(/const exportCsv = document\.getElementById\('fhSegExportCsv'\)[\s\S]{0,300}guardEaSingularExport\(\)/.test(seguimientoSourceForWiring),
-  'I · el botón CSV conserva la guardia singular anterior (no se activa para multi-EA)');
+check(!/getElementById\('fhSegExcelExportBtn'\)/.test(seguimientoSourceForWiring) && !/getElementById\('fhSegExportCsv'\)/.test(seguimientoSourceForWiring),
+  'E3 (#867) · Seguimiento ya no cablea los botones Excel WO8 ni CSV: «Copiar filas Excel FH» es la copia 166');
 
 /* ─── G · regresión legacy sin EA y guardias de presencia ────────────────── */
 
@@ -556,8 +554,10 @@ check(countOccurrences(overJara, 'x'.repeat(34000)) === 1,
   'P1-A · TXT JARA no se bloquea por el límite de Excel y conserva la descripción íntegra una vez');
 
 const seguimientoSourceP1A = read('scripts/farmacia_seguimiento.js');
-check(/var rows = buildFollowupExcelRows\(model\);[\s\S]{0,400}guardEaManualExcelRows\(rows\)[\s\S]{0,400}copyTSVRowsToClipboard/.test(seguimientoSourceP1A),
-  'P1-A · el botón Excel valida las filas finales después de construirlas y antes de tocar el portapapeles');
+// E3 (#867): el botón Excel WO8 ya no existe en Seguimiento; el guard de celda
+// sigue probado abajo por la API, y la copia 166 lo aplica en su núcleo.
+check(!/copyTSVRowsToClipboard/.test(seguimientoSourceP1A),
+  'E3 · Seguimiento ya no copia filas WO8 al portapapeles');
 
 // Fronteras exactas: 32767 cabe, 32768 se bloquea.
 buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1A-LIMIT', dispense: ['LINE-A'] });

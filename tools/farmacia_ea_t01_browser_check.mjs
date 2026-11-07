@@ -219,9 +219,12 @@ function captureTwoEa(page) {
 
         // C-088 VIS-01/VIS-02: fidelidad del segmento máster G0 v0.4 en el
         // estado equivalente (Sí, dos EA, tarjeta 1 expandida, 2 plegada).
-        assert.ok(await page.locator('#fhSegEaPriorEpisodeSelect').isDisabled(), 'prior-episode select visible but non-functional (demo, T01)');
-        assert.ok(await page.locator('#fhSegEaUpdatePriorBtn').isDisabled(), '«Actualizar EA anterior» visible but non-functional (demo, T01)');
-        assert.ok(await page.locator('#fhSegEaRecurrenceBtn').isDisabled(), '«Registrar recurrencia» visible but non-functional (demo, T01)');
+        // D4b (#867): la maqueta de continuidad/recurrencia es ya una lista real
+        // de episodios anteriores del libro (vacía para un paciente del registro demo).
+        for (const old of ['#fhSegEaPriorEpisodeSelect', '#fhSegEaUpdatePriorBtn', '#fhSegEaRecurrenceBtn']) {
+            assert.equal(await page.locator(old).count(), 0, `${old} replaced by the real prior-episode list`);
+        }
+        assert.equal(await page.locator('#fhSegEaPriorEpisodes').count(), 1, 'prior-episode list present');
         assert.ok((await page.locator('#fhSegEaZone').textContent()).includes('Continuidad y recurrencia requieren selección explícita'), 'master continuity/recurrence hint present');
         const expandedBody = page.locator('#fhSegEaList .ea-t01-card').first();
         assert.equal(await expandedBody.locator('details summary').count(), 1, 'expanded card shows the master disclosure');
@@ -362,8 +365,8 @@ function captureTwoEa(page) {
         assert.ok(!Object.prototype.hasOwnProperty.call(snapshotAfter, 'act_date'), 'session B never records the act date: auto-filled value stays out of the snapshot (SPEC-03)');
         ok('contradiction «Sí»→«No/No consta» blocked with explanation and no data deletion');
 
-        // FH-EA-MANUAL-01: habilitar las salidas. El CSV conserva la frontera
-        // singular anterior; TXT JARA y Excel WO8 manual representan 0..N.
+        // FH-EA-MANUAL-01: habilitar las salidas. TXT JARA representa 0..N
+        // (la copia 166 de «Filas Excel FH» tiene sus propios checks).
         await page.selectOption('#fhSegDispensado', 'si');
         await page.waitForFunction(() => !document.getElementById('fhSegExportTxt').disabled, null, { timeout: 5000 });
         const guardNotice = () => page.evaluate(() => ({
@@ -380,14 +383,14 @@ function captureTwoEa(page) {
             lineColumn: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('linea_id')
         }));
 
-        // CSV: fuera del alcance manual, mantiene el fallo cerrado singular.
-        await page.click('#fhSegExportCsv');
-        await page.waitForTimeout(150);
-        const csvGuard = await guardNotice();
-        assert.ok(csvGuard.visible, 'fhSegExportCsv: visible fail-closed refusal');
-        assert.ok(csvGuard.text.includes('2 EA incorporados') && csvGuard.text.includes('no se exporta solo el primer EA'), 'fhSegExportCsv: refusal declares 0..N instead of truncating');
-        assert.deepEqual(downloads, [], 'no file download fired while the singular CSV export is blocked');
-        ok('CSV keeps the previous singular frontier: visibly refuses 0..N without download');
+        // E3 (#867): Seguimiento solo ofrece «Copiar texto JARA» y «Copiar
+        // filas Excel FH» (copia 166); CSV, Excel WO8 y datos estructurados
+        // (demo) ya no están en la pantalla.
+        for (const removed of ['#fhSegExportCsv', '#fhSegExcelExportBtn', '#fhSegExportV2Btn']) {
+            assert.equal(await page.locator(removed).count(), 0, `${removed} retirado de Seguimiento`);
+        }
+        assert.deepEqual(downloads, [], 'no file download fired');
+        ok('Seguimiento offers only the two agreed outputs');
 
         // TXT JARA manual: no se niega; un informe por visita, cada EA una vez.
         await page.click('#fhSegExportTxt');
@@ -400,39 +403,6 @@ function captureTwoEa(page) {
         assert.ok(!jaraManual.includes('no se exporta solo el primer EA'), 'TXT JARA no longer refuses the 0..N collection');
         assert.ok(!(await guardNotice()).visible, 'TXT JARA: no refusal notice after a successful copy');
         ok('TXT JARA manual carries one visit report with each of the two EA exactly once');
-
-        // Excel WO8 manual: una fila TSV por fármaco efectivamente dispensado.
-        assert.ok(exportSnapshot.dispensedLines.length >= 1, 'the witnessed act has at least one effectively dispensed line');
-        await page.click('#fhSegExcelExportBtn');
-        await page.waitForTimeout(250);
-        const excelTsv = await clipboardText();
-        const tsvRows = excelTsv.split('\n').filter((row) => row.trim() !== '');
-        assert.equal(tsvRows.length, exportSnapshot.dispensedLines.length, 'Excel WO8 manual: exactly one TSV row per dispensed drug line (never one row per EA)');
-        const tsvCells = tsvRows.map((row) => row.split('\t'));
-        tsvCells.forEach((cells, index) => assert.equal(cells.length, exportSnapshot.columns, `Excel row ${index + 1} keeps the 62 canonical WO8 cells`));
-        assert.deepEqual(tsvCells.map((cells) => cells[exportSnapshot.lineColumn]), exportSnapshot.dispensedLines, 'Excel WO8 manual: row identity/order matches the dispensed lines');
-        tsvCells.forEach((cells, index) => {
-            assert.ok(cells[exportSnapshot.eaColumn].includes(EA_TEXTS[0]) && cells[exportSnapshot.eaColumn].includes(EA_TEXTS[1]), `Excel row ${index + 1}: both incorporated EA are projected, none truncated`);
-            assert.equal(countIn(cells[exportSnapshot.eaColumn], EA_TEXTS[0]), 1, `Excel row ${index + 1}: first EA written once per row`);
-        });
-        assert.ok(!(await guardNotice()).visible, 'Excel WO8 manual: no refusal notice after a successful copy');
-        ok('Excel WO8 manual copies exactly one row per dispensed line with the full 0..N EA projection');
-
-        // C-088 SPEC-02: la copia estructurada demo (v2) también se niega de
-        // forma visible con cobertura EA (su proyección no lleva el bloque
-        // EA); no se dispara copia ni mensaje de éxito.
-        assert.ok(!(await page.locator('#fhSegExportV2Btn').isDisabled()), 'v2 copy button available so the guard is exercised on the action itself');
-        await page.click('#fhSegExportV2Btn');
-        await page.waitForTimeout(150);
-        const v2Guard = await page.evaluate(() => ({
-            visible: !document.getElementById('fhSegEaExportGuardNotice').classList.contains('hidden'),
-            text: document.getElementById('fhSegEaExportGuardNotice').textContent,
-            status: document.getElementById('fhSegExportV2Status').textContent
-        }));
-        assert.ok(v2Guard.visible, 'v2 structured copy shows the visible refusal notice');
-        assert.ok(v2Guard.text.includes('no representa la cobertura EA') && v2Guard.text.includes('No se ha copiado nada'), 'v2 refusal declares the EA coverage cannot be represented and nothing was copied');
-        assert.ok(v2Guard.status.indexOf('Copia no realizada') === 0, 'v2 status declares refusal, never success');
-        ok('structured demo copy (v2) visibly refuses with EA coverage; no copy fired');
 
         assert.deepEqual(pageErrors, [], 'pageerror');
         assert.deepEqual(consoleErrors.filter(t => !resourceNoise(t)), [], 'console.error');

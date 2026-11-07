@@ -45,6 +45,15 @@
    'suspension_reason','suspension_effective_date','line_observations',
    'adherence_collection_status','adherence_instrument','adherence_result',
    'adherence_answers_json'];
+ // Visit content of a follow-up act travels ONCE, in the `followup_act` row:
+ // it is visit data, not per-row identity, so no other row repeats it.
+ var VISIT_FIELDS=['stratification_review_status','previous_stratification_level',
+   'new_stratification_level','stratification_change_reason','followup_proms_collection_status',
+   'visit_general_observations','proms_json','related_treatments_json'];
+ // Line content of a follow-up line: everything in LINE_FIELDS that is not a
+ // line snapshot, sliced from the published order so it cannot drift.
+ var LINE_CONTENT_FIELDS=LINE_FIELDS.slice(LINE_FIELDS.indexOf('dispensation_status'));
+ var PROM_INSTRUMENTS=['DLQI','EVA_DOLOR','EVA_PRURITO'];
  // Published V2 follow-up adapter semantics, expressed over the typed columns.
  var LINE_ROLES=['principal','additional'];
  var PLACEHOLDERS=['—','no informado'];
@@ -101,7 +110,8 @@
      EVENT_FIELDS=Array.from(d.v.ROW_COLUMNS).filter(function(k){
        return !EVENT_EXCLUDED.includes(k)&&!LINE_FIELDS.includes(k);
      });
-     COMMON=EVENT_FIELDS.concat(['fh_act_id','fh_patient_ref']);
+     COMMON=EVENT_FIELDS.filter(function(k){return !VISIT_FIELDS.includes(k);})
+       .concat(['fh_act_id','fh_patient_ref']);
    }
    return d;
  }
@@ -120,6 +130,41 @@
    return false;
  }
  function failValidation(msg,errors){error('INVALID_ROW',msg,errors);}
+ // Visit content is checked against the published V2 definitions. Values are
+ // never interpreted, filled or inferred: absent stays absent.
+ function definitionOf(name,d){
+   var found=null;
+   d.v.FIELD_DEFINITIONS.forEach(function(def){if(def.name===name)found=def;});
+   return found;
+ }
+ function validateProms(value){
+   if(value===null)return;
+   if(!Array.isArray(value))error('INVALID_PROMS','proms_json must be an explicit array');
+   var seen=Object.create(null);
+   value.forEach(function(entry){
+     if(!plain(entry))error('INVALID_PROMS','Each PROMS record must be an explicit record');
+     if(PROM_INSTRUMENTS.indexOf(entry.instrument)===-1)
+       error('INVALID_PROMS','PROMS instrument must be DLQI, EVA_DOLOR or EVA_PRURITO');
+     if(seen[entry.instrument])error('INVALID_PROMS','A PROMS instrument cannot repeat');
+     seen[entry.instrument]=true;
+     if(typeof entry.value!=='number'||!Number.isFinite(entry.value))
+       error('INVALID_PROMS','PROMS value must be a finite number');
+   });
+ }
+ function validateVisit(visit,d){
+   if(!plain(visit))error('INVALID_VISIT','Visit content must be an explicit record');
+   Object.keys(visit).forEach(function(k){
+     if(VISIT_FIELDS.indexOf(k)===-1)error('UNKNOWN_VISIT_FIELD','Unexpected visit field '+k);
+   });
+   Object.keys(visit).forEach(function(k){
+     var value=visit[k];
+     if(k==='proms_json'){validateProms(value);return;}
+     var definition=definitionOf(k,d);
+     if(!definition||!fieldTypeValid(k,value,definition)||
+        (value!==null&&definition.enum&&definition.enum.indexOf(value)===-1))
+       error('INVALID_VISIT_VALUE','Visit field '+k+' is not canonical');
+   });
+ }
  // Line invariants of the published V2 follow-up adapter, over typed columns.
  function lineInvariants(line,errors) {
    LINE_REQUIRED_TEXT.forEach(function(field){
@@ -308,6 +353,10 @@
         if(i>0&&d.v.stableStringify(row[k])!==d.v.stableStringify(first[k]))
           errors.push({code:'COMMON_IDENTITY_MISMATCH',field:k,row:i+1});
       });
+      // Visit content is declared once for the act: no other row may carry it.
+      if(row.row_role!=='followup_act')VISIT_FIELDS.forEach(function(k){
+        if(own(row,k)&&row[k]!==null)errors.push({code:'VISIT_FIELD_OUTSIDE_ACT',field:k,row:i+1});
+      });
       if(row.row_role!=='followup_line')LINE_FIELDS.forEach(function(k){
         if(k!=='rowKey'&&own(row,k)&&row[k]!==null)
           errors.push({code:'UNEXPECTED_LINE_FIELD',field:k,row:i+1});
@@ -460,8 +509,10 @@
    var d=init();
    if(!plain(input))error('INVALID_REQUEST','Input must be a plain record');
    var keys=['event','actId','patientRef','present','activeLines','adverse_events','history','selections'];
+   // `visit` is optional: absent (or undefined) means no visit content at all.
+   var optionalKeys=['visit'];
    keys.forEach(function(k){if(!data(input,k))error(k==='actId'?'INVALID_ACT_ID':k==='patientRef'?'INVALID_PATIENT_REF':'MISSING_INPUT','Explicit own data '+k+' is mandatory');});
-   Object.keys(input).forEach(function(k){if(!keys.includes(k))error('UNKNOWN_INPUT','Unexpected top-level input '+k);});
+   Object.keys(input).forEach(function(k){if(!keys.includes(k)&&!optionalKeys.includes(k))error('UNKNOWN_INPUT','Unexpected top-level input '+k);});
    // Verify all nested descriptors before R1 or V2 can read input; never invoke
    // a caller-provided accessor or silently flatten non-JSON source values.
    d.c.inspect(input);
@@ -475,6 +526,12 @@
       error('LEGACY_EA_COLLISION','Singular EA identity is not the EA collection');
    if(input.event.adverse_event_status!==undefined&&input.event.adverse_event_status!==null)
       error('LEGACY_EA_COLLISION','Singular EA status is not the EA collection');
+   // Visit and line content live in their own rows; an event carrying them
+   // would copy them to every row, so it is rejected before V2 validates it.
+   Object.keys(input.event).forEach(function(k){
+     if(VISIT_FIELDS.includes(k)||LINE_CONTENT_FIELDS.includes(k))
+       error('VISIT_FIELD_IN_EVENT','Visit and line content travel in their own row, not in the event');
+   });
    var v2Event={};
    Object.keys(input.event).forEach(function(k){v2Event[k]=input.event[k];});
    v2Event.event_schema_version=d.v.EVENT_SCHEMA_VERSION;
@@ -485,6 +542,13 @@
      present:input.present,adverse_events:input.adverse_events,
      history:input.history,selections:input.selections});
    if(!checked.ok)error(checked.error.code,checked.error.message);
+   // Visit content is declared once, for the whole act; it never lands on the
+   // lines or on the EA rows.
+   var visit=null;
+   if(own(input,'visit')&&input.visit!==undefined){
+     validateVisit(input.visit,d);
+     visit=clonePlain(input.visit);
+   }
    var base={};
    Object.keys(v2Event).forEach(function(k){if(COLS.includes(k)&&!['event_schema_version','row_role','row_index','row_count','row_id','row_schema_version'].includes(k))base[k]=v2Event[k];});
    base.fh_act_id=input.actId;base.fh_patient_ref=input.patientRef;
@@ -496,7 +560,7 @@
      keysSeen[r.row_id]=true;items.push(r);
    }
    // The act row is created first and receives the technical manifest at the end.
-   add('followup_act','act',{ea_present:input.present});
+   add('followup_act','act',Object.assign({ea_present:input.present},visit||{}));
    var lineSeen=Object.create(null),primaryCount=0;
    input.activeLines.forEach(function(line){
      if(!plain(line))error('INVALID_LINE','Each line must be an explicit record');
@@ -615,11 +679,16 @@
    var event={};
    // Preserve old event data originally provided only where it exists,
    // without interpreting transport role fields or mapping to F4.4.
-   EVENT_FIELDS.forEach(function(k){if(first[k]!==null)
+   // Visit content comes back as `visit`, symmetric with buildFollowupRows.
+   EVENT_FIELDS.forEach(function(k){if(first[k]!==null&&!VISIT_FIELDS.includes(k))
      event[k]=clonePlain(first[k]);});
    event.event_schema_version=VERSION;
-   return {event:event,actId:first.fh_act_id,patientRef:first.fh_patient_ref,
+   var visit={},hasVisit=false;
+   VISIT_FIELDS.forEach(function(k){if(first[k]!==null){visit[k]=clonePlain(first[k]);hasVisit=true;}});
+   var result={event:event,actId:first.fh_act_id,patientRef:first.fh_patient_ref,
      present:first.ea_present,activeLines:lines,adverse_events:observations};
+   if(hasVisit)result.visit=visit;
+   return result;
  }
  init();
  root.FarmaciaBridgeRawEaV21Core=Object.freeze({

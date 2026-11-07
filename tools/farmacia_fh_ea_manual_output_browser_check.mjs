@@ -4,7 +4,7 @@
 // viaje real Inicio → paciente sintético → Seguimiento con 2 líneas activas,
 // dispensación marcada con los controles soportados, sospechosos explícitos
 // registrados y DOS EA incorporados; después se pulsan los botones reales y se
-// comprueba el portapapeles (TXT JARA y TSV WO8), el conteo de filas, el
+// comprueba el portapapeles (TXT JARA; E3 retiró WO8 y CSV de Seguimiento), el
 // contenido de las celdas G, la guardia negativa de CSV y la consola.
 // Sin manipulación del DOM, sin fixtures imposibles y sin datos reales.
 // Ejecutar: node tools/farmacia_fh_ea_manual_output_browser_check.mjs
@@ -189,72 +189,24 @@ try {
     assert.ok(!(await guardNotice()).visible, 'TXT JARA: no refusal notice after a successful copy');
     ok('TXT JARA copy: one report per visit, each EA once, with identity, severity/evolution and explicit suspect references');
 
-    // ─── Botones reales: Excel WO8 manual ─────────────────────────────────
-    const layout = await page.evaluate(() => ({
-        columns: window.FarmaciaExcelRowExport.WO8_COLUMNS.length,
-        eaId: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('ea_id'),
-        eaDescription: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('ea_descripcion'),
-        eaSeverity: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('ea_gravedad'),
-        suspectIds: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('farmaco_sospechoso_id'),
-        naranjo: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('causalidad_naranjo'),
-        karch: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('causalidad_karch'),
-        lineId: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('linea_id')
-    }));
-    await page.click('#fhSegExcelExportBtn');
-    await page.waitForTimeout(250);
-    const tsv = await clipboardText();
-    const rows = tsv.split('\n').filter((row) => row.trim() !== '');
-    const cells = rows.map((row) => row.split('\t'));
-    assert.equal(cells.length, 2, 'Excel WO8 manual copies exactly one row per dispensed drug (two rows)');
-    cells.forEach((row, index) => assert.equal(row.length, layout.columns, `Excel row ${index + 1} keeps the ${layout.columns} canonical WO8 cells`));
-    assert.deepEqual(cells.map((row) => row[layout.lineId]).sort(), activeLines.slice().sort(), 'row identity matches the dispensed lines');
-    cells.forEach((row, index) => {
-        const rowLineId = row[layout.lineId];
-        const ownIdentity = rowLineId === lineOne ? identityLineOne : identityLineTwo;
-        const otherIdentity = rowLineId === lineOne ? identityLineTwo : identityLineOne;
-        assert.ok(row[layout.eaId].includes(ownIdentity), `Excel row ${index + 1}: the EA explicitly associated with ${rowLineId} is present`);
-        assert.ok(row[layout.eaId].includes(identityCommon), `Excel row ${index + 1}: the EA without a selected suspect is projected in the common part`);
-        assert.ok(!row[layout.eaId].includes(otherIdentity), `Excel row ${index + 1}: the EA of the other line is NOT copied into this row`);
-        assert.ok(row[layout.eaSeverity].includes('Gravedad:') && row[layout.eaSeverity].includes('Evolución:'), `Excel row ${index + 1}: severity/evolution labelled explicitly`);
-        assert.ok(row[layout.suspectIds].includes('Sin sospechoso seleccionado'), `Excel row ${index + 1}: «sin sospechoso seleccionado» stays distinct from an evaluation`);
-        assert.ok(/No evaluada/.test(row[layout.naranjo]) && /No evaluada/.test(row[layout.karch]), `Excel row ${index + 1}: causality stays «No evaluada»`);
-        const fragmentScopes = row[layout.eaId].split(' | ').map((fragment) => fragment.slice(0, fragment.indexOf(': ')));
-        assert.ok(fragmentScopes.every((scope) => scope === 'COMÚN' || scope.startsWith('LÍNEA ')), `Excel row ${index + 1}: every fragment carries a valid COMÚN / LÍNEA scope`);
-        assert.deepEqual(fragmentScopes, ['COMÚN', 'LÍNEA ' + rowLineId], `Excel row ${index + 1}: common part first, then the line-specific part of that line`);
-    });
-    const commonDescriptionCells = cells.map((row) => row[layout.eaDescription].split(' | ')[0]);
-    assert.equal(commonDescriptionCells[0], commonDescriptionCells[1], 'the common part is repeated identically on both rows and creates no new EA');
-    assert.ok(commonDescriptionCells.every((cell) => cell.includes('Mareo sin sospechoso declarado')), 'the repeated common part is the EA without a selected suspect');
-    assert.ok(!(await guardNotice()).visible, 'Excel WO8 manual: no refusal notice after a successful copy');
-    ok('Excel WO8 copy: one row per dispensed line, 62 cells, aligned COMÚN / LÍNEA fragments and no inferred causality');
+    // ─── E3 (#867): solo JARA y «Copiar filas Excel FH» (copia 166) ───────
+    for (const removed of ['#fhSegExportCsv', '#fhSegExcelExportBtn', '#fhSegExportV2Btn']) {
+        assert.equal(await page.locator(removed).count(), 0, `${removed} retirado de Seguimiento`);
+    }
+    assert.deepEqual(downloads, [], 'no file download fired');
+    ok('Seguimiento offers only JARA and Excel FH (166); WO8, CSV and V2 copies are gone');
 
-    // ─── Negativo: CSV y Export V2 conservan su frontera ──────────────────
-    await page.click('#fhSegExportCsv');
-    await page.waitForTimeout(200);
-    const csvGuard = await guardNotice();
-    assert.ok(csvGuard.visible && csvGuard.text.includes('3 EA incorporados') && csvGuard.text.includes('no se exporta solo el primer EA'), 'CSV keeps the previous singular frontier and refuses 0..N');
-    assert.deepEqual(downloads, [], 'no file download fired while the CSV export is blocked');
-    ok('CSV still refuses the 0..N collection without downloading anything');
-
-    // ─── REHACER 1 (P1-A): límite de celda Excel sin copia ni truncado ────
-    const clipboardBeforeOverflow = await clipboardText();
-    assert.ok(clipboardBeforeOverflow.split('\n').filter((row) => row.trim() !== '').length === 2, 'the clipboard holds the previous successful copy before the overflow attempt');
+    // ─── Descripción muy larga: el informe de texto no se trunca ─────────
+    // (el límite de celda Excel de la copia 166 lo prueba su propio núcleo)
     await page.click('#fhSegAddEaBtn');
     const overflowCard = page.locator('#fhSegEaList .ea-t01-card').last();
     await overflowCard.locator('[data-ea-field="description"]').fill('L'.repeat(34000));
     await overflowCard.getByRole('button', { name: 'Incorporar al acto' }).click();
-    await page.click('#fhSegExcelExportBtn');
-    await page.waitForTimeout(250);
-    const overflowGuard = await guardNotice();
-    assert.ok(overflowGuard.visible, 'Excel cell limit: visible refusal notice');
-    assert.ok(overflowGuard.text.includes('32767'), 'Excel cell limit: the refusal declares the exceeded Excel limit');
-    assert.ok(/no se ha copiado nada/i.test(overflowGuard.text), 'Excel cell limit: the refusal declares that nothing was copied');
-    assert.equal(await clipboardText(), clipboardBeforeOverflow, 'Excel cell limit: the clipboard stays byte-identical, no partial TSV and no truncation');
     await page.click('#fhSegExportTxt');
     await page.waitForTimeout(250);
     const jaraWithOverflow = await clipboardText();
-    assert.ok(jaraWithOverflow.includes('L'.repeat(34000)), 'Excel cell limit does not block the text report: JARA keeps the full description');
-    ok('Excel cell limit refused visibly without copying or truncating, while the text report stayed available');
+    assert.ok(jaraWithOverflow.includes('L'.repeat(34000)), 'JARA keeps the full description');
+    ok('a very long EA description stays complete in the text report');
 
     await page.evaluate(() => window.scrollTo(0, 0));
     writeFileSync(path.join(screenshotDir, 'FH_EA_MANUAL_01_seguimiento_1440x900.png'), await page.screenshot({ fullPage: false }));

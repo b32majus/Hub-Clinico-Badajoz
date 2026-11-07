@@ -182,32 +182,13 @@ try {
   await page.locator('#fhPvExcelExportBtn').click();
   assert.equal((await page.evaluate(() => window.__parallelExcelCapture))?.length, 62, 'v1 Excel remains exactly 62 columns (61 + solicitud_id per #366)');
 
-  const followupV1 = ['#fhSegExportTxt', '#fhSegExportCsv', '#fhSegExcelExportBtn'];
+  // E3 (#867): Seguimiento ya no ofrece la copia v2 en paralelo; solo JARA y
+  // «Copiar filas Excel FH» (copia 166). Validación y Primera Visita siguen igual.
   await page.goto(new URL('farmacia_seguimiento.html?cip=CIP-DEMO-FH-001', BASE).href, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.FarmaciaSeguimiento && !document.getElementById('fhSegExportV2Btn')?.disabled && document.querySelectorAll('input[name="fhSegLineCardSelection"]').length === 1);
-  await assertParallelUi({ button: '#fhSegExportV2Btn', status: '#fhSegExportV2Status', v1: followupV1 });
-  const followupV1Before = await disabledStates(followupV1);
-  await installProjectionCapture('FarmaciaSeguimiento', 'buildFollowupV2ProjectionFromCurrentContext');
-  const followup001First = await copyAndAssertExact({
-    button: '#fhSegExportV2Btn', status: '#fhSegExportV2Status', expectedRows: 1, expectedLineIds: ['BIO-FH-001-L1'], doubleClick: true
-  });
-  await repeatAndAssertStable({ button: '#fhSegExportV2Btn', status: '#fhSegExportV2Status', expectedRows: 1, expectedLineIds: ['BIO-FH-001-L1'] }, followup001First);
-  assert.deepEqual(await disabledStates(followupV1), followupV1Before, 'Follow-up v1 controls are unaffected by v2 copies');
-
-  await page.goto(new URL('farmacia_seguimiento.html?cip=CIP-DEMO-FH-004', BASE).href, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.FarmaciaSeguimiento && !document.getElementById('fhSegExportV2Btn')?.disabled && document.querySelectorAll('input[name="fhSegLineCardSelection"]:not(:disabled)').length === 2);
-  await installProjectionCapture('FarmaciaSeguimiento', 'buildFollowupV2ProjectionFromCurrentContext');
-  const followup004First = await copyAndAssertExact({
-    button: '#fhSegExportV2Btn', status: '#fhSegExportV2Status', expectedRows: 2,
-    expectedLineIds: ['BIO-FH-004-L2', 'BIO-FH-004-L3'], doubleClick: true
-  });
-  await repeatAndAssertStable({
-    button: '#fhSegExportV2Btn', status: '#fhSegExportV2Status', expectedRows: 2,
-    expectedLineIds: ['BIO-FH-004-L2', 'BIO-FH-004-L3']
-  }, followup004First);
-  assert.equal(await page.locator('#fhSegExportTxt').isVisible(), true, 'JARA v1 remains visible');
-  assert.equal(await page.locator('#fhSegExportCsv').isVisible(), true, 'CSV v1 remains visible');
-  assert.equal(await page.locator('#fhSegExcelExportBtn').isVisible(), true, 'Excel v1 remains visible');
+  await page.waitForFunction(() => window.FarmaciaSeguimiento && document.querySelectorAll('input[name="fhSegLineCardSelection"]').length === 1);
+  assert.equal(await page.locator('#fhSegExportV2Btn').count(), 0, 'Follow-up v2 parallel copy retired');
+  assert.equal(await page.locator('#fhSegExportTxt').isVisible(), true, 'JARA remains visible');
+  assert.equal(await page.locator('#fhSegExportBridgeRawBtn').isVisible(), true, 'Excel FH (166) visible');
 
   await page.goto(new URL('farmacia_primera_visita.html?cip=CIP-DEMO-FH-001', BASE).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita && !document.getElementById('fhPvExportV2Btn')?.disabled);

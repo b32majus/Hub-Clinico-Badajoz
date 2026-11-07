@@ -66,9 +66,10 @@ check('estadisticas population still flows through the published handoff seam',
 
 // ─── 3. Follow-up/export sync contract preserved ─────────────────────────────
 
-check('seguimiento keeps the published sync Excel export entry (no export semantics change)',
-    seguimientoSrc.indexOf('buildFollowupExcelRows(model)') !== -1
-        && seguimientoSrc.indexOf('copyTSVRowsToClipboard') !== -1);
+// E3 (#867): «Copiar filas Excel FH» de Seguimiento es la copia 166 (decisión
+// de Sil); la copia WO8 ya no está cableada en Seguimiento.
+check('seguimiento keeps its Excel FH export entry (166 copy, E3 #867)',
+    seguimientoSrc.indexOf("byId('fhSegExportBridgeRawBtn')") !== -1);
 check('seguimiento keeps the explicit follow-up visit construction identity',
     seguimientoSrc.indexOf('createFollowupVisit(') !== -1);
 

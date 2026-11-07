@@ -7,7 +7,9 @@
 //    «OTRO SINTETICO», sin evaluación);
 //  - CIP-LEGACY-003: seguimiento V2 heredado, sin filas 166 (no leído ≠ sin EA).
 // Solo datos sintéticos. `loadModules()` carga en el global de Node los
-// módulos que hacen falta para construir y leer el libro.
+// módulos que hacen falta para construir y leer el libro. `extraDermaTsv`
+// (opcional) añade a 01_DERMA filas TSV ya serializadas (p. ej. un acto
+// nuevo copiado desde Seguimiento) para releer el libro resultante.
 
 const fs = require('fs');
 const path = require('path');
@@ -68,7 +70,7 @@ const obs = (p, act, fields) => ({
 });
 const refOf = o => ({ patientRef: o.patientRef, actId: o.actId, episode_id: o.episode_id, observation_id: o.observation_id });
 
-function rows() {
+function rows(options = {}) {
     const v2 = global.FarmaciaExportV2Core;
     const v21 = global.FarmaciaBridgeRawEaV21Core;
     const EXTRA = v21.ROW_COLUMNS.slice(152);
@@ -98,27 +100,28 @@ function rows() {
             ...v2.projectEventRows(validation.event, validation.rowPayloads).map(v2Cells),
             ...typedCells(typedAct(P1, 'EV-A', 'ACT-A', '2026-09-10', [o1, o9])),
             ...typedCells(typedAct(P1, 'EV-B', 'ACT-B', '2026-10-10', [o2], [o1])),
-            ...typedCells(typedAct(P2, 'EV-Z', 'ACT-Z', '2026-10-15', [z1]))
+            ...typedCells(typedAct(P2, 'EV-Z', 'ACT-Z', '2026-10-15', [z1])),
+            ...(options.extraDermaTsv || []).flatMap(tsv => String(tsv).split('\n').map(text => text.split('\t')))
         ],
         digestivo: v2.projectEventRows(legacy.event, legacy.rowPayloads).map(v2Cells)
     };
 }
 
-function workbook() {
+function workbook(options) {
     const XLSX = global.XLSX;
-    const built = rows();
+    const built = rows(options);
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([built.header].concat(built.derma)), '01_DERMA');
     XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([built.header].concat(built.digestivo)), '03_DIGESTIVO');
     return book;
 }
 
-function workbookBuffer() {
-    return global.XLSX.write(workbook(), { type: 'buffer', bookType: 'xlsx' });
+function workbookBuffer(options) {
+    return global.XLSX.write(workbook(options), { type: 'buffer', bookType: 'xlsx' });
 }
 
-function source() {
-    const model = global.FarmaciaBridgeV2Reader.readWorkbook(workbook(), {
+function source(options) {
+    const model = global.FarmaciaBridgeV2Reader.readWorkbook(workbook(options), {
         core: global.FarmaciaExportV2Core, xlsx: global.XLSX, fileName: 'mixto.xlsx', importedAt: '2026-10-29T10:00:00Z'
     });
     return global.FarmaciaRawExcelDataSource.create(model);

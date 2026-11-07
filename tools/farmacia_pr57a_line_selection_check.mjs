@@ -160,7 +160,7 @@ const preserved = [
   ['DLQI', /DLQI/], ['catálogo', /fhSegDrugSearch/], ['Naranjo', /modNaranjo/],
   ['Karch-Lasagna', /modKarchLasagna/], ['relacionados', /modOtrosFarmacos/],
   ['navegación', /navToDashboardPaciente/], ['JARA', /fhSegExportTxt/],
-  ['CSV', /fhSegExportCsv/], ['Excel', /fhSegExcelExportBtn/]
+  ['Excel FH (166, E3 #867)', /fhSegExportBridgeRawBtn/]
 ];
 preserved.forEach(([name, pattern]) => assert(pattern.test(html) || pattern.test(js), `${name} permanece en Seguimiento`));
 assert(['modOtrosFarmacos', 'modNaranjo', 'modKarchLasagna', 'modExportacion'].every((id) => new RegExp(`<[^>]+id="${id}"`).test(html)), 'módulos preservados mantienen estructura e IDs navegables');

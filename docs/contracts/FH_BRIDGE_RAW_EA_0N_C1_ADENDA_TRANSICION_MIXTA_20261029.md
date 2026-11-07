@@ -20,5 +20,15 @@
 7. **Libros antiguos de 152:** siguen leyéndose por el camino legacy exactamente como hoy; no se reinterpretan como 166 ni se afirma EA 0..N.
 8. Todo rechazo es cerrado: sin carga parcial del libro.
 
+## Ampliación 31-10-2026 · Seguimiento 166 con la visita completa e identidad del libro
+**Decisiones de producto (Sil, 31-10-2026).** Issue: #867.
+1. **Una sola copia de Seguimiento.** «Copiar filas Excel FH» copia la visita completa en 166 (acto, líneas y EA 0..N). Se retiran de Seguimiento el CSV, la copia V2 de 152 («datos estructurados»), la copia Bridge raw suelta y la de 62 columnas. Validación y Primera Visita no cambian (152 hasta el camino B). La convivencia de esta adenda es la del **libro**, no la de los botones.
+2. **Datos de la visita, una sola vez, en la fila `followup_act`:** `stratification_review_status`, `previous_stratification_level`, `new_stratification_level`, `stratification_change_reason`, `followup_proms_collection_status`, `visit_general_observations`, `proms_json` y `related_treatments_json`. `fh_act_id` agrupa las filas de la visita (fármacos y EA); ninguna otra fila repite estos campos. Un evento que los traiga para copiarlos a todas las filas se rechaza (`VISIT_FIELD_IN_EVENT`).
+3. **Valores de PROMs del seguimiento** en `proms_json` de la fila del acto, con la forma de primera visita: array de `{ instrument: DLQI | EVA_DOLOR | EVA_PRURITO, value: número finito, … }`, sin instrumentos repetidos. El libro 166 es la fuente de verdad.
+4. **Datos de cada línea** en su fila `followup_line`: dispensación, revisión específica, movimiento terapéutico (nueva dosis/pauta/vía, motivo, fecha), suspensión, observaciones de la línea y adherencia (`adherence_*`).
+5. **Viajan todas las líneas revisadas en la visita**, cada una con su dispensación declarada (no solo las dispensadas).
+6. **Ausente ≠ NO.** Un control con valor por defecto que el profesional no toca se guarda como no registrado (`not_recorded` / `no_change_recorded` / vacío); solo cuenta como «No» si lo marca.
+7. **Identidad del acto desde el libro.** La identidad del paciente (`patient_id`, `fh_patient_ref`, `demo_flag`, `identifier_system`) se lee tal como la declara el libro; consultar no crea ni modifica nada. Sin `fh_patient_ref` declarado, o con datos contradictorios, la copia se bloquea con motivo. Solo el acto emite su identidad (`fh_act_id`, evento, visita) una vez, al abrirse. Los pacientes del registro demo siguen con su identidad declarada. La emisión del `fh_patient_ref` en el primer acto del paciente corresponde al camino B.
+
 ## Fin de la transición (camino B de C1)
 Cuando Validación y Primera Visita exporten filas 166 con identidad de acto/paciente autorizada, el lector dejará de aceptar filas `2.0.0-draft.1` en un libro de cabecera 166 y se retirarán, en el mismo tramo, la proyección del punto 5 y el método antiguo `getAdverseEventsAndCausality`. Esta adenda se marcará entonces como superada.

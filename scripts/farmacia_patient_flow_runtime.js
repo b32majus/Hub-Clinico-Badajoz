@@ -286,6 +286,23 @@
         var firstVisitDate = firstVisitRow.first_visit_date || '';
         var followupDate = followupRow.visit_date || '';
         var requestedSchedule = firstPresent(request.requested_schedule_label, request.requested_schedule_other_text);
+        // Identidad declarada por el libro: se lee, no se deduce. Sin módulo →
+        // `unavailable`; una lectura que falla → `error`, nunca un dato parcial.
+        var workbookContext = root.FarmaciaBridgeRawEaV21WorkbookContext;
+        var bridgeRawIdentity = { status: 'unavailable' };
+        if (workbookContext && typeof workbookContext.declaredPatientIdentity === 'function') {
+            try {
+                bridgeRawIdentity = workbookContext.declaredPatientIdentity({
+                    patientId: projection.patient_id,
+                    identifierValue: identifier.identifier_value,
+                    events: explicit.events || [],
+                    eaEnvelope: explicit.ea_episodes,
+                    lines: (explicit.visits_and_lines || {}).lines || []
+                });
+            } catch (problem) {
+                bridgeRawIdentity = { status: 'error' };
+            }
+        }
 
         return {
             __farmaciaRawPatient: true,
@@ -348,7 +365,8 @@
             adherence_records: clone(explicit.adherence),
             adverse_event_records: clone(explicit.safety && explicit.safety.adverse_events || []),
             causality_records: causality,
-            ea_episodes: eaEpisodesStatus(explicit.ea_episodes)
+            ea_episodes: eaEpisodesStatus(explicit.ea_episodes),
+            bridge_raw_identity: bridgeRawIdentity
         };
     }
 
@@ -496,7 +514,8 @@
                 safety: dataPort.getAdverseEventsAndCausality(patientId) || { adverse_events: [], causality_assessments: [] },
                 validation_context: validationContext(events),
                 event_metadata: eventMetadata(events),
-                ea_episodes: adverseEventEpisodesFor(patientId)
+                ea_episodes: adverseEventEpisodesFor(patientId),
+                events: events
             };
         }
 
