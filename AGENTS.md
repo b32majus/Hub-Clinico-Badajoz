@@ -17,6 +17,16 @@ For bounded engineering work:
 
 Do not load historical Gentle/Pi/RDD/4R/OpenCode V1 material or broad product/shaping documents by ritual. Durable repository authority beats remembered SHAs, prior chat and auxiliary memory.
 
+## Start from the existing situation
+
+Before proposing a step, estimating size or asking the product owner a question, find out what is already decided and what the change touches:
+
+- `docs/DECISIONES.md`, `docs/PREGUNTAS_ABIERTAS.md` and the relevant `docs/contracts/`;
+- how the base form already does it (Validation → First Visit → Follow-up);
+- the data chain: who writes it, the 166-column workbook, the reader/selectors and the screens.
+
+Follow existing patterns (e.g. act-scoped ids). Ask only what is a genuine clinical/product choice not settled in the repo, and say where you looked. Never call a change "small" before checking the formats and consumers it crosses.
+
 ## C-087 execution boundary
 
 Normal execution uses native OpenCode V2 2.0.26 (2.0.22 is a historical baseline) + upstream Matt skills. Standard `volume` writes with DeepSeek V4 Flash; Standard `complex` writes with GLM 5.3 Flash high. Cost policy and risk class are independent. No silent fallback or mid-unit route change.
@@ -31,19 +41,6 @@ Specialized product/fidelity safeguards are conditional on the accepted work and
 
 Herdr is user-owned persistent operator infrastructure; do not launch/restart/stop it. Ordinary visible execution is `opencode .`. Do not use `--pure` or V1 configuration.
 
-## Executor handoffs (adapted DIA)
-
-Applies when an executor (e.g. DeepSeek V4 Flash) implements from a written `PLAN_EJECUTOR_*` handoff. The coordinator writes the RED test and the handoff; the executor implements; the coordinator audits once and re-runs the checks itself (the executor's report is not evidence).
-
-- Touch only the files and functions the handoff lists. Never edit tests/checks, fixtures, documents or any other file; if that seems necessary, STOP and describe it.
-- No git (no stash/checkout/commit/push), no installs, no `tools/` generators or scripts outside the handoff's check list.
-- No reviews, subagents or workers: implement and check yourself.
-- Never use `innerHTML`; build nodes with `createElement`/`textContent`.
-- Run only the commands listed in the handoff. Maximum 3 attempts per failure. If a test contradicts the handoff rules, STOP and describe it without touching the test.
-- Add no logic whose only purpose is to pass a test; report any such logic.
-- Final report in 12 lines or fewer: changes (lines +/- per file), result of each command, any logic added only to pass a test.
-- Clinical safety invariants above apply unchanged (no inferred dose, route, schedule, causality, validation or switch; synthetic data only; no invented MedDRA/CTCAE codes).
-
 ## Repository / Git authority
 
 - Canonical V4 branch: `promueve/nexus-v4`.
@@ -51,6 +48,7 @@ Applies when an executor (e.g. DeepSeek V4 Flash) implements from a written `PLA
 - Preserve unrelated work; no broad reset/clean/restore.
 - No force-push, hidden rebase/history rewrite, push, PR, merge, deploy or worktree deletion without explicit authority.
 - A review PASS never grants publication authority.
+- GitHub Pages publishes only `promueve/nexus-v4`; open PRs are not live there.
 
 ## Clinical safety invariants
 
@@ -61,9 +59,11 @@ Never infer from drug name, catalogue, prior treatment, label, tray or missing d
 
 The catalogue may identify/select; it does not decide therapeutic data. Requested treatment is not validated treatment. Missing data stays blank/unknown/pending. Use synthetic/demo data only; no real patient data, secrets or credentials.
 
+MedDRA and CTCAE coding for adverse events is documented only (spec v0.5 D14, gate G1) and not implemented: never invent or infer codes; the visible placeholder is "Término codificado: pendiente de codificar".
+
 ## Engineering / QA
 
-Read `CODING_STANDARDS.md` before product code changes. Existing tests/oracles and supported browser interaction are evidence; passing tests alone is not product proof. Do not weaken accepted oracles to fit an implementation.
+Read `CODING_STANDARDS.md` before product code changes. Existing tests/oracles and supported browser interaction are evidence; passing tests alone is not product proof. Do not weaken accepted oracles to fit an implementation. Do not add logic whose only purpose is to pass a test.
 
 For UI work, verify the supported interaction actually demonstrates the requested behavior. DOM tampering or impossible fixtures do not count.
 
