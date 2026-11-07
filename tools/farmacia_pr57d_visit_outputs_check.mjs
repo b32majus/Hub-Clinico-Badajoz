@@ -73,11 +73,12 @@ const document = {
   querySelector(selector) { const answer = selector.match(/data-answer-id="([^"]+)"/)?.[1]; if (answer) return groups.get(answer); const uid = selector.match(/data-uid="([^"]+)"/)?.[1]; const field = selector.match(/data-field="([^"]+)"/)?.[1]; return rendered().find((item) => (!uid || item.getAttribute?.('data-uid') === uid) && (!field || item.getAttribute?.('data-field') === field)) || null; },
   querySelectorAll(selector) { if (selector.includes('data-answer-id^="naranjo"')) return [...groups.entries()].filter(([id]) => id.startsWith('naranjo')).map(([, group]) => group); if (selector.includes('data-answer-id^="kl"')) return [...groups.entries()].filter(([id]) => id.startsWith('kl')).map(([, group]) => group); if (selector === '.causality-chip-group .causality-chip') return [...groups.values()].flatMap((group) => group.children); return []; }
 };
-const F = { getQueryContext: () => ({}), insertNoCipBanner() {}, clearChildren(el) { if (el) { el.children = []; el.options = []; } }, setText(id, value) { node(id).textContent = value || ''; }, setValue(id, value) { const el = nodes.get(id); if (el) el.value = value || ''; }, renderFields() {} };
+const F = { getQueryContext: () => ({}), readPatientContext: () => Promise.resolve({ cip: '', status: 'no_cip', patient: null, hasExplicitCip: false, patientNotFound: false }), insertNoCipBanner() {}, clearChildren(el) { if (el) { el.children = []; el.options = []; } }, setText(id, value) { node(id).textContent = value || ''; }, setValue(id, value) { const el = nodes.get(id); if (el) el.value = value || ''; }, renderFields() {} };
 const sandbox = { window: { FarmaciaDemo: F, confirm: () => true }, document, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
 vm.createContext(sandbox);
 ['scripts/farmacia_pautas_catalog.js', 'scripts/farmacia_excel_row_export.js', 'scripts/farmacia_seguimiento.js'].forEach((file) => vm.runInContext(read(file), sandbox));
-(documentListeners.DOMContentLoaded || []).forEach((fn) => fn());
+// El arranque de la página es async (await applyContext()): se espera entero antes de comprobar nada.
+for (const fn of documentListeners.DOMContentLoaded || []) await fn();
 const api = sandbox.window.FarmaciaSeguimiento;
 check(['fhSegOptimiza', 'fhSegSuspension', 'fhSegNuevaPauta'].every((id) => (node(id).listeners.change || []).length > 0), 'VM executes real DOMContentLoaded and installs productive visible-control listeners');
 const columns = sandbox.window.FarmaciaExcelRowExport.WO8_COLUMNS;
