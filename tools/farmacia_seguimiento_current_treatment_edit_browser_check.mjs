@@ -111,6 +111,34 @@ try {
         assert.ok(await page.locator('#fhSegPautaActual').isDisabled(), 'pauta no editable');
     });
 
+    await test('el buscador de fármaco acepta un clic lento (pulsar y mantener) en el principal y en Otros fármacos', async () => {
+        await page.goto(base + 'farmacia_seguimiento.html?cip=' + CIP, { waitUntil: 'load' });
+        await page.waitForFunction((value) => (document.getElementById('fhSegCip') || {}).value === value, CIP, { timeout: 10000 });
+        await page.waitForFunction(() => window.FarmaciaCatalog && window.FarmaciaCatalog.loaded, null, { timeout: 20000 });
+        const slowClick = async (item) => {
+            await item.waitFor({ state: 'visible', timeout: 5000 });
+            const box = await item.boundingBox();
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            await page.waitForTimeout(400);
+            await page.mouse.up();
+            await page.waitForTimeout(300);
+        };
+        await page.click('#fhSegDrugSearch');
+        await page.keyboard.type('secuk', { delay: 40 });
+        await slowClick(page.locator('#fhSegAutocompleteDropdown .autocomplete-item').first());
+        assert.ok((await page.inputValue('#fhSegFarmaco')).trim() !== '', 'el buscador principal elige con clic lento');
+        assert.equal(await cards().count(), 1);
+        await page.click('#btnSegAddOtherDrug');
+        const other = otherCards().last();
+        await other.locator('select').first().selectOption('Concomitante');
+        await other.locator('input[data-field="farmaco"]').click();
+        await page.keyboard.type('adalim', { delay: 40 });
+        await slowClick(other.locator('.autocomplete-dropdown .autocomplete-item').first());
+        assert.ok((await other.locator('input[data-field="farmaco"]').inputValue()).trim() !== '', 'Otros fármacos elige con clic lento');
+        assert.equal(await cards().count(), 2, 'el otro fármaco activo es línea');
+    });
+
     await test('línea creada en la visita (A1): dosis, vía y pauta editables; fármaco, principio y presentación de solo lectura', async () => {
         await page.goto(base + 'farmacia_seguimiento.html?cip=' + CIP, { waitUntil: 'load' });
         await page.waitForFunction((value) => (document.getElementById('fhSegCip') || {}).value === value, CIP, { timeout: 10000 });

@@ -945,6 +945,7 @@
         autocompleteWrapper.id = drug.uid + '-autocomplete-wrapper';
         autocompleteWrapper.appendChild(farmacoInput);
         var autocompleteDropdown = createElement('div', 'autocomplete-dropdown hidden');
+        keepFocusOnDropdownMouseDown(autocompleteDropdown);
         autocompleteDropdown.id = drug.uid + '-dropdown';
         autocompleteWrapper.appendChild(autocompleteDropdown);
         grid.appendChild(buildFollowupField('Fármaco', autocompleteWrapper));
@@ -4203,6 +4204,14 @@
         }
     }
 
+    // Pulsar en una opción del desplegable hace que el campo pierda el foco y,
+    // 150 ms después, el desplegable se cierra: un clic lento perdía la
+    // selección. Con mousedown cancelado el campo conserva el foco y el clic llega.
+    function keepFocusOnDropdownMouseDown(dropdown) {
+        if (!dropdown || typeof dropdown.addEventListener !== 'function') return;
+        dropdown.addEventListener('mousedown', function (event) { event.preventDefault(); });
+    }
+
     function handleSegDrugSearchInput() {
         var C = getCatalog();
         if (!C || !C.loaded) return;
@@ -4220,6 +4229,7 @@
     function initSegDrugAutocomplete() {
         var input = document.getElementById('fhSegDrugSearch');
         if (!input) return;
+        keepFocusOnDropdownMouseDown(document.getElementById('fhSegAutocompleteDropdown'));
 
         input.addEventListener('input', handleSegDrugSearchInput);
         input.addEventListener('keydown', function (event) {
