@@ -329,7 +329,7 @@
                 break;
             }
         }
-        return {
+        var adapted = {
             __farmaciaRawPatient: true,
             source_mode: 'raw',
             patient_id: envelope.patient_id,
@@ -351,6 +351,12 @@
             actividad_clinica: [],
             comorbilidades_relevantes: []
         };
+        // Estado del modelo de EA del paciente de la sesión: se conserva tal
+        // como lo publica la proyección, sin completarlo ni reinterpretarlo.
+        if (projected && own(projected, 'ea_episodes')) {
+            adapted.ea_episodes = clone(projected.ea_episodes);
+        }
+        return adapted;
     }
 
     root.FarmaciaLongitudinalRawAdapter = Object.freeze({ buildFromEnvelope: buildFromEnvelope });

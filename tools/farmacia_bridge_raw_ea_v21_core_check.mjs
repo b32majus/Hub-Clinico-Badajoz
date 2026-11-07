@@ -185,15 +185,23 @@ test('legacy 152-column row and version are not silently reinterpreted',()=>{
  const broken=tsv.split('\n').map(s=>s.split('\t').slice(0,152).join('\t')).join('\n');
  reject('INVALID_TSV_COLUMN_COUNT',()=>core.parseTsvRows(broken));
 });
-test('all explicit V2 common event fields survive and cannot diverge across rows',()=>{
-const x=richInput();x.event.proms_json=[{instrument:'TEST',value:7}];
-x.event.visit_general_observations='Nota sintética no omitida';
+// Adenda C1, ampliación 31-10-2026 (Sil): la visita viaja UNA vez, en la fila
+// del acto, declarada como `visit`; nunca en el evento ni en otras filas.
+test('visit content travels once in the act row, decodes back and cannot spread to other rows',()=>{
+const x=richInput();x.visit={proms_json:[{instrument:'DLQI',value:7}],visit_general_observations:'Nota sintética no omitida'};
 const rows=core.buildFollowupRows(x);
+assert.equal(rows[0].visit_general_observations,'Nota sintética no omitida');
+rows.slice(1).forEach(row=>{assert.equal(row.visit_general_observations,null);assert.equal(row.proms_json,null);});
 const back=core.decodeFollowupRows(core.parseTsvRows(core.serializeRowsToTsv(rows)));
-assert.equal(back.event.visit_general_observations,'Nota sintética no omitida');
-assert.equal(back.event.proms_json[0].instrument,'TEST');
+assert.equal(back.visit.visit_general_observations,'Nota sintética no omitida');
+assert.equal(back.visit.proms_json[0].instrument,'DLQI');
+assert.equal(Object.hasOwn(back.event,'visit_general_observations'),false);
+assert.equal(Object.hasOwn(back.event,'proms_json'),false);
 const altered=structuredClone(rows);altered[3].visit_general_observations='Cambió';
-assert.equal(core.validateRowSet(altered).valid,false);
+assert.ok(core.validateRowSet(altered).errors.some(e=>e.code==='VISIT_FIELD_OUTSIDE_ACT'));
+const legacy=richInput();legacy.event.visit_general_observations='En el evento';
+reject('VISIT_FIELD_IN_EVENT',()=>core.buildFollowupRows(legacy));
+assert.equal(Object.hasOwn(core.decodeFollowupRows(core.buildFollowupRows(richInput())),'visit'),false);
 });
 test('association payloads preserve their own declared fields, no synthetic properties',()=>{
 const x=richInput();x.adverse_events[0].suspicions[0].reviewNote=undefined;

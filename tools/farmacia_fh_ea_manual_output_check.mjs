@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// A3 (#871): un «otro fármaco» activo (tipo por defecto o Concomitante) es una línea de la visita y se sospecha como `line:<id>`. Este check prueba las referencias `other:<uid>`, que siguen siendo las de los tratamientos NO activos: cada alta nace como histórico.
 // tools/farmacia_fh_ea_manual_output_check.mjs
 // FH-EA-MANUAL-01 — proyección EA 0..N en las DOS salidas manuales de
 // Seguimiento: TXT JARA (un informe por visita) y Excel WO8 manual (una fila
@@ -296,7 +297,7 @@ const eaC1 = addIncorporatedEa({ description: 'EA de la línea A', severity: 'Mo
 const eaC2 = addIncorporatedEa({ description: 'EA de la línea B', severity: 'Leve', evolution: 'si', suspects: ['line:LINE-B'] });
 const eaC3 = addIncorporatedEa({ description: 'EA compartido', severity: 'Grave', evolution: 'no', suspects: ['line:LINE-A', 'line:LINE-B'] });
 const eaC4 = addIncorporatedEa({ description: 'EA sin sospechoso', suspects: [] });
-api.addFollowupOtherDrug();
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico');
 const otherUid = api.getFollowupOtherDrugs()[0].uid;
 // Un sospechoso externo solo puede marcarse si el tratamiento tiene nombre
 // real (G0 nunca ofrece etiquetas técnicas de relleno).
@@ -457,10 +458,8 @@ check(/reconcilia/i.test(failClosedReason), 'F · el mensaje identifica la recon
 const seguimientoSourceForWiring = read('scripts/farmacia_seguimiento.js');
 check(/const exportTxt = document\.getElementById\('fhSegExportTxt'\)[\s\S]{0,400}guardEaManualOutputs\(\)/.test(seguimientoSourceForWiring),
   'F · el botón TXT JARA consulta la guardia manual ANTES de construir y copiar');
-check(/var btn = document\.getElementById\('fhSegExcelExportBtn'\)[\s\S]{0,300}guardEaManualOutputs\(\)/.test(seguimientoSourceForWiring),
-  'F · el botón Excel WO8 consulta la guardia manual ANTES de construir y copiar');
-check(/const exportCsv = document\.getElementById\('fhSegExportCsv'\)[\s\S]{0,300}guardEaSingularExport\(\)/.test(seguimientoSourceForWiring),
-  'I · el botón CSV conserva la guardia singular anterior (no se activa para multi-EA)');
+check(!/getElementById\('fhSegExcelExportBtn'\)/.test(seguimientoSourceForWiring) && !/getElementById\('fhSegExportCsv'\)/.test(seguimientoSourceForWiring),
+  'E3 (#867) · Seguimiento ya no cablea los botones Excel WO8 ni CSV: «Copiar filas Excel FH» es la copia 166');
 
 /* ─── G · regresión legacy sin EA y guardias de presencia ────────────────── */
 
@@ -556,8 +555,10 @@ check(countOccurrences(overJara, 'x'.repeat(34000)) === 1,
   'P1-A · TXT JARA no se bloquea por el límite de Excel y conserva la descripción íntegra una vez');
 
 const seguimientoSourceP1A = read('scripts/farmacia_seguimiento.js');
-check(/var rows = buildFollowupExcelRows\(model\);[\s\S]{0,400}guardEaManualExcelRows\(rows\)[\s\S]{0,400}copyTSVRowsToClipboard/.test(seguimientoSourceP1A),
-  'P1-A · el botón Excel valida las filas finales después de construirlas y antes de tocar el portapapeles');
+// E3 (#867): el botón Excel WO8 ya no existe en Seguimiento; el guard de celda
+// sigue probado abajo por la API, y la copia 166 lo aplica en su núcleo.
+check(!/copyTSVRowsToClipboard/.test(seguimientoSourceP1A),
+  'E3 · Seguimiento ya no copia filas WO8 al portapapeles');
 
 // Fronteras exactas: 32767 cabe, 32768 se bloquea.
 buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1A-LIMIT', dispense: ['LINE-A'] });
@@ -591,10 +592,10 @@ const eaBlockOf = (text) => {
 
 buildVisit({ patientCip: 'CIP-FH-EA-MANUAL-01-P1B', dispense: ['LINE-A'] });
 api.setEaPresent('si');
-api.addFollowupOtherDrug();
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico');
 const homonymOne = api.getFollowupOtherDrugs()[0].uid;
 api.updateFollowupOtherDrug(homonymOne, 'farmaco', 'Mismo nombre');
-api.addFollowupOtherDrug();
+api.addFollowupOtherDrug(); api.updateFollowupOtherDrug(api.getFollowupOtherDrugs().slice(-1)[0].uid, 'relationType', 'Biológico previo/histórico');
 const homonymTwo = api.getFollowupOtherDrugs()[1].uid;
 api.updateFollowupOtherDrug(homonymTwo, 'farmaco', 'Mismo nombre');
 addIncorporatedEa({ description: 'EA con homónimos', suspects: ['other:' + homonymTwo] });

@@ -85,9 +85,6 @@
         font-weight: 800;
         color: #1f344b;
     }
-    #modSeguimientoEa .ea-t01-footer-actions {
-        margin: 0;
-    }
     /* VIS-04: solo los dos campos de la tarjeta EA expandida, como G0. */
     #fhSegEaList .ea-t01-clinical-grid {
         display: grid;
@@ -357,11 +354,9 @@
         <p class="search-card__hint">Descripción del EA nuevo obligatoria al finalizar · Otros datos opcionales</p>
         <div class="form-actions ea-t01-entry-actions">
             <button type="button" class="btn btn-primary btn-sm" id="fhSegAddEaBtn"><i class="fas fa-plus" aria-hidden="true"></i> Añadir EA nuevo</button>
-            <div class="form-group ea-t01-prior-picker"><label class="form-label" for="fhSegEaPriorEpisodeSelect">EA anterior para actualizar / registrar recurrencia</label><select class="form-select" id="fhSegEaPriorEpisodeSelect" disabled aria-disabled="true" data-ea-demo-control="t01"><option value="">Seleccionar episodio anterior…</option><option value="DEMO-EP-081">Prurito · DEMO-EP-081 · En seguimiento (demo)</option><option value="DEMO-EP-082">Náuseas · DEMO-EP-082 · Resuelto (demo)</option></select></div>
-            <button type="button" class="btn btn-secondary btn-sm" id="fhSegEaUpdatePriorBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Actualizar EA anterior</button>
-            <button type="button" class="btn btn-outline btn-sm" id="fhSegEaRecurrenceBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Registrar recurrencia</button>
         </div>
-        <p class="search-card__hint">Continuidad y recurrencia requieren selección explícita. Se mantienen separados el episodio y las observaciones de cada acto. Selección y botones de continuidad/recurrencia: presentación visual de la maqueta aprobada, no funcionales en T01; no crean episodios, observaciones ni relaciones.</p>
+        <p class="search-card__hint">Continuidad y recurrencia requieren selección explícita: pulse Continúa, Resuelto o Recurrencia en el episodio anterior. Cada visita registra su propia observación; el episodio anterior no se modifica.</p>
+        <div id="fhSegEaPriorEpisodes" aria-live="polite"></div>
         <p class="empty-state hidden" id="fhSegEaEmpty">Sin EA añadidos todavía en esta visita.</p>
         <div id="fhSegEaList" data-fh-transient aria-live="polite"></div>
         <div id="fhSegEaContradictionNotice" class="notice-box notice-box--warning hidden" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>No se puede cambiar a «No» o «No consta»: este acto ya tiene EA incorporados. La contradicción se resuelve con conciliación explícita, nunca borrando datos; no se ha eliminado nada.</span></div>
@@ -370,12 +365,8 @@
                 <p class="search-card__hint ea-t01-summary-copy" id="fhSegEaSummary" aria-live="polite">0 observación/es en esta visita · 0 episodio/s relacionado/s</p>
                 <p class="search-card__hint">Ejemplo editable; no guarda en historia clínica ni genera notificaciones.</p>
             </div>
-            <div class="form-actions ea-t01-footer-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="fhSegEaShowStructureBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Ver estructura simulada</button>
-                <button type="button" class="btn btn-outline btn-sm" id="fhSegEaResetDemoBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Reiniciar ejemplo</button>
-            </div>
         </div>
-        <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Borrador ≠ incorporado ≠ guardado. «Incorporado» forma parte de la representación preparada del acto en edición; esta unidad no tiene guardado en destino: al salir o recargar la pantalla no se recupera. Ejemplo editable, no guarda en historia clínica ni genera notificaciones. Los controles «EA anterior», «Actualizar EA anterior», «Registrar recurrencia», «Ver estructura simulada» y «Reiniciar ejemplo» son fidelidad visual de la maqueta aprobada: no funcionales en T01, sin destino de guardado y sin notificaciones.</span></div>
+        <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Borrador ≠ incorporado ≠ guardado. «Incorporado» forma parte de la representación preparada del acto en edición; esta unidad no tiene guardado en destino: al salir o recargar la pantalla no se recupera. Ejemplo editable, no guarda en historia clínica ni genera notificaciones.</span></div>
     </div>
     <div class="form-grid form-grid--full hidden" id="fhSeguimientoEaObservacionesRow"><div class="form-group"><label for="fhSeguimientoEaObservaciones">Descripción breve / observaciones</label><textarea class="form-textarea" id="fhSeguimientoEaObservaciones" rows="3"></textarea></div></div>
     <div class="form-grid hidden" id="fhSeguimientoEaFarmacoRow">
@@ -387,7 +378,7 @@
     <div class="hidden" id="fhSegEaSospechosos"></div>
 </section>
 <section class="dashboard-card hidden" id="modSeguimientoCausalidad"><h2 class="section-title"><i class="fas fa-calculator"></i> Análisis de causalidad</h2>
-<div class="form-grid" id="fhCausalityContextRow">
+<div class="form-grid hidden" id="fhCausalityContextRow" hidden>
     <div class="form-group"><label for="fhCausalityEpisode">Episodio adverso de esta visita</label><select class="form-select" id="fhCausalityEpisode" disabled><option value="">Seleccionar episodio adverso…</option></select></div>
     <div class="form-group"><label for="fhCausalitySuspect">Medicamento sospechoso del episodio</label><select class="form-select" id="fhCausalitySuspect" disabled><option value="">Seleccionar sospechoso...</option></select></div>
 </div>
@@ -465,16 +456,9 @@
 <section class="dashboard-card" id="modExportacion">
     <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
     <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo con datos sintéticos. No es un entorno clínico ni multiusuario. Revise las salidas antes de utilizarlas.</span></div>
-    <div id="fhSegDispenseExportNotice" class="notice-box notice-box--warning hidden" role="status"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Marque al menos una línea como dispensada en esta visita para generar filas CSV o Excel.</span></div>
     <div id="fhSegEaExportGuardNotice" class="notice-box notice-box--warning hidden" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span></span></div>
-    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn"><i class="fas fa-table"></i> Copiar filas Excel FH</button></div>
-    <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhSegExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
-    <p class="search-card__hint">Prepara una copia de los datos para demostrar futuras integraciones. Esta acción no envía información a otros sistemas ni la guarda automáticamente. Uso exclusivo con datos sintéticos.</p>
-    <p id="fhSegExportV2Status" role="status" aria-live="polite"></p>
-    <div class="form-actions" data-export-version="bridge-raw-c2b">
-        <button type="button" class="btn btn-secondary" id="fhSegExportBridgeRawBtn"><i class="fas fa-exchange-alt" aria-hidden="true"></i> Copiar Bridge raw EA 0..N (demo, transferencia manual)</button>
-    </div>
-    <p class="search-card__hint">Bridge raw EA 0..N: copia local preparada para transferencia MANUAL. No guarda, no persiste y no envía nada a Farmacia. Uso exclusivo con datos sintéticos.</p>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline" id="fhSegExportBridgeRawBtn"><i class="fas fa-table" aria-hidden="true"></i> Copiar filas Excel FH</button></div>
+    <p class="search-card__hint">Copia las filas de esta visita (el acto y cada línea revisada) para pegarlas en el libro Excel FH. No guarda ni envía nada. Uso exclusivo con datos sintéticos.</p>
     <p id="fhSegExportBridgeRawStatus" class="search-card__hint" role="status" aria-live="polite">Estado de la copia: sin preparar.</p>
 </section>
                 </main>
@@ -498,6 +482,7 @@
     <script src="scripts/farmacia_bridge_ea_typed_codec.js?v=20261025-fh-bridge-c2b"></script>
     <script src="scripts/farmacia_bridge_raw_ea_v21_core.js?v=20261025-fh-bridge-c2b"></script>
     <script src="scripts/farmacia_bridge_raw_ea_v21_demo_context.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_bridge_raw_ea_v21_workbook_context.js?v=20261031-ea-v1-demo"></script>
     <script src="scripts/farmacia_bridge_raw_ea_v21_followup_adapter.js?v=1.0.0-draft.1"></script>
     <script src="scripts/farmacia_seguimiento_ea_causality_state.js?v=20261024-fh-ea03-causality-state"></script>
     <script src="scripts/farmacia_seguimiento.js?v=20261018-fh-ea-t01-r1"></script>

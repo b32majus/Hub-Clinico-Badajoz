@@ -7,6 +7,9 @@
  *  - Act identity (`actId`, `patientRef`) and the event/visit context come
  *    from the explicit demo identity source and are checked against it.
  *    A context that mixes the identity of another act or patient fails closed.
+ *  - Two identity sources are declared: the demo registry (no `identitySource`)
+ *    or the workbook (`identitySource: 'workbook'`), whose identity is read as
+ *    the workbook declares it. A demo CIP may never arrive as a second source.
  *  - Every adverse-event ficha must already be incorporated and carry its
  *    original description. Drafts and non-final evaluations reject the WHOLE
  *    act before any row or TSV exists (`EA_NOT_INCORPORATED`,
@@ -16,6 +19,10 @@
  *    is the selected reference verbatim, never a translated drug name.
  *  - Active lines travel from the declared `activeLines` array (0..N). No
  *    dose, schedule, route or exposure is inferred from a drug.
+ *  - Optional `visit` (whole-act content) and `lineContent` (per-line content)
+ *    travel verbatim in deep copy: the core places the visit once on the act
+ *    row and the content on its line row. The adapter only checks shape and
+ *    the published V2 definitions; it never infers clinical values.
  *
  * The adapter calls `FarmaciaBridgeRawEaV21Core.buildFollowupRows` and
  * `serializeRowsToTsv` unchanged and returns `{ rows, tsv }`. The input is
@@ -27,6 +34,7 @@
   var CORE_VERSION = '2.1.0-draft.1';
   var DEMO_PROVIDER_VERSION = '1.0.0-draft.1';
   var INPUT_FIELDS = ['context', 'present', 'adverseEvents', 'history', 'selections'];
+  var OPTIONAL_INPUT_FIELDS = ['visit', 'lineContent'];
   var IDENTITY_FIELDS = ['actId', 'patientRef', 'eventId', 'sourceEventId', 'visitId',
     'patientId', 'visitDate', 'identifierValue'];
   var CONTEXT_REQUIRED_STRINGS = ['identifierValue', 'actId', 'patientRef', 'eventId',
@@ -102,6 +110,86 @@
     return core;
   }
 
+  function copyPlain(value) {
+    if (Array.isArray(value)) return value.map(copyPlain);
+    if (plain(value)) {
+      var copy = {};
+      Object.keys(value).forEach(function (key) { copy[key] = copyPlain(value[key]); });
+      return copy;
+    }
+    return value;
+  }
+  // Line content columns are published by the Bridge core; deriving them from
+  // its order keeps this adapter from declaring a second, drifting list.
+  function lineContentFields(core) {
+    var columns = Array.isArray(core.ROW_COLUMNS) ? core.ROW_COLUMNS : [];
+    var start = columns.indexOf('dispensation_status');
+    var end = columns.indexOf('adherence_answers_json');
+    if (start === -1 || end < start) {
+      fail('CORE_UNAVAILABLE', 'The published line content columns are not available.');
+    }
+    return columns.slice(start, end + 1);
+  }
+  function v2Definitions() {
+    var core = root.FarmaciaExportV2Core;
+    if (!core || !Array.isArray(core.FIELD_DEFINITIONS)) {
+      fail('V2_CORE_UNAVAILABLE', 'The published V2 field definitions are required.');
+    }
+    var definitions = Object.create(null);
+    core.FIELD_DEFINITIONS.forEach(function (definition) {
+      definitions[definition.name] = definition;
+    });
+    return definitions;
+  }
+  function valueMatches(value, definition) {
+    if (value === null) return definition.nullable === true;
+    if (definition.type === 'string') return typeof value === 'string';
+    if (definition.type === 'boolean') return typeof value === 'boolean';
+    if (definition.type === 'integer') return Number.isInteger(value);
+    if (definition.type === 'json') return plain(value) || Array.isArray(value);
+    return false;
+  }
+  // Line content is declared per line id and added to the mapped line BEFORE
+  // the core sees it. Shape and V2 definitions only: no clinical inference.
+  function applyLineContent(core, lines, lineContent) {
+    if (!plain(lineContent)) fail('INVALID_LINE_CONTENT', 'lineContent must be an explicit record keyed by line id.');
+    var fields = lineContentFields(core);
+    var definitions = v2Definitions();
+    var known = lines.map(function (line) { return line.line_id; });
+    var contentByLine = Object.create(null);
+    Object.keys(lineContent).forEach(function (lineId) {
+      if (known.indexOf(lineId) === -1) {
+        fail('LINE_CONTENT_UNKNOWN_LINE', 'Line content declared for a line that is not active in this act.', { lineId: lineId });
+      }
+      var content = lineContent[lineId];
+      if (!plain(content)) {
+        fail('UNKNOWN_LINE_CONTENT_FIELD', 'Line content must be an explicit record.', { lineId: lineId });
+      }
+      var declared = {};
+      Object.keys(content).forEach(function (field) {
+        if (fields.indexOf(field) === -1) {
+          fail('UNKNOWN_LINE_CONTENT_FIELD', 'Unexpected line content field ' + field + '.', { lineId: lineId, field: field });
+        }
+        var value = content[field];
+        var definition = definitions[field];
+        if (!definition || !valueMatches(value, definition) ||
+            (value !== null && definition.enum && definition.enum.indexOf(value) === -1)) {
+          fail('INVALID_LINE_CONTENT_VALUE', 'Line content field ' + field + ' is not canonical.', { lineId: lineId, field: field });
+        }
+        declared[field] = copyPlain(value);
+      });
+      contentByLine[lineId] = declared;
+    });
+    return lines.map(function (line) {
+      var content = contentByLine[line.line_id];
+      if (!content) return line;
+      var merged = {};
+      Object.keys(line).forEach(function (key) { merged[key] = line[key]; });
+      Object.keys(content).forEach(function (field) { merged[field] = content[field]; });
+      return merged;
+    });
+  }
+
   function identityOf(context) {
     var identity = {};
     IDENTITY_FIELDS.forEach(function (field) {
@@ -112,6 +200,26 @@
 
   function assertDeclaredContext(context) {
     if (!plain(context)) fail('INVALID_CONTEXT', 'The act context must be an explicit record.');
+    if (own(context, 'identitySource')) {
+      // Workbook identity: read as declared, never compared with a registry.
+      if (context.identitySource !== 'workbook') {
+        fail('INVALID_CONTEXT', 'identitySource must be exactly workbook.');
+      }
+      CONTEXT_REQUIRED_STRINGS.forEach(function (field) {
+        if (!text(context[field])) fail('INVALID_CONTEXT', 'The act context requires an explicit ' + field + '.', { field: field });
+      });
+      if (typeof context.demoFlag !== 'boolean') {
+        fail('INVALID_CONTEXT', 'The act context requires an explicit demoFlag boolean.');
+      }
+      if (!Array.isArray(context.activeLines)) fail('INVALID_ACTIVE_LINES', 'activeLines must be an explicit array (0..N).');
+      var demoProvider = root.FarmaciaBridgeRawEaV21DemoContext;
+      var demoAct = demoProvider && typeof demoProvider.getContext === 'function'
+        ? demoProvider.getContext('followupAct', context.identifierValue) : null;
+      if (demoAct) {
+        fail('IDENTITY_SOURCE_CONFLICT', 'A demo registry patient cannot carry a second declared identity.');
+      }
+      return context;
+    }
     CONTEXT_REQUIRED_STRINGS.forEach(function (field) {
       if (!text(context[field])) fail('INVALID_CONTEXT', 'The act context requires an explicit ' + field + '.', { field: field });
     });
@@ -323,7 +431,9 @@
   function buildFollowupRawProjection(input) {
     if (!plain(input)) fail('INVALID_REQUEST', 'The projection request must be an explicit record.');
     Object.keys(input).forEach(function (key) {
-      if (INPUT_FIELDS.indexOf(key) === -1) fail('UNKNOWN_INPUT', 'Unexpected projection input ' + key + '.');
+      if (INPUT_FIELDS.indexOf(key) === -1 && OPTIONAL_INPUT_FIELDS.indexOf(key) === -1) {
+        fail('UNKNOWN_INPUT', 'Unexpected projection input ' + key + '.');
+      }
     });
     INPUT_FIELDS.forEach(function (key) {
       if (!own(input, key)) fail('MISSING_INPUT', 'Explicit projection input ' + key + ' is mandatory.');
@@ -337,6 +447,9 @@
     if (!Array.isArray(input.selections)) fail('INVALID_SELECTIONS', 'selections must be an explicit array.');
     var core = coreOrFail();
     var lines = input.context.activeLines.map(validateLine);
+    if (own(input, 'lineContent') && input.lineContent !== undefined) {
+      lines = applyLineContent(core, lines, input.lineContent);
+    }
     var adverseEvents = input.adverseEvents.map(function (event, index) {
       return buildObservation(event, input.context, index);
     });
@@ -350,6 +463,10 @@
       history: input.history,
       selections: input.selections
     };
+    // `{}` is an explicit empty declaration: same act as an absent visit.
+    if (own(input, 'visit') && input.visit !== undefined) {
+      request.visit = copyPlain(input.visit);
+    }
     var rows;
     try {
       rows = core.buildFollowupRows(request);

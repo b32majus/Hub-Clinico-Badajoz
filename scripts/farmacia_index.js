@@ -345,6 +345,47 @@
         return wrapper;
     }
 
+    // Bloque de EA de Quick View. Con modelo de pantalla disponible pinta el
+    // título y una línea por episodio sin cierre registrado tal como los publica
+    // `farmaciaEaScreenModel.quickView` (texto, nunca HTML). Un fallo de lectura
+    // se declara; cualquier otro estado sigue por el camino antiguo mientras dure
+    // la transición. Nunca se dice «activo».
+    function createEaQuickViewField(patient) {
+        var ea = patient.ea_episodes;
+        var status = ea && typeof ea === 'object' ? ea.status : null;
+        var farmaciaEaScreenModel = window.HubTools && window.HubTools.farmaciaEaScreenModel;
+        if (status === 'ok' && farmaciaEaScreenModel && typeof farmaciaEaScreenModel.quickView === 'function') {
+            var view = null;
+            try {
+                view = farmaciaEaScreenModel.quickView(ea.model);
+            } catch (problem) {
+                view = null;
+            }
+            if (view && view.ok === true && Array.isArray(view.lines)) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'fh-qv-farmaco-field fh-qv-span-full';
+                wrapper.setAttribute('data-fh-qv-ea', '');
+                var title = typeof view.title === 'string' ? view.title : '';
+                var label = document.createElement('span');
+                label.className = 'info-field__label';
+                label.textContent = title;
+                label.title = title;
+                wrapper.appendChild(label);
+                view.lines.forEach(function (line) {
+                    var value = document.createElement('span');
+                    value.className = 'info-field__value';
+                    value.textContent = String(line);
+                    wrapper.appendChild(value);
+                });
+                return wrapper;
+            }
+        }
+        if (status === 'error') {
+            return F.createField('Efectos adversos', 'No se pudieron leer los registros de EA');
+        }
+        return F.createField('Efectos adversos', patient.efectosAdversos);
+    }
+
     function renderFhQuickViewFields(grid, patient) {
         F.clearChildren(grid);
         if (patient.__farmaciaRawPatient) {
@@ -357,7 +398,7 @@
             grid.appendChild(F.createField('Tratamiento actual', patient.lineaActiva && patient.lineaActiva.nombre_linea));
             grid.appendChild(F.createField('Líneas activas explícitas', patient.lineasActivas && patient.lineasActivas.length));
             grid.appendChild(F.createField('Última adherencia', patient.adherencia));
-            grid.appendChild(F.createField('Efectos adversos activos', patient.efectosAdversos));
+            grid.appendChild(createEaQuickViewField(patient));
             grid.appendChild(createRawPromsGroup(patient.proms));
             return;
         }
@@ -369,7 +410,7 @@
             grid.appendChild(createScoreChip(scores[si]));
         }
         grid.appendChild(createAdherenciaChip(parseAdherencia(patient.adherencia)));
-        grid.appendChild(F.createField('Efectos adversos activos', patient.efectosAdversos));
+        grid.appendChild(F.createField('Efectos adversos', patient.efectosAdversos));
         var proms = parseProms(patient.proms);
         for (var pi = 0; pi < proms.length; pi++) {
             grid.appendChild(createPromCard(proms[pi]));

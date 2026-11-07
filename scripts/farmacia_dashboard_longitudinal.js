@@ -616,6 +616,58 @@
 
         if (!patient) { return; }
 
+        // Modelo de EA del paciente de la sesión: un fallo de lectura se declara y
+        // cualquier otro estado sigue por el camino antiguo mientras dure la
+        // transición. Nunca se dice «activo».
+        var ea = patient.ea_episodes;
+        if (ea && ea.status === 'error') {
+            container.appendChild(pEl('No se pudieron leer los registros de EA', 'longitudinal-error'));
+            return;
+        }
+        if (ea && ea.status === 'ok') {
+            var farmaciaEaScreenModel = window.HubTools && window.HubTools.farmaciaEaScreenModel;
+            var eaView = null;
+            if (farmaciaEaScreenModel && typeof farmaciaEaScreenModel.dashboardView === 'function') {
+                try {
+                    eaView = farmaciaEaScreenModel.dashboardView(ea.model);
+                } catch (eaProblem) {
+                    eaView = null;
+                }
+            }
+            if (!eaView || eaView.ok !== true) {
+                container.appendChild(pEl('No se pudieron leer los registros de EA', 'longitudinal-error'));
+                return;
+            }
+            if (eaView.empty) {
+                container.appendChild(pEl(eaView.empty, 'longitudinal-empty'));
+                return;
+            }
+            var eaCards = Array.isArray(eaView.cards) ? eaView.cards : [];
+            for (var ec = 0; ec < eaCards.length; ec++) {
+                var eaCard = eaCards[ec];
+                var eaCardEl = divEl('longitudinal-ae-card longitudinal-ae-card--threshold-no-data');
+                var eaHeaderEl = divEl('longitudinal-ae-header');
+                var eaIconEl = icon('fa-exclamation-triangle');
+                eaIconEl.className = 'fas fa-exclamation-triangle longitudinal-ae-icon threshold-no-data';
+                eaHeaderEl.appendChild(eaIconEl);
+                eaHeaderEl.appendChild(span(eaCard.title, 'longitudinal-ae-title'));
+                eaCardEl.appendChild(eaHeaderEl);
+                var eaDetailsEl = divEl('longitudinal-ae-details');
+                eaDetailsEl.appendChild(span('Estado: ' + eaCard.statusText, 'longitudinal-ae-detail'));
+                var eaRows = Array.isArray(eaCard.rows) ? eaCard.rows : [];
+                for (var er = 0; er < eaRows.length; er++) {
+                    eaDetailsEl.appendChild(span(eaRows[er].label + ': ' + eaRows[er].value, 'longitudinal-ae-detail'));
+                }
+                var eaObservations = Array.isArray(eaCard.observations) ? eaCard.observations : [];
+                for (var eo = 0; eo < eaObservations.length; eo++) {
+                    eaDetailsEl.appendChild(span('Registro: ' + eaObservations[eo], 'longitudinal-ae-detail'));
+                }
+                eaCardEl.appendChild(eaDetailsEl);
+                container.appendChild(eaCardEl);
+            }
+            return;
+        }
+
         var events = patient.eventos_adversos || [];
 
         if (events.length === 0) {

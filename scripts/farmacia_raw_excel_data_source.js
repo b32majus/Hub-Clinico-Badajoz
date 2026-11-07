@@ -57,6 +57,22 @@
             return selectors.findIdentifierCandidatesByValue(value);
         }
 
+        // New EA path (C3a). The declared identity of the 166 rows is the only
+        // bridge: absent typed rows of this patient means `null`, never "sin EA".
+        function getAdverseEventEpisodes(patientId) {
+            var refs = readModel.patient_refs;
+            if (!refs || typeof patientId !== 'string' || !Object.prototype.hasOwnProperty.call(refs, patientId)) {
+                return null;
+            }
+            var patientRef = refs[patientId];
+            var reader = dependency(root.FarmaciaBridgeRawEaV21Reader, 'ea reader');
+            var typedRows = Array.isArray(readModel.typed_rows) ? readModel.typed_rows : [];
+            var rows = typedRows.filter(function (row) {
+                return row && row.fh_patient_ref === patientRef;
+            }).map(clone);
+            return clone(reader.readPatient({ patientRef: patientRef, rows: rows }));
+        }
+
         var implementation = {
             listPatients: function () {
                 return selectors.listPatientSummaries();
@@ -108,6 +124,7 @@
         Object.keys(port).forEach(function (key) { source[key] = port[key]; });
         source.data_source_version = DATA_SOURCE_VERSION;
         source.getInternalProvenance = getInternalProvenance;
+        source.getAdverseEventEpisodes = getAdverseEventEpisodes;
         source.findIdentifierCandidatesByValue = findIdentifierCandidatesByValue;
         return Object.freeze(source);
     }

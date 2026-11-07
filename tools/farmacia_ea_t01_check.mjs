@@ -44,11 +44,12 @@ assert(html.includes('id="fhSegEaContradictionNotice"'), 'Aviso de contradicció
 assert(html.includes('id="fhSegEaExportGuardNotice"'), 'Aviso de frontera de exportación singular presente');
 // C-088 VIS-02: elementos del máster G0 v0.4 restaurados como fidelidad visual
 // con señalización demo explícita (no funcionales en T01).
-assert(html.includes('id="fhSegEaPriorEpisodeSelect"') && html.includes('id="fhSegEaUpdatePriorBtn"') && html.includes('id="fhSegEaRecurrenceBtn"'), 'Fila de continuidad/recurrencia del máster presente sobre las tarjetas (fidelidad visual)');
-assert(html.includes('id="fhSegEaShowStructureBtn"') && html.includes('id="fhSegEaResetDemoBtn"'), 'Pie del máster (estructura simulada / reiniciar ejemplo) presente como fidelidad visual');
-assert(/id="fhSegEaPriorEpisodeSelect"[^>]*disabled/.test(html) && /id="fhSegEaUpdatePriorBtn"[^>]*disabled/.test(html) && /id="fhSegEaRecurrenceBtn"[^>]*disabled/.test(html) && /id="fhSegEaShowStructureBtn"[^>]*disabled/.test(html) && /id="fhSegEaResetDemoBtn"[^>]*disabled/.test(html), 'Los controles demo (continuidad, recurrencia, estructura, reinicio) están deshabilitados: no funcionales en T01');
-assert(js.includes('Información clínica adicional (opcional)') && js.includes('Medicamentos señalados expresamente como sospechosos'), 'Disclosure de información adicional y bloque demo de sospechosos presentes en la tarjeta expandida');
-assert(js.includes('data-ea-demo-control'), 'Los controles demo de tarjeta llevan marcación explícita data-ea-demo-control');
+// D4b (#867): la fila de continuidad/recurrencia es real: lista de episodios del libro con botones por episodio.
+assert(html.includes('id="fhSegEaPriorEpisodes"') && !html.includes('id="fhSegEaPriorEpisodeSelect"') && !html.includes('id="fhSegEaUpdatePriorBtn"') && !html.includes('id="fhSegEaRecurrenceBtn"'), 'Fila de continuidad/recurrencia: lista real de episodios anteriores (D4b)');
+// F1 (#867): los botones de maqueta «Ver estructura simulada» y «Reiniciar ejemplo» se retiran (decisión de Sil, 07-11).
+assert(!html.includes('fhSegEaShowStructureBtn') && !html.includes('fhSegEaResetDemoBtn') && !/estructura simulada|Reiniciar ejemplo/.test(html), 'Botones de maqueta de estructura/reinicio retirados (F1)');
+assert(js.includes('Medicamentos señalados expresamente como sospechosos') && !js.includes('Información clínica adicional (opcional)'), 'B (#869): la tarjeta lleva el bloque de sospechosos y ya no el disclosure de información adicional de maqueta');
+assert(!js.includes('data-ea-demo-control'), 'B (#869): sin controles demo deshabilitados en la tarjeta');
 // C-088 VIS-01: insignia de recuento y de sección con el tratamiento de píldora del máster.
 assert(/#fhSegEaCountBadge,\s*\n\s*#modSeguimientoEa > \.section-title > \.status-badge/.test(html) && html.includes('border: 1px solid #c9dbe5;'), 'Insignia de recuento EA y de sección con el tratamiento de píldora encajonada del máster');
 // C-088 VIS-03: insignia de estado de las tarjetas EA con el tratamiento del máster.
@@ -179,7 +180,7 @@ const allIds = snapshot.events.flatMap((event) => [event.episode_id, event.obser
 assert(new Set(allIds).size === allIds.length, 'episodeId/observationId únicos en la colección');
 assert(api.getEaSingularExportBlockReason().indexOf('2 EA incorporados') !== -1, '2 EA incorporados: la exportación singular se bloquea de forma explícita y visible');
 assert(api.getEaV2CopyBlockReason().indexOf('2 EA incorporados') !== -1 && api.getEaV2CopyBlockReason().indexOf('no representa la cobertura EA') !== -1, '2 EA incorporados: la copia estructurada demo (v2) se bloquea y declara que omitiría el bloque EA');
-assert(/async function handleFollowupV2Export[\s\S]{0,600}eaV2CopyBlockReason\(\)/.test(js), 'La acción «Copiar datos estructurados demo» consulta la frontera EA antes de construir la proyección o copiar');
+assert(!html.includes('id="fhSegExportV2Btn"') && !/getElementById\('fhSegExportV2Btn'\)/.test(js), 'E3 (#867): Seguimiento ya no ofrece la copia «datos estructurados (demo)»; solo JARA y Filas Excel FH (166)');
 const model = api.buildFollowupVisitExportModel();
 assert(model.ea_block && model.ea_block.event_count === 2 && model.ea_singular_export_block_reason !== '', 'El modelo de exportación lleva el bloque EA desacoplado y la razón de bloqueo singular');
 

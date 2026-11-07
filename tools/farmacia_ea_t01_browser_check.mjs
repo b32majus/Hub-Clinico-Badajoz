@@ -105,7 +105,6 @@ async function captureEa(page, texts) {
         await page.click('#fhSegAddEaBtn');
         const card = page.locator('#fhSegEaList .ea-t01-card').last();
         await card.locator('[data-ea-field="description"]').fill(text);
-        await card.getByRole('button', { name: 'Incorporar al acto' }).click();
     }
 }
 
@@ -219,21 +218,22 @@ function captureTwoEa(page) {
 
         // C-088 VIS-01/VIS-02: fidelidad del segmento máster G0 v0.4 en el
         // estado equivalente (Sí, dos EA, tarjeta 1 expandida, 2 plegada).
-        assert.ok(await page.locator('#fhSegEaPriorEpisodeSelect').isDisabled(), 'prior-episode select visible but non-functional (demo, T01)');
-        assert.ok(await page.locator('#fhSegEaUpdatePriorBtn').isDisabled(), '«Actualizar EA anterior» visible but non-functional (demo, T01)');
-        assert.ok(await page.locator('#fhSegEaRecurrenceBtn').isDisabled(), '«Registrar recurrencia» visible but non-functional (demo, T01)');
+        // D4b (#867): la maqueta de continuidad/recurrencia es ya una lista real
+        // de episodios anteriores del libro (vacía para un paciente del registro demo).
+        for (const old of ['#fhSegEaPriorEpisodeSelect', '#fhSegEaUpdatePriorBtn', '#fhSegEaRecurrenceBtn']) {
+            assert.equal(await page.locator(old).count(), 0, `${old} replaced by the real prior-episode list`);
+        }
+        assert.equal(await page.locator('#fhSegEaPriorEpisodes').count(), 1, 'prior-episode list present');
         assert.ok((await page.locator('#fhSegEaZone').textContent()).includes('Continuidad y recurrencia requieren selección explícita'), 'master continuity/recurrence hint present');
         const expandedBody = page.locator('#fhSegEaList .ea-t01-card').first();
-        assert.equal(await expandedBody.locator('details summary').count(), 1, 'expanded card shows the master disclosure');
-        assert.ok((await expandedBody.locator('details summary').textContent()).includes('Información clínica adicional (opcional)'), 'disclosure matches master wording');
-        assert.equal(await expandedBody.locator('details input[disabled], details textarea[disabled]').count(), 3, 'disclosure demo fields are inert');
+        assert.equal(await expandedBody.locator('details summary').count(), 0, 'B (#869): sin bloque de información adicional de maqueta');
+        assert.equal(await expandedBody.locator('[data-ea-demo-control]').count(), 0, 'B (#869): sin controles de maqueta deshabilitados');
         assert.ok((await expandedBody.textContent()).includes('Medicamentos señalados expresamente como sospechosos'), 'per-episode suspect section present in expanded card');
         assert.equal(await expandedBody.locator('.ea-suspect-list input[type="checkbox"]').count(), 0, 'no suspect candidates without an explicitly named medicine');
         assert.ok((await expandedBody.locator('.ea-suspect-list').textContent()).includes('Sin medicamentos identificados explícitamente'), 'empty candidate source is explained, never filled with demo medicines');
         assert.ok((await page.locator('#fhSegEaSummary').textContent()).trim().startsWith('2 observación/es en esta visita · 2 episodio/s relacionado/s'), 'master footer summary arrangement');
-        assert.ok(await page.locator('#fhSegEaShowStructureBtn').isDisabled(), '«Ver estructura simulada» visible but non-functional (demo, T01)');
-        assert.ok(await page.locator('#fhSegEaResetDemoBtn').isDisabled(), '«Reiniciar ejemplo» visible but non-functional (demo, T01)');
-        ok('master segment fidelity present with explicit non-functional demo signaling (VIS-01/VIS-02)');
+        assert.equal(await page.locator('#fhSegEaShowStructureBtn, #fhSegEaResetDemoBtn').count(), 0, 'mockup footer buttons removed (F1)');
+        ok('master segment fidelity present; mockup footer buttons removed (VIS-01/VIS-02, F1)');
 
         // Captura real del producto EN EL ESTADO DEL MÁSTER (antes de extender
         // a 5 EA): viewport 1440x900 + recorte del bloque EA.
@@ -293,9 +293,9 @@ function captureTwoEa(page) {
         assert.ok(transient.transient && transient.withId === 0, 'EA card controls stay outside the patient draft envelope');
         ok('negative persistence proof: no EA content in sessionStorage/localStorage/IndexedDB and no envelope reuse');
 
-        // Causalidad independiente y no duplicada. Con el editor G0 la sección
-        // se muestra al haber EA documentados, pero sigue siendo una sección
-        // independiente: fuera del bloque EA y sin cuestionarios por tarjeta.
+        // B (#869): la causalidad es UN solo editor; se abre en la fila del EA
+        // cuyo sospechoso se marca. Sin sospechoso marcado no hay causalidad
+        // abierta y nunca hay cuestionarios duplicados por tarjeta.
         const causality = await page.evaluate(() => {
             const section = document.getElementById('modSeguimientoCausalidad');
             const eaBlock = document.getElementById('modSeguimientoEa');
@@ -306,11 +306,11 @@ function captureTwoEa(page) {
                 duplicatedQuestionnaires: document.querySelectorAll('#fhSegEaList .causality-chip-group, #fhSegEaList #modNaranjo, #fhSegEaList #modKarchLasagna').length
             };
         });
-        assert.ok(causality.visible, 'causality section is visible with documented EA (G0 editor active)');
-        assert.ok(causality.independent, 'causality section stays independent (outside the EA block)');
+        assert.ok(!causality.visible, 'sin sospechoso marcado no hay causalidad abierta');
+        assert.ok(causality.independent, 'sin sospechoso marcado, la sección sigue fuera del bloque EA');
         assert.equal(causality.titles, 0, 'no causality questionnaire duplicated inside EA cards');
         assert.equal(causality.duplicatedQuestionnaires, 0, 'no Naranjo/Karch triggers per EA card');
-        ok('causality remains an independent section, never duplicated per EA card');
+        ok('causality closed without a marked suspect, never duplicated per EA card');
 
         // Sin reclamo de «guardado» en ninguna superficie T01.
         const visibleText = await page.evaluate(() => (document.getElementById('modSeguimientoEa').textContent + ' ' + document.getElementById('modExportacion').textContent));
@@ -362,8 +362,8 @@ function captureTwoEa(page) {
         assert.ok(!Object.prototype.hasOwnProperty.call(snapshotAfter, 'act_date'), 'session B never records the act date: auto-filled value stays out of the snapshot (SPEC-03)');
         ok('contradiction «Sí»→«No/No consta» blocked with explanation and no data deletion');
 
-        // FH-EA-MANUAL-01: habilitar las salidas. El CSV conserva la frontera
-        // singular anterior; TXT JARA y Excel WO8 manual representan 0..N.
+        // FH-EA-MANUAL-01: habilitar las salidas. TXT JARA representa 0..N
+        // (la copia 166 de «Filas Excel FH» tiene sus propios checks).
         await page.selectOption('#fhSegDispensado', 'si');
         await page.waitForFunction(() => !document.getElementById('fhSegExportTxt').disabled, null, { timeout: 5000 });
         const guardNotice = () => page.evaluate(() => ({
@@ -380,14 +380,14 @@ function captureTwoEa(page) {
             lineColumn: window.FarmaciaExcelRowExport.WO8_COLUMNS.indexOf('linea_id')
         }));
 
-        // CSV: fuera del alcance manual, mantiene el fallo cerrado singular.
-        await page.click('#fhSegExportCsv');
-        await page.waitForTimeout(150);
-        const csvGuard = await guardNotice();
-        assert.ok(csvGuard.visible, 'fhSegExportCsv: visible fail-closed refusal');
-        assert.ok(csvGuard.text.includes('2 EA incorporados') && csvGuard.text.includes('no se exporta solo el primer EA'), 'fhSegExportCsv: refusal declares 0..N instead of truncating');
-        assert.deepEqual(downloads, [], 'no file download fired while the singular CSV export is blocked');
-        ok('CSV keeps the previous singular frontier: visibly refuses 0..N without download');
+        // E3 (#867): Seguimiento solo ofrece «Copiar texto JARA» y «Copiar
+        // filas Excel FH» (copia 166); CSV, Excel WO8 y datos estructurados
+        // (demo) ya no están en la pantalla.
+        for (const removed of ['#fhSegExportCsv', '#fhSegExcelExportBtn', '#fhSegExportV2Btn']) {
+            assert.equal(await page.locator(removed).count(), 0, `${removed} retirado de Seguimiento`);
+        }
+        assert.deepEqual(downloads, [], 'no file download fired');
+        ok('Seguimiento offers only the two agreed outputs');
 
         // TXT JARA manual: no se niega; un informe por visita, cada EA una vez.
         await page.click('#fhSegExportTxt');
@@ -400,39 +400,6 @@ function captureTwoEa(page) {
         assert.ok(!jaraManual.includes('no se exporta solo el primer EA'), 'TXT JARA no longer refuses the 0..N collection');
         assert.ok(!(await guardNotice()).visible, 'TXT JARA: no refusal notice after a successful copy');
         ok('TXT JARA manual carries one visit report with each of the two EA exactly once');
-
-        // Excel WO8 manual: una fila TSV por fármaco efectivamente dispensado.
-        assert.ok(exportSnapshot.dispensedLines.length >= 1, 'the witnessed act has at least one effectively dispensed line');
-        await page.click('#fhSegExcelExportBtn');
-        await page.waitForTimeout(250);
-        const excelTsv = await clipboardText();
-        const tsvRows = excelTsv.split('\n').filter((row) => row.trim() !== '');
-        assert.equal(tsvRows.length, exportSnapshot.dispensedLines.length, 'Excel WO8 manual: exactly one TSV row per dispensed drug line (never one row per EA)');
-        const tsvCells = tsvRows.map((row) => row.split('\t'));
-        tsvCells.forEach((cells, index) => assert.equal(cells.length, exportSnapshot.columns, `Excel row ${index + 1} keeps the 62 canonical WO8 cells`));
-        assert.deepEqual(tsvCells.map((cells) => cells[exportSnapshot.lineColumn]), exportSnapshot.dispensedLines, 'Excel WO8 manual: row identity/order matches the dispensed lines');
-        tsvCells.forEach((cells, index) => {
-            assert.ok(cells[exportSnapshot.eaColumn].includes(EA_TEXTS[0]) && cells[exportSnapshot.eaColumn].includes(EA_TEXTS[1]), `Excel row ${index + 1}: both incorporated EA are projected, none truncated`);
-            assert.equal(countIn(cells[exportSnapshot.eaColumn], EA_TEXTS[0]), 1, `Excel row ${index + 1}: first EA written once per row`);
-        });
-        assert.ok(!(await guardNotice()).visible, 'Excel WO8 manual: no refusal notice after a successful copy');
-        ok('Excel WO8 manual copies exactly one row per dispensed line with the full 0..N EA projection');
-
-        // C-088 SPEC-02: la copia estructurada demo (v2) también se niega de
-        // forma visible con cobertura EA (su proyección no lleva el bloque
-        // EA); no se dispara copia ni mensaje de éxito.
-        assert.ok(!(await page.locator('#fhSegExportV2Btn').isDisabled()), 'v2 copy button available so the guard is exercised on the action itself');
-        await page.click('#fhSegExportV2Btn');
-        await page.waitForTimeout(150);
-        const v2Guard = await page.evaluate(() => ({
-            visible: !document.getElementById('fhSegEaExportGuardNotice').classList.contains('hidden'),
-            text: document.getElementById('fhSegEaExportGuardNotice').textContent,
-            status: document.getElementById('fhSegExportV2Status').textContent
-        }));
-        assert.ok(v2Guard.visible, 'v2 structured copy shows the visible refusal notice');
-        assert.ok(v2Guard.text.includes('no representa la cobertura EA') && v2Guard.text.includes('No se ha copiado nada'), 'v2 refusal declares the EA coverage cannot be represented and nothing was copied');
-        assert.ok(v2Guard.status.indexOf('Copia no realizada') === 0, 'v2 status declares refusal, never success');
-        ok('structured demo copy (v2) visibly refuses with EA coverage; no copy fired');
 
         assert.deepEqual(pageErrors, [], 'pageerror');
         assert.deepEqual(consoleErrors.filter(t => !resourceNoise(t)), [], 'console.error');

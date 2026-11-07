@@ -352,16 +352,56 @@
 
     function createFollowupVisit(cip) {
         var declaredDemo = declaredBridgeRawDemoContext(cip);
+        var normalizedCip = String(cip || '').trim();
+        // Identidad declarada por el libro: se lee del paciente de sesión tal
+        // como la dejó Inicio. Si no es utilizable se guarda el motivo; nunca
+        // se completa ni se elige una identidad alternativa.
+        function declaredWorkbookIdentity() {
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            if (!runtime || typeof runtime.getCurrentPatient !== 'function') return { identity: null, block: null };
+            var patient = null;
+            try {
+                patient = runtime.getCurrentPatient();
+            } catch (error) {
+                patient = null;
+            }
+            if (!patient || String(patient.cip || '').trim() !== normalizedCip) return { identity: null, block: null };
+            var declared = patient.bridge_raw_identity;
+            if (!declared || typeof declared !== 'object') return { identity: null, block: null };
+            if (declared.status === 'ok') return { identity: copyDeclaredValue(declared), block: null };
+            var reason = typeof declared.reason === 'string' && declared.reason.trim() ? declared.reason : declared.status;
+            return { identity: null, block: reason ? String(reason) : null };
+        }
+        function copyDeclaredValue(value) {
+            if (Array.isArray(value)) return value.map(copyDeclaredValue);
+            if (value && Object.prototype.toString.call(value) === '[object Object]') {
+                var copy = {};
+                Object.keys(value).forEach(function (key) { copy[key] = copyDeclaredValue(value[key]); });
+                return copy;
+            }
+            return value;
+        }
+        // El acto emite su propia identidad UNA vez, al crearse. Copiar el acto
+        // reutiliza estos valores: no se regeneran.
+        function newActUnitId() {
+            var cryptoObject = typeof crypto !== 'undefined' ? crypto : null;
+            if (cryptoObject && typeof cryptoObject.randomUUID === 'function') {
+                return cryptoObject.randomUUID().toUpperCase();
+            }
+            return (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)).toUpperCase();
+        }
+        var workbook = declaredDemo ? { identity: null, block: null } : declaredWorkbookIdentity();
+        /* En demo la identidad de visita se vincula EXPLÍCITAMENTE al crear
+           el acto: la visita abierta adopta el visitId declarado por la
+           fuente de identidad y conserva el vínculo para rechazar
+           cualquier desajuste posterior. Sin identidad declarada se
+           mantiene el identificador local de la visita. */
+        var visitId = declaredDemo && declaredDemo.visitId
+            ? declaredDemo.visitId
+            : 'FH-VISIT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
         currentFollowupVisit = {
-            cip: String(cip || '').trim(),
-            /* En demo la identidad de visita se vincula EXPLÍCITAMENTE al crear
-               el acto: la visita abierta adopta el visitId declarado por la
-               fuente de identidad y conserva el vínculo para rechazar
-               cualquier desajuste posterior. Sin identidad declarada se
-               mantiene el identificador local de la visita. */
-            visit_id: declaredDemo && declaredDemo.visitId
-                ? declaredDemo.visitId
-                : 'FH-VISIT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+            cip: normalizedCip,
+            visit_id: visitId,
             bridge_raw_act_identity: declaredDemo ? {
                 identifierValue: declaredDemo.identifierValue,
                 actId: declaredDemo.actId,
@@ -370,9 +410,22 @@
                 eventId: declaredDemo.eventId,
                 sourceEventId: declaredDemo.sourceEventId,
                 demoFlag: true
-            } : null,
+            } : (workbook.identity ? {
+                source: 'workbook',
+                identity: workbook.identity,
+                actId: 'FH-ACT-' + newActUnitId(),
+                eventId: 'FH-EVT-' + newActUnitId(),
+                sourceEventId: 'FH-SRC-' + newActUnitId(),
+                visitId: visitId
+            } : null),
+            bridge_raw_identity_block: declaredDemo ? null : workbook.block,
             created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
             selected_line_ids: [], dispensed_line_ids: [], editing_line_id: '', line_state: {},
+            /* Tramo E2: marcas de «tocado» por el clínico. Lo que el clínico no
+               toca viaja como «no registrado» (o vacío), nunca como el valor
+               por defecto del control. Viajan con la visita en edición. */
+            recorded_controls: {},
+            line_recorded: {},
             adverse_event: { present: 'no_consta', severity: '', resolved: 'no_consta', corrected: 'no_consta', observations: '', suspect_ids: [], causality_editing_id: '' },
             /* T01 (#795): colección EA 0..N del acto en edición. Vive SOLO en
                memoria de edición; nunca en almacenamiento del navegador ni en
@@ -383,6 +436,7 @@
             act_date_recorded: false,
             causality_by_suspect: {}
         };
+        updateFollowupBridgeRawExportAvailability();
         return currentFollowupVisit;
     }
 
@@ -405,7 +459,48 @@
         return state;
     }
 
-    function lineStateIsDirty(state) {
+    /* Tramo E2: el clínico tocó el control; los cambios hechos por código
+       (restitución del editor, arranque de demo) no marcan nada. */
+    var suppressRecordedMarks = false;
+    var VISIT_RECORDED_CONTROL_IDS = ['fhSegCambiaNivel', 'fhSegProms', 'fhSegEvaDolorRange', 'fhSegEvaPruritoRange'];
+    var LINE_RECORDED_CONTROL_IDS = ['fhSegDispensado', 'fhSegTipoRelacionTerapia', 'fhSegOptimiza', 'fhSegSuspension', 'fhSegNuevaPauta'];
+
+    function recordControlMark(event) {
+        if (suppressRecordedMarks || !currentFollowupVisit) return;
+        var target = event && event.target;
+        if (!target || target.nodeType !== 1 || typeof target.getAttribute !== 'function') return;
+        // Responder cualquier pregunta DLQI acredita valores recogidos.
+        if (target.getAttribute('data-dlqi-q') !== null) {
+            currentFollowupVisit.recorded_controls = currentFollowupVisit.recorded_controls || {};
+            currentFollowupVisit.recorded_controls.fhSegProms = true;
+            return;
+        }
+        var id = target.id || '';
+        if (!id) return;
+        if (LINE_RECORDED_CONTROL_IDS.indexOf(id) !== -1) {
+            var editing = currentFollowupVisit.editing_line_id;
+            if (!editing) return;
+            currentFollowupVisit.line_recorded = currentFollowupVisit.line_recorded || {};
+            var marks = currentFollowupVisit.line_recorded[editing] || {};
+            marks[id] = true;
+            currentFollowupVisit.line_recorded[editing] = marks;
+            return;
+        }
+        if (VISIT_RECORDED_CONTROL_IDS.indexOf(id) === -1) return;
+        currentFollowupVisit.recorded_controls = currentFollowupVisit.recorded_controls || {};
+        currentFollowupVisit.recorded_controls[id] = true;
+        // Mover una EVA acredita también valores recogidos para los PROMs.
+        if (id === 'fhSegEvaDolorRange' || id === 'fhSegEvaPruritoRange') {
+            currentFollowupVisit.recorded_controls.fhSegProms = true;
+        }
+    }
+
+    document.addEventListener('input', recordControlMark);
+    document.addEventListener('change', recordControlMark);
+
+    function lineStateIsDirty(state, lineId) {
+        if (lineId && currentFollowupVisit && currentFollowupVisit.line_recorded &&
+            Object.keys(currentFollowupVisit.line_recorded[lineId] || {}).length > 0) return true;
         return !!state && (LINE_CONTROL_IDS.some(function (id) {
             return String((state.controls || {})[id] == null ? LINE_CONTROL_DEFAULTS[id] : state.controls[id]) !== LINE_CONTROL_DEFAULTS[id];
         }) || Object.keys(state.morisky || {}).length > 0);
@@ -464,10 +559,15 @@
         var help = byId('fhSegLineEditorHelp');
         if (help) help.classList.toggle('hidden', !!editing);
         restoreDispensedControl();
-        ['fhSegOptimiza', 'fhSegSuspension', 'fhSegNuevaPauta'].forEach(function (id) {
-            var el = byId(id);
-            if (editing && el) el.dispatchEvent(new Event('change'));
-        });
+        suppressRecordedMarks = true;
+        try {
+            ['fhSegOptimiza', 'fhSegSuspension', 'fhSegNuevaPauta'].forEach(function (id) {
+                var el = byId(id);
+                if (editing && el) el.dispatchEvent(new Event('change'));
+            });
+        } finally {
+            suppressRecordedMarks = false;
+        }
     }
 
     function syncEditorOptions() {
@@ -491,15 +591,8 @@
 
     function updateExportInterlock() {
         var count = currentFollowupVisit ? currentFollowupVisit.selected_line_ids.length : 0;
-        var dispensedCount = currentFollowupVisit ? currentFollowupVisit.dispensed_line_ids.length : 0;
         var jara = byId('fhSegExportTxt');
         if (jara) jara.disabled = count < 1;
-        ['fhSegExportCsv', 'fhSegExcelExportBtn'].forEach(function (id) {
-            var button = byId(id);
-            if (button) button.disabled = dispensedCount < 1;
-        });
-        var notice = byId('fhSegDispenseExportNotice');
-        if (notice) notice.classList.toggle('hidden', dispensedCount > 0);
     }
 
     function setEditingLine(lineId) {
@@ -523,13 +616,14 @@
             ids.push(lineId);
             if (!currentFollowupVisit.editing_line_id && ids.length === 1) currentFollowupVisit.editing_line_id = lineId;
         } else if (!selected && index >= 0) {
-            if ((lineStateIsDirty(currentFollowupVisit.line_state[lineId]) || isLineDispensed(lineId)) && !window.confirm(LINE_DISCARD_MESSAGE)) {
+            if ((lineStateIsDirty(currentFollowupVisit.line_state[lineId], lineId) || isLineDispensed(lineId)) && !window.confirm(LINE_DISCARD_MESSAGE)) {
                 renderBiologicLineCards();
                 return false;
             }
             ids.splice(index, 1);
             currentFollowupVisit.dispensed_line_ids = currentFollowupVisit.dispensed_line_ids.filter(function (id) { return id !== lineId; });
             delete currentFollowupVisit.line_state[lineId];
+            if (currentFollowupVisit.line_recorded) delete currentFollowupVisit.line_recorded[lineId];
             if (currentFollowupVisit.editing_line_id === lineId) currentFollowupVisit.editing_line_id = ids.length === 1 ? ids[0] : '';
         }
         syncEditorOptions();
@@ -560,8 +654,135 @@
             sourceType: '',
             fechaInicio: '',
             fechaFin: '',
-            motivo: ''
+            motivo: '',
+            line_id: '',
+            treatment_id: ''
         };
+    }
+
+    // #871 A3: un «otro fármaco» ACTIVO (línea existente o concomitante) es la
+    // misma entidad que el primer fármaco: una línea de ESTA visita. La línea
+    // es una proyección sincronizada de lo que el clínico escribió; nunca se
+    // infiere pauta, dosis, vía ni fecha de inicio.
+    function followupOtherDrugIsActiveLine(drug) {
+        if (!drug) return false;
+        return drug.relationType === 'Tratamiento activo previo / línea existente' ||
+            drug.relationType === 'Concomitante';
+    }
+
+    function followupOtherDrugDisplayName(drug) {
+        return drug ? firstNonEmpty(drug.farmaco, drug.principioActivo) : '';
+    }
+
+    function applyOtherDrugLineFields(line, drug) {
+        var display = followupOtherDrugDisplayName(drug);
+        line.farmaco_nombre = drug.farmaco || '';
+        line.principio_activo = drug.principioActivo || '';
+        line.presentacion = drug.presentacion || '';
+        line.dosis_texto = drug.dosis || '';
+        line.via = drug.via || '';
+        line.pauta_label = drug.pauta || '';
+        line.pauta_codigo = drug.pautaCodigo || '';
+        line.pauta_otro_texto = drug.pautaOtro || '';
+        line.codigo_nacional = drug.codigoNacional || '';
+        line.nregistro = drug.nregistro || '';
+        line.selected_drug_id = drug.selectedDrugId || '';
+        line.source_type = drug.sourceType || '';
+        line.nombre_linea = display;
+        line.nombre_comercial = drug.farmaco || '';
+        line.fuente = 'seguimiento_otro_farmaco';
+        line.candidate_explicit = true;
+        return display;
+    }
+
+    function createOtherDrugLine(drug) {
+        if (!drug.line_id) {
+            var identity = followupSessionLineIdentity(currentBiologicLines);
+            drug.line_id = identity.lineId;
+            drug.treatment_id = identity.treatmentId;
+        }
+        var line = normalizeBiologicLine({
+            linea_id: drug.line_id,
+            tratamiento_id_principal: drug.treatment_id || '',
+            farmaco_nombre: drug.farmaco || '',
+            principio_activo: drug.principioActivo || '',
+            presentacion: drug.presentacion || '',
+            dosis_texto: drug.dosis || '',
+            via: drug.via || '',
+            pauta_label: drug.pauta || '',
+            pauta_codigo: drug.pautaCodigo || '',
+            pauta_otro_texto: drug.pautaOtro || '',
+            codigo_nacional: drug.codigoNacional || '',
+            nregistro: drug.nregistro || '',
+            selected_drug_id: drug.selectedDrugId || '',
+            source_type: drug.sourceType || '',
+            fuente: 'seguimiento_otro_farmaco',
+            candidate_explicit: true
+        }, { cip: currentFollowupVisit.cip }, { estado_linea: 'active', tipo_relacion: 'additional' });
+        line.session_new = true;
+        line.other_uid = drug.uid;
+        applyOtherDrugLineFields(line, drug);
+        return line;
+    }
+
+    function findProjectedOtherDrugLine(drug) {
+        if (!drug || !drug.line_id) return null;
+        for (var i = 0; i < currentBiologicLines.length; i += 1) {
+            if (currentBiologicLines[i].linea_id === drug.line_id) return currentBiologicLines[i];
+        }
+        return null;
+    }
+
+    function removeOtherDrugLine(drug) {
+        var line = findProjectedOtherDrugLine(drug);
+        if (!line || !currentFollowupVisit) return true;
+        var lineId = line.linea_id;
+        if (currentFollowupVisit.selected_line_ids.indexOf(lineId) >= 0 &&
+            toggleBiologicLineSelection(lineId, false) === false) {
+            return false;
+        }
+        currentBiologicLines = currentBiologicLines.filter(function (item) { return item.linea_id !== lineId; });
+        currentFollowupVisit.dispensed_line_ids = currentFollowupVisit.dispensed_line_ids.filter(function (id) { return id !== lineId; });
+        delete currentFollowupVisit.line_state[lineId];
+        if (currentFollowupVisit.line_recorded) delete currentFollowupVisit.line_recorded[lineId];
+        if (currentFollowupVisit.editing_line_id === lineId) currentFollowupVisit.editing_line_id = '';
+        // Desmarcar la línea ya repintó la lista antes de retirarla del
+        // modelo: hay que volver a pintar para que la tarjeta desaparezca.
+        renderBiologicLineCards();
+        syncEditorOptions();
+        return true;
+    }
+
+    function syncOtherDrugLines() {
+        if (!currentFollowupVisit) return false;
+        var structural = false;
+        followupOtherDrugs.forEach(function (drug) {
+            var active = followupOtherDrugIsActiveLine(drug);
+            var line = findProjectedOtherDrugLine(drug);
+            if (active && !line) {
+                if (!followupOtherDrugDisplayName(drug)) return;
+                var created = createOtherDrugLine(drug);
+                currentBiologicLines.push(created);
+                toggleBiologicLineSelection(created.linea_id, true);
+                structural = true;
+                return;
+            }
+            if (!active) {
+                if (line && removeOtherDrugLine(drug) !== false) structural = true;
+                return;
+            }
+            if (line) {
+                var previousName = line.nombre_linea || '';
+                if (applyOtherDrugLineFields(line, drug) !== previousName) structural = true;
+            }
+        });
+        if (structural) {
+            renderBiologicLineCards();
+            syncEditorOptions();
+            updateSuspectDrugSelector();
+            updateFollowupBridgeRawExportAvailability();
+        }
+        return structural;
     }
 
     function followupEmptyState() {
@@ -573,9 +794,14 @@
     // de una sospecha ya declarada expresamente en una ficha EA. Requiere
     // desvincularlo antes de sustituir nombre o identificadores de fármaco.
     function hasEaEpisodeSuspectForOtherDrug(uid) {
-        var suspectId = 'other:' + uid;
+        var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+        var suspectIds = ['other:' + uid];
+        // #871 A3: un fármaco activo proyectado es sospechoso por su línea.
+        if (drug && drug.line_id) suspectIds.push('line:' + drug.line_id);
         return eaEventsCollection().some(function (event) {
-            return Array.isArray(event.suspect_ids) && event.suspect_ids.indexOf(suspectId) >= 0;
+            return Array.isArray(event.suspect_ids) && suspectIds.some(function (suspectId) {
+                return event.suspect_ids.indexOf(suspectId) >= 0;
+            });
         });
     }
 
@@ -587,6 +813,22 @@
 
     function updateFollowupOtherDrug(uid, key, value) {
         var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+        // #871 A3: cambiar entre activo y no activo crea o retira la línea de
+        // la visita. Detrás de una sospecha explícita el tipo no se puede
+        // cambiar, y perder una línea con datos exige confirmación: en ambos
+        // casos se restaura la lista visible sin mutar nada.
+        if (drug && key === 'relationType' &&
+            followupOtherDrugIsActiveLine(drug) !== followupOtherDrugIsActiveLine({ relationType: value })) {
+            if (hasEaEpisodeSuspectForOtherDrug(uid)) {
+                window.alert('Este medicamento está marcado como sospechoso en una ficha EA. Desvincúlelo antes de cambiar su tipo.');
+                renderFollowupOtherDrugs();
+                return false;
+            }
+            if (!followupOtherDrugIsActiveLine({ relationType: value }) && removeOtherDrugLine(drug) === false) {
+                renderFollowupOtherDrugs();
+                return false;
+            }
+        }
         // Solo los campos de identidad del fármaco quedan bloqueados detrás de
         // una sospecha explícita; dosis, vía, pauta y demás datos no
         // identitarios permanecen editables.
@@ -603,6 +845,7 @@
             return item;
         });
         updateSuspectDrugSelector();
+        syncOtherDrugLines();
         return true;
     }
 
@@ -665,6 +908,9 @@
         }
         var linked = currentFollowupVisit && (currentFollowupVisit.adverse_event.suspect_ids.indexOf(suspectId) >= 0 || currentFollowupVisit.causality_by_suspect[suspectId]);
         if (linked && !window.confirm(RELATED_DISCARD_MESSAGE)) return false;
+        // #871 A3: retirar la línea proyectada antes de eliminar el fármaco y
+        // no borrar nada si el clínico no confirma la pérdida de sus datos.
+        if (removeOtherDrugLine(drug) === false) return false;
         var C = getCatalog();
         if (C && C.clearSnapshot) C.clearSnapshot(followupCatalogContext('', uid));
         followupOtherDrugs = followupOtherDrugs.filter(function (item) { return item.uid !== uid; });
@@ -908,6 +1154,7 @@
         });
         if (contextValid && C && typeof C.selectDrug === 'function') C.selectDrug(d, context, reconciled);
         updateSuspectDrugSelector();
+        syncOtherDrugLines();
     }
 
     function clearOtherDrugDropdown(dropdownId) {
@@ -1003,7 +1250,16 @@
             seenIds[id] = true;
             var cat = 'Biológico no clasificado';
             var linePriority = 6;
-            if (line.estado_linea === 'active') {
+            // #871 A3: la línea proyectada de un «otro fármaco» conserva la
+            // categoría y la prioridad que ese fármaco tenía como other:<uid>.
+            var linkedDrug = null;
+            if (line.other_uid) {
+                linkedDrug = followupOtherDrugs.find(function (drug) { return drug.uid === line.other_uid; }) || null;
+            }
+            if (linkedDrug) {
+                cat = normalizeFollowupDrugCategory(linkedDrug.relationType);
+                linePriority = mapOtherDrugToContract(linkedDrug).tipo_relacion === 'concomitante' ? 3 : 4;
+            } else if (line.estado_linea === 'active') {
                 cat = 'Biológico activo';
                 linePriority = line.es_principal ? 1 : 2;
             } else if (line.estado_linea === 'validated_not_started') {
@@ -1028,6 +1284,9 @@
         });
         // Añadir todos los otros fármacos (existentes, concomitantes, históricos, exposiciones)
         followupOtherDrugs.forEach(function (drug) {
+            // #871 A3: un fármaco con línea proyectada vigente ya sale como
+            // line:<id>; nunca se duplica como other:<uid>.
+            if (findProjectedOtherDrugLine(drug)) return;
             var name = drug.farmaco || drug.principioActivo || 'Tratamiento relacionado ' + drug.uid;
             var oid = 'other:' + drug.uid;
             if (seenIds[oid]) return;
@@ -1281,6 +1540,13 @@
             container.appendChild(createElement('p', 'search-card__hint', 'Sin medicamentos identificados explícitamente en esta visita. Regístrelos antes de seleccionarlos.'));
             return;
         }
+        // B (#869): con un único sospechoso marcado la pareja ya es inequívoca.
+        // Con dos o más marcas en la misma fila se ofrece un botón explícito por
+        // sospechoso; nunca se elige un sospechoso por el clínico.
+        var markedEvaluable = options.filter(function (candidate) {
+            return !candidate.missing && marked.indexOf(candidate.id) >= 0;
+        });
+        var showOpenButtons = markedEvaluable.length >= 2;
         options.forEach(function (candidate) {
             var labelText = candidate.label;
             if (candidate.missing) labelText += ' · fuente no disponible';
@@ -1293,14 +1559,29 @@
             checkbox.checked = marked.indexOf(candidate.id) >= 0;
             checkbox.setAttribute('aria-label', 'Marcar sospechoso de este EA: ' + candidate.label);
             checkbox.addEventListener('change', function () {
+                var wasOpenPair = eaCausalityEditingEpisodeId === event.episode_id && eaCausalityEditingSuspectRef === candidate.id;
                 if (!setEaEpisodeSuspect(event.episode_id, candidate.id, checkbox.checked)) {
                     checkbox.checked = !checkbox.checked;
-                } else if (typeof window.setTimeout === 'function') {
-                    // Refrescar al terminar el evento: la degradación pegajosa
-                    // y la reconciliación explícita deben verse de inmediato,
-                    // sin desmontar la casilla pulsada durante el propio
-                    // tratamiento del cambio.
-                    window.setTimeout(refreshEaEpisodeSuspects, 0);
+                } else {
+                    // Marcar el sospechoso en su fila fija la pareja EA ×
+                    // sospechoso que edita el único editor de causalidad.
+                    // Desmarcar el sospechoso abierto lo cierra sin abrir otro.
+                    if (checkbox.checked) {
+                        eaCausalityEditingEpisodeId = event.episode_id;
+                        eaCausalityEditingSuspectRef = candidate.id;
+                        refreshEaCausalityEditor();
+                    } else if (wasOpenPair) {
+                        eaCausalityEditingEpisodeId = '';
+                        eaCausalityEditingSuspectRef = '';
+                        refreshEaCausalityEditor();
+                    }
+                    if (typeof window.setTimeout === 'function') {
+                        // Refrescar al terminar el evento: la degradación pegajosa
+                        // y la reconciliación explícita deben verse de inmediato,
+                        // sin desmontar la casilla pulsada durante el propio
+                        // tratamiento del cambio.
+                        window.setTimeout(refreshEaEpisodeSuspects, 0);
+                    }
                 }
                 applyEaSuspectChipState(label, checkbox);
             });
@@ -1308,6 +1589,13 @@
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(labelText));
             container.appendChild(label);
+            if (showOpenButtons && !candidate.missing && marked.indexOf(candidate.id) >= 0) {
+                var openButton = createElement('button', 'btn btn-outline btn-sm', 'Evaluar causalidad');
+                openButton.type = 'button';
+                openButton.setAttribute('data-ea-causality-open', candidate.id);
+                openButton.addEventListener('click', function () { fixEaCausalityPair(event.episode_id, candidate.id); });
+                container.appendChild(openButton);
+            }
         });
     }
 
@@ -1519,6 +1807,91 @@
         return EA_CAUSALITY_KL_KEYS[answerId] || answerId;
     }
 
+    var EA_CAUSALITY_METHOD_LABELS = {};
+    EA_CAUSALITY_METHOD_LABELS[EA_CAUSALITY_NARANJO] = 'Naranjo';
+    EA_CAUSALITY_METHOD_LABELS[EA_CAUSALITY_KARCH] = 'Karch-Lasagna';
+
+    function eaCausalityMethodQuestionKeys(method) {
+        var answerIds = method === EA_CAUSALITY_NARANJO
+            ? ['naranjoQ1', 'naranjoQ2', 'naranjoQ3', 'naranjoQ4', 'naranjoQ5', 'naranjoQ6', 'naranjoQ7', 'naranjoQ8', 'naranjoQ9', 'naranjoQ10']
+            : ['klTemporal', 'klConocido', 'klAlternativa', 'klSuspendido', 'klMejoraRetirada', 'klReadministracion', 'klReaparece'];
+        return answerIds.map(function (answerId) { return eaCausalityAnswerKey(method, answerId); });
+    }
+
+    // Etiqueta del sospechoso para las salidas: la del candidato nombrado o,
+    // si no hay candidato verificado, la referencia explícita; nunca se
+    // reasocia por nombre ni se inventa identidad.
+    function eaCausalitySuspectLabel(suspectRef) {
+        var candidate = getEaNamedDrugCandidates().find(function (item) { return item.id === suspectRef; });
+        return candidate ? candidate.label : suspectRef;
+    }
+
+    // Salidas manuales (#867 F2): de cada pareja EA × sospechoso × método solo
+    // viaja una evaluación con TODAS sus preguntas contestadas de forma
+    // explícita. Cero respuestas no es una evaluación; a medias bloquea las dos
+    // salidas con motivo y nunca se copia una causalidad parcial.
+    function eaCausalityOutputs(actId) {
+        var output = { entries: [], finals: [], blockReason: '' };
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule || typeof stateModule.getState !== 'function') return output;
+        var methodOrder = [EA_CAUSALITY_NARANJO, EA_CAUSALITY_KARCH];
+        eaIncorporatedEvents().forEach(function (event) {
+            var suspects = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+            suspects.forEach(function (suspectRef) {
+                if (eaSuspectMarkIsPending(event.episode_id, suspectRef)) return;
+                var finalValue = typeof stateModule.getFinal === 'function' ? stateModule.getFinal(event.episode_id, suspectRef) : '';
+                finalValue = typeof finalValue === 'string' ? finalValue : '';
+                var completeMethods = 0;
+                if (finalValue) {
+                    output.finals.push({ episode_id: event.episode_id, suspectRef: suspectRef, value: finalValue });
+                }
+                methodOrder.forEach(function (method) {
+                    var state = stateModule.getState(event.episode_id, suspectRef, method);
+                    var source = state && state.answers && typeof state.answers === 'object' ? state.answers : {};
+                    var answers = {};
+                    Object.keys(source).forEach(function (key) { answers[key] = source[key]; });
+                    var keys = eaCausalityMethodQuestionKeys(method);
+                    var answered = keys.filter(function (key) {
+                        return Object.prototype.hasOwnProperty.call(answers, key);
+                    }).length;
+                    if (answered === 0) return;
+                    if (answered < keys.length) {
+                        if (!output.blockReason) {
+                            output.blockReason = 'Exportación no realizada: causalidad a medias en ' + event.episode_id + ' × ' + suspectRef +
+                                ' (' + EA_CAUSALITY_METHOD_LABELS[method] + '): faltan ' + (keys.length - answered) + ' de ' + keys.length +
+                                ' preguntas. Complete todas o deje todas sin contestar; no se ha copiado ni entregado nada.';
+                        }
+                        return;
+                    }
+                    completeMethods += 1;
+                    var entry = {
+                        episode_id: event.episode_id,
+                        suspectRef: suspectRef,
+                        method: method,
+                        answers: answers,
+                        category: ''
+                    };
+                    if (method === EA_CAUSALITY_NARANJO) {
+                        if (M) {
+                            var score = M.calculateNaranjoScore(answers);
+                            entry.score = score;
+                            entry.category = M.categorizeNaranjo(score);
+                        }
+                    } else if (M) {
+                        entry.category = M.categorizeKarchLasagna(answers);
+                    }
+                    if (finalValue) entry.final_assessment = finalValue;
+                    output.entries.push(entry);
+                });
+                if (!completeMethods && finalValue && !output.blockReason) {
+                    output.blockReason = 'Exportación no realizada: valoración final sin evaluación completa en ' + event.episode_id + ' × ' + suspectRef +
+                        '. Complete Naranjo o Karch-Lasagna, o quite la valoración final; no se ha copiado ni entregado nada.';
+                }
+            });
+        });
+        return output;
+    }
+
     function eaCausalityMethodState(method) {
         var stateModule = ensureEaCausalityStateContext();
         if (!stateModule || !eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) {
@@ -1627,32 +2000,174 @@
         notice.classList.toggle('hidden', !visible);
     }
 
-    // La «Causalidad final farmacéutica» heredada no forma parte del editor G0
-    // provisional: la captura aceptada valora por EA × sospechoso × método ×
-    // acto y no admite trasladar una categoría formal entre parejas. El control
-    // heredado (con su etiqueta y el texto de apoyo que solo tiene sentido a su
-    // lado) se oculta y deshabilita aquí, y permanece siempre en el estado
-    // clínicamente neutro «No evaluada».
+    // La «Causalidad final farmacéutica» es opcional y pertenece a la pareja
+    // EA × sospechoso en edición: con pareja se muestra y se guarda por pareja
+    // (valoración final del profesional); sin pareja queda oculta, deshabilitada
+    // y en el estado clínicamente neutro «No evaluada».
+    function eaCausalityFinalControlContainer(finalAssessment) {
+        if (!finalAssessment || typeof finalAssessment.closest !== 'function') return null;
+        return finalAssessment.closest('.form-grid') || finalAssessment.closest('.form-group');
+    }
+
+    function eaCausalityHelpText() {
+        var summary = byId('modResumenCausalidad');
+        return summary && typeof summary.querySelector === 'function' ? summary.querySelector('.causality-help-text') : null;
+    }
+
+    function setEaCausalityFinalControlVisible(visible) {
+        var container = eaCausalityFinalControlContainer(byId('fhCausalidadFinal'));
+        if (container) {
+            container.classList.toggle('hidden', !visible);
+            if (typeof container.setAttribute === 'function') container.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        }
+        var help = eaCausalityHelpText();
+        if (help) {
+            help.classList.toggle('hidden', !visible);
+            if (typeof help.setAttribute === 'function') help.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        }
+    }
+
     function hideEaCausalityLegacyFinalControl() {
         var finalAssessment = byId('fhCausalidadFinal');
         if (!finalAssessment) return;
         finalAssessment.value = 'No evaluada';
         finalAssessment.disabled = true;
-        var container = finalAssessment.closest ? (finalAssessment.closest('.form-grid') || finalAssessment.closest('.form-group')) : null;
-        if (container) {
-            container.classList.add('hidden');
-            container.setAttribute('aria-hidden', 'true');
+        setEaCausalityFinalControlVisible(false);
+    }
+
+    function ensureEaCausalityFinalControlListener(finalAssessment) {
+        if (!finalAssessment || typeof finalAssessment.addEventListener !== 'function') return;
+        if (finalAssessment.__fhEaCausalityFinalListener) return;
+        finalAssessment.__fhEaCausalityFinalListener = true;
+        finalAssessment.addEventListener('change', handleEaCausalityFinalChange);
+    }
+
+    function handleEaCausalityFinalChange() {
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (!finalAssessment) return;
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule || typeof stateModule.recordFinal !== 'function') return;
+        if (!eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) return;
+        stateModule.recordFinal(eaCausalityEditingEpisodeId, eaCausalityEditingSuspectRef, finalAssessment.value);
+        refreshEaCausalityEditor();
+    }
+
+    function syncEaCausalityFinalControl(editing) {
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (!finalAssessment) return;
+        ensureEaCausalityFinalControlListener(finalAssessment);
+        if (!editing) {
+            hideEaCausalityLegacyFinalControl();
+            return;
         }
-        var summary = byId('modResumenCausalidad');
-        var help = summary && summary.querySelector ? summary.querySelector('.causality-help-text') : null;
-        if (help) {
-            help.classList.add('hidden');
-            help.setAttribute('aria-hidden', 'true');
+        var stateModule = ensureEaCausalityStateContext();
+        var value = stateModule && typeof stateModule.getFinal === 'function'
+            ? stateModule.getFinal(eaCausalityEditingEpisodeId, eaCausalityEditingSuspectRef)
+            : '';
+        finalAssessment.value = typeof value === 'string' && value ? value : 'No evaluada';
+        finalAssessment.disabled = false;
+        setEaCausalityFinalControlVisible(true);
+    }
+
+    // B (#869): un único editor de causalidad que se mueve a la fila del EA
+    // cuyo sospechoso está marcado. Se registra una sola vez su sitio original
+    // («home»), nunca dentro de una tarjeta, y se devuelve ahí siempre que deba
+    // ocultarse.
+    var eaCausalitySectionHome = null;
+
+    function eaCausalityNodeInsideCard(node) {
+        var current = node;
+        var depth = 0;
+        while (current && depth < 8) {
+            if (current.classList && typeof current.classList.contains === 'function' && current.classList.contains('ea-t01-card')) return true;
+            current = current.parentNode;
+            depth += 1;
         }
+        return false;
+    }
+
+    function rememberEaCausalitySectionHome(section) {
+        if (eaCausalitySectionHome || !section) return;
+        var parent = section.parentNode;
+        if (!parent) return;
+        if (eaCausalityNodeInsideCard(parent)) return;
+        eaCausalitySectionHome = { parent: parent, nextSibling: section.nextSibling || null };
+    }
+
+    function returnEaCausalitySectionHome(section) {
+        if (!section) return;
+        rememberEaCausalitySectionHome(section);
+        var home = eaCausalitySectionHome;
+        if (!home || !home.parent) return;
+        if (section.parentNode === home.parent) return;
+        var next = home.nextSibling && home.nextSibling.parentNode === home.parent ? home.nextSibling : null;
+        if (typeof home.parent.insertBefore === 'function') home.parent.insertBefore(section, next);
+        else if (typeof home.parent.appendChild === 'function') home.parent.appendChild(section);
+    }
+
+    function eaCausalityCardForEpisode(episodeId) {
+        var list = byId('fhSegEaList');
+        if (!list || !episodeId || typeof list.querySelectorAll !== 'function') return null;
+        var cards = list.querySelectorAll('.ea-t01-card');
+        var found = null;
+        Array.prototype.forEach.call(cards, function (card) {
+            if (found || !card || typeof card.getAttribute !== 'function') return;
+            if (card.getAttribute('data-episode-id') === episodeId) found = card;
+        });
+        return found;
+    }
+
+    // El editor se coloca justo después de la lista de sospechosos de la fila.
+    // Es el mismo nodo que se mueve: nunca se duplica ni se recrea.
+    function placeEaCausalitySection(section, card) {
+        if (!section || !card || typeof card.querySelector !== 'function') return false;
+        var suspects = card.querySelector('.ea-suspect-list');
+        if (!suspects || !suspects.parentNode) return false;
+        var host = suspects.parentNode;
+        if (typeof host.insertBefore !== 'function') return false;
+        if (section.parentNode === host && section.previousSibling === suspects) return true;
+        host.insertBefore(section, suspects.nextSibling || null);
+        return true;
+    }
+
+    // Fila plegada (sin lista de sospechosos en el DOM) o sin pareja válida: el
+    // editor queda oculto y en su sitio original. Nunca se deja visible «suelto»
+    // fuera de la fila que lo justifica.
+    function syncEaCausalitySectionPlacement(section, editing) {
+        if (!section) return;
+        if (editing) {
+            var card = eaCausalityCardForEpisode(eaCausalityEditingEpisodeId);
+            if (card && placeEaCausalitySection(section, card)) {
+                section.classList.remove('hidden');
+                return;
+            }
+        }
+        section.classList.add('hidden');
+        returnEaCausalitySectionHome(section);
+    }
+
+    // Una pareja fijada sobre un EA todavía en borrador (sin descripción) no se
+    // pierde al refrescar: los selectores ocultos solo ofrecen episodios
+    // incorporados. Se conserva la pareja y el editor queda oculto hasta que la
+    // descripción incorpora el EA.
+    function eaCausalityDraftPair() {
+        if (!eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) return null;
+        var event = findEaEvent(eaCausalityEditingEpisodeId);
+        if (!event || event.status === 'incorporated') return null;
+        var marked = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+        if (marked.indexOf(eaCausalityEditingSuspectRef) < 0) return null;
+        return { episodeId: event.episode_id, suspectRef: eaCausalityEditingSuspectRef };
+    }
+
+    // Marcar un sospechoso en su fila (o pulsar «Evaluar causalidad» cuando la
+    // fila tiene más de uno marcado) fija la pareja en edición.
+    function fixEaCausalityPair(episodeId, suspectRef) {
+        eaCausalityEditingEpisodeId = String(episodeId || '');
+        eaCausalityEditingSuspectRef = String(suspectRef || '');
+        refreshEaCausalityEditor();
     }
 
     function refreshEaCausalityEditor() {
-        hideEaCausalityLegacyFinalControl();
         var section = byId('modSeguimientoCausalidad');
         var presentElement = byId('fhSeguimientoEaPresente');
         var present = presentElement && presentElement.value ? presentElement.value : 'no_consta';
@@ -1662,7 +2177,6 @@
                causalidad en edición nunca redacta estado a almacenamiento
                del navegador. */
             section.setAttribute('data-fh-transient', 'true');
-            section.classList.toggle('hidden', present !== 'si');
         }
         // Sin presencia declarada no hay evaluación posible: los cuestionarios
         // y el resumen quedan inactivos (ocultos) junto con la sección, no solo
@@ -1676,7 +2190,10 @@
         var episodeSelect = byId('fhCausalityEpisode');
         var suspectSelect = byId('fhCausalitySuspect');
         var contextNotice = byId('fhCausalityContextoVacio');
-        if (!episodeSelect || !suspectSelect) return;
+        if (!episodeSelect || !suspectSelect) {
+            syncEaCausalitySectionPlacement(section, false);
+            return;
+        }
 
         if (present !== 'si') {
             eaCausalityEditingEpisodeId = '';
@@ -1695,16 +2212,24 @@
             eaCausalityStateText('fhSeguimientoEaContextoResumen', '—');
             eaCausalityStateText('resumenNaranjo', 'No evaluado');
             eaCausalityStateText('resumenKl', 'No evaluado');
+            hideEaCausalityLegacyFinalControl();
+            syncEaCausalitySectionPlacement(section, false);
             return;
         }
 
+        var draftPair = eaCausalityDraftPair();
         syncEaCausalityStateMarks();
         var episodes = eaCausalityEpisodeOptions();
         var currentEvent = episodes.length
             ? eaEventsCollection().find(function (event) { return event.episode_id === eaCausalityEditingEpisodeId; }) || null
             : null;
         var suspects = eaCausalitySuspectOptions(currentEvent);
-        var editing = !!(currentEvent && eaCausalityEditingSuspectRef);
+        if (draftPair) {
+            // La pareja del borrador sobrevive al refresco (ver eaCausalityDraftPair).
+            eaCausalityEditingEpisodeId = draftPair.episodeId;
+            eaCausalityEditingSuspectRef = draftPair.suspectRef;
+        }
+        var editing = !!(currentEvent && currentEvent.episode_id === eaCausalityEditingEpisodeId && eaCausalityEditingSuspectRef);
 
         if (!episodes.length) {
             setEaCausalityContextNotice('No hay ningún episodio adverso documentado en esta visita. Incorpore un episodio con descripción para poder analizar la causalidad de sus medicamentos sospechosos.');
@@ -1753,6 +2278,8 @@
         eaCausalityStateText('fhSeguimientoEaContextoNaranjo', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoKl', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoResumen', contextLabel);
+        syncEaCausalityFinalControl(editing);
+        syncEaCausalitySectionPlacement(section, editing);
     }
 
     function selectEaCausalityEpisode(episodeId) {
@@ -1967,31 +2494,156 @@
         return eaEventsCollection().find(function (event) { return event.episode_id === episodeId; }) || null;
     }
 
+    // D4b-2 (#867): una visita con identidad de libro emite sus propios ids de
+    // episodio y observación a partir del acto (`<actId>-EP-0001`,
+    // `<actId>-OBS-0001`). Dos visitas pegadas en el libro nunca repiten
+    // identidades y el lector vuelve a leer la historia entera. El registro
+    // demo, sin identidad declarada, conserva exactamente el formato anterior.
+    var EA_LONGITUDINAL_EVOLUTIONS = ['continuation', 'resolution', 'recurrence'];
+    var EA_LONGITUDINAL_LABELS = {
+        continuation: 'Continúa',
+        resolution: 'Resuelto (cierra el episodio)',
+        recurrence: 'Recurrencia'
+    };
+    var EA_PRIOR_ACTION_LABELS = { continuation: 'Continúa', resolution: 'Resuelto', recurrence: 'Recurrencia' };
+
+    function followupWorkbookActId() {
+        var bound = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
+        if (!bound || bound.source !== 'workbook') return '';
+        return typeof bound.actId === 'string' && bound.actId.trim() !== '' ? bound.actId : '';
+    }
+
     function nextEaEpisodeId() {
         EA_EPISODE_SEQ += 1;
-        return 'FH-EA-EP-' + String(EA_EPISODE_SEQ).padStart(4, '0');
+        var actId = followupWorkbookActId();
+        return (actId ? actId + '-EP-' : 'FH-EA-EP-') + String(EA_EPISODE_SEQ).padStart(4, '0');
     }
 
     function nextEaObservationId() {
         EA_OBSERVATION_SEQ += 1;
-        return 'FH-EA-OBS-' + String(EA_OBSERVATION_SEQ).padStart(4, '0');
+        var actId = followupWorkbookActId();
+        return (actId ? actId + '-OBS-' : 'FH-EA-OBS-') + String(EA_OBSERVATION_SEQ).padStart(4, '0');
+    }
+
+    function eaTrailingSequence(value, marker) {
+        var match = String(value || '').match(new RegExp('-' + marker + '-(\\d+)$'));
+        return match ? Number(match[1]) : NaN;
     }
 
     // Los contadores solo avanzan; tras restaurar estados con identidades
     // previas, se sitúan por encima del máximo restaurado para que los ids
-    // nuevos no colisionen con identidades ya existentes en la sesión.
+    // nuevos no colisionen con identidades ya existentes en la sesión. El
+    // número final tras `-EP-`/`-OBS-` sirve para ambos formatos.
     function eaSyncSeqCounters() {
         eaEventsCollection().forEach(function (event) {
-            var episode = Number(String(event.episode_id || '').replace('FH-EA-EP-', ''));
-            var observation = Number(String(event.observation_id || '').replace('FH-EA-OBS-', ''));
+            var episode = eaTrailingSequence(event.episode_id, 'EP');
+            var observation = eaTrailingSequence(event.observation_id, 'OBS');
             if (isFinite(episode) && episode > EA_EPISODE_SEQ) EA_EPISODE_SEQ = episode;
             if (isFinite(observation) && observation > EA_OBSERVATION_SEQ) EA_OBSERVATION_SEQ = observation;
         });
     }
 
+    function eaIsLongitudinalEvolution(value) {
+        return EA_LONGITUDINAL_EVOLUTIONS.indexOf(value) !== -1;
+    }
+
     function eaEvolutionLabel(value) {
+        if (eaIsLongitudinalEvolution(value)) return EA_LONGITUDINAL_LABELS[value];
         var option = EA_EVOLUTION_OPTIONS.find(function (item) { return item.value === value; });
         return option ? option.label : 'No consta';
+    }
+
+    // D4b-2 (#867): la historia de episodios anteriores sale del paciente de
+    // sesión (`patient.ea_episodes`) y solo se ofrece a las visitas con
+    // identidad declarada por el libro. La lógica pura no se reimplementa.
+    function followupPriorEpisodes() {
+        var bound = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
+        if (!bound || bound.source !== 'workbook') {
+            return { status: 'unavailable', reason: 'no_workbook', history: [], episodes: [] };
+        }
+        var workbookContext = window.FarmaciaBridgeRawEaV21WorkbookContext;
+        if (!workbookContext || typeof workbookContext.priorEpisodes !== 'function') {
+            return { status: 'error', reason: 'provider_unavailable', history: [], episodes: [] };
+        }
+        var patient = null;
+        try {
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            patient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        } catch (error) {
+            patient = null;
+        }
+        if (!patient) return { status: 'error', reason: 'patient_unavailable', history: [], episodes: [] };
+        try {
+            return workbookContext.priorEpisodes(bound.identity, patient.ea_episodes);
+        } catch (error) {
+            return {
+                status: 'error',
+                reason: String(error && error.code ? error.code : 'unknown'),
+                history: [],
+                episodes: []
+            };
+        }
+    }
+
+    // F1 (#867): en una ficha longitudinal los sospechosos de la visita anterior
+    // se ofrecen como REFERENCIA, nunca como selección. Se leen del modelo de
+    // episodios del paciente de sesión y se copian verbatim; cualquier otra
+    // situación (sin basis, sin runtime, sin episodio) devuelve [] y nunca
+    // lanza, igual que el resto de lecturas de historia.
+    function priorSuspectsForEvent(event) {
+        var basis = event && event.basis && typeof event.basis === 'object' ? event.basis : null;
+        if (!basis) return [];
+        var targetEpisodeId = String(basis.episode_id || '');
+        if (targetEpisodeId === '') return [];
+        var patient = null;
+        try {
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            patient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        } catch (error) {
+            patient = null;
+        }
+        if (!patient) return [];
+        var model = patient.ea_episodes && patient.ea_episodes.model ? patient.ea_episodes.model : null;
+        var episodes = model && Array.isArray(model.episodes) ? model.episodes : [];
+        for (var index = 0; index < episodes.length; index += 1) {
+            var episode = episodes[index];
+            if (!episode || typeof episode !== 'object') continue;
+            if (String(episode.episode_id || '') !== targetEpisodeId) continue;
+            return Array.isArray(episode.suspects) ? episode.suspects.slice() : [];
+        }
+        return [];
+    }
+
+    // Un episodio ya representado en este acto (borrador o incorporado, propio
+    // o como basis de una recurrencia) no vuelve a ofrecerse.
+    function eaActCoversEpisode(episodeId) {
+        var id = String(episodeId || '');
+        return eaEventsCollection().some(function (event) {
+            if (!event) return false;
+            if (String(event.episode_id || '') === id) return true;
+            var basis = event.basis && typeof event.basis === 'object' ? event.basis : null;
+            return !!basis && String(basis.episode_id || '') === id;
+        });
+    }
+
+    function addFollowupLongitudinalEa(prior, action) {
+        var workbookContext = window.FarmaciaBridgeRawEaV21WorkbookContext;
+        if (!currentFollowupVisit || !workbookContext || typeof workbookContext.longitudinalDraft !== 'function') return false;
+        var draft = null;
+        try {
+            draft = workbookContext.longitudinalDraft(prior, action, {
+                observationId: nextEaObservationId(),
+                episodeId: action === 'recurrence' ? nextEaEpisodeId() : undefined
+            });
+        } catch (error) {
+            return false;
+        }
+        draft.suspect_ids = [];
+        draft.severity = '';
+        draft.expanded = true;
+        currentFollowupVisit.adverse_events.push(draft);
+        renderEaZone();
+        return true;
     }
 
     function eaCardTitle(event) {
@@ -2000,7 +2652,23 @@
     }
 
     function eaCardBadgeText(event) {
+        if (eaIsLongitudinalEvolution(event.evolution)) {
+            var longitudinal = eaEvolutionLabel(event.evolution).toUpperCase();
+            return event.status === 'incorporated' ? longitudinal : 'BORRADOR · ' + longitudinal;
+        }
         return event.status === 'incorporated' ? eaEvolutionLabel(event.evolution).toUpperCase() : 'BORRADOR';
+    }
+
+    function eaCardSubtitle(event) {
+        var observationSuffix = ' · Observación de esta visita (' + event.observation_id + ')';
+        if (!eaIsLongitudinalEvolution(event.evolution)) {
+            return 'Nuevo episodio · ' + event.episode_id + observationSuffix;
+        }
+        var basis = event.basis && typeof event.basis === 'object' ? event.basis : {};
+        var subtitle = eaEvolutionLabel(event.evolution) + ' · episodio ' + event.episode_id +
+            ' · sobre la observación ' + String(basis.observation_id || '');
+        if (event.evolution === 'recurrence') subtitle += ' del episodio ' + String(basis.episode_id || '');
+        return subtitle + observationSuffix;
     }
 
     // C-088 VIS-03: la insignia de estado de cada tarjeta EA lleva la marca
@@ -2078,6 +2746,9 @@
             // Invariante T01-B: descripción vacía solo puede estar en borrador.
             if (event.status === 'incorporated' && String(event.description).trim() === '') event.status = 'draft';
         } else if (field === 'evolution') {
+            // D4b-2 (#867): la evolución de una ficha longitudinal la declara
+            // la acción elegida sobre el episodio anterior; no se edita aquí.
+            if (eaIsLongitudinalEvolution(event.evolution)) return false;
             if (!EA_EVOLUTION_OPTIONS.some(function (option) { return option.value === value; })) return false;
             event.evolution = value;
         } else if (field === 'severity') {
@@ -2107,6 +2778,10 @@
     function renderEaZone() {
         var list = byId('fhSegEaList');
         if (!list) return;
+        // B (#869): el editor de causalidad vive temporalmente dentro de una
+        // fila. Volver a llevarlo a su sitio antes de vaciar la lista evita que
+        // clearChildren lo destruya; el refresco posterior lo recoloca.
+        returnEaCausalitySectionHome(byId('modSeguimientoCausalidad'));
         F.clearChildren(list);
         var events = eaEventsCollection();
         var empty = byId('fhSegEaEmpty');
@@ -2114,8 +2789,66 @@
         var countBadge = byId('fhSegEaCountBadge');
         if (countBadge) countBadge.textContent = String(events.length);
         events.forEach(function (event, index) { list.appendChild(buildEaCard(event, index)); });
+        renderFollowupPriorEpisodes();
         updateEaSummary();
         refreshEaCausalityEditor();
+    }
+
+    // D4b-2 (#867): lista real de episodios anteriores del libro. Un episodio
+    // sin acciones ofrecidas (ambiguo) se muestra sin botones: se revisa en
+    // origen, nunca se elige por el clínico.
+    function buildFollowupPriorEpisode(episode) {
+        var item = createElement('div', 'ea-t01-prior-episode');
+        item.setAttribute('data-episode-id', String(episode && episode.episode_id || ''));
+        applyEaStyle(item, { border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 12px', marginBottom: '8px', background: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' });
+        var textGroup = createElement('div');
+        applyEaStyle(textGroup, { flex: '1 1 auto', minWidth: '0' });
+        textGroup.appendChild(createElement('div', 'card-title card-title--tight', String(episode.description || '')));
+        var meta = [];
+        if (String(episode.statusText || '').trim() !== '') meta.push(String(episode.statusText).trim());
+        if (meta.length) textGroup.appendChild(createElement('p', 'search-card__hint', meta.join(' · ')));
+        if (episode.ambiguous === true) textGroup.appendChild(createElement('p', 'search-card__hint', 'Revisar en origen: estado ambiguo'));
+        item.appendChild(textGroup);
+        var actions = Array.isArray(episode.actions) ? episode.actions : [];
+        var actionsRow = createElement('div', 'form-actions');
+        var covered = eaActCoversEpisode(episode.episode_id);
+        actions.forEach(function (action) {
+            var label = EA_PRIOR_ACTION_LABELS[action] || String(action);
+            var button = createElement('button', 'btn btn-outline btn-sm', label);
+            button.type = 'button';
+            button.setAttribute('data-ea-prior-action', String(action));
+            button.disabled = covered;
+            if (covered) {
+                // El estilo btn-outline no atenúa el estado deshabilitado.
+                button.title = 'Este episodio ya tiene una ficha en esta visita.';
+                applyEaStyle(button, { opacity: '0.45', cursor: 'not-allowed' });
+            }
+            button.addEventListener('click', function () { addFollowupLongitudinalEa(episode, action); });
+            actionsRow.appendChild(button);
+        });
+        if (actionsRow.children.length) item.appendChild(actionsRow);
+        return item;
+    }
+
+    function renderFollowupPriorEpisodes() {
+        var container = byId('fhSegEaPriorEpisodes');
+        if (!container) return;
+        F.clearChildren(container);
+        var prior = followupPriorEpisodes();
+        var episodes = Array.isArray(prior.episodes) ? prior.episodes : [];
+        if (!episodes.length) {
+            var message;
+            if (prior.status === 'ok') {
+                message = 'Sin EA anteriores en el libro para este paciente.';
+            } else if (prior.status === 'unavailable') {
+                message = 'Historia de EA del libro no disponible para este paciente.';
+            } else {
+                message = 'No se puede ofrecer la historia de EA: ' + String(prior.reason || prior.status) + '.';
+            }
+            container.appendChild(createElement('p', 'search-card__hint', message));
+            return;
+        }
+        episodes.forEach(function (episode) { container.appendChild(buildFollowupPriorEpisode(episode)); });
     }
 
     function buildEaCard(event, index) {
@@ -2130,7 +2863,7 @@
         var textGroup = createElement('div');
         applyEaStyle(textGroup, { flex: '1 1 auto', minWidth: '0' });
         var title = createElement('div', 'card-title card-title--tight', eaCardTitle(event));
-        var subtitle = createElement('div', 'search-card__hint', 'Nuevo episodio · ' + event.episode_id + ' · Observación de esta visita (' + event.observation_id + ')');
+        var subtitle = createElement('div', 'search-card__hint', eaCardSubtitle(event));
         textGroup.appendChild(title);
         textGroup.appendChild(subtitle);
         header.appendChild(textGroup);
@@ -2163,11 +2896,13 @@
             event.description = descriptionInput.value;
             // Invariante T01-B: descripción vacía solo puede estar en borrador.
             if (event.status === 'incorporated' && String(event.description).trim() === '') event.status = 'draft';
+            // B (#869): escribir la descripción es el acto de incorporación; no
+            // hay botón «Incorporar al acto» que lo decida por separado.
+            else if (event.status === 'draft' && String(event.description).trim() !== '') event.status = 'incorporated';
             title.textContent = eaCardTitle(event);
             badge.textContent = eaCardBadgeText(event);
             badge.className = 'status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : '');
             discardButton.textContent = event.status === 'incorporated' ? 'Descartar' : 'Descartar borrador';
-            if (incorporateButton) incorporateButton.disabled = String(event.description).trim() === '';
             card.setAttribute('data-ea-status', event.status);
             updateEaSummary();
             // La descripción forma parte de la identidad visible del episodio:
@@ -2176,17 +2911,28 @@
             refreshEaCausalityEditor();
         });
         body.appendChild(descriptionInput);
-        body.appendChild(createElement('p', 'search-card__hint', 'Se conserva el texto original. Codificación normalizada: pendiente de configuración y licencia del servicio.'));
+        // B (#869): hueco de codificación de solo lectura. La codificación
+        // normalizada (MedDRA/CTCAE) está aparcada: nunca se muestra un código
+        // ni se deduce alguno a partir de la descripción.
+        var codingSlot = createElement('p', 'search-card__hint', 'Término codificado: pendiente de codificar');
+        codingSlot.setAttribute('data-ea-coding-slot', '');
+        body.appendChild(codingSlot);
 
         // VIS-04: ambos controles clínicos comparten la fila del maestro G0.
         var clinicalGrid = createElement('div', 'ea-t01-clinical-grid');
         var evolutionField = createElement('div', 'ea-t01-clinical-field');
         evolutionField.appendChild(createElement('span', 'form-label', 'Evolución documentada en esta visita'));
-        var evolutionSelect = buildSelectControl(EA_EVOLUTION_OPTIONS, event.evolution);
-        evolutionSelect.setAttribute('aria-label', 'Evolución documentada en esta visita');
-        evolutionSelect.setAttribute('data-ea-field', 'evolution');
-        evolutionSelect.addEventListener('change', function () { setEaEventField(event.episode_id, 'evolution', evolutionSelect.value); });
-        evolutionField.appendChild(evolutionSelect);
+        if (eaIsLongitudinalEvolution(event.evolution)) {
+            // D4b-2 (#867): la evolución de una ficha longitudinal es la acción
+            // elegida sobre el episodio anterior; se muestra fija, no se elige.
+            evolutionField.appendChild(createElement('p', 'search-card__hint', eaEvolutionLabel(event.evolution)));
+        } else {
+            var evolutionSelect = buildSelectControl(EA_EVOLUTION_OPTIONS, event.evolution);
+            evolutionSelect.setAttribute('aria-label', 'Evolución documentada en esta visita');
+            evolutionSelect.setAttribute('data-ea-field', 'evolution');
+            evolutionSelect.addEventListener('change', function () { setEaEventField(event.episode_id, 'evolution', evolutionSelect.value); });
+            evolutionField.appendChild(evolutionSelect);
+        }
         clinicalGrid.appendChild(evolutionField);
 
         var severityField = createElement('div', 'ea-t01-clinical-field');
@@ -2199,54 +2945,22 @@
         clinicalGrid.appendChild(severityField);
         body.appendChild(clinicalGrid);
 
-        var incorporateButton = null;
-        if (event.status === 'draft') {
-            incorporateButton = createElement('button', 'btn btn-sm btn-secondary', 'Incorporar al acto');
-            incorporateButton.type = 'button';
-            incorporateButton.disabled = String(event.description || '').trim() === '';
-            incorporateButton.addEventListener('click', function () { incorporateEaDraft(event.episode_id); });
-            body.appendChild(incorporateButton);
-            body.appendChild(createElement('p', 'search-card__hint', 'La descripción del EA nuevo es obligatoria para incorporarlo a la representación preparada del acto.'));
-        }
-
-        // C-088 VIS-02 → G0 FH-EA-02: se preserva el disclosure clínico
-        // adicional como DEMO, todavía disabled. Los candidatos a sospechosos
-        // de cada episodio sí son seleccionables explícitamente y solo viven
-        // en memoria de edición de la ficha; no habilitan causalidad, guardado
-        // ni proyección F4.4.
-        var extraDetails = document.createElement('details');
-        extraDetails.className = 'ea-t01-demo-details';
-        extraDetails.setAttribute('data-ea-demo-control', 't01');
-        var extraSummary = createElement('summary', 'search-card__hint', 'Información clínica adicional (opcional)');
-        applyEaStyle(extraSummary, { fontWeight: '700', cursor: 'default', color: '#1F344B', padding: '4px 0' });
-        extraDetails.appendChild(extraSummary);
-        var extraBody = createElement('div');
-        applyEaStyle(extraBody, { marginTop: '8px', display: 'grid', gap: '8px' });
-        [['Inicio EA, solo si se conoce (demo, no funcional en T01)', 'date'],
-         ['Resolución, si hay fecha documentada (demo, no funcional en T01)', 'date']].forEach(function (item) {
-            var demoInput = document.createElement('input');
-            demoInput.type = item[1];
-            demoInput.className = 'form-control';
-            demoInput.disabled = true;
-            demoInput.setAttribute('aria-label', item[0]);
-            demoInput.setAttribute('data-ea-demo-control', 't01');
-            extraBody.appendChild(demoInput);
-        });
-        var demoNotes = document.createElement('textarea');
-        demoNotes.className = 'form-textarea';
-        demoNotes.rows = 2;
-        demoNotes.disabled = true;
-        demoNotes.setAttribute('aria-label', 'Actuación/observaciones, si constan (demo, no funcional en T01)');
-        demoNotes.setAttribute('data-ea-demo-control', 't01');
-        extraBody.appendChild(demoNotes);
-        extraBody.appendChild(createElement('p', 'search-card__hint', 'Presentación visual de la maqueta aprobada, no funcional en T01: sin valores, sin inferencias de fechas ni de decisiones terapéuticas.'));
-        extraDetails.appendChild(extraBody);
-        body.appendChild(extraDetails);
-
-        var demoDivider = createElement('div');
-        applyEaStyle(demoDivider, { borderTop: '1px solid #E2E8F0', margin: '12px 0 8px' });
-        body.appendChild(demoDivider);
+        // B (#869): una fila = descripción, hueco de codificación, gravedad y
+        // evolución. Sin controles de maqueta, sin botón de incorporación y sin
+        // textos de ayuda redundantes. Los candidatos a sospechosos siguen
+        // siendo seleccionables explícitamente y solo viven en memoria de
+        // edición de la ficha.
         body.appendChild(createElement('div', 'form-label', 'Medicamentos señalados expresamente como sospechosos'));
+        // F1 (#867): la sospecha de la visita anterior es REFERENCIA, nunca
+        // selección. Se muestra antes de la lista, sin inputs ni controles:
+        // el profesional debe preguntar y marcar en esta visita lo que persista.
+        var priorSuspects = priorSuspectsForEvent(event);
+        if (priorSuspects.length > 0) {
+            var priorBlock = createElement('div', 'ea-prior-suspects');
+            priorBlock.appendChild(document.createTextNode('Sospechosos de la visita anterior (referencia): ' + priorSuspects.join(' · ')));
+            priorBlock.appendChild(createElement('p', 'search-card__hint ea-prior-suspects__warning', 'Referencia, no marcada. Pregunte activamente por ellos y marque en la lista siguiente los que sigan siendo sospechosos en esta visita; si no los marca, no se registran.'));
+            body.appendChild(priorBlock);
+        }
         var demoSuspects = createElement('div', 'ea-suspect-list');
         applyEaStyle(demoSuspects, { display: 'flex', flexWrap: 'wrap', gap: '8px' });
         // G0 FH-EA-02: solo medicamentos ya identificados por el profesional o
@@ -2256,7 +2970,6 @@
         // causalidad.
         renderEaEpisodeSuspects(event, demoSuspects);
         body.appendChild(demoSuspects);
-        body.appendChild(createElement('p', 'search-card__hint', 'Selección en edición. No forma parte del acto preparado, no se ha guardado ni exportado. La sospecha se marca únicamente por selección explícita; no se preselecciona nada y no se ha evaluado causalidad.'));
         card.appendChild(body);
         return card;
     }
@@ -2322,6 +3035,7 @@
         if (!fechaEl || typeof fechaEl.addEventListener !== 'function') return;
         function markActDateRecorded() {
             if (currentFollowupVisit) currentFollowupVisit.act_date_recorded = true;
+            updateFollowupBridgeRawExportAvailability();
         }
         fechaEl.addEventListener('change', markActDateRecorded);
         fechaEl.addEventListener('input', markActDateRecorded);
@@ -2493,7 +3207,7 @@
         if (present !== 'si' && incorporated.length) {
             return 'Exportación no realizada: el acto tiene EA incorporados sin presencia «Sí»; concilie el acto antes de exportar.';
         }
-        return buildEaManualProjection().blockReason;
+        return buildEaManualProjection().blockReason || eaCausalityOutputs('').blockReason;
     }
 
     function guardEaManualOutputs() {
@@ -2649,6 +3363,9 @@
             body.appendChild(createElement('strong', 'seg-line-card__name', line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Línea sin nombre'));
             body.appendChild(createElement('code', 'seg-line-card__id', line.linea_id));
             body.appendChild(createElement('span', 'seg-line-card__meta', biologicRelationLabel(line.tipo_relacion) + ' · ' + biologicStateLabel(line.estado_linea)));
+            if (line.session_new === true) {
+                body.appendChild(createElement('span', 'seg-line-card__meta', 'Registrada en esta visita · aún no está en el libro'));
+            }
             card.appendChild(control);
             card.appendChild(body);
             container.appendChild(card);
@@ -2756,6 +3473,7 @@
         }
 
         F.setValue('fhSegCip', ctx.cip);
+        updateFollowupBridgeRawExportAvailability();
         F.setValue('fhSegServicio', ctx.servicio || ctx.patient?.servicio);
         // Guardar valor de patología para restaurarlo tras initSegServicioPatologiaSync
         // (el select aún no tiene opciones pobladas)
@@ -3185,8 +3903,15 @@
         clearSegDrugAutocompleteDropdown();
     }
 
+    // #871 A3: la línea proyectada de un «otro fármaco» no es el primer
+    // tratamiento: no esconde el buscador de «Tratamiento actual» ni bloquea
+    // su registro.
+    function followupHasSessionLineWithoutOtherDrug() {
+        return currentBiologicLines.some(function (line) { return line && !line.other_uid; });
+    }
+
     function syncSegDrugAutocompleteVisibility() {
-        if (currentBiologicLines.length) {
+        if (followupHasSessionLineWithoutOtherDrug()) {
             hideSegDrugAutocomplete();
         } else {
             showSegDrugAutocomplete();
@@ -3267,11 +3992,35 @@
         segAutocompleteActiveIndex = -1;
     }
 
+    // #870 A2: la línea registrada en ESTA visita lleva la identidad del acto,
+    // igual que los episodios y observaciones EA (`<actId>-LIN-0001`,
+    // `<actId>-TRT-0001`). Sin identidad de acto se conserva el formato
+    // anterior (la copia 166 ya queda bloqueada por otra razón).
+    function followupActIdentityId() {
+        var bound = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
+        if (!bound || typeof bound.actId !== 'string') return '';
+        return bound.actId.trim();
+    }
+
+    function followupSessionLineIdentity(existingLines) {
+        var actId = followupActIdentityId();
+        var lines = Array.isArray(existingLines) ? existingLines : [];
+        var highest = 0;
+        lines.forEach(function (line) {
+            var lineId = String(line && line.linea_id || '');
+            var match = lineId.match(/-LIN-(\d+)$/) || lineId.match(/^FH-SES-L(\d+)$/);
+            if (match && Number(match[1]) > highest) highest = Number(match[1]);
+        });
+        if (!actId) return { lineId: 'FH-SES-L' + String(highest + 1).padStart(4, '0'), treatmentId: '' };
+        var sequence = String(highest + 1).padStart(4, '0');
+        return { lineId: actId + '-LIN-' + sequence, treatmentId: actId + '-TRT-' + sequence };
+    }
+
     function selectDrugSeg(drug) {
         var C = getCatalog();
         if (!C || !drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         // Main follow-up catalog registration is only available for a manually registered treatment.
-        if (currentBiologicLines.length) return;
+        if (followupHasSessionLineWithoutOtherDrug()) return;
         var helper = getTreatmentHelper();
         var context = followupCatalogContext('seguimiento.tratamiento');
         var contextValid = typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
@@ -3317,6 +4066,35 @@
         var searchInput = document.getElementById('fhSegDrugSearch');
         if (searchInput) {
             searchInput.value = drug.display_name || drug.nombre_comercial || '';
+        }
+        // Paciente sin líneas (primera vez en la plataforma, ya en tratamiento):
+        // el fármaco elegido queda como línea «ya en tratamiento» de ESTA
+        // visita. Nunca es un alta ni una validación, y no se infiere pauta,
+        // dosis ni fecha de inicio.
+        if (currentFollowupVisit) {
+            var sessionLineIdentity = followupSessionLineIdentity(currentBiologicLines);
+            var sessionLineSource = {
+                linea_id: sessionLineIdentity.lineId,
+                tratamiento_id_principal: sessionLineIdentity.treatmentId,
+                farmaco_nombre: reconciled.values.farmaco_nombre || '',
+                principio_activo: reconciled.values.principio_activo || '',
+                presentacion: reconciled.values.presentacion || '',
+                codigo_nacional: reconciled.values.codigo_nacional || '',
+                nregistro: reconciled.values.nregistro || '',
+                dosis_texto: reconciled.values.dosis_texto || '',
+                via: reconciled.values.via || '',
+                nombre_comercial: drug.nombre_comercial || '',
+                source_type: drug.source_type || '',
+                selected_drug_id: drug.drug_id || '',
+                fuente: 'seguimiento_primera_visita',
+                candidate_explicit: true
+            };
+            var sessionLine = normalizeBiologicLine(sessionLineSource, { cip: currentFollowupVisit.cip }, { estado_linea: 'active', tipo_relacion: 'primary' });
+            sessionLine.session_new = true;
+            currentBiologicLines.push(sessionLine);
+            toggleBiologicLineSelection(sessionLineIdentity.lineId, true);
+            syncSegDrugAutocompleteVisibility();
+            updateFollowupBridgeRawExportAvailability();
         }
     }
 
@@ -3806,7 +4584,13 @@
             },
             evaluated_lines: evaluated,
             dispensed_lines: evaluated.filter(function (item) { return item.dispensed; }),
-            related_treatments: followupOtherDrugs.map(function (drug) { return Object.assign({ uid: drug.uid }, mapOtherDrugToContract(drug), JSON.parse(JSON.stringify(drug))); }),
+            // #871 A3: un «otro fármaco» con línea seleccionada viaja como
+            // followup_line; no se duplica en tratamientos relacionados. Los
+            // no seleccionados o no activos siguen aquí (no se pierde lo
+            // registrado).
+            related_treatments: followupOtherDrugs.filter(function (drug) {
+                return !(drug.line_id && currentFollowupVisit.selected_line_ids.indexOf(drug.line_id) >= 0);
+            }).map(function (drug) { return Object.assign({ uid: drug.uid }, mapOtherDrugToContract(drug), JSON.parse(JSON.stringify(drug))); }),
             adverse_event: adverse,
             /* T01 (#795): bloque EA 0..N desacoplado del acto en edición. */
             ea_block: buildEaActBlockSnapshot(),
@@ -3953,6 +4737,7 @@
                sospecha explícita no se redacta como causalidad y las
                evaluaciones G0 en edición no se exportan como resultado. */
             var projection = buildEaManualProjection();
+            var causalityOutputs = eaCausalityOutputs('');
             lines.push('- Presencia declarada en el acto: ' + textOrDash(model.adverse_event.present));
             lines.push('- EA incorporados en esta visita: ' + incorporatedEa.length);
             incorporatedEa.forEach(function (event, index) {
@@ -3967,8 +4752,30 @@
                 lines.push('Gravedad: ' + textOrDash(String(event.severity || '').trim() || 'No consta'));
                 lines.push('Evolución: ' + eaEvolutionLabel(event.evolution));
                 lines.push('Medicamentos sospechosos explícitos: ' + eaManualEventSuspectReferences(event));
-                lines.push('Causalidad Naranjo: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
-                lines.push('Causalidad Karch-Lasagna: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
+                var naranjoEntries = causalityOutputs.entries.filter(function (entry) {
+                    return entry.method === EA_CAUSALITY_NARANJO && String(entry.episode_id) === String(event.episode_id);
+                });
+                var karchEntries = causalityOutputs.entries.filter(function (entry) {
+                    return entry.method === EA_CAUSALITY_KARCH && String(entry.episode_id) === String(event.episode_id);
+                });
+                var finalEntries = causalityOutputs.finals.filter(function (entry) {
+                    return String(entry.episode_id) === String(event.episode_id);
+                });
+                lines.push('Causalidad Naranjo: ' + (naranjoEntries.length
+                    ? naranjoEntries.map(function (entry) {
+                        return eaCausalitySuspectLabel(entry.suspectRef) + ': ' + entry.score + ' · ' + entry.category;
+                    }).join(' | ')
+                    : EA_MANUAL_CAUSALITY_NOT_EVALUATED));
+                lines.push('Causalidad Karch-Lasagna: ' + (karchEntries.length
+                    ? karchEntries.map(function (entry) {
+                        return eaCausalitySuspectLabel(entry.suspectRef) + ': ' + entry.category;
+                    }).join(' | ')
+                    : EA_MANUAL_CAUSALITY_NOT_EVALUATED));
+                if (finalEntries.length) {
+                    lines.push('Valoración final: ' + finalEntries.map(function (entry) {
+                        return eaCausalitySuspectLabel(entry.suspectRef) + ': ' + entry.value;
+                    }).join(' | '));
+                }
                 lines.push('Acción registrada: ' + EA_MANUAL_NO_ACTION);
                 lines.push('Ámbito en las salidas por fila: ' + (scopeLabels.length ? scopeLabels.join(', ') : 'Sin distribución por línea'));
                 lines.push('');
@@ -4019,6 +4826,8 @@
             dispensed_line_ids: [],
             editing_line_id: '',
             line_state: {},
+            recorded_controls: {},
+            line_recorded: {},
             adverse_event: Object.assign({}, adverseDefaults),
             adverse_events: [],
             /* C-088 SPEC-03: acto restaurado sin evidencia de registro de
@@ -4031,6 +4840,8 @@
         currentFollowupVisit.selected_line_ids = Array.isArray(currentFollowupVisit.selected_line_ids) ? currentFollowupVisit.selected_line_ids.slice() : [];
         currentFollowupVisit.dispensed_line_ids = Array.isArray(currentFollowupVisit.dispensed_line_ids) ? currentFollowupVisit.dispensed_line_ids.slice() : [];
         currentFollowupVisit.line_state = currentFollowupVisit.line_state && typeof currentFollowupVisit.line_state === 'object' ? cloneEvaluationState(currentFollowupVisit.line_state, {}) : {};
+        currentFollowupVisit.recorded_controls = currentFollowupVisit.recorded_controls && typeof currentFollowupVisit.recorded_controls === 'object' ? cloneEvaluationState(currentFollowupVisit.recorded_controls, {}) : {};
+        currentFollowupVisit.line_recorded = currentFollowupVisit.line_recorded && typeof currentFollowupVisit.line_recorded === 'object' ? cloneEvaluationState(currentFollowupVisit.line_recorded, {}) : {};
         currentFollowupVisit.adverse_event = Object.assign({}, adverseDefaults, currentFollowupVisit.adverse_event || {}, state.adverse_event || {});
         currentFollowupVisit.adverse_event.suspect_ids = Array.isArray(currentFollowupVisit.adverse_event.suspect_ids) ? currentFollowupVisit.adverse_event.suspect_ids.slice() : [];
         /* T01 (#795): la colección EA 0..N se restaura en memoria de edición
@@ -4062,6 +4873,9 @@
             return restored;
         });
         followupOtherDrugs = Array.isArray(state.related_treatments) ? cloneEvaluationState(state.related_treatments, []) : [];
+        // #871 A3: el estado restituido mantiene sincronizada la proyección de
+        // cada «otro fármaco» activo sobre las líneas de la visita.
+        syncOtherDrugLines();
 
         renderFollowupOtherDrugs();
         renderBiologicLineCards();
@@ -4245,12 +5059,149 @@
         throw new FollowupV2BridgeError(code, message, details);
     }
 
+    function applyFollowupDeclaredDisplayLabels(context) {
+        if (!context || typeof context !== 'object') return context;
+        // Etiquetas visibles del acto: solo texto; nunca se inventan códigos.
+        var service = cleanExportToken(fv('fhSegServicio'));
+        if (service) context.service_label = service;
+        var pathology = cleanExportToken(fv('fhSegPatologia'));
+        if (pathology) context.pathology_label = pathology;
+        var professionalEl = byId('currentProfessional');
+        var professional = professionalEl ? cleanExportToken(professionalEl.textContent) : '';
+        if (professional) context.professional_display = professional;
+        return context;
+    }
+
+    // #870 A2: las líneas registradas en ESTA visita todavía no están
+    // declaradas en el libro; viajan como una `followup_line` más del
+    // seguimiento con la misma foto que emite `buildActContext`. Lo que la
+    // línea no tiene viaja a null: nunca se infiere pauta, dosis, vía ni
+    // fecha de inicio.
+    function followupBridgeRawSessionLines() {
+        if (!currentFollowupVisit || !Array.isArray(currentFollowupVisit.selected_line_ids)) return [];
+        var selected = currentFollowupVisit.selected_line_ids;
+        return currentBiologicLines.filter(function (line) {
+            return line && line.session_new === true && selected.indexOf(line.linea_id) >= 0;
+        });
+    }
+
+    function bridgeRawLineText(value) {
+        var text = cleanExportToken(value);
+        return text ? text : null;
+    }
+
+    function bridgeRawLineIsPrimary(line) {
+        return !!line && (line.isPrimaryLine === true || line.lineRole === 'principal');
+    }
+
+    function bridgeRawSessionLineFields(line, context) {
+        var drugName = bridgeRawLineText(line.farmaco_nombre);
+        var activeIngredient = bridgeRawLineText(line.principio_activo);
+        if (!drugName && !activeIngredient) {
+            failFollowupBridgeRaw('BRIDGE_RAW_LINE_INCOMPLETE', 'la línea ' + line.linea_id + ' no tiene fármaco.');
+        }
+        var isPrimary = line.tipo_relacion === 'primary';
+        return {
+            rowKey: context.actId + ':' + line.linea_id,
+            treatmentId: line.tratamiento_id_principal,
+            lineId: line.linea_id,
+            lineRole: isPrimary ? 'principal' : 'additional',
+            isPrimaryLine: isPrimary,
+            lineStatusAtEvent: 'active',
+            activeAtEvent: true,
+            drugName: drugName,
+            activeIngredient: activeIngredient,
+            presentation: bridgeRawLineText(line.presentacion),
+            doseText: bridgeRawLineText(line.dosis_texto),
+            route: bridgeRawLineText(line.via),
+            scheduleCode: bridgeRawLineText(line.pauta_codigo),
+            scheduleLabel: bridgeRawLineText(line.pauta_label),
+            scheduleOtherText: bridgeRawLineText(line.pauta_otro_texto),
+            selectedDrugId: bridgeRawLineText(line.selected_drug_id),
+            catalogSource: bridgeRawLineText(line.source_type),
+            nationalCode: bridgeRawLineText(line.codigo_nacional),
+            registrationNumber: bridgeRawLineText(line.nregistro)
+        };
+    }
+
+    function appendFollowupBridgeRawSessionLines(context, sessionLines) {
+        if (!context || !Array.isArray(context.activeLines)) return context;
+        var lines = context.activeLines;
+        sessionLines.forEach(function (line) {
+            if (line.tipo_relacion === 'primary' && lines.some(bridgeRawLineIsPrimary)) {
+                failFollowupBridgeRaw('BRIDGE_RAW_MULTIPLE_PRIMARY', 'hay más de una línea principal en el acto; revisa las líneas de la visita.');
+            }
+            lines.push(bridgeRawSessionLineFields(line, context));
+        });
+        return context;
+    }
+
     function getFollowupBridgeRawActContext() {
+        var sessionLines = followupBridgeRawSessionLines();
+        var cip = visibleFollowupCip();
+        var openIdentity = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
+        if (openIdentity && openIdentity.source === 'workbook') {
+            if (!currentFollowupVisit) {
+                failFollowupBridgeRaw('BRIDGE_RAW_VISIT_UNAVAILABLE', 'No hay una visita de seguimiento abierta.');
+            }
+            if (String(currentFollowupVisit.cip || '').trim() !== cip) {
+                failFollowupBridgeRaw('BRIDGE_RAW_CIP_MISMATCH', 'El paciente visible no coincide con el acto abierto.');
+            }
+            // La identidad sigue siendo la que declara el libro: se relee del
+            // paciente de sesión y debe ser la misma que se vinculó al acto.
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            var patient = null;
+            try {
+                patient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+            } catch (error) {
+                patient = null;
+            }
+            var declared = patient && patient.bridge_raw_identity && typeof patient.bridge_raw_identity === 'object'
+                ? patient.bridge_raw_identity
+                : null;
+            if (!patient || String(patient.cip || '').trim() !== cip || !declared || declared.status !== 'ok' ||
+                declared.patientId !== openIdentity.identity.patientId ||
+                declared.patientRef !== openIdentity.identity.patientRef ||
+                declared.identifierValue !== openIdentity.identity.identifierValue ||
+                declared.demoFlag !== openIdentity.identity.demoFlag) {
+                failFollowupBridgeRaw('BRIDGE_RAW_IDENTITY_MISMATCH', 'La identidad del paciente cambió respecto a la vinculada al abrir el acto.');
+            }
+            var fechaEl = byId('fhSegFecha');
+            var visitDate = fechaEl && fechaEl.value ? String(fechaEl.value).trim() : '';
+            if (currentFollowupVisit.act_date_recorded !== true || !visitDate) {
+                failFollowupBridgeRaw('BRIDGE_RAW_ACT_DATE_MISSING', 'anota la fecha del acto.');
+            }
+            var workbookContext = window.FarmaciaBridgeRawEaV21WorkbookContext;
+            if (!workbookContext || typeof workbookContext.buildActContext !== 'function') {
+                failFollowupBridgeRaw('BRIDGE_RAW_PROVIDER_UNAVAILABLE', 'No está disponible la fuente de identidad declarada del acto.');
+            }
+            // Las líneas de la visita no están declaradas en el libro: se
+            // añaden después, ya con la identidad del acto emitida.
+            var sessionLineIds = sessionLines.map(function (line) { return line.linea_id; });
+            var declaredSelection = (currentFollowupVisit.selected_line_ids || []).filter(function (lineId) {
+                return sessionLineIds.indexOf(lineId) < 0;
+            });
+            var actContext = applyFollowupDeclaredDisplayLabels(workbookContext.buildActContext(openIdentity.identity, {
+                actId: openIdentity.actId,
+                eventId: openIdentity.eventId,
+                sourceEventId: openIdentity.sourceEventId,
+                visitId: openIdentity.visitId,
+                visitDate: visitDate,
+                recordedAt: new Date().toISOString()
+            }, declaredSelection));
+            return appendFollowupBridgeRawSessionLines(actContext, sessionLines);
+        }
+        if (currentFollowupVisit && currentFollowupVisit.bridge_raw_identity_block) {
+            var block = currentFollowupVisit.bridge_raw_identity_block;
+            if (block === 'PATIENT_REF_UNDECLARED') {
+                failFollowupBridgeRaw('BRIDGE_RAW_PATIENT_REF_UNDECLARED', 'el libro no declara el patientRef de este paciente.');
+            }
+            failFollowupBridgeRaw('BRIDGE_RAW_IDENTITY_UNAVAILABLE', 'el libro no declara una identidad utilizable para este paciente (' + block + ').');
+        }
         var provider = window.FarmaciaBridgeRawEaV21DemoContext;
         if (!provider || provider.PROVIDER_VERSION !== '1.0.0-draft.1' || typeof provider.getContext !== 'function') {
             failFollowupBridgeRaw('BRIDGE_RAW_PROVIDER_UNAVAILABLE', 'No está disponible la fuente de identidad declarada del acto.');
         }
-        var cip = visibleFollowupCip();
         var context = provider.getContext('followupAct', cip);
         if (!context) {
             failFollowupBridgeRaw('BRIDGE_RAW_IDENTITY_UNAVAILABLE', 'No existe identidad declarada para este paciente.');
@@ -4274,7 +5225,11 @@
             bound.visitId !== context.visitId) {
             failFollowupBridgeRaw('BRIDGE_RAW_VISIT_MISMATCH', 'La visita declarada no coincide con la visita abierta.');
         }
-        return context;
+        // El proveedor demo declara su propio contexto: se copia antes de
+        // añadir las líneas de esta visita.
+        var visitContext = Object.assign({}, context);
+        visitContext.activeLines = Array.isArray(context.activeLines) ? context.activeLines.slice() : context.activeLines;
+        return appendFollowupBridgeRawSessionLines(visitContext, sessionLines);
     }
 
     function bridgeRawErrorMessage(error) {
@@ -4297,12 +5252,127 @@
         return '';
     }
 
+    /* Tramo E2: contenido de la visita y de cada línea revisada, derivado del
+       modelo de exportación y de las marcas de «tocado» del clínico. Lo no
+       tocado viaja como «no registrado» o vacío; nunca se infiere dosis,
+       pauta, causalidad ni un valor por defecto del control. */
+    function followupRecordedControlFlag(record, id) {
+        return !!(record && record[id]);
+    }
+
+    function followupTriStateFromRecord(recorded, id, yesValue) {
+        if (!followupRecordedControlFlag(recorded, id)) return 'not_recorded';
+        return fv(id) === yesValue ? 'yes' : 'no';
+    }
+
+    function followupPromsFromVisit(recorded) {
+        var proms = [];
+        var answers = [];
+        var dlqiTotal = 0;
+        DLQI_QUESTIONS.forEach(function (question) {
+            var answer = getDLQIAnswer(question);
+            if (!answer) return;
+            var score = Number(answer.score);
+            answers.push({ item: question.id, score: score, response: answer.text });
+            dlqiTotal += score;
+        });
+        if (answers.length) {
+            proms.push({
+                instrument: 'DLQI', value: dlqiTotal, complete: answers.length === DLQI_QUESTIONS.length,
+                answeredCount: answers.length, answers: answers
+            });
+        }
+        if (followupRecordedControlFlag(recorded, 'fhSegEvaDolorRange')) {
+            proms.push({ instrument: 'EVA_DOLOR', value: Number(fv('fhSegEvaDolorRange')), complete: true, answeredCount: 1, answers: null });
+        }
+        if (followupRecordedControlFlag(recorded, 'fhSegEvaPruritoRange')) {
+            proms.push({ instrument: 'EVA_PRURITO', value: Number(fv('fhSegEvaPruritoRange')), complete: true, answeredCount: 1, answers: null });
+        }
+        return proms;
+    }
+
+    function followupRecordedReason(value) {
+        var token = cleanExportToken(value);
+        return !token || token === 'No aplica' ? null : token;
+    }
+
+    function buildFollowupBridgeRawLineContent(item, lineRecorded) {
+        var lrec = lineRecorded || {};
+        var therapeutic = resolveLineTherapeuticOutput(item);
+        var newDose = therapeutic.optimized ? cleanExportToken(lineControl(item, 'fhSegNuevaDosis')) : '';
+        var newSchedule = therapeutic.optimized && followupRecordedControlFlag(lrec, 'fhSegNuevaPauta')
+            ? cleanExportToken(lineControl(item, 'fhSegNuevaPauta')) : '';
+        var movement = 'not_recorded';
+        if (followupRecordedControlFlag(lrec, 'fhSegTipoRelacionTerapia')) {
+            var relation = lineControl(item, 'fhSegTipoRelacionTerapia');
+            if (relation === 'sin_cambios') movement = 'no_change_recorded';
+            else if (relation === 'suspension') movement = 'suspension';
+            else if (relation === 'revision_linea') movement = 'other';
+            else if (relation === 'optimizacion') {
+                if (newDose && newSchedule) movement = 'dose_and_schedule_change';
+                else if (newDose) movement = 'dose_change';
+                else if (newSchedule) movement = 'schedule_change';
+                else movement = 'other';
+            } else movement = 'other';
+        }
+        var morisky = item.morisky && Object.keys(item.morisky).length ? Object.assign({}, item.morisky) : null;
+        var moriskyComplete = !!morisky && Object.keys(correctAnswers).every(function (name) { return !!morisky[name]; });
+        return {
+            dispensation_status: item.dispensed ? 'dispensed' : (followupRecordedControlFlag(lrec, 'fhSegDispensado') ? 'not_dispensed' : 'not_recorded'),
+            therapeutic_movement_type: movement,
+            new_dose_text: newDose || null,
+            new_schedule_code: newSchedule || null,
+            new_schedule_label: newSchedule ? (therapeutic.pauta_label || null) : null,
+            new_schedule_other_text: newSchedule === 'OTRO' ? (cleanExportToken(therapeutic.pauta_otro_texto) || null) : null,
+            movement_reason: followupRecordedReason(therapeutic.motivo_optimizacion),
+            suspension_status: followupTriStateFromRecord(lrec, 'fhSegSuspension', 'Sí'),
+            suspension_reason: followupRecordedReason(therapeutic.motivo_suspension),
+            line_observations: cleanExportToken(lineControl(item, 'fhSegObservacionesLinea')) || null,
+            adherence_collection_status: morisky ? 'yes' : 'not_recorded',
+            adherence_instrument: morisky ? 'morisky_green' : null,
+            adherence_answers_json: morisky,
+            adherence_result: moriskyComplete ? moriskyResultFromAnswers(item.morisky) : null
+        };
+    }
+
+    function buildFollowupBridgeRawVisitContent(model) {
+        var recorded = currentFollowupVisit && currentFollowupVisit.recorded_controls || {};
+        var lineRecorded = currentFollowupVisit && currentFollowupVisit.line_recorded || {};
+        var stratified = followupTriStateFromRecord(recorded, 'fhSegCambiaNivel', 'Sí');
+        var newLevel = stratified === 'yes' ? cleanExportToken(fv('fhSegNuevoNivel')) : '';
+        var promsStatus = followupTriStateFromRecord(recorded, 'fhSegProms', 'Sí, recoger DLQI + EVA dolor/prurito');
+        var related = (model && Array.isArray(model.related_treatments) ? model.related_treatments : []).filter(function (drug) {
+            return drug && (cleanExportToken(drug.farmaco) || cleanExportToken(drug.principioActivo));
+        }).map(function (drug) { return JSON.parse(JSON.stringify(drug)); });
+        var visit = {
+            stratification_review_status: stratified,
+            new_stratification_level: stratified === 'yes' && newLevel ? newLevel : null,
+            followup_proms_collection_status: promsStatus,
+            proms_json: promsStatus === 'yes' ? followupPromsFromVisit(recorded) : null,
+            related_treatments_json: related.length ? related : null
+        };
+        var lineContent = {};
+        (model && Array.isArray(model.evaluated_lines) ? model.evaluated_lines : []).forEach(function (item) {
+            lineContent[item.line_id] = buildFollowupBridgeRawLineContent(item, lineRecorded[item.line_id] || {});
+        });
+        return { visit: visit, lineContent: lineContent };
+    }
+
     function buildFollowupBridgeRawProjectionFromCurrentContext() {
         var adapter = window.FarmaciaBridgeRawEaV21FollowupAdapter;
         if (!adapter || adapter.ADAPTER_VERSION !== '1.0.0-draft.1' || typeof adapter.buildFollowupRawProjection !== 'function') {
             failFollowupBridgeRaw('BRIDGE_RAW_ADAPTER_UNAVAILABLE', 'El adaptador Bridge raw C2b no está cargado.');
         }
         var context = getFollowupBridgeRawActContext();
+        var model = buildFollowupVisitExportModel();
+        if (!model) failFollowupBridgeRaw('BRIDGE_RAW_VISIT_UNAVAILABLE', 'No hay una visita de seguimiento abierta.');
+        var content = buildFollowupBridgeRawVisitContent(model);
+        // Solo las líneas activas del acto declaran contenido propio.
+        var activeLineIds = (context.activeLines || []).map(function (line) { return line.lineId; });
+        var lineContent = {};
+        Object.keys(content.lineContent).forEach(function (lineId) {
+            if (activeLineIds.indexOf(lineId) !== -1) lineContent[lineId] = content.lineContent[lineId];
+        });
         var presentEl = byId('fhSeguimientoEaPresente');
         var present = presentEl && presentEl.value ? presentEl.value : 'no_consta';
         var events = cloneEvaluationState(eaEventsCollection(), []);
@@ -4310,12 +5380,53 @@
             var blockReason = bridgeRawSuspectSourceBlockReason(events[index]);
             if (blockReason) failFollowupBridgeRaw('BRIDGE_RAW_SUSPECT_UNVERIFIED', blockReason);
         }
+        // #867 F2: la causalidad solo viaja completa. Una pareja a medias o una
+        // valoración final sin evaluación completa bloquea la copia con motivo
+        // visible; nunca se emite una evaluación parcial.
+        var causality = eaCausalityOutputs(context.actId);
+        if (causality.blockReason) {
+            syncEaExportGuardNotice(causality.blockReason);
+            failFollowupBridgeRaw('BRIDGE_RAW_CAUSALITY_INCOMPLETE', causality.blockReason);
+        }
+        if (causality.entries.length) {
+            var evaluationSequence = 0;
+            causality.entries.forEach(function (entry) {
+                var target = null;
+                for (var eventIndex = 0; eventIndex < events.length; eventIndex += 1) {
+                    if (String(events[eventIndex].episode_id) === String(entry.episode_id)) { target = events[eventIndex]; break; }
+                }
+                if (!target) return;
+                evaluationSequence += 1;
+                var evaluation = {
+                    evaluation_id: context.actId + '-EV-' + ('000' + evaluationSequence).slice(-4),
+                    medicationRef: entry.suspectRef,
+                    method: entry.method,
+                    status: 'completado',
+                    answers: entry.answers,
+                    category: entry.category
+                };
+                if (entry.method === EA_CAUSALITY_NARANJO && typeof entry.score === 'number') evaluation.score = entry.score;
+                if (entry.final_assessment) evaluation.final_assessment = entry.final_assessment;
+                if (!Array.isArray(target.evaluations)) target.evaluations = [];
+                target.evaluations.push(evaluation);
+            });
+        }
+        // D4b-2 (#867): la historia de EA del libro viaja entera para que el
+        // validador impida reutilizar episodios u observaciones anteriores. Un
+        // registro demo sigue sin historia; una historia no utilizable de una
+        // visita del libro bloquea la copia con motivo.
+        var prior = followupPriorEpisodes();
+        if ((prior.status === 'blocked' || prior.status === 'error') && followupWorkbookActId() !== '') {
+            failFollowupBridgeRaw('BRIDGE_RAW_HISTORY_UNUSABLE', 'la historia de EA del libro no es utilizable (' + String(prior.reason || prior.status) + ').');
+        }
         return adapter.buildFollowupRawProjection({
             context: context,
             present: present,
             adverseEvents: events,
-            history: [],
-            selections: []
+            history: prior.history,
+            selections: [],
+            visit: content.visit,
+            lineContent: lineContent
         });
     }
 
@@ -4372,6 +5483,10 @@
         }
     }
 
+    /* E3 (#867): la copia manual de filas Excel FH del acto (WO8) conserva su
+       rutina y sus guardias, pero ya no tiene botón propio en Seguimiento:
+       esa pantalla ofrece «Copiar texto JARA» y la copia 166 «Copiar filas
+       Excel FH». */
     var followupV2CopyInFlight = false;
 
     async function copyFollowupV2TsvExact(tsv) {
@@ -4403,56 +5518,6 @@
             document.body.removeChild(textarea);
         }
         if (!copied) throw new Error('No se pudo confirmar la copia local al portapapeles.');
-    }
-
-    function updateFollowupV2ExportAvailability() {
-        var button = byId('fhSegExportV2Btn');
-        var status = byId('fhSegExportV2Status');
-        if (!button) return;
-        try {
-            getFollowupV2TechnicalContext();
-            button.disabled = followupV2CopyInFlight;
-            if (status && status.textContent.indexOf('Copia no disponible:') === 0) status.textContent = '';
-        } catch (error) {
-            button.disabled = true;
-            if (status) status.textContent = 'Copia no disponible: revise que el paciente y los datos de la visita estén completos.';
-        }
-    }
-
-    async function handleFollowupV2Export() {
-        if (followupV2CopyInFlight) return;
-        var button = byId('fhSegExportV2Btn');
-        var status = byId('fhSegExportV2Status');
-        // C-088 SPEC-02: la acción consulta la frontera EA ANTES de construir
-        // la proyección o tocar el portapapeles; con cobertura EA se muestra
-        // el aviso visible de rechazo y no se copia nada.
-        var eaBlockReason = eaV2CopyBlockReason();
-        if (eaBlockReason) {
-            syncEaExportGuardNotice(eaBlockReason);
-            if (status) status.textContent = 'Copia no realizada: revise el aviso de cobertura EA del acto.';
-            return;
-        }
-        syncEaExportGuardNotice('');
-        followupV2CopyInFlight = true;
-        if (button) button.disabled = true;
-        if (status) status.textContent = 'Copiando...';
-        try {
-            var projection = window.FarmaciaSeguimiento.buildFollowupV2ProjectionFromCurrentContext();
-            await copyFollowupV2TsvExact(projection.tsv);
-            var rowCount = projection.rows.length;
-            var success = 'Copiado al portapapeles: ' + rowCount + ' fila(s).';
-            if (status) {
-                status.textContent = success;
-                window.setTimeout(function () {
-                    if (status.textContent === success) status.textContent = '';
-                }, 3000);
-            }
-        } catch (error) {
-            if (status) status.textContent = 'No se pudo copiar: revise los datos de la visita.';
-        } finally {
-            followupV2CopyInFlight = false;
-            updateFollowupV2ExportAvailability();
-        }
     }
 
     window.FarmaciaSeguimiento = {
@@ -4527,15 +5592,10 @@
         await applyContext();
         var v2Cip = byId('fhSegCip');
         if (v2Cip) {
-            v2Cip.addEventListener('input', updateFollowupV2ExportAvailability);
-            v2Cip.addEventListener('change', updateFollowupV2ExportAvailability);
             v2Cip.addEventListener('input', updateFollowupBridgeRawExportAvailability);
             v2Cip.addEventListener('change', updateFollowupBridgeRawExportAvailability);
         }
-        updateFollowupV2ExportAvailability();
         updateFollowupBridgeRawExportAvailability();
-        var exportV2 = byId('fhSegExportV2Btn');
-        if (exportV2) exportV2.addEventListener('click', handleFollowupV2Export);
         var exportBridgeRaw = byId('fhSegExportBridgeRawBtn');
         if (exportBridgeRaw) exportBridgeRaw.addEventListener('click', handleFollowupBridgeRawExport);
         initCipSearch();
@@ -4550,8 +5610,14 @@
             // Demo FH-004: pre-activar PROMs si el paciente tiene datos registrados
             var promsSelect = document.getElementById('fhSegProms');
             if (promsSelect) {
-                promsSelect.value = 'Sí, recoger DLQI + EVA dolor/prurito';
-                promsSelect.dispatchEvent(new Event('change'));
+                // El valor pre-activado por la demo no es un dato del clínico.
+                suppressRecordedMarks = true;
+                try {
+                    promsSelect.value = 'Sí, recoger DLQI + EVA dolor/prurito';
+                    promsSelect.dispatchEvent(new Event('change'));
+                } finally {
+                    suppressRecordedMarks = false;
+                }
             }
         }
 
@@ -4651,30 +5717,6 @@
             F.copyTextToClipboard(buildSegLines().join('\n'), 'Texto JARA copiado al portapapeles.');
         });
 
-        const exportCsv = document.getElementById('fhSegExportCsv');
-        if (exportCsv) exportCsv.addEventListener('click', () => {
-            if (!guardEaSingularExport()) return;
-            const csv = buildFollowupCsv(buildFollowupVisitExportModel());
-            F.downloadFile('seguimientos_FH_' + new Date().toISOString().slice(0, 10) + '.csv', csv, 'text/csv;charset=utf-8');
-        });
-        // WO8.1b — Botón Excel FH
-        (function initSegExcelBtn() {
-            var btn = document.getElementById('fhSegExcelExportBtn');
-            if (!btn) return;
-            btn.addEventListener('click', function () {
-                if (!guardEaManualOutputs()) return;
-                var exp = window.FarmaciaExcelRowExport;
-                if (!exp) return;
-                var model = buildFollowupVisitExportModel();
-                var rows = buildFollowupExcelRows(model);
-                /* REHACER 1 (P1-A): el destino libro tiene su propio límite de
-                   celda; se valida aquí, después del saneamiento y antes de
-                   tocar el portapapeles. */
-                if (!guardEaManualExcelRows(rows)) return;
-                var sheetName = exp.getServiceSheetName(model && model.common_visit.servicio || '') || 'hoja correspondiente';
-                exp.copyTSVRowsToClipboard(rows, { sheetName: sheetName });
-            });
-        })();
         var runtime = window.FarmaciaPatientFlowRuntime;
         var draftScope = document.querySelector('main.main-content');
         if (runtime && draftScope) {

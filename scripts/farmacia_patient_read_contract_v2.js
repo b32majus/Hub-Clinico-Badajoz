@@ -2,7 +2,7 @@
 (function (root) {
     'use strict';
 
-    var CONTRACT_VERSION = '2.0.0';
+    var CONTRACT_VERSION = '2.1.0';
     var SOURCE_KIND = 'application_read_contract_v2';
 
     var OUTCOMES = Object.freeze({
@@ -484,10 +484,68 @@
             );
         }
 
+        // Reads adverse-event episode state through the source's optional reader
+        // (same shape the C3a reader returns). Absent source data is not "no EA".
+        function readAdverseEventEpisodes(patientId) {
+            if (!isNonEmptyString(patientId)) {
+                return failureEnvelope(OUTCOMES.ERROR, ERROR_CODES.PATIENT_ID_INVALID);
+            }
+            if (typeof source.getAdverseEventEpisodes !== 'function') {
+                return failureEnvelope(OUTCOMES.UNAVAILABLE, ERROR_CODES.SOURCE_METHOD_UNAVAILABLE);
+            }
+
+            try {
+                var normalizedPatientId = patientId.trim();
+                var result = source.getAdverseEventEpisodes(normalizedPatientId);
+                if (result === null || result === undefined) {
+                    return makeEnvelope(OUTCOMES.NOT_FOUND, null, null, COMPLETENESS.UNKNOWN, provenanceFor(null, []));
+                }
+                if (!isPlainObject(result)) {
+                    return failureEnvelope(OUTCOMES.ERROR, ERROR_CODES.SOURCE_READ_FAILED);
+                }
+                if (result.ok === false) {
+                    if (isPlainObject(result.error) && result.error.code === 'PATIENT_NOT_FOUND') {
+                        return makeEnvelope(OUTCOMES.NOT_FOUND, null, null, COMPLETENESS.UNKNOWN, provenanceFor(null, []));
+                    }
+                    return failureEnvelope(OUTCOMES.ERROR, ERROR_CODES.SOURCE_READ_FAILED);
+                }
+
+                var usable = result.ok === true
+                    && isNonEmptyString(result.patientRef)
+                    && isPlainObject(result.projection)
+                    && result.projection.ok === true
+                    && Array.isArray(result.projection.episodes)
+                    && isPlainObject(result.state)
+                    && result.state.ok === true
+                    && Array.isArray(result.state.episodes)
+                    && (result.actDates === undefined || isPlainObject(result.actDates));
+                if (!usable) {
+                    return failureEnvelope(OUTCOMES.ERROR, ERROR_CODES.SOURCE_READ_FAILED);
+                }
+
+                var value = {
+                    patientRef: result.patientRef,
+                    projection: sanitize(result.projection),
+                    state: sanitize(result.state),
+                    actDates: sanitize(result.actDates || {})
+                };
+                return makeEnvelope(
+                    OUTCOMES.OK,
+                    value,
+                    null,
+                    COMPLETENESS.PARTIAL,
+                    provenanceFor(normalizedPatientId, [])
+                );
+            } catch (error) {
+                return failureEnvelope(OUTCOMES.ERROR, ERROR_CODES.SOURCE_READ_FAILED);
+            }
+        }
+
         return Object.freeze({
             contract_version: CONTRACT_VERSION,
             resolvePatient: resolvePatient,
-            readPatientContext: readPatientContext
+            readPatientContext: readPatientContext,
+            readAdverseEventEpisodes: readAdverseEventEpisodes
         });
     }
 
