@@ -1050,6 +1050,15 @@
         var input = document.getElementById('fhPvFarmaco');
         if (!input) return;
 
+        // Pulsar una opción hace que el campo pierda el foco y, 150 ms después,
+        // el desplegable se cierra: un clic lento perdía la selección. Con
+        // mousedown cancelado el campo conserva el foco y el clic llega (como
+        // en Validación y Seguimiento).
+        var pvDropdown = document.getElementById('fhPvAutocompleteDropdown');
+        if (pvDropdown && typeof pvDropdown.addEventListener === 'function') {
+            pvDropdown.addEventListener('mousedown', function (event) { event.preventDefault(); });
+        }
+
         input.addEventListener('input', handleDrugSearchInput);
         input.addEventListener('keydown', function (event) {
             var dropdown = document.getElementById('fhPvAutocompleteDropdown');
