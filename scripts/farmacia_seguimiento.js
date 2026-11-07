@@ -3093,6 +3093,9 @@
             body.appendChild(createElement('strong', 'seg-line-card__name', line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Línea sin nombre'));
             body.appendChild(createElement('code', 'seg-line-card__id', line.linea_id));
             body.appendChild(createElement('span', 'seg-line-card__meta', biologicRelationLabel(line.tipo_relacion) + ' · ' + biologicStateLabel(line.estado_linea)));
+            if (line.session_new === true) {
+                body.appendChild(createElement('span', 'seg-line-card__meta', 'Registrada en esta visita · aún no está en el libro'));
+            }
             card.appendChild(control);
             card.appendChild(body);
             container.appendChild(card);
@@ -3762,6 +3765,33 @@
         var searchInput = document.getElementById('fhSegDrugSearch');
         if (searchInput) {
             searchInput.value = drug.display_name || drug.nombre_comercial || '';
+        }
+        // Paciente sin líneas (primera vez en la plataforma, ya en tratamiento):
+        // el fármaco elegido queda como línea «ya en tratamiento» de ESTA
+        // visita. Nunca es un alta ni una validación, y no se infiere pauta,
+        // dosis ni fecha de inicio.
+        if (currentFollowupVisit) {
+            var sessionLineSource = {
+                linea_id: 'FH-SES-L0001',
+                farmaco_nombre: reconciled.values.farmaco_nombre || '',
+                principio_activo: reconciled.values.principio_activo || '',
+                presentacion: reconciled.values.presentacion || '',
+                codigo_nacional: reconciled.values.codigo_nacional || '',
+                nregistro: reconciled.values.nregistro || '',
+                dosis_texto: reconciled.values.dosis_texto || '',
+                via: reconciled.values.via || '',
+                nombre_comercial: drug.nombre_comercial || '',
+                source_type: drug.source_type || '',
+                selected_drug_id: drug.drug_id || '',
+                fuente: 'seguimiento_primera_visita',
+                candidate_explicit: true
+            };
+            var sessionLine = normalizeBiologicLine(sessionLineSource, { cip: currentFollowupVisit.cip }, { estado_linea: 'active', tipo_relacion: 'primary' });
+            sessionLine.session_new = true;
+            currentBiologicLines.push(sessionLine);
+            toggleBiologicLineSelection('FH-SES-L0001', true);
+            syncSegDrugAutocompleteVisibility();
+            updateFollowupBridgeRawExportAvailability();
         }
     }
 
@@ -4731,6 +4761,16 @@
     }
 
     function getFollowupBridgeRawActContext() {
+        // Una línea registrada en esta visita y aún no declarada en el libro no
+        // es representable en el formato 166 (solo admite líneas del libro).
+        if (currentFollowupVisit && Array.isArray(currentFollowupVisit.selected_line_ids)) {
+            currentFollowupVisit.selected_line_ids.forEach(function (selectedLineId) {
+                var sessionLine = currentBiologicLines.find(function (item) { return item.linea_id === selectedLineId; });
+                if (sessionLine && sessionLine.session_new === true) {
+                    failFollowupBridgeRaw('BRIDGE_RAW_LINE_NOT_IN_WORKBOOK', 'la línea ' + (sessionLine.farmaco_nombre || sessionLine.nombre_linea) + ' aún no está en el libro; dala de alta en el libro antes de copiar las filas.');
+                }
+            });
+        }
         var cip = visibleFollowupCip();
         var openIdentity = currentFollowupVisit ? currentFollowupVisit.bridge_raw_act_identity : null;
         if (openIdentity && openIdentity.source === 'workbook') {
