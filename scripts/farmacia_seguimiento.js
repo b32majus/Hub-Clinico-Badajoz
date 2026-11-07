@@ -3401,6 +3401,109 @@
         return explicit || firstNonEmpty(fuente) || fallback || '';
     }
 
+    // #876 C1: solo una línea creada EN ESTA VISITA permite editar dosis, vía y
+    // pauta en «Tratamiento actual». En una línea del libro esos datos se
+    // cambian con la optimización; fármaco, principio activo y presentación
+    // quedan siempre de solo lectura.
+    function currentTreatmentLineEditable(line) {
+        return !!line && line.session_new === true;
+    }
+
+    function syncCurrentTreatmentEditable(line) {
+        var editable = currentTreatmentLineEditable(line);
+        var dosis = byId('fhSegDosisActual');
+        if (dosis) dosis.readOnly = !editable;
+        var via = byId('fhSegVia');
+        if (via) via.disabled = !editable;
+        var pauta = byId('fhSegPautaActual');
+        if (pauta) pauta.disabled = !editable;
+        var otro = byId('fhSegPautaActualOtro');
+        if (otro) otro.readOnly = !editable;
+    }
+
+    function currentTreatmentPautaLabel(codigo) {
+        if (!codigo) return '';
+        var label = '';
+        if (P && typeof P.getPautaOptions === 'function') {
+            P.getPautaOptions().forEach(function (option) {
+                if (option.value === codigo) label = option.label || '';
+            });
+        }
+        return label;
+    }
+
+    function setOtherDrugCardValue(uid, field, value) {
+        var list = byId('segOtrosFarmacosList');
+        if (!list || typeof list.querySelector !== 'function') return;
+        var control = list.querySelector('[data-uid="' + uid + '"][data-field="' + field + '"]');
+        if (control) control.value = value || '';
+        if (field !== 'pauta') return;
+        // El selector de pauta de la tarjeta no lleva data-field: se localiza
+        // desde el campo «Especificar otra pauta» de la misma tarjeta. Asignar
+        // .value no dispara change: no se toca el modelo ni se repinta.
+        var otro = list.querySelector('[data-uid="' + uid + '"][data-field="pautaOtro"]');
+        var wrapper = otro && typeof otro.closest === 'function' ? otro.closest('.other-drug-pauta-wrapper') : null;
+        var select = wrapper && typeof wrapper.querySelector === 'function' ? wrapper.querySelector('select') : null;
+        if (select) select.value = value || '';
+        if (otro) otro.classList.toggle('hidden', value !== 'OTRO');
+    }
+
+    // Lo editado en el panel se guarda en la línea seleccionada. No se
+    // infiere nada: un campo vacío queda vacío.
+    function onCurrentTreatmentEdited() {
+        var line = getCurrentSelectedLine();
+        if (!currentTreatmentLineEditable(line)) return;
+        var dosisEl = byId('fhSegDosisActual');
+        var viaEl = byId('fhSegVia');
+        var pautaEl = byId('fhSegPautaActual');
+        var otroEl = byId('fhSegPautaActualOtro');
+        var dosisTexto = dosisEl ? String(dosisEl.value || '').trim() : '';
+        var via = viaEl ? String(viaEl.value || '') : '';
+        var codigo = pautaEl ? String(pautaEl.value || '') : '';
+        var otroTexto = codigo === 'OTRO' && otroEl ? String(otroEl.value || '').trim() : '';
+        var etiqueta = currentTreatmentPautaLabel(codigo);
+        var pautaTexto = codigo === 'OTRO' ? otroTexto : etiqueta;
+        if (line.other_uid) {
+            // La fuente de un «otro fármaco» activo es el propio fármaco: se
+            // escribe en él y su línea proyectada se sincroniza desde ahí.
+            var drug = followupOtherDrugs.find(function (item) { return item.uid === line.other_uid; }) || null;
+            if (!drug) return;
+            drug.dosis = dosisTexto;
+            drug.via = via;
+            drug.pauta = etiqueta;
+            drug.pautaCodigo = codigo;
+            drug.pautaOtro = otroTexto;
+            setOtherDrugCardValue(drug.uid, 'dosis', dosisTexto);
+            setOtherDrugCardValue(drug.uid, 'via', via);
+            setOtherDrugCardValue(drug.uid, 'pautaOtro', otroTexto);
+            setOtherDrugCardValue(drug.uid, 'pauta', codigo);
+            syncOtherDrugLines();
+            // syncOtherDrugLines no proyecta el espejo `pauta`: se refleja en la
+            // línea seleccionada para que al volver a ella el desplegable
+            // conserve el código (misma semántica que la rama de línea A1).
+            line.pauta = pautaTexto;
+            return;
+        }
+        line.dosis_texto = dosisTexto;
+        line.dosis = dosisTexto;
+        line.via = via;
+        line.pauta_codigo = codigo;
+        line.pauta_label = etiqueta;
+        line.pauta_otro_texto = otroTexto;
+        line.pauta = pautaTexto;
+    }
+
+    function initCurrentTreatmentEditListeners() {
+        var dosis = byId('fhSegDosisActual');
+        if (dosis) dosis.addEventListener('input', onCurrentTreatmentEdited);
+        var otro = byId('fhSegPautaActualOtro');
+        if (otro) otro.addEventListener('input', onCurrentTreatmentEdited);
+        var via = byId('fhSegVia');
+        if (via) via.addEventListener('change', onCurrentTreatmentEdited);
+        var pauta = byId('fhSegPautaActual');
+        if (pauta) pauta.addEventListener('change', onCurrentTreatmentEdited);
+    }
+
     function applySelectedBiologicLine() {
         var line = getCurrentSelectedLine();
         var helper = getTreatmentHelper();
@@ -3424,8 +3527,10 @@
             } else {
                 renderSegTreatmentSummary(line);
             }
+            syncCurrentTreatmentEditable(line);
         } else {
             // Compatibilidad para integraciones antiguas sin el bloque de tarjetas; la pantalla actual siempre lo incluye.
+            syncCurrentTreatmentEditable(null);
             if (!document.getElementById('fhSegLineCards')) return;
             setSegValue('fhSegFarmaco', '');
             setSegValue('fhSegPrincipioActivo', '');
@@ -5588,6 +5693,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
         populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
+        initCurrentTreatmentEditListeners();
         /* F4.3: la lectura del paciente pasa por la operación async publicada. */
         await applyContext();
         var v2Cip = byId('fhSegCip');
