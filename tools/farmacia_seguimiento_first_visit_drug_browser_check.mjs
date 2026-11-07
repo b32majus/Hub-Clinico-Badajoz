@@ -109,7 +109,8 @@ try {
         assert.ok(text.includes(drugName), 'la tarjeta nombra el fármaco');
         assert.ok(/aún no está en el libro/i.test(text), 'la tarjeta avisa de que aún no está en el libro');
         assert.ok(!/validad|alta/i.test(text), 'nunca la presenta como alta ni validación');
-        assert.ok(!(await page.locator('#fhSegAutocompleteBlock').isVisible()), 'el buscador se oculta al haber línea');
+        // Tramo 2a (decisión de Sil 07-11): con la línea de esta visita el buscador sigue visible para corregir el fármaco.
+        assert.ok(await page.locator('#fhSegAutocompleteBlock').isVisible(), 'el buscador sigue visible para poder cambiar el fármaco');
     });
 
     await test('la línea nueva es candidata a sospechoso en un EA nuevo', async () => {

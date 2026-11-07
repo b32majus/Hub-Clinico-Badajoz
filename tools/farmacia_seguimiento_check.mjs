@@ -39,6 +39,8 @@ const commonPath = path.join(ROOT, 'scripts', 'farmacia_common.js');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const js = fs.readFileSync(jsPath, 'utf8');
 const helperSrc = fs.readFileSync(helperPath, 'utf8');
+// Tramo 2a: la página carga el widget común del buscador antes que Seguimiento.
+const drugAutocompleteSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_drug_autocomplete.js'), 'utf8');
 const pautasSrc = fs.readFileSync(pautasPath, 'utf8');
 const commonSrc = fs.readFileSync(commonPath, 'utf8');
 const seguimientoIds = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
@@ -340,9 +342,12 @@ const eventF = {
   readQueryContextSync: () => ({ cip: 'CIP-EVENT-SEG' }),
   readPatientContext: async () => ({ cip: 'CIP-EVENT-SEG' })
 };
-const eventSandbox = { window: { FarmaciaDemo: eventF, FarmaciaCatalog: eventCatalog }, document: eventDocument, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
+// Tramo 2a: el reemplazo con datos escritos pide confirmación (se acepta aquí).
+const eventConfirms = [];
+const eventSandbox = { window: { FarmaciaDemo: eventF, FarmaciaCatalog: eventCatalog, confirm: (message) => { eventConfirms.push(message); return true; }, alert() {} }, document: eventDocument, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
 vm.createContext(eventSandbox);
 vm.runInContext(helperSrc, eventSandbox);
+vm.runInContext(drugAutocompleteSrc, eventSandbox);
 vm.runInContext(js, eventSandbox);
 const eventApi = eventSandbox.window.FarmaciaSeguimiento;
 
@@ -368,7 +373,7 @@ inputA.value = 'partial-b';
 inputA.dispatchEvent({ type: 'input' });
 eventIds.get(`${uidA}-dropdown`).children[1].click();
 const afterSecond = eventApi.getFollowupOtherDrugs();
-assert(afterSecond[0].farmaco === 'Producto SEG B' && afterSecond[0].principioActivo === 'Activo SEG B' && afterSecond[0].presentacion === 'Producto SEG B 108 mg jeringa' && afterSecond[0].dosis === 'Dosis profesional relacionada' && afterSecond[0].via === 'IM' && afterSecond[0].codigoNacional === '710002' && afterSecond[0].nregistro === 'SYN/B' && afterSecond[0].selectedDrugId === 'CIMA-SEG-B' && afterSecond[0].origenCatalogo === 'CIMA', 'Second click in same UID replaces identity atomically and preserves manual field');
+assert(afterSecond[0].farmaco === 'Producto SEG B' && afterSecond[0].principioActivo === 'Activo SEG B' && afterSecond[0].presentacion === 'Producto SEG B 108 mg jeringa' && afterSecond[0].dosis !== 'Dosis profesional relacionada' && eventConfirms.length === 1 && afterSecond[0].via === 'IM' && afterSecond[0].codigoNacional === '710002' && afterSecond[0].nregistro === 'SYN/B' && afterSecond[0].selectedDrugId === 'CIMA-SEG-B' && afterSecond[0].origenCatalogo === 'CIMA', 'Second click in same UID replaces identity atomically; manual dose asks confirmation and is cleared (tramo 2a)');
 const inputB = eventSelector(`input[data-uid="${uidB}"].js-cima-autocomplete`);
 inputB.value = 'other-row';
 inputB.dispatchEvent({ type: 'input' });
