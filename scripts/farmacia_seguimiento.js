@@ -1375,6 +1375,13 @@
             container.appendChild(createElement('p', 'search-card__hint', 'Sin medicamentos identificados explícitamente en esta visita. Regístrelos antes de seleccionarlos.'));
             return;
         }
+        // B (#869): con un único sospechoso marcado la pareja ya es inequívoca.
+        // Con dos o más marcas en la misma fila se ofrece un botón explícito por
+        // sospechoso; nunca se elige un sospechoso por el clínico.
+        var markedEvaluable = options.filter(function (candidate) {
+            return !candidate.missing && marked.indexOf(candidate.id) >= 0;
+        });
+        var showOpenButtons = markedEvaluable.length >= 2;
         options.forEach(function (candidate) {
             var labelText = candidate.label;
             if (candidate.missing) labelText += ' · fuente no disponible';
@@ -1387,14 +1394,29 @@
             checkbox.checked = marked.indexOf(candidate.id) >= 0;
             checkbox.setAttribute('aria-label', 'Marcar sospechoso de este EA: ' + candidate.label);
             checkbox.addEventListener('change', function () {
+                var wasOpenPair = eaCausalityEditingEpisodeId === event.episode_id && eaCausalityEditingSuspectRef === candidate.id;
                 if (!setEaEpisodeSuspect(event.episode_id, candidate.id, checkbox.checked)) {
                     checkbox.checked = !checkbox.checked;
-                } else if (typeof window.setTimeout === 'function') {
-                    // Refrescar al terminar el evento: la degradación pegajosa
-                    // y la reconciliación explícita deben verse de inmediato,
-                    // sin desmontar la casilla pulsada durante el propio
-                    // tratamiento del cambio.
-                    window.setTimeout(refreshEaEpisodeSuspects, 0);
+                } else {
+                    // Marcar el sospechoso en su fila fija la pareja EA ×
+                    // sospechoso que edita el único editor de causalidad.
+                    // Desmarcar el sospechoso abierto lo cierra sin abrir otro.
+                    if (checkbox.checked) {
+                        eaCausalityEditingEpisodeId = event.episode_id;
+                        eaCausalityEditingSuspectRef = candidate.id;
+                        refreshEaCausalityEditor();
+                    } else if (wasOpenPair) {
+                        eaCausalityEditingEpisodeId = '';
+                        eaCausalityEditingSuspectRef = '';
+                        refreshEaCausalityEditor();
+                    }
+                    if (typeof window.setTimeout === 'function') {
+                        // Refrescar al terminar el evento: la degradación pegajosa
+                        // y la reconciliación explícita deben verse de inmediato,
+                        // sin desmontar la casilla pulsada durante el propio
+                        // tratamiento del cambio.
+                        window.setTimeout(refreshEaEpisodeSuspects, 0);
+                    }
                 }
                 applyEaSuspectChipState(label, checkbox);
             });
@@ -1402,6 +1424,13 @@
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(labelText));
             container.appendChild(label);
+            if (showOpenButtons && !candidate.missing && marked.indexOf(candidate.id) >= 0) {
+                var openButton = createElement('button', 'btn btn-outline btn-sm', 'Evaluar causalidad');
+                openButton.type = 'button';
+                openButton.setAttribute('data-ea-causality-open', candidate.id);
+                openButton.addEventListener('click', function () { fixEaCausalityPair(event.episode_id, candidate.id); });
+                container.appendChild(openButton);
+            }
         });
     }
 
@@ -1875,6 +1904,104 @@
         setEaCausalityFinalControlVisible(true);
     }
 
+    // B (#869): un único editor de causalidad que se mueve a la fila del EA
+    // cuyo sospechoso está marcado. Se registra una sola vez su sitio original
+    // («home»), nunca dentro de una tarjeta, y se devuelve ahí siempre que deba
+    // ocultarse.
+    var eaCausalitySectionHome = null;
+
+    function eaCausalityNodeInsideCard(node) {
+        var current = node;
+        var depth = 0;
+        while (current && depth < 8) {
+            if (current.classList && typeof current.classList.contains === 'function' && current.classList.contains('ea-t01-card')) return true;
+            current = current.parentNode;
+            depth += 1;
+        }
+        return false;
+    }
+
+    function rememberEaCausalitySectionHome(section) {
+        if (eaCausalitySectionHome || !section) return;
+        var parent = section.parentNode;
+        if (!parent) return;
+        if (eaCausalityNodeInsideCard(parent)) return;
+        eaCausalitySectionHome = { parent: parent, nextSibling: section.nextSibling || null };
+    }
+
+    function returnEaCausalitySectionHome(section) {
+        if (!section) return;
+        rememberEaCausalitySectionHome(section);
+        var home = eaCausalitySectionHome;
+        if (!home || !home.parent) return;
+        if (section.parentNode === home.parent) return;
+        var next = home.nextSibling && home.nextSibling.parentNode === home.parent ? home.nextSibling : null;
+        if (typeof home.parent.insertBefore === 'function') home.parent.insertBefore(section, next);
+        else if (typeof home.parent.appendChild === 'function') home.parent.appendChild(section);
+    }
+
+    function eaCausalityCardForEpisode(episodeId) {
+        var list = byId('fhSegEaList');
+        if (!list || !episodeId || typeof list.querySelectorAll !== 'function') return null;
+        var cards = list.querySelectorAll('.ea-t01-card');
+        var found = null;
+        Array.prototype.forEach.call(cards, function (card) {
+            if (found || !card || typeof card.getAttribute !== 'function') return;
+            if (card.getAttribute('data-episode-id') === episodeId) found = card;
+        });
+        return found;
+    }
+
+    // El editor se coloca justo después de la lista de sospechosos de la fila.
+    // Es el mismo nodo que se mueve: nunca se duplica ni se recrea.
+    function placeEaCausalitySection(section, card) {
+        if (!section || !card || typeof card.querySelector !== 'function') return false;
+        var suspects = card.querySelector('.ea-suspect-list');
+        if (!suspects || !suspects.parentNode) return false;
+        var host = suspects.parentNode;
+        if (typeof host.insertBefore !== 'function') return false;
+        if (section.parentNode === host && section.previousSibling === suspects) return true;
+        host.insertBefore(section, suspects.nextSibling || null);
+        return true;
+    }
+
+    // Fila plegada (sin lista de sospechosos en el DOM) o sin pareja válida: el
+    // editor queda oculto y en su sitio original. Nunca se deja visible «suelto»
+    // fuera de la fila que lo justifica.
+    function syncEaCausalitySectionPlacement(section, editing) {
+        if (!section) return;
+        if (editing) {
+            var card = eaCausalityCardForEpisode(eaCausalityEditingEpisodeId);
+            if (card && placeEaCausalitySection(section, card)) {
+                section.classList.remove('hidden');
+                return;
+            }
+        }
+        section.classList.add('hidden');
+        returnEaCausalitySectionHome(section);
+    }
+
+    // Una pareja fijada sobre un EA todavía en borrador (sin descripción) no se
+    // pierde al refrescar: los selectores ocultos solo ofrecen episodios
+    // incorporados. Se conserva la pareja y el editor queda oculto hasta que la
+    // descripción incorpora el EA.
+    function eaCausalityDraftPair() {
+        if (!eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) return null;
+        var event = findEaEvent(eaCausalityEditingEpisodeId);
+        if (!event || event.status === 'incorporated') return null;
+        var marked = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+        if (marked.indexOf(eaCausalityEditingSuspectRef) < 0) return null;
+        return { episodeId: event.episode_id, suspectRef: eaCausalityEditingSuspectRef };
+    }
+
+    // Marcar un sospechoso en su fila (o pulsar «Evaluar causalidad» cuando la
+    // fila tiene más de uno marcado) fija la pareja en edición.
+    function fixEaCausalityPair(episodeId, suspectRef) {
+        eaCausalityEditingEpisodeId = String(episodeId || '');
+        eaCausalityEditingSuspectRef = String(suspectRef || '');
+        refreshEaCausalityEditor();
+    }
+
     function refreshEaCausalityEditor() {
         var section = byId('modSeguimientoCausalidad');
         var presentElement = byId('fhSeguimientoEaPresente');
@@ -1885,7 +2012,6 @@
                causalidad en edición nunca redacta estado a almacenamiento
                del navegador. */
             section.setAttribute('data-fh-transient', 'true');
-            section.classList.toggle('hidden', present !== 'si');
         }
         // Sin presencia declarada no hay evaluación posible: los cuestionarios
         // y el resumen quedan inactivos (ocultos) junto con la sección, no solo
@@ -1899,7 +2025,10 @@
         var episodeSelect = byId('fhCausalityEpisode');
         var suspectSelect = byId('fhCausalitySuspect');
         var contextNotice = byId('fhCausalityContextoVacio');
-        if (!episodeSelect || !suspectSelect) return;
+        if (!episodeSelect || !suspectSelect) {
+            syncEaCausalitySectionPlacement(section, false);
+            return;
+        }
 
         if (present !== 'si') {
             eaCausalityEditingEpisodeId = '';
@@ -1919,16 +2048,23 @@
             eaCausalityStateText('resumenNaranjo', 'No evaluado');
             eaCausalityStateText('resumenKl', 'No evaluado');
             hideEaCausalityLegacyFinalControl();
+            syncEaCausalitySectionPlacement(section, false);
             return;
         }
 
+        var draftPair = eaCausalityDraftPair();
         syncEaCausalityStateMarks();
         var episodes = eaCausalityEpisodeOptions();
         var currentEvent = episodes.length
             ? eaEventsCollection().find(function (event) { return event.episode_id === eaCausalityEditingEpisodeId; }) || null
             : null;
         var suspects = eaCausalitySuspectOptions(currentEvent);
-        var editing = !!(currentEvent && eaCausalityEditingSuspectRef);
+        if (draftPair) {
+            // La pareja del borrador sobrevive al refresco (ver eaCausalityDraftPair).
+            eaCausalityEditingEpisodeId = draftPair.episodeId;
+            eaCausalityEditingSuspectRef = draftPair.suspectRef;
+        }
+        var editing = !!(currentEvent && currentEvent.episode_id === eaCausalityEditingEpisodeId && eaCausalityEditingSuspectRef);
 
         if (!episodes.length) {
             setEaCausalityContextNotice('No hay ningún episodio adverso documentado en esta visita. Incorpore un episodio con descripción para poder analizar la causalidad de sus medicamentos sospechosos.');
@@ -1978,6 +2114,7 @@
         eaCausalityStateText('fhSeguimientoEaContextoKl', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoResumen', contextLabel);
         syncEaCausalityFinalControl(editing);
+        syncEaCausalitySectionPlacement(section, editing);
     }
 
     function selectEaCausalityEpisode(episodeId) {
@@ -2476,6 +2613,10 @@
     function renderEaZone() {
         var list = byId('fhSegEaList');
         if (!list) return;
+        // B (#869): el editor de causalidad vive temporalmente dentro de una
+        // fila. Volver a llevarlo a su sitio antes de vaciar la lista evita que
+        // clearChildren lo destruya; el refresco posterior lo recoloca.
+        returnEaCausalitySectionHome(byId('modSeguimientoCausalidad'));
         F.clearChildren(list);
         var events = eaEventsCollection();
         var empty = byId('fhSegEaEmpty');
@@ -2590,11 +2731,13 @@
             event.description = descriptionInput.value;
             // Invariante T01-B: descripción vacía solo puede estar en borrador.
             if (event.status === 'incorporated' && String(event.description).trim() === '') event.status = 'draft';
+            // B (#869): escribir la descripción es el acto de incorporación; no
+            // hay botón «Incorporar al acto» que lo decida por separado.
+            else if (event.status === 'draft' && String(event.description).trim() !== '') event.status = 'incorporated';
             title.textContent = eaCardTitle(event);
             badge.textContent = eaCardBadgeText(event);
             badge.className = 'status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : '');
             discardButton.textContent = event.status === 'incorporated' ? 'Descartar' : 'Descartar borrador';
-            if (incorporateButton) incorporateButton.disabled = String(event.description).trim() === '';
             card.setAttribute('data-ea-status', event.status);
             updateEaSummary();
             // La descripción forma parte de la identidad visible del episodio:
@@ -2603,7 +2746,12 @@
             refreshEaCausalityEditor();
         });
         body.appendChild(descriptionInput);
-        body.appendChild(createElement('p', 'search-card__hint', 'Se conserva el texto original. Codificación normalizada: pendiente de configuración y licencia del servicio.'));
+        // B (#869): hueco de codificación de solo lectura. La codificación
+        // normalizada (MedDRA/CTCAE) está aparcada: nunca se muestra un código
+        // ni se deduce alguno a partir de la descripción.
+        var codingSlot = createElement('p', 'search-card__hint', 'Término codificado: pendiente de codificar');
+        codingSlot.setAttribute('data-ea-coding-slot', '');
+        body.appendChild(codingSlot);
 
         // VIS-04: ambos controles clínicos comparten la fila del maestro G0.
         var clinicalGrid = createElement('div', 'ea-t01-clinical-grid');
@@ -2632,53 +2780,11 @@
         clinicalGrid.appendChild(severityField);
         body.appendChild(clinicalGrid);
 
-        var incorporateButton = null;
-        if (event.status === 'draft') {
-            incorporateButton = createElement('button', 'btn btn-sm btn-secondary', 'Incorporar al acto');
-            incorporateButton.type = 'button';
-            incorporateButton.disabled = String(event.description || '').trim() === '';
-            incorporateButton.addEventListener('click', function () { incorporateEaDraft(event.episode_id); });
-            body.appendChild(incorporateButton);
-            body.appendChild(createElement('p', 'search-card__hint', 'La descripción del EA nuevo es obligatoria para incorporarlo a la representación preparada del acto.'));
-        }
-
-        // C-088 VIS-02 → G0 FH-EA-02: se preserva el disclosure clínico
-        // adicional como DEMO, todavía disabled. Los candidatos a sospechosos
-        // de cada episodio sí son seleccionables explícitamente y solo viven
-        // en memoria de edición de la ficha; no habilitan causalidad, guardado
-        // ni proyección F4.4.
-        var extraDetails = document.createElement('details');
-        extraDetails.className = 'ea-t01-demo-details';
-        extraDetails.setAttribute('data-ea-demo-control', 't01');
-        var extraSummary = createElement('summary', 'search-card__hint', 'Información clínica adicional (opcional)');
-        applyEaStyle(extraSummary, { fontWeight: '700', cursor: 'default', color: '#1F344B', padding: '4px 0' });
-        extraDetails.appendChild(extraSummary);
-        var extraBody = createElement('div');
-        applyEaStyle(extraBody, { marginTop: '8px', display: 'grid', gap: '8px' });
-        [['Inicio EA, solo si se conoce (demo, no funcional en T01)', 'date'],
-         ['Resolución, si hay fecha documentada (demo, no funcional en T01)', 'date']].forEach(function (item) {
-            var demoInput = document.createElement('input');
-            demoInput.type = item[1];
-            demoInput.className = 'form-control';
-            demoInput.disabled = true;
-            demoInput.setAttribute('aria-label', item[0]);
-            demoInput.setAttribute('data-ea-demo-control', 't01');
-            extraBody.appendChild(demoInput);
-        });
-        var demoNotes = document.createElement('textarea');
-        demoNotes.className = 'form-textarea';
-        demoNotes.rows = 2;
-        demoNotes.disabled = true;
-        demoNotes.setAttribute('aria-label', 'Actuación/observaciones, si constan (demo, no funcional en T01)');
-        demoNotes.setAttribute('data-ea-demo-control', 't01');
-        extraBody.appendChild(demoNotes);
-        extraBody.appendChild(createElement('p', 'search-card__hint', 'Presentación visual de la maqueta aprobada, no funcional en T01: sin valores, sin inferencias de fechas ni de decisiones terapéuticas.'));
-        extraDetails.appendChild(extraBody);
-        body.appendChild(extraDetails);
-
-        var demoDivider = createElement('div');
-        applyEaStyle(demoDivider, { borderTop: '1px solid #E2E8F0', margin: '12px 0 8px' });
-        body.appendChild(demoDivider);
+        // B (#869): una fila = descripción, hueco de codificación, gravedad y
+        // evolución. Sin controles de maqueta, sin botón de incorporación y sin
+        // textos de ayuda redundantes. Los candidatos a sospechosos siguen
+        // siendo seleccionables explícitamente y solo viven en memoria de
+        // edición de la ficha.
         body.appendChild(createElement('div', 'form-label', 'Medicamentos señalados expresamente como sospechosos'));
         // F1 (#867): la sospecha de la visita anterior es REFERENCIA, nunca
         // selección. Se muestra antes de la lista, sin inputs ni controles:
@@ -2699,7 +2805,6 @@
         // causalidad.
         renderEaEpisodeSuspects(event, demoSuspects);
         body.appendChild(demoSuspects);
-        body.appendChild(createElement('p', 'search-card__hint', 'Selección en edición. No forma parte del acto preparado, no se ha guardado ni exportado. La sospecha se marca únicamente por selección explícita; no se preselecciona nada y no se ha evaluado causalidad.'));
         card.appendChild(body);
         return card;
     }

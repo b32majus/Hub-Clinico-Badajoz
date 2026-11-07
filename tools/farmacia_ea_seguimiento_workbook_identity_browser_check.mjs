@@ -124,7 +124,6 @@ async function incorporateEa(description) {
     await page.click('#fhSegAddEaBtn');
     const card = page.locator('#fhSegEaList .ea-t01-card').last();
     await card.locator('[data-ea-field="description"]').fill(description);
-    await card.getByRole('button', { name: 'Incorporar al acto' }).click();
 }
 
 async function copyAndRead() {

@@ -123,7 +123,6 @@ try {
         assert.equal(await box.count(), 1, 'la línea aparece como candidato');
         await box.check();
         await card.locator('[data-ea-field="description"]').fill('Prurito sintético');
-        await card.getByRole('button', { name: 'Incorporar al acto' }).click();
         await page.waitForTimeout(200);
     });
 

@@ -124,7 +124,6 @@ const card = (episodeId) => page.locator(`#fhSegEaList .ea-t01-card[data-episode
 
 async function finishCard(locator, description) {
     await locator.locator('[data-ea-field="description"]').fill(description);
-    await locator.getByRole('button', { name: 'Incorporar al acto' }).click();
 }
 
 async function addNewEa(description) {
@@ -197,9 +196,8 @@ try {
         assert.ok(jara.includes('Causalidad Karch-Lasagna: No evaluada'));
     });
 
-    await test('selección de la pareja y a medias: Naranjo con 9 de 10 preguntas bloquea las DOS salidas con motivo', async () => {
-        await page.selectOption('#fhCausalityEpisode', { index: 1 });
-        await page.selectOption('#fhCausalitySuspect', { index: 1 });
+    await test('pareja abierta en línea al marcar y a medias: Naranjo con 9 de 10 preguntas bloquea las DOS salidas con motivo', async () => {
+        assert.ok(await page.locator('#fhSegEaList .ea-t01-card').last().locator('#modSeguimientoCausalidad').isVisible(), 'la causalidad del sospechoso marcado está abierta en su fila');
         await clickChips('#modNaranjo', NARANJO_N, 4);
         const status = await copyStatus();
         assert.ok(!/Preparado para transferencia manual/.test(status), 'la copia 166 no sale');

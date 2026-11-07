@@ -105,7 +105,6 @@ async function captureEa(page, texts) {
         await page.click('#fhSegAddEaBtn');
         const card = page.locator('#fhSegEaList .ea-t01-card').last();
         await card.locator('[data-ea-field="description"]').fill(text);
-        await card.getByRole('button', { name: 'Incorporar al acto' }).click();
     }
 }
 
@@ -227,9 +226,8 @@ function captureTwoEa(page) {
         assert.equal(await page.locator('#fhSegEaPriorEpisodes').count(), 1, 'prior-episode list present');
         assert.ok((await page.locator('#fhSegEaZone').textContent()).includes('Continuidad y recurrencia requieren selección explícita'), 'master continuity/recurrence hint present');
         const expandedBody = page.locator('#fhSegEaList .ea-t01-card').first();
-        assert.equal(await expandedBody.locator('details summary').count(), 1, 'expanded card shows the master disclosure');
-        assert.ok((await expandedBody.locator('details summary').textContent()).includes('Información clínica adicional (opcional)'), 'disclosure matches master wording');
-        assert.equal(await expandedBody.locator('details input[disabled], details textarea[disabled]').count(), 3, 'disclosure demo fields are inert');
+        assert.equal(await expandedBody.locator('details summary').count(), 0, 'B (#869): sin bloque de información adicional de maqueta');
+        assert.equal(await expandedBody.locator('[data-ea-demo-control]').count(), 0, 'B (#869): sin controles de maqueta deshabilitados');
         assert.ok((await expandedBody.textContent()).includes('Medicamentos señalados expresamente como sospechosos'), 'per-episode suspect section present in expanded card');
         assert.equal(await expandedBody.locator('.ea-suspect-list input[type="checkbox"]').count(), 0, 'no suspect candidates without an explicitly named medicine');
         assert.ok((await expandedBody.locator('.ea-suspect-list').textContent()).includes('Sin medicamentos identificados explícitamente'), 'empty candidate source is explained, never filled with demo medicines');
@@ -295,9 +293,9 @@ function captureTwoEa(page) {
         assert.ok(transient.transient && transient.withId === 0, 'EA card controls stay outside the patient draft envelope');
         ok('negative persistence proof: no EA content in sessionStorage/localStorage/IndexedDB and no envelope reuse');
 
-        // Causalidad independiente y no duplicada. Con el editor G0 la sección
-        // se muestra al haber EA documentados, pero sigue siendo una sección
-        // independiente: fuera del bloque EA y sin cuestionarios por tarjeta.
+        // B (#869): la causalidad es UN solo editor; se abre en la fila del EA
+        // cuyo sospechoso se marca. Sin sospechoso marcado no hay causalidad
+        // abierta y nunca hay cuestionarios duplicados por tarjeta.
         const causality = await page.evaluate(() => {
             const section = document.getElementById('modSeguimientoCausalidad');
             const eaBlock = document.getElementById('modSeguimientoEa');
@@ -308,11 +306,11 @@ function captureTwoEa(page) {
                 duplicatedQuestionnaires: document.querySelectorAll('#fhSegEaList .causality-chip-group, #fhSegEaList #modNaranjo, #fhSegEaList #modKarchLasagna').length
             };
         });
-        assert.ok(causality.visible, 'causality section is visible with documented EA (G0 editor active)');
-        assert.ok(causality.independent, 'causality section stays independent (outside the EA block)');
+        assert.ok(!causality.visible, 'sin sospechoso marcado no hay causalidad abierta');
+        assert.ok(causality.independent, 'sin sospechoso marcado, la sección sigue fuera del bloque EA');
         assert.equal(causality.titles, 0, 'no causality questionnaire duplicated inside EA cards');
         assert.equal(causality.duplicatedQuestionnaires, 0, 'no Naranjo/Karch triggers per EA card');
-        ok('causality remains an independent section, never duplicated per EA card');
+        ok('causality closed without a marked suspect, never duplicated per EA card');
 
         // Sin reclamo de «guardado» en ninguna superficie T01.
         const visibleText = await page.evaluate(() => (document.getElementById('modSeguimientoEa').textContent + ' ' + document.getElementById('modExportacion').textContent));

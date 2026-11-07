@@ -128,7 +128,6 @@ async function captureIncorporatedEa(page, text) {
     await page.click('#fhSegAddEaBtn');
     const card = page.locator('#fhSegEaList .ea-t01-card').last();
     await card.locator('[data-ea-field="description"]').fill(text);
-    await card.getByRole('button', { name: 'Incorporar al acto' }).click();
 }
 
 // Entrada de catálogo sintética concreta (drug_id + source_type CIMA +
@@ -203,11 +202,6 @@ const SYNTH_CATALOG_GAMMA = {
         const visit = await page.evaluate(() => window.FarmaciaSeguimiento.getCurrentVisit());
         assert.deepEqual(visit.adverse_event.suspect_ids, [], 'legacy singular adverse_event.suspect_ids untouched');
         assert.deepEqual(visit.causality_by_suspect, {}, 'legacy causality_by_suspect untouched');
-        assert.ok((await cards.first().textContent()).includes('Selección en edición. No forma parte del acto preparado, no se ha guardado ni exportado'), 'literal editing-only disclosure visible');
-        assert.ok(await page.evaluate(() => {
-            const hint = document.querySelector('#fhSegEaList .ea-t01-card .ea-suspect-list + p.search-card__hint');
-            return hint && hint.textContent.indexOf('Selección en edición. No forma parte del acto preparado, no se ha guardado ni exportado') === 0;
-        }), 'suspects hint leads with the mandated literal message');
         // Tratamiento teal del máster G0 v0.4: casilla + borde teal marcados;
         // neutros sin marcar.
         const chipStates = await cards.first().locator('.ea-suspect-list label').evaluateAll((labels) =>

@@ -48,8 +48,8 @@ assert(html.includes('id="fhSegEaExportGuardNotice"'), 'Aviso de frontera de exp
 assert(html.includes('id="fhSegEaPriorEpisodes"') && !html.includes('id="fhSegEaPriorEpisodeSelect"') && !html.includes('id="fhSegEaUpdatePriorBtn"') && !html.includes('id="fhSegEaRecurrenceBtn"'), 'Fila de continuidad/recurrencia: lista real de episodios anteriores (D4b)');
 // F1 (#867): los botones de maqueta «Ver estructura simulada» y «Reiniciar ejemplo» se retiran (decisión de Sil, 07-11).
 assert(!html.includes('fhSegEaShowStructureBtn') && !html.includes('fhSegEaResetDemoBtn') && !/estructura simulada|Reiniciar ejemplo/.test(html), 'Botones de maqueta de estructura/reinicio retirados (F1)');
-assert(js.includes('Información clínica adicional (opcional)') && js.includes('Medicamentos señalados expresamente como sospechosos'), 'Disclosure de información adicional y bloque demo de sospechosos presentes en la tarjeta expandida');
-assert(js.includes('data-ea-demo-control'), 'Los controles demo de tarjeta llevan marcación explícita data-ea-demo-control');
+assert(js.includes('Medicamentos señalados expresamente como sospechosos') && !js.includes('Información clínica adicional (opcional)'), 'B (#869): la tarjeta lleva el bloque de sospechosos y ya no el disclosure de información adicional de maqueta');
+assert(!js.includes('data-ea-demo-control'), 'B (#869): sin controles demo deshabilitados en la tarjeta');
 // C-088 VIS-01: insignia de recuento y de sección con el tratamiento de píldora del máster.
 assert(/#fhSegEaCountBadge,\s*\n\s*#modSeguimientoEa > \.section-title > \.status-badge/.test(html) && html.includes('border: 1px solid #c9dbe5;'), 'Insignia de recuento EA y de sección con el tratamiento de píldora encajonada del máster');
 // C-088 VIS-03: insignia de estado de las tarjetas EA con el tratamiento del máster.

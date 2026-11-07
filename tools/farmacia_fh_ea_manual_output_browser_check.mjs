@@ -140,7 +140,6 @@ try {
         await card.locator('[data-ea-field="description"]').fill(description);
         if (severity) await card.locator('[data-ea-field="severity"]').selectOption(severity);
         if (evolution) await card.locator('[data-ea-field="evolution"]').selectOption(evolution);
-        await card.getByRole('button', { name: 'Incorporar al acto' }).click();
         if (suspectLineId) {
             // Los candidatos son medicamentos nombrados explícitamente en el
             // acto; se marca la línea dispensada concreta por su identidad.
@@ -201,7 +200,6 @@ try {
     await page.click('#fhSegAddEaBtn');
     const overflowCard = page.locator('#fhSegEaList .ea-t01-card').last();
     await overflowCard.locator('[data-ea-field="description"]').fill('L'.repeat(34000));
-    await overflowCard.getByRole('button', { name: 'Incorporar al acto' }).click();
     await page.click('#fhSegExportTxt');
     await page.waitForTimeout(250);
     const jaraWithOverflow = await clipboardText();

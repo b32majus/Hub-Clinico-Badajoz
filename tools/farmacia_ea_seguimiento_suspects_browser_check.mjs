@@ -123,7 +123,6 @@ const card = (episodeId) => page.locator(`#fhSegEaList .ea-t01-card[data-episode
 
 async function finishCard(locator, description) {
     await locator.locator('[data-ea-field="description"]').fill(description);
-    await locator.getByRole('button', { name: 'Incorporar al acto' }).click();
 }
 
 async function addNewEa(description) {
