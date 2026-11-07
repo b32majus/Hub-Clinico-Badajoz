@@ -234,9 +234,8 @@ function captureTwoEa(page) {
         assert.equal(await expandedBody.locator('.ea-suspect-list input[type="checkbox"]').count(), 0, 'no suspect candidates without an explicitly named medicine');
         assert.ok((await expandedBody.locator('.ea-suspect-list').textContent()).includes('Sin medicamentos identificados explícitamente'), 'empty candidate source is explained, never filled with demo medicines');
         assert.ok((await page.locator('#fhSegEaSummary').textContent()).trim().startsWith('2 observación/es en esta visita · 2 episodio/s relacionado/s'), 'master footer summary arrangement');
-        assert.ok(await page.locator('#fhSegEaShowStructureBtn').isDisabled(), '«Ver estructura simulada» visible but non-functional (demo, T01)');
-        assert.ok(await page.locator('#fhSegEaResetDemoBtn').isDisabled(), '«Reiniciar ejemplo» visible but non-functional (demo, T01)');
-        ok('master segment fidelity present with explicit non-functional demo signaling (VIS-01/VIS-02)');
+        assert.equal(await page.locator('#fhSegEaShowStructureBtn, #fhSegEaResetDemoBtn').count(), 0, 'mockup footer buttons removed (F1)');
+        ok('master segment fidelity present; mockup footer buttons removed (VIS-01/VIS-02, F1)');
 
         // Captura real del producto EN EL ESTADO DEL MÁSTER (antes de extender
         // a 5 EA): viewport 1440x900 + recorte del bloque EA.

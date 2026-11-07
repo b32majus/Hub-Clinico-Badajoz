@@ -23,10 +23,19 @@
     function visitStore(create) {
         var store = visits.get(editingVisit);
         if (!store && create) {
-            store = { marks: new Map(), drafts: new Map(), history: [] };
+            store = { marks: new Map(), drafts: new Map(), finals: new Map(), history: [] };
             visits.set(editingVisit, store);
         }
         return store || null;
+    }
+
+    function finalKey(episodeId, suspectRef) {
+        return episodeId + '\u0000' + suspectRef;
+    }
+
+    function deleteFinal(store, episodeId, suspectRef) {
+        if (!store.finals) return;
+        store.finals.delete(finalKey(episodeId, suspectRef));
     }
 
     function isMarkedIn(store, episodeId, suspectRef) {
@@ -79,6 +88,7 @@
         suspects.delete(suspectRef);
         if (!suspects.size) store.marks.delete(episodeId);
         retireDrafts(store, episodeId, suspectRef);
+        deleteFinal(store, episodeId, suspectRef);
         return true;
     }
 
@@ -120,6 +130,29 @@
         return { status: STATUS_BORRADOR, answers: copyAnswers(answers) };
     }
 
+    // Valoración final farmacéutica opcional de la pareja episodio ×
+    // sospechoso. El valor neutro «No evaluada» no se guarda: no elegir nada
+    // no es una valoración final.
+    function recordFinal(episodeId, suspectRef, value) {
+        var store = visitStore(false);
+        if (!store || !isMarkedIn(store, episodeId, suspectRef)) return false;
+        var text = value === null || value === undefined ? '' : String(value);
+        if (!store.finals) store.finals = new Map();
+        if (!text || text === 'No evaluada') {
+            deleteFinal(store, episodeId, suspectRef);
+            return true;
+        }
+        store.finals.set(finalKey(episodeId, suspectRef), text);
+        return true;
+    }
+
+    function getFinal(episodeId, suspectRef) {
+        var store = visitStore(false);
+        if (!store || !store.finals) return '';
+        var value = store.finals.get(finalKey(episodeId, suspectRef));
+        return typeof value === 'string' ? value : '';
+    }
+
     function getInactiveHistory() {
         var store = visitStore(false);
         if (!store) return [];
@@ -140,6 +173,8 @@
         isSuspectMarked: isSuspectMarked,
         recordAnswer: recordAnswer,
         getState: getState,
+        recordFinal: recordFinal,
+        getFinal: getFinal,
         getInactiveHistory: getInactiveHistory
     };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -46,8 +46,8 @@ assert(html.includes('id="fhSegEaExportGuardNotice"'), 'Aviso de frontera de exp
 // con señalización demo explícita (no funcionales en T01).
 // D4b (#867): la fila de continuidad/recurrencia es real: lista de episodios del libro con botones por episodio.
 assert(html.includes('id="fhSegEaPriorEpisodes"') && !html.includes('id="fhSegEaPriorEpisodeSelect"') && !html.includes('id="fhSegEaUpdatePriorBtn"') && !html.includes('id="fhSegEaRecurrenceBtn"'), 'Fila de continuidad/recurrencia: lista real de episodios anteriores (D4b)');
-assert(html.includes('id="fhSegEaShowStructureBtn"') && html.includes('id="fhSegEaResetDemoBtn"'), 'Pie del máster (estructura simulada / reiniciar ejemplo) presente como fidelidad visual');
-assert(/id="fhSegEaShowStructureBtn"[^>]*disabled/.test(html) && /id="fhSegEaResetDemoBtn"[^>]*disabled/.test(html), 'Los controles demo (continuidad, recurrencia, estructura, reinicio) están deshabilitados: no funcionales en T01');
+// F1 (#867): los botones de maqueta «Ver estructura simulada» y «Reiniciar ejemplo» se retiran (decisión de Sil, 07-11).
+assert(!html.includes('fhSegEaShowStructureBtn') && !html.includes('fhSegEaResetDemoBtn') && !/estructura simulada|Reiniciar ejemplo/.test(html), 'Botones de maqueta de estructura/reinicio retirados (F1)');
 assert(js.includes('Información clínica adicional (opcional)') && js.includes('Medicamentos señalados expresamente como sospechosos'), 'Disclosure de información adicional y bloque demo de sospechosos presentes en la tarjeta expandida');
 assert(js.includes('data-ea-demo-control'), 'Los controles demo de tarjeta llevan marcación explícita data-ea-demo-control');
 // C-088 VIS-01: insignia de recuento y de sección con el tratamiento de píldora del máster.

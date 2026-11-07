@@ -1613,6 +1613,91 @@
         return EA_CAUSALITY_KL_KEYS[answerId] || answerId;
     }
 
+    var EA_CAUSALITY_METHOD_LABELS = {};
+    EA_CAUSALITY_METHOD_LABELS[EA_CAUSALITY_NARANJO] = 'Naranjo';
+    EA_CAUSALITY_METHOD_LABELS[EA_CAUSALITY_KARCH] = 'Karch-Lasagna';
+
+    function eaCausalityMethodQuestionKeys(method) {
+        var answerIds = method === EA_CAUSALITY_NARANJO
+            ? ['naranjoQ1', 'naranjoQ2', 'naranjoQ3', 'naranjoQ4', 'naranjoQ5', 'naranjoQ6', 'naranjoQ7', 'naranjoQ8', 'naranjoQ9', 'naranjoQ10']
+            : ['klTemporal', 'klConocido', 'klAlternativa', 'klSuspendido', 'klMejoraRetirada', 'klReadministracion', 'klReaparece'];
+        return answerIds.map(function (answerId) { return eaCausalityAnswerKey(method, answerId); });
+    }
+
+    // Etiqueta del sospechoso para las salidas: la del candidato nombrado o,
+    // si no hay candidato verificado, la referencia explícita; nunca se
+    // reasocia por nombre ni se inventa identidad.
+    function eaCausalitySuspectLabel(suspectRef) {
+        var candidate = getEaNamedDrugCandidates().find(function (item) { return item.id === suspectRef; });
+        return candidate ? candidate.label : suspectRef;
+    }
+
+    // Salidas manuales (#867 F2): de cada pareja EA × sospechoso × método solo
+    // viaja una evaluación con TODAS sus preguntas contestadas de forma
+    // explícita. Cero respuestas no es una evaluación; a medias bloquea las dos
+    // salidas con motivo y nunca se copia una causalidad parcial.
+    function eaCausalityOutputs(actId) {
+        var output = { entries: [], finals: [], blockReason: '' };
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule || typeof stateModule.getState !== 'function') return output;
+        var methodOrder = [EA_CAUSALITY_NARANJO, EA_CAUSALITY_KARCH];
+        eaIncorporatedEvents().forEach(function (event) {
+            var suspects = Array.isArray(event.suspect_ids) ? event.suspect_ids : [];
+            suspects.forEach(function (suspectRef) {
+                if (eaSuspectMarkIsPending(event.episode_id, suspectRef)) return;
+                var finalValue = typeof stateModule.getFinal === 'function' ? stateModule.getFinal(event.episode_id, suspectRef) : '';
+                finalValue = typeof finalValue === 'string' ? finalValue : '';
+                var completeMethods = 0;
+                if (finalValue) {
+                    output.finals.push({ episode_id: event.episode_id, suspectRef: suspectRef, value: finalValue });
+                }
+                methodOrder.forEach(function (method) {
+                    var state = stateModule.getState(event.episode_id, suspectRef, method);
+                    var source = state && state.answers && typeof state.answers === 'object' ? state.answers : {};
+                    var answers = {};
+                    Object.keys(source).forEach(function (key) { answers[key] = source[key]; });
+                    var keys = eaCausalityMethodQuestionKeys(method);
+                    var answered = keys.filter(function (key) {
+                        return Object.prototype.hasOwnProperty.call(answers, key);
+                    }).length;
+                    if (answered === 0) return;
+                    if (answered < keys.length) {
+                        if (!output.blockReason) {
+                            output.blockReason = 'Exportación no realizada: causalidad a medias en ' + event.episode_id + ' × ' + suspectRef +
+                                ' (' + EA_CAUSALITY_METHOD_LABELS[method] + '): faltan ' + (keys.length - answered) + ' de ' + keys.length +
+                                ' preguntas. Complete todas o deje todas sin contestar; no se ha copiado ni entregado nada.';
+                        }
+                        return;
+                    }
+                    completeMethods += 1;
+                    var entry = {
+                        episode_id: event.episode_id,
+                        suspectRef: suspectRef,
+                        method: method,
+                        answers: answers,
+                        category: ''
+                    };
+                    if (method === EA_CAUSALITY_NARANJO) {
+                        if (M) {
+                            var score = M.calculateNaranjoScore(answers);
+                            entry.score = score;
+                            entry.category = M.categorizeNaranjo(score);
+                        }
+                    } else if (M) {
+                        entry.category = M.categorizeKarchLasagna(answers);
+                    }
+                    if (finalValue) entry.final_assessment = finalValue;
+                    output.entries.push(entry);
+                });
+                if (!completeMethods && finalValue && !output.blockReason) {
+                    output.blockReason = 'Exportación no realizada: valoración final sin evaluación completa en ' + event.episode_id + ' × ' + suspectRef +
+                        '. Complete Naranjo o Karch-Lasagna, o quite la valoración final; no se ha copiado ni entregado nada.';
+                }
+            });
+        });
+        return output;
+    }
+
     function eaCausalityMethodState(method) {
         var stateModule = ensureEaCausalityStateContext();
         if (!stateModule || !eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) {
@@ -1721,32 +1806,76 @@
         notice.classList.toggle('hidden', !visible);
     }
 
-    // La «Causalidad final farmacéutica» heredada no forma parte del editor G0
-    // provisional: la captura aceptada valora por EA × sospechoso × método ×
-    // acto y no admite trasladar una categoría formal entre parejas. El control
-    // heredado (con su etiqueta y el texto de apoyo que solo tiene sentido a su
-    // lado) se oculta y deshabilita aquí, y permanece siempre en el estado
-    // clínicamente neutro «No evaluada».
+    // La «Causalidad final farmacéutica» es opcional y pertenece a la pareja
+    // EA × sospechoso en edición: con pareja se muestra y se guarda por pareja
+    // (valoración final del profesional); sin pareja queda oculta, deshabilitada
+    // y en el estado clínicamente neutro «No evaluada».
+    function eaCausalityFinalControlContainer(finalAssessment) {
+        if (!finalAssessment || typeof finalAssessment.closest !== 'function') return null;
+        return finalAssessment.closest('.form-grid') || finalAssessment.closest('.form-group');
+    }
+
+    function eaCausalityHelpText() {
+        var summary = byId('modResumenCausalidad');
+        return summary && typeof summary.querySelector === 'function' ? summary.querySelector('.causality-help-text') : null;
+    }
+
+    function setEaCausalityFinalControlVisible(visible) {
+        var container = eaCausalityFinalControlContainer(byId('fhCausalidadFinal'));
+        if (container) {
+            container.classList.toggle('hidden', !visible);
+            if (typeof container.setAttribute === 'function') container.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        }
+        var help = eaCausalityHelpText();
+        if (help) {
+            help.classList.toggle('hidden', !visible);
+            if (typeof help.setAttribute === 'function') help.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        }
+    }
+
     function hideEaCausalityLegacyFinalControl() {
         var finalAssessment = byId('fhCausalidadFinal');
         if (!finalAssessment) return;
         finalAssessment.value = 'No evaluada';
         finalAssessment.disabled = true;
-        var container = finalAssessment.closest ? (finalAssessment.closest('.form-grid') || finalAssessment.closest('.form-group')) : null;
-        if (container) {
-            container.classList.add('hidden');
-            container.setAttribute('aria-hidden', 'true');
+        setEaCausalityFinalControlVisible(false);
+    }
+
+    function ensureEaCausalityFinalControlListener(finalAssessment) {
+        if (!finalAssessment || typeof finalAssessment.addEventListener !== 'function') return;
+        if (finalAssessment.__fhEaCausalityFinalListener) return;
+        finalAssessment.__fhEaCausalityFinalListener = true;
+        finalAssessment.addEventListener('change', handleEaCausalityFinalChange);
+    }
+
+    function handleEaCausalityFinalChange() {
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (!finalAssessment) return;
+        var stateModule = ensureEaCausalityStateContext();
+        if (!stateModule || typeof stateModule.recordFinal !== 'function') return;
+        if (!eaCausalityEditingEpisodeId || !eaCausalityEditingSuspectRef) return;
+        stateModule.recordFinal(eaCausalityEditingEpisodeId, eaCausalityEditingSuspectRef, finalAssessment.value);
+        refreshEaCausalityEditor();
+    }
+
+    function syncEaCausalityFinalControl(editing) {
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (!finalAssessment) return;
+        ensureEaCausalityFinalControlListener(finalAssessment);
+        if (!editing) {
+            hideEaCausalityLegacyFinalControl();
+            return;
         }
-        var summary = byId('modResumenCausalidad');
-        var help = summary && summary.querySelector ? summary.querySelector('.causality-help-text') : null;
-        if (help) {
-            help.classList.add('hidden');
-            help.setAttribute('aria-hidden', 'true');
-        }
+        var stateModule = ensureEaCausalityStateContext();
+        var value = stateModule && typeof stateModule.getFinal === 'function'
+            ? stateModule.getFinal(eaCausalityEditingEpisodeId, eaCausalityEditingSuspectRef)
+            : '';
+        finalAssessment.value = typeof value === 'string' && value ? value : 'No evaluada';
+        finalAssessment.disabled = false;
+        setEaCausalityFinalControlVisible(true);
     }
 
     function refreshEaCausalityEditor() {
-        hideEaCausalityLegacyFinalControl();
         var section = byId('modSeguimientoCausalidad');
         var presentElement = byId('fhSeguimientoEaPresente');
         var present = presentElement && presentElement.value ? presentElement.value : 'no_consta';
@@ -1789,6 +1918,7 @@
             eaCausalityStateText('fhSeguimientoEaContextoResumen', '—');
             eaCausalityStateText('resumenNaranjo', 'No evaluado');
             eaCausalityStateText('resumenKl', 'No evaluado');
+            hideEaCausalityLegacyFinalControl();
             return;
         }
 
@@ -1847,6 +1977,7 @@
         eaCausalityStateText('fhSeguimientoEaContextoNaranjo', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoKl', contextLabel);
         eaCausalityStateText('fhSeguimientoEaContextoResumen', contextLabel);
+        syncEaCausalityFinalControl(editing);
     }
 
     function selectEaCausalityEpisode(episodeId) {
@@ -2150,6 +2281,35 @@
                 episodes: []
             };
         }
+    }
+
+    // F1 (#867): en una ficha longitudinal los sospechosos de la visita anterior
+    // se ofrecen como REFERENCIA, nunca como selección. Se leen del modelo de
+    // episodios del paciente de sesión y se copian verbatim; cualquier otra
+    // situación (sin basis, sin runtime, sin episodio) devuelve [] y nunca
+    // lanza, igual que el resto de lecturas de historia.
+    function priorSuspectsForEvent(event) {
+        var basis = event && event.basis && typeof event.basis === 'object' ? event.basis : null;
+        if (!basis) return [];
+        var targetEpisodeId = String(basis.episode_id || '');
+        if (targetEpisodeId === '') return [];
+        var patient = null;
+        try {
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            patient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        } catch (error) {
+            patient = null;
+        }
+        if (!patient) return [];
+        var model = patient.ea_episodes && patient.ea_episodes.model ? patient.ea_episodes.model : null;
+        var episodes = model && Array.isArray(model.episodes) ? model.episodes : [];
+        for (var index = 0; index < episodes.length; index += 1) {
+            var episode = episodes[index];
+            if (!episode || typeof episode !== 'object') continue;
+            if (String(episode.episode_id || '') !== targetEpisodeId) continue;
+            return Array.isArray(episode.suspects) ? episode.suspects.slice() : [];
+        }
+        return [];
     }
 
     // Un episodio ya representado en este acto (borrador o incorporado, propio
@@ -2520,6 +2680,16 @@
         applyEaStyle(demoDivider, { borderTop: '1px solid #E2E8F0', margin: '12px 0 8px' });
         body.appendChild(demoDivider);
         body.appendChild(createElement('div', 'form-label', 'Medicamentos señalados expresamente como sospechosos'));
+        // F1 (#867): la sospecha de la visita anterior es REFERENCIA, nunca
+        // selección. Se muestra antes de la lista, sin inputs ni controles:
+        // el profesional debe preguntar y marcar en esta visita lo que persista.
+        var priorSuspects = priorSuspectsForEvent(event);
+        if (priorSuspects.length > 0) {
+            var priorBlock = createElement('div', 'ea-prior-suspects');
+            priorBlock.appendChild(document.createTextNode('Sospechosos de la visita anterior (referencia): ' + priorSuspects.join(' · ')));
+            priorBlock.appendChild(createElement('p', 'search-card__hint ea-prior-suspects__warning', 'Referencia, no marcada. Pregunte activamente por ellos y marque en la lista siguiente los que sigan siendo sospechosos en esta visita; si no los marca, no se registran.'));
+            body.appendChild(priorBlock);
+        }
         var demoSuspects = createElement('div', 'ea-suspect-list');
         applyEaStyle(demoSuspects, { display: 'flex', flexWrap: 'wrap', gap: '8px' });
         // G0 FH-EA-02: solo medicamentos ya identificados por el profesional o
@@ -2767,7 +2937,7 @@
         if (present !== 'si' && incorporated.length) {
             return 'Exportación no realizada: el acto tiene EA incorporados sin presencia «Sí»; concilie el acto antes de exportar.';
         }
-        return buildEaManualProjection().blockReason;
+        return buildEaManualProjection().blockReason || eaCausalityOutputs('').blockReason;
     }
 
     function guardEaManualOutputs() {
@@ -4228,6 +4398,7 @@
                sospecha explícita no se redacta como causalidad y las
                evaluaciones G0 en edición no se exportan como resultado. */
             var projection = buildEaManualProjection();
+            var causalityOutputs = eaCausalityOutputs('');
             lines.push('- Presencia declarada en el acto: ' + textOrDash(model.adverse_event.present));
             lines.push('- EA incorporados en esta visita: ' + incorporatedEa.length);
             incorporatedEa.forEach(function (event, index) {
@@ -4242,8 +4413,30 @@
                 lines.push('Gravedad: ' + textOrDash(String(event.severity || '').trim() || 'No consta'));
                 lines.push('Evolución: ' + eaEvolutionLabel(event.evolution));
                 lines.push('Medicamentos sospechosos explícitos: ' + eaManualEventSuspectReferences(event));
-                lines.push('Causalidad Naranjo: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
-                lines.push('Causalidad Karch-Lasagna: ' + EA_MANUAL_CAUSALITY_NOT_EVALUATED);
+                var naranjoEntries = causalityOutputs.entries.filter(function (entry) {
+                    return entry.method === EA_CAUSALITY_NARANJO && String(entry.episode_id) === String(event.episode_id);
+                });
+                var karchEntries = causalityOutputs.entries.filter(function (entry) {
+                    return entry.method === EA_CAUSALITY_KARCH && String(entry.episode_id) === String(event.episode_id);
+                });
+                var finalEntries = causalityOutputs.finals.filter(function (entry) {
+                    return String(entry.episode_id) === String(event.episode_id);
+                });
+                lines.push('Causalidad Naranjo: ' + (naranjoEntries.length
+                    ? naranjoEntries.map(function (entry) {
+                        return eaCausalitySuspectLabel(entry.suspectRef) + ': ' + entry.score + ' · ' + entry.category;
+                    }).join(' | ')
+                    : EA_MANUAL_CAUSALITY_NOT_EVALUATED));
+                lines.push('Causalidad Karch-Lasagna: ' + (karchEntries.length
+                    ? karchEntries.map(function (entry) {
+                        return eaCausalitySuspectLabel(entry.suspectRef) + ': ' + entry.category;
+                    }).join(' | ')
+                    : EA_MANUAL_CAUSALITY_NOT_EVALUATED));
+                if (finalEntries.length) {
+                    lines.push('Valoración final: ' + finalEntries.map(function (entry) {
+                        return eaCausalitySuspectLabel(entry.suspectRef) + ': ' + entry.value;
+                    }).join(' | '));
+                }
                 lines.push('Acción registrada: ' + EA_MANUAL_NO_ACTION);
                 lines.push('Ámbito en las salidas por fila: ' + (scopeLabels.length ? scopeLabels.join(', ') : 'Sin distribución por línea'));
                 lines.push('');
@@ -4768,6 +4961,37 @@
         for (var index = 0; index < events.length; index += 1) {
             var blockReason = bridgeRawSuspectSourceBlockReason(events[index]);
             if (blockReason) failFollowupBridgeRaw('BRIDGE_RAW_SUSPECT_UNVERIFIED', blockReason);
+        }
+        // #867 F2: la causalidad solo viaja completa. Una pareja a medias o una
+        // valoración final sin evaluación completa bloquea la copia con motivo
+        // visible; nunca se emite una evaluación parcial.
+        var causality = eaCausalityOutputs(context.actId);
+        if (causality.blockReason) {
+            syncEaExportGuardNotice(causality.blockReason);
+            failFollowupBridgeRaw('BRIDGE_RAW_CAUSALITY_INCOMPLETE', causality.blockReason);
+        }
+        if (causality.entries.length) {
+            var evaluationSequence = 0;
+            causality.entries.forEach(function (entry) {
+                var target = null;
+                for (var eventIndex = 0; eventIndex < events.length; eventIndex += 1) {
+                    if (String(events[eventIndex].episode_id) === String(entry.episode_id)) { target = events[eventIndex]; break; }
+                }
+                if (!target) return;
+                evaluationSequence += 1;
+                var evaluation = {
+                    evaluation_id: context.actId + '-EV-' + ('000' + evaluationSequence).slice(-4),
+                    medicationRef: entry.suspectRef,
+                    method: entry.method,
+                    status: 'completado',
+                    answers: entry.answers,
+                    category: entry.category
+                };
+                if (entry.method === EA_CAUSALITY_NARANJO && typeof entry.score === 'number') evaluation.score = entry.score;
+                if (entry.final_assessment) evaluation.final_assessment = entry.final_assessment;
+                if (!Array.isArray(target.evaluations)) target.evaluations = [];
+                target.evaluations.push(evaluation);
+            });
         }
         // D4b-2 (#867): la historia de EA del libro viaja entera para que el
         // validador impida reutilizar episodios u observaciones anteriores. Un
