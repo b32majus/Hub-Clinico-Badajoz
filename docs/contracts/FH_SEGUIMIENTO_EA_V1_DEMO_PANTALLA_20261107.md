@@ -12,7 +12,7 @@ Qué hace hoy la pantalla `farmacia_seguimiento.html` en el cierre de «EA v1 de
 - La fecha del acto debe anotarla el profesional.
 
 ## 3. Contenido de la visita
-Viaja una sola vez en la fila de acto: estratificación, recogida de PROMs (con sus valores) y otros fármacos (`related_treatments_json`). En cada línea revisada: dispensación, movimiento terapéutico, suspensión, observaciones y adherencia. Un control que el profesional no tocó viaja como «no registrado»; solo cuenta lo que marca. Ausente ≠ NO.
+Viaja una sola vez en la fila de acto: estratificación, recogida de PROMs (con sus valores) y otros fármacos no activos (histórico/exposición, `related_treatments_json`); los activos viajan como líneas. En cada línea revisada: dispensación, movimiento terapéutico, suspensión, observaciones y adherencia. Un control que el profesional no tocó viaja como «no registrado»; solo cuenta lo que marca. Ausente ≠ NO.
 
 ## 4. Fármaco en la primera visita (A1 + A2)
 Un paciente sin líneas (primera visita en la plataforma, ya en tratamiento) busca su fármaco en «Tratamiento actual»:
@@ -20,7 +20,7 @@ Un paciente sin líneas (primera visita en la plataforma, ya en tratamiento) bus
 - sirve como sospechoso en EA y aparece en JARA;
 - viaja en la copia 166 como una `followup_line` más, con la foto del fármaco; **pauta, dosis, vía y fecha de inicio no se infieren** (lo que no hay viaja vacío). Una vez pegada en el libro, el lector la toma como línea activa del paciente (última foto por `line_id`);
 - dos líneas principales en el mismo acto bloquean la copia con motivo.
-Límites: el buscador solo crea la primera línea. Los «Otros fármacos» viajan hoy en `related_treatments_json`; por decisión de Sil (07-11) los activos deben viajar como líneas propias, igual que el primero (pendiente: tramo A3, que también cambiará sus sospechosos de `other:<uid>` a `line:<id>`). No se puede deshacer el fármaco elegido sin recargar.
+Límites: el buscador solo crea la primera línea. Los «Otros fármacos» activos (*Concomitante* y *Tratamiento activo previo / línea existente*) son líneas de la visita (A3, #871): aparecen en «Líneas de tratamiento», se pueden marcar dispensados, son sospechosos como `line:<id>` y viajan como `followup_line` sin duplicarse en `related_treatments_json`. *Biológico previo/histórico* y *Exposición* siguen como `other:<uid>`. Si son sospechosos de un EA no se puede cambiar su tipo, nombre ni borrarlos. No se puede deshacer el fármaco elegido sin recargar.
 
 ## 5. Formulario de EA (B)
 - Un EA es **una fila**: descripción, gravedad opcional y evolución. No hay «Incorporar al acto»: escribir la descripción lo incorpora; vaciarla lo devuelve a borrador (un borrador no viaja).

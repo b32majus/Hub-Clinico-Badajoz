@@ -41,7 +41,7 @@ REN-OPEN-001…008: ver `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACI
 - Perfiles FHIR/openEHR: decisión del SES. FEDRA: autorización SES/AEMPS.
 
 ## Seguimiento (EA)
-- ¿Un «Otros fármaco» de tipo *Concomitante* cuenta como línea de la visita igual que el *Tratamiento activo previo / línea existente*? (propuesta: sí; *Biológico previo/histórico* y *Exposición* no son activos y siguen en `related_treatments_json`). Resto RESUELTA → ver DECISIONES (07-11, «otros fármacos activos = líneas propias»).
+- ¿Un «Otros fármaco» de tipo *Concomitante* cuenta como línea de la visita igual que el *Tratamiento activo previo / línea existente*? (RESUELTA por Sil 07-11: sí; *Biológico previo/histórico* y *Exposición* no son activos y siguen en `related_treatments_json`). Resto RESUELTA → ver DECISIONES (07-11, «otros fármacos activos = líneas propias»).
 
 ## Infraestructura (SES)
 - Elección entre rutas A/B1/B2/C y qué permisos concede SESATIC (Power Automate HTTP bloqueado por Premium en el entorno de prueba del 17-09).
