@@ -783,6 +783,10 @@
             updateSuspectDrugSelector();
             updateFollowupBridgeRawExportAvailability();
         }
+        // El panel «Tratamiento actual» refleja la línea seleccionada: si es la
+        // de un otro fármaco, se repinta con lo recién editado (dosis, vía, pauta).
+        var selectedLine = getCurrentSelectedLine();
+        if (selectedLine && selectedLine.other_uid) applySelectedBiologicLine();
         return structural;
     }
 
