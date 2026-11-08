@@ -456,7 +456,7 @@ vm.runInContext(fs.readFileSync(catalogPath, 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(commonPath, 'utf8'), sandbox);
 if (fs.existsSync(modelPath)) vm.runInContext(fs.readFileSync(modelPath, 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(validacionPath, 'utf8'), sandbox);
-for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { DOMContentLoadedCallbacks[di](); }
+for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { await DOMContentLoadedCallbacks[di](); }
 
 const F = sandbox.window.FarmaciaDemo;
 const validation = sandbox.window.FarmaciaValidacion;
@@ -479,12 +479,14 @@ const v6Patient = {
 };
 F.patients[v6Patient.cip] = v6Patient;
 
-function rerunWithContext(context) {
+async function rerunWithContext(context) {
   F.getQueryContext = function () { return context; };
-  DOMContentLoadedCallbacks[DOMContentLoadedCallbacks.length - 1]();
+  F.readPatientContext = async function () { return context; };
+  /* F4.3B: el DOMContentLoaded de Validación es async (lee el paciente por readPatientContext). */
+  await DOMContentLoadedCallbacks[DOMContentLoadedCallbacks.length - 1]();
 }
 
-rerunWithContext({ cip: v6Patient.cip, servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', patient: v6Patient });
+await rerunWithContext({ cip: v6Patient.cip, servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', patient: v6Patient });
 assertEqual(v('fhOrigenEntrada'), 'excel_enfermeria', '2.1 origen = excel_enfermeria');
 const exportDataV6 = validation_buildExportData();
 assertEqual(exportDataV6.solicitudId, 'SOL-DER-000101', '2.2 export data conserva el ID exacto');
@@ -500,19 +502,19 @@ assertEqual(v2Input.technical.requestId, 'SOL-DER-000101', '2.4 solicitud_id map
 
 // Same CIP different request through the page path stays separated
 const v6PatientB = Object.assign({}, v6Patient, { solicitud_id: 'SOL-DER-000102' });
-rerunWithContext({ cip: v6Patient.cip, servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', patient: v6PatientB });
+await rerunWithContext({ cip: v6Patient.cip, servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', patient: v6PatientB });
 assertEqual(validation_buildExportData().solicitudId, 'SOL-DER-000102', '2.5 misma CIP, otra solicitud: el ID visible cambia con la solicitud cargada');
 
 // Enfermería patient without solicitud_id → empty, never invented
 const v6NoId = Object.assign({}, v6Patient, { solicitud_id: undefined });
 delete v6NoId.solicitud_id;
-rerunWithContext({ cip: v6Patient.cip, servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', patient: v6NoId });
+await rerunWithContext({ cip: v6Patient.cip, servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', patient: v6NoId });
 assertEqual(validation_buildExportData().solicitudId, '', '2.6 paciente sin solicitud_id exporta vacío');
 const v2NoId = validation_buildV2Input({});
 assertEqual(v2NoId.technical.requestId, null, '2.7 ausencia no se mapea a request_id derivado (null)');
 
 // Manual Farmacia origin never exports the ID even if a stale patient carries it
-rerunWithContext({ cip: 'CIP-SYN-366-MAN', servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', entrada: 'validacion', patient: null });
+await rerunWithContext({ cip: 'CIP-SYN-366-MAN', servicio: 'Derma', servicioSlug: 'dermatologia', patologia: 'HS', entrada: 'validacion', patient: null });
 assertEqual(v('fhOrigenEntrada'), 'manual_farmacia', '2.8 origen manual reconocido');
 assertEqual(validation_buildExportData().solicitudId, '', '2.9 origen manual exporta solicitud_id vacío');
 

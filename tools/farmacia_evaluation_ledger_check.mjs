@@ -198,7 +198,7 @@ assert.match(indexHtml, /vendor\/sheetjs\/xlsx\.full\.min\.js/, 'Inicio retains 
 const clinicalPages = [
   ['farmacia_validacion.html', 'scripts/farmacia_validacion.js', ['fhValExportTxt', 'fhValExcelExportBtn', 'fhValExportV2Btn']],
   ['farmacia_primera_visita.html', 'scripts/farmacia_primera_visita.js', ['fhPvExportTxt', 'fhPvExcelExportBtn', 'fhPvExportV2Btn']],
-  ['farmacia_seguimiento.html', 'scripts/farmacia_seguimiento.js', ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn', 'fhSegExportV2Btn']]
+  ['farmacia_seguimiento.html', 'scripts/farmacia_seguimiento.js', ['fhSegExportTxt', 'fhSegExportBridgeRawBtn']]
 ];
 for (const [htmlName, pageScript, outputIds] of clinicalPages) {
   const html = fs.readFileSync(path.join(ROOT, htmlName), 'utf8');
@@ -210,7 +210,7 @@ for (const [htmlName, pageScript, outputIds] of clinicalPages) {
 }
 
 const previewManifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'previews/caceres-fh/deployment-manifest.json'), 'utf8'));
-assert.equal(previewManifest.version, 'CÁCERES-REVIEW-0.3', 'current Cáceres snapshot remains unchanged');
+assert.ok(/^CÁCERES-REVIEW-/.test(previewManifest.version), 'Cáceres snapshot keeps its review-version family (the exact version moves with each publication)');
 assert.equal(fs.readFileSync(path.join(ROOT, 'previews/caceres-fh/farmacia_index.html'), 'utf8').includes('farmacia_evaluation_ledger.js'), false, 'this WO does not modify the stable snapshot');
 
 console.log('farmacia_evaluation_ledger_check: PASSED');

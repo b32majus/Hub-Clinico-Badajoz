@@ -148,6 +148,8 @@ try {
   await page.goto(new URL('farmacia_primera_visita.html?cip=CIP-DEMO-FH-001', BASE_URL).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita && !document.getElementById('fhPvExportV2Btn')?.disabled);
   await page.locator('#fhPvFecha').fill('2026-08-04');
+  /* PV-001 (#482): Primera visita ya no prehidrata el fármaco; hay que escribirlo para que la línea sea identificable. */
+  await page.locator('#fhPvFarmaco').fill('Fármaco sintético PV');
   await assertV2Clipboard(page, '#fhPvExportV2Btn', '#fhPvExportV2Status', 1);
   await page.locator('#fhPvNotas').fill('FIRST-VISIT-NOT-PERSISTED');
   await installOutputCapture(page);
@@ -171,8 +173,9 @@ try {
   await assertRetiredRuntime(page);
 
   await page.goto(new URL('farmacia_seguimiento.html?cip=CIP-DEMO-FH-004', BASE_URL).href, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.FarmaciaSeguimiento && !document.getElementById('fhSegExportV2Btn')?.disabled && document.querySelectorAll('input[name="fhSegLineCardSelection"]:not(:disabled)').length === 2);
-  await assertV2Clipboard(page, '#fhSegExportV2Btn', '#fhSegExportV2Status', 2);
+  await page.waitForFunction(() => window.FarmaciaSeguimiento && document.querySelectorAll('input[name="fhSegLineCardSelection"]:not(:disabled)').length === 2);
+  /* #867 / DECISIONES 07-11: Seguimiento ya no tiene V2, CSV ni Excel WO8; quedan Copiar texto JARA y Copiar filas Excel FH. */
+  for (const retired of ['#fhSegExportV2Btn', '#fhSegExportCsv', '#fhSegExcelExportBtn']) assert.equal(await page.locator(retired).count(), 0, `${retired} stays retired in Seguimiento`);
   await page.locator('.seg-line-card:has(input[value="BIO-FH-004-L2"])').click();
   await page.locator('#fhSegDispensado').selectOption('si');
   await page.waitForFunction(() => window.FarmaciaSeguimiento.getCurrentVisit().dispensed_line_ids.includes('BIO-FH-004-L2'));
@@ -180,10 +183,6 @@ try {
   await installOutputCapture(page);
   await page.locator('#fhSegExportTxt').click();
   assert.match(await page.evaluate(() => window.__normalOutputs.text), /FOLLOWUP-NOT-PERSISTED/);
-  await page.locator('#fhSegExportCsv').click();
-  assert.match((await page.evaluate(() => window.__normalOutputs.download)).mime, /text\/csv/);
-  await page.locator('#fhSegExcelExportBtn').click();
-  assert.ok((await page.evaluate(() => window.__normalOutputs.excelRows.rows)).every(row => row.length === 62), 'Follow-up v1 Excel rows remain 62 columns');
   await assertRetiredRuntime(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaSeguimiento && document.querySelectorAll('input[name="fhSegLineCardSelection"]:not(:disabled)').length === 2);

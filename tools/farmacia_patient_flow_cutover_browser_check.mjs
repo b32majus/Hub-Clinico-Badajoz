@@ -255,7 +255,7 @@ page.on('pageerror', error => pageErrors.push(error.message));
 async function assertNoRetiredUi() {
   const bodyText = await page.locator('body').innerText();
   assert.doesNotMatch(bodyText, /Bridge v2 activo|Buscar en Bridge|Dashboard Bridge v2|Abrir dashboard Bridge|modo Bridge/i);
-  assert.equal(await page.locator('[id*="Bridge"], [id*="bridge"]').count(), 0);
+  assert.equal(await page.locator('[id*="Bridge"]:not(#fhSegExportBridgeRawBtn):not(#fhSegExportBridgeRawStatus), [id*="bridge"]').count(), 0);
 }
 
 async function upload(selector, name, buffer) {

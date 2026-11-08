@@ -160,20 +160,13 @@ try {
   await page.locator('#fhSegDispensado').selectOption('si');
   await page.waitForFunction(() => window.FarmaciaSeguimiento.getCurrentVisit().dispensed_line_ids.includes('BIO-FH-004-L2'));
   const jara = await page.evaluate(() => window.FarmaciaSeguimiento.buildSegLines().join('\n'));
-  const csv = await page.evaluate(() => window.FarmaciaSeguimiento.buildFollowupCsv(window.FarmaciaSeguimiento.buildFollowupVisitExportModel()));
   assert.ok(jara.includes('BIO-FH-004-L2'), 'JARA keeps the v1 selected line');
-  assert.ok(csv.length > 0 && csv.includes('BIO-FH-004-L2'), 'CSV v1 still builds for the dispensed line');
-  await page.evaluate(() => {
-    window.__followupExcelCapture = null;
-    window.FarmaciaExcelRowExport.copyTSVRowsToClipboard = (rows, options) => {
-      window.__followupExcelCapture = { rows: rows.map(row => [...row]), options: { ...(options || {}) } };
-      return Promise.resolve(true);
-    };
-  });
-  await page.locator('#fhSegExcelExportBtn').click();
-  const excelCapture = await page.evaluate(() => window.__followupExcelCapture);
-  assert.ok(excelCapture && excelCapture.rows.length >= 1, 'visible v1 Excel action reaches its output boundary');
-  assert.equal(excelCapture.rows[0].length, 61, 'v1 Excel output remains exactly 61 columns');
+  /* #867 / DECISIONES 07-11: Seguimiento ya no tiene CSV, Excel WO8 ni V2; quedan Copiar texto JARA y Copiar filas Excel FH. */
+  for (const retired of ['#fhSegExportCsv', '#fhSegExcelExportBtn', '#fhSegExportV2Btn']) {
+    assert.equal(await page.locator(retired).count(), 0, `${retired} stays retired in Seguimiento`);
+  }
+  assert.equal(await page.locator('#fhSegExportTxt').count(), 1, 'Copiar texto JARA remains');
+  assert.equal(await page.locator('#fhSegExportBridgeRawBtn').count(), 1, 'Copiar filas Excel FH remains');
 
   assert.equal(await page.getByRole('button', { name: /v2/i }).count(), 0, 'there is no public v2 button');
   assert.equal(await page.locator('a[download*="v2"], button[download*="v2"]').count(), 0, 'there is no public v2 download');
@@ -202,7 +195,8 @@ try {
   await page.locator('#fhSegDrugSearch').fill(catalogCandidate.visibleName);
   await page.locator('#fhSegAutocompleteDropdown .autocomplete-item').first().waitFor({ state: 'visible' });
   await page.locator('#fhSegAutocompleteDropdown .autocomplete-item').first().click();
-  assert.equal(await page.locator('input[name="fhSegLineCardSelection"]').count(), 0, 'catalog selection never creates a line card');
+  /* Paciente sin líneas: el fármaco elegido queda como UNA línea «ya en tratamiento» de esta visita (session_new); nunca más de una. */
+  assert.equal(await page.locator('input[name="fhSegLineCardSelection"]').count(), 1, 'catalog selection on a patient without lines creates exactly one session line card');
   const zeroManual = await bridgeFailure(page, technical([], { identifierValue: MANUAL_CIP }));
   assert.equal(zeroManual?.code, 'BRIDGE_EMPTY_ACTIVE_LINES', 'zero active lines fail safely on a manual patient');
   const fabricatedLine = await bridgeFailure(page, technical([FH001_LINES[0]], { identifierValue: MANUAL_CIP }));
