@@ -33,9 +33,10 @@ Límites: el buscador solo crea la primera línea. Los «Otros fármacos» activ
 
 ## 6. Historia de EA
 Con identidad de libro, los EA anteriores del paciente se listan con acciones: abierto → «Continúa» / «Resuelto»; cerrado → «Recurrencia»; ambiguo → ninguna («Revisar en origen»). Cada visita registra su propia observación; el episodio anterior no se modifica. Los pacientes del registro demo no tienen historia.
+Cada episodio anterior, y cada tarjeta EA del Dashboard del paciente, muestra en solo lectura el detalle de causalidad (`modules/farmacia_ea_causality_detail.js`): por evaluación, fecha · sospechoso · método · puntuación (si se declaró) · categoría, «Valoración final» y las respuestas plegadas en «Ver respuestas». Solo lo declarado en el libro; lo ausente, «No registrada». Check: `tools/farmacia_ea_causality_detail_browser_check.mjs`.
 
 ## 7. Pendiente
-Pantalla con el detalle de la evaluación al abrir un episodio (puntuación, categoría, valoración final); columnas EA en el CSV de Estadísticas; guardar y reabrir por Bridge (C3b). Ver `docs/IDEAS.md` y `docs/PREGUNTAS_ABIERTAS.md`.
+Columnas EA en el CSV de Estadísticas; guardar y reabrir por Bridge (C3b). Ver `docs/IDEAS.md` y `docs/PREGUNTAS_ABIERTAS.md`.
 
 ## Verificación
 Checks de navegador (Playwright, servidor efímero): `tools/farmacia_ea_seguimiento_*_browser_check.mjs` (sospechosos, causalidad y salidas, episodios anteriores, dos salidas, contenido de visita, identidad del libro, formulario simplificado), `farmacia_seguimiento_first_visit_drug_browser_check.mjs` y `farmacia_seguimiento_new_line_166_browser_check.mjs` (incluye releer el libro).

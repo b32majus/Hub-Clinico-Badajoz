@@ -718,6 +718,30 @@
                     eaDetailEl.appendChild(eaFieldRow);
                 }
                 eaCardEl.appendChild(eaDetailEl);
+                // Detalle de causalidad en solo lectura (HANDOFF punto 3):
+                // el episodio del modelo con el mismo episode_id, debajo de
+                // las filas de la tarjeta. Sin módulo cargado o sin episodio
+                // no se añade nada (sin error).
+                var causalityDetailModule = window.FarmaciaEaCausalityDetail;
+                if (causalityDetailModule && typeof causalityDetailModule.render === 'function') {
+                    var causalityEpisode = null;
+                    var modelEpisodes = ea.model && Array.isArray(ea.model.episodes) ? ea.model.episodes : [];
+                    for (var cei = 0; cei < modelEpisodes.length; cei++) {
+                        var causalityCandidate = modelEpisodes[cei];
+                        if (causalityCandidate && typeof causalityCandidate === 'object' &&
+                            String(causalityCandidate.episode_id || '') === String(eaCard.episode_id || '')) {
+                            causalityEpisode = causalityCandidate;
+                            break;
+                        }
+                    }
+                    if (causalityEpisode) {
+                        try {
+                            eaCardEl.appendChild(causalityDetailModule.render(causalityEpisode));
+                        } catch (causalityProblem) {
+                            // Bloque informativo: sin detalle no hay error.
+                        }
+                    }
+                }
                 container.appendChild(eaCardEl);
             }
             return;
