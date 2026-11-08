@@ -39,6 +39,8 @@ REN-OPEN-001…008: ver `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACI
 - Decidido el 27-10: se cierra «EA v1 demo» (ver `docs/DECISIONES.md`).
 - Continuidad/recurrencia (T02/T03) y exportación longitudinal: se piden después, con uso real.
 - Perfiles FHIR/openEHR: decisión del SES. FEDRA: autorización SES/AEMPS.
+- **G3 · Columnas EA en el CSV de Estadísticas** (pendiente desde 08-11): ¿cómo se representan varios episodios EA por paciente (0..N) en un CSV de una fila por paciente? Los contratos prohíben hoy modificar el CSV de 37 columnas y empaquetar JSON en celdas (`docs/contracts/FARMACIA_ANALYTICAL_LONGITUDINAL_EXPORT_V1.md` §4; `docs/contracts/FH_EA_0N_SPEC_V0_5_PRODUCT_BASE_20261018.md` D12, D13). Opciones sobre la mesa: un CSV EA aparte con una fila por evaluación, o columnas resumen en el CSV actual (obliga a actualizar 4 checks que fijan 37 columnas). Sin gravedad ni MedDRA en los datos. Responde: grupo de trabajo de Farmacia / Sil.
+- **G1 · Codificación MedDRA/CTCAE reales** (pendiente desde 08-11; #777, PR #778): qué diccionario, versión y licencia, y quién codifica. Hoy solo se muestra «pendiente de codificar»; nunca se inventan códigos. Responde: grupo de trabajo de Farmacia / Sil.
 
 ## Seguimiento (EA)
 - ¿Un «Otros fármaco» de tipo *Concomitante* cuenta como línea de la visita igual que el *Tratamiento activo previo / línea existente*? (RESUELTA por Sil 07-11: sí; *Biológico previo/histórico* y *Exposición* no son activos y siguen en `related_treatments_json`). Resto RESUELTA → ver DECISIONES (07-11, «otros fármacos activos = líneas propias»).
