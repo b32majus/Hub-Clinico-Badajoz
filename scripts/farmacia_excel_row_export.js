@@ -126,6 +126,17 @@
     return { resultado: '', estadoRegistro: '' };
   }
 
+  function normalizeMorisky(value) {
+    var cleaned = cleanValue(value);
+    if (cleaned === '') return '';
+    var normalized = cleaned.toLowerCase();
+    if (normalized === 'alta adherencia' || normalized === 'alta') return 'Alta';
+    if (normalized === 'adherencia media / parcial' || normalized === 'media') return 'Media';
+    if (normalized === 'baja adherencia' || normalized === 'baja') return 'Baja';
+    if (normalized === 'pendiente de completar' || normalized === 'no evaluada') return 'No evaluada';
+    return cleaned;
+  }
+
   /* ---- Construir objeto de fila desde contexto ---- */
   function buildExcelRowObject(context) {
     if (!context) context = {};
@@ -210,7 +221,7 @@
       bloqueantes_validacion: cleanValue(prebio ? (prebio.bloqueante || '') : ''),
       observaciones_validacion: cleanValue(context.obsValidacion || ''),
       /* F */
-      adherencia_morisky: cleanValue(proms ? (proms.morisky_green || proms.morisky || '') : ''),
+      adherencia_morisky: normalizeMorisky(cleanValue(proms ? (proms.morisky_green || proms.morisky || '') : '')),
       haq: cleanValue(proms ? (proms.haq || '') : ''),
       eva_dolor: cleanValue(proms ? (proms.eva_dolor || proms.evaDolor || '') : ''),
       dlqi: cleanValue(proms ? (proms.dlqi || '') : ''),
