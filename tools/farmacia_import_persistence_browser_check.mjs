@@ -125,6 +125,17 @@ async function importEnfermeria(page, file) {
   await page.setInputFiles('#inputExcelEnfermeria', file);
 }
 
+async function activeSolicitudIds(page) {
+  // #550 retiró el tablero de tarjetas de Inicio: la fuente activa se lee del
+  // snapshot persistido (filas con solicitud_id), no de `[data-enf-solicitud]`.
+  return page.evaluate(() => {
+    const raw = window.sessionStorage.getItem('farmaciaDemo.enfermeriaImport');
+    if (!raw) return [];
+    const rows = (JSON.parse(raw).rows || []);
+    return rows.map((row) => row.solicitud_id).filter(Boolean);
+  });
+}
+
 // ─── 1) No previous source + failing persistence ─────────────────────────────
 console.log('\n=== 1) Sin fuente previa + persistencia fallida => importación rechazada, sin activación engañosa ===');
 {
@@ -146,8 +157,7 @@ console.log('\n=== 1) Sin fuente previa + persistencia fallida => importación r
   assert(status.includes('no se ha activado ningún Excel nuevo'), 'mensaje declara que no hay Excel nuevo activo');
   assert(!status.includes('cargado ·'), 'sin afirmación "Excel cargado"');
 
-  const cardCount = await page.locator('[data-enf-solicitud]').count();
-  assert(cardCount === 0, 'cero tarjetas importadas (sin identidad fabricada)');
+  assert((await activeSolicitudIds(page)).length === 0, 'cero solicitudes importadas (sin identidad fabricada)');
 
   const dbTime = await page.locator('#dbStatusTime').textContent().catch(() => '');
   assert(!(dbTime || '').includes('Enfermería cargada'), 'indicador DB no reclama Enfermería cargada');
@@ -167,7 +177,7 @@ console.log('\n=== 2) Sustitución con fuente previa válida => B rechazado, A s
     const el = document.getElementById('estadoCargaEnfermeria');
     return el && (el.textContent || '').includes('cargado · 5 registros');
   }, null, { timeout: 15000 });
-  assert((await page.locator('[data-enf-solicitud]').count()) === 5, 'fuente A activa: 5 tarjetas');
+  assert((await activeSolicitudIds(page)).length === 5, 'fuente A activa: 5 solicitudes');
 
   const statusBefore = await page.locator('#estadoCargaEnfermeria').textContent();
 
@@ -186,11 +196,11 @@ console.log('\n=== 2) Sustitución con fuente previa válida => B rechazado, A s
   assert(status.includes('Sigue activo el Excel anterior'), 'mensaje declara la fuente anterior activa');
   assert(status.includes('enfermeria_v6_sintetico_v1.xlsx'), 'mensaje nombra el archivo anterior (A)');
 
-  const cardCount = await page.locator('[data-enf-solicitud]').count();
-  assert(cardCount === 5, `tablero sigue derivado de A: 5 tarjetas (recibido ${cardCount})`);
-  assert((await page.locator('[data-enf-solicitud="SOL-DER-000007"]').count()) === 0, 'ninguna tarjeta del candidato B (SOL-DER-000007)');
-  assert((await page.locator('[data-enf-solicitud="SOL-REU-000008"]').count()) === 0, 'ninguna tarjeta del candidato B (SOL-REU-000008)');
-  assert((await page.locator('[data-enf-solicitud="SOL-DER-000001"]').count()) === 1, 'tarjeta de A (SOL-DER-000001) sigue presente');
+  const ids = await activeSolicitudIds(page);
+  assert(ids.length === 5, `la fuente activa sigue siendo A: 5 solicitudes (recibido ${ids.length})`);
+  assert(ids.indexOf('SOL-DER-000007') === -1, 'ninguna solicitud del candidato B (SOL-DER-000007)');
+  assert(ids.indexOf('SOL-REU-000008') === -1, 'ninguna solicitud del candidato B (SOL-REU-000008)');
+  assert(ids.indexOf('SOL-DER-000001') !== -1, 'solicitud de A (SOL-DER-000001) sigue presente');
 
   // Functional state of A preserved byte-for-byte in real sessionStorage.
   const raw = await page.evaluate(() => window.sessionStorage.getItem('farmaciaDemo.enfermeriaImport'));
@@ -213,7 +223,7 @@ console.log('\n=== 3) Camino válido: persistencia confirmada sigue funcionando 
     return el && (el.textContent || '').includes('cargado · 5 registros');
   }, null, { timeout: 15000 });
   assert((await page.locator('#estadoCargaEnfermeria').textContent()).includes('Excel Enfermería cargado · 5 registros'), 'UI de carga correcta conservada');
-  assert((await page.locator('[data-enf-solicitud]').count()) === 5, 'tablero deriva del Excel cargado (5 tarjetas)');
+  assert((await activeSolicitudIds(page)).length === 5, 'la fuente activa deriva del Excel cargado (5 solicitudes)');
 
   const raw = await page.evaluate(() => window.sessionStorage.getItem('farmaciaDemo.enfermeriaImport'));
   assert(!!raw && JSON.parse(raw).rowCount === 5, 'persistencia real confirmada en sessionStorage');
