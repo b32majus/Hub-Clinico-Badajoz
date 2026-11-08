@@ -285,14 +285,14 @@ try {
     await waitForMode(demo, 'demo', DEMO_COUNT);
 
     try {
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 11, 'eleven quick-filter groups');
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 12, 'twelve quick-filter groups');
         assert.equal(await demo.locator('#qf-gravedad').count(), 0, 'gravedad filter retired (D3c-2)');
         assert.equal(await demo.locator('#qf-movimiento').getAttribute('data-quick-filter'), 'movimiento');
         assert.equal((await demo.locator('label[for="qf-movimiento"]').textContent()).trim(), 'Movimiento terapéutico registrado');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento'], 'movimiento stays last');
-        ok('demo: movimiento control present, labelled, last; no gravedad');
-    } catch (error) { bad('demo: movimiento control present, labelled, last; no gravedad', error.message); }
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes'], 'concurrentes appended last');
+        ok('demo: movimiento control before concurrentes in the row; no gravedad');
+    } catch (error) { bad('demo: movimiento control before concurrentes in the row; no gravedad', error.message); }
 
     try {
         const options = await movimientoOptions(demo);

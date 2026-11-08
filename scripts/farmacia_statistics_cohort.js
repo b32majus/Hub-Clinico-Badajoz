@@ -469,6 +469,57 @@
         if (VALIDATION_FILTER_KEYS.indexOf(value) === -1) throw new TypeError('VALIDATION_FILTER_INVALID');
         return explicitValidationResult(record && record.latest_validation) === value;
     }
+    // CONCUR #691 (contrato FARMACIA_ESTADISTICAS_FILTROS_COHORTE_CONTRACT §7):
+    // punto de evaluación = último acto. Se cuenta cada línea DISTINTA por
+    // `line_id` con su última foto (la del acto más reciente según el orden de
+    // `record.events[]`). Solo suma `active_at_event === true`; `null` es
+    // desconocida: no se cuenta y su cierre no se deduce de otro nombre.
+    var CONCURRENT_FILTER_KEYS = ['1', '2', '3plus'];
+
+    function concurrentLineCount(record) {
+        var events = record && Array.isArray(record.events) ? record.events : [];
+        var lines = record && Array.isArray(record.lines) ? record.lines : [];
+        var position = Object.create(null);
+        events.forEach(function (event, index) {
+            if (!event) return;
+            position[String(event.source_event_id)] = index;
+        });
+        var latest = Object.create(null);
+        lines.forEach(function (line) {
+            if (!line || !present(line.line_id)) return;
+            var lineId = String(line.line_id);
+            var eventId = line.source_event_id === null || line.source_event_id === undefined
+                ? '' : String(line.source_event_id);
+            // Un `source_event_id` que no está en events[] cuenta como el más antiguo.
+            var index = own(position, eventId) ? position[eventId] : -1;
+            if (!own(latest, lineId) || index >= latest[lineId].index) {
+                latest[lineId] = { index: index, active: line.active_at_event === true };
+            }
+        });
+        var count = 0;
+        Object.keys(latest).forEach(function (key) {
+            if (latest[key].active) count += 1;
+        });
+        return count;
+    }
+
+    function concurrentFilterOptions(records) {
+        if (!Array.isArray(records) || !records.length) return [];
+        var seen = {};
+        records.forEach(function (record) {
+            var count = concurrentLineCount(record);
+            if (count === 1) seen['1'] = true;
+            else if (count === 2) seen['2'] = true;
+            else if (count >= 3) seen['3plus'] = true;
+        });
+        return CONCURRENT_FILTER_KEYS.filter(function (value) { return seen[value]; });
+    }
+
+    function concurrentMatches(record, value) {
+        if (CONCURRENT_FILTER_KEYS.indexOf(value) === -1) throw new TypeError('CONCURRENT_FILTER_INVALID');
+        var count = concurrentLineCount(record);
+        return value === '3plus' ? count >= 3 : count === Number(value);
+    }
 
     // EA 0..N por paciente: envelope V2 tal cual se lee, traducido por el modelo
     // de pantalla. Ausente ≠ NO: sin contrato o sin modelo se declara
@@ -1033,6 +1084,9 @@
         eaMatches: eaMatches,
         eaSummary: eaSummary,
         validationFilterOptions: validationFilterOptions,
-        validationMatches: validationMatches
+        validationMatches: validationMatches,
+        concurrentLineCount: concurrentLineCount,
+        concurrentFilterOptions: concurrentFilterOptions,
+        concurrentMatches: concurrentMatches
     });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -123,6 +123,8 @@ Referencias: [exportación analítica longitudinal](FARMACIA_ANALYTICAL_LONGITUD
 
 **No fijado.** Cambio terapéutico frente a adición: solo lo documentará el equipo de FH (dependencia registrada). No consta una fecha de fin de línea explícita (no verificado).
 
+**Implementado (#691, decisión de Sil 08-11-2026).** Filtro rápido «Líneas activas» (1, 2, 3 o más). Punto de evaluación = último acto del paciente (orden de `record.events[]`); se cuentan líneas distintas por `line_id`, con su última foto; solo `active_at_event` true suma y null no suma ni se da por cerrada. No añade columnas al CSV. Check: `tools/farmacia_statistics_concurrent_filter_check.js`. Sin verificar: que `lines[]` excluya por origen biológicos previos y exposiciones (el check solo prueba que no se cuenta nada que no declare actividad).
+
 **Casos sintéticos.** Cohorte: pacientes con al menos dos líneas activas en el punto de evaluación.
 
 | Caso | Datos | ¿Entra en la cohorte? |
