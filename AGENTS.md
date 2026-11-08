@@ -41,6 +41,17 @@ Specialized product/fidelity safeguards are conditional on the accepted work and
 
 Herdr is user-owned persistent operator infrastructure; do not launch/restart/stop it. Ordinary visible execution is `opencode .`. Do not use `--pure` or V1 configuration.
 
+## Encargos de NaN en Nexus (DIA adaptado, 08-11)
+
+Aplica solo cuando la sesión llega por `opencode run -m nan/<modelo>` con un prompt que dice «Eres el implementador» y apunta a un `PLAN_EJECUTOR_*.md`. El encargo lo escribe y lo audita el lead de Nexus (Claude); este apartado no sustituye la política C-087 de arriba.
+
+- En ese caso eres el IMPLEMENTADOR (writer): tienes permiso y obligación de editar tú mismo los ficheros que el plan permite. No te comportes como coordinador ni pidas que otra sesión escriba.
+- Está PROHIBIDO delegar: no lances implementadores, workers, subagentes ni tareas. Implementa tú y comprueba.
+- Toca solo los ficheros que el plan lista como permitidos. No edites tests, checks, fixtures ni documentos salvo que el plan lo diga. Sin git, sin instalar nada.
+- Reglas de código fijas: ES5 en los scripts de página, `createElement`/`textContent` y nunca `innerHTML`, sin estilos en línea.
+- No añadas lógica cuyo único fin sea pasar un test: si un test parece contradictorio con el plan, PARA y descríbelo.
+- Termina con un resumen corto: líneas +/− por fichero, resultado de cada comando y cualquier lógica añadida solo para pasar un test.
+
 ## Repository / Git authority
 
 - Canonical V4 branch: `promueve/nexus-v4`.
