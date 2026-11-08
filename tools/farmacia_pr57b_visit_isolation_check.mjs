@@ -123,11 +123,11 @@ const controlsMatch = (expected) => Object.entries(expected).every(([id, value])
 api.syncLinesForPatient(fh004);
 const firstVisitId = api.getCurrentVisit().visit_id;
 check(api.getCurrentVisit().selected_line_ids.length === 0 && !api.getCurrentVisit().editing_line_id, 'FH-004 starts without selection or editor');
-check(ids.get('fhSegExportTxt').disabled && ids.get('fhSegExportCsv').disabled && ids.get('fhSegExcelExportBtn').disabled, 'zero selected lines disable all current exports');
+check(ids.get('fhSegExportTxt').disabled, 'zero selected lines disable the JARA export');
 
 api.toggleLineSelection('BIO-FH-004-L2', true);
 check(controlsMatch(defaults), 'fresh L2 restores visible baseline defaults');
-check(!ids.get('fhSegExportTxt').disabled && ids.get('fhSegExcelExportBtn').disabled, 'one evaluated line enables JARA but not row export before explicit dispensing');
+check(!ids.get('fhSegExportTxt').disabled, 'one evaluated line enables the JARA export');
 const beforeEmptyDeselect = confirmCalls;
 api.toggleLineSelection('BIO-FH-004-L2', false);
 check(confirmCalls === beforeEmptyDeselect && api.getCurrentVisit().selected_line_ids.length === 0, 'empty baseline line deselects immediately without confirm');
@@ -178,7 +178,7 @@ const editorBlock = (js.match(/function readVisibleLineState[\s\S]*?function tog
 const cipLifecycleBlock = (js.match(/function applyContext[\s\S]*?function initCipSearch/) || [''])[0];
 const visitImplementationPaths = [visitBlock, syncBlock, cipLifecycleBlock].join('\n');
 
-check(/visit_id: 'FH-VISIT-'.*Date\.now.*Math\.random/.test(visitBlock), 'visit_id is generated freshly in memory');
+check(/'FH-VISIT-' \+ Date\.now\(\)[\s\S]*?Math\.random/.test(visitBlock) && /visit_id: visitId/.test(visitBlock), 'visit_id is generated freshly in memory');
 check(js.includes('createFollowupVisit(requestedCip)') && js.includes('createFollowupVisit(currentSegPatient'), 'initial and changed CIP create a visit');
 check(!/sessionStorage|localStorage|indexedDB|FarmaciaMultitreatment|URLSearchParams|FARMACIA_DRUG_SNAPSHOT/.test(visitImplementationPaths), 'all visit/line-state paths avoid persistent, multitreatment, snapshot and URL storage');
 check(/selected_line_ids: \[\], dispensed_line_ids: \[\], editing_line_id: '', line_state: \{\}/.test(visitBlock), 'visit owns evaluated/dispensed IDs, editor ID and per-line state');
@@ -209,9 +209,8 @@ check(syncBlock.includes('currentFollowupVisit.line_state = {}'), 'known CIP hyd
 check(js.includes('syncBiologicControls(null)') && editorBlock.includes(": ''"), 'unknown CIP remains clean with line controls cleared');
 check(js.includes('LINE_CONTROL_DEFAULTS') && editorBlock.includes('LINE_CONTROL_DEFAULTS[id]'), 'fresh and discarded lines restore explicit contract defaults');
 
-check(js.includes('jara.disabled = count < 1') && js.includes('button.disabled = dispensedCount < 1'), 'PR57D replaces the obsolete exact-one interlock with evaluated/dispensed gates');
-check(html.includes('Marque al menos una línea como dispensada en esta visita para generar filas CSV o Excel.'), 'zero-dispense row-export notice is exact');
-check(html.includes('fhSegExportTxt') && html.includes('fhSegExportCsv') && html.includes('fhSegExcelExportBtn'), 'JARA, CSV and Excel export anchors remain');
+check(js.includes('jara.disabled = count < 1'), 'JARA export is gated by evaluated lines (CSV/Excel row export buttons retired in EA v1, 2256fad)');
+check(html.includes('fhSegExportTxt') && html.includes('fhSegExportBridgeRawBtn'), 'JARA and Bridge RAW export anchors remain');
 check(js.includes("'CIP-DEMO-FH-002': []") && js.includes("estado_linea: 'validated_not_started'"), 'FH-002/003 have no active selectable line');
 check(!/selected_line_ids.*tratamiento_id|editing_line_id.*tratamiento_id/.test(js), 'visit line identity has no treatment-ID fallback');
 
