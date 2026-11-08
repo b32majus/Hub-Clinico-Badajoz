@@ -22,7 +22,7 @@ Referencias: [exportación analítica longitudinal](FARMACIA_ANALYTICAL_LONGITUD
 
 **Fuente del dato.** `latest_validation.validation_result`, con valores `validated`, `denied`, `pending` y `not_recorded`. Existen además `latest_request.*` y `validated_*`, que informan pero no sustituyen al resultado de validación.
 
-**Regla fijada.** «Validación explícita» es `validation_result = validated` en la última validación del paciente. El filtro de «estado» actual (`care_status`) devuelve «seguimiento» cuando hay seguimiento y así oculta el resultado de validación: debe dejar de ocultarlo. Hallazgo para la futura implementación. Check cercano: `tools/farmacia_pv001_requested_not_validated_check.mjs`.
+**Regla fijada.** «Validación explícita» es `validation_result = validated` en la última validación del paciente. El filtro de «estado» actual (`care_status`) devuelve «seguimiento» cuando hay seguimiento y así oculta el resultado de validación: debe dejar de ocultarlo. **Implementado en #684** con un filtro propio «Validación» (`qf-validacion`, `Cohort.validationFilterOptions` / `Cohort.validationMatches`), independiente de `care_status`; «Estado seguimiento» no cambia. Check: `tools/farmacia_statistics_validation_filter_check.js`. Check cercano: `tools/farmacia_pv001_requested_not_validated_check.mjs`.
 
 **No fijado.** No se declara dependencia abierta del equipo de FH para este filtro. Lo pendiente es corregir en la implementación la ocultación del resultado por `care_status`.
 

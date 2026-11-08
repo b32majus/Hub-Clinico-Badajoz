@@ -221,6 +221,7 @@
         var eaOptions = Cohort.eaFilterOptions(eaRecords(allPatients));
         values.ea_sospechoso = eaOptions.suspects;
         values.ea_metodo = eaOptions.methods;
+        values.validacion = Cohort.validationFilterOptions(eaRecords(allPatients));
         return values;
     }
 
@@ -248,6 +249,7 @@
         fillSelect('qf-ea_metodo', options.ea_metodo, 'Todos');
         fillSelect('qf-movimiento', options.movimiento, 'Todos');
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
+        fillSelect('qf-validacion', options.validacion, 'Todas', careLabel);
         fillSelect('qf-ea', options.ea, 'Todos', adverseLabel);
         fillSelect('qf-adherencia', options.adherencia, 'Todas', function (value) {
             return value === 'multiple' ? 'Múltiple' : (value === 'not_recorded' ? 'No registrado' : value);
@@ -271,6 +273,7 @@
         if (filters.principio && profile.activeIngredients.indexOf(filters.principio) === -1) return false;
         if (filters.movimiento && profile.movementTypes.indexOf(filters.movimiento) === -1) return false;
         if (filters.estado && profile.careStatus !== filters.estado) return false;
+        if (filters.validacion && !Cohort.validationMatches(item.record, filters.validacion)) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
         if (Object.keys(eaFilters).length && !Cohort.eaMatches(item.record, eaFilters)) return false;
@@ -351,7 +354,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
