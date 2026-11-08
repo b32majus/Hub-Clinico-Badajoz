@@ -285,12 +285,12 @@ try {
     await waitForMode(demo, 'demo', DEMO_COUNT);
 
     try {
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 14, 'fourteen quick-filter groups (#690 adds Desde/Hasta)');
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 17, 'seventeen quick-filter groups (#690 adds Desde/Hasta; #687/#688/#689 add Dosis/Vía/Pauta)');
         assert.equal(await demo.locator('#qf-gravedad').count(), 0, 'gravedad filter retired (D3c-2)');
         assert.equal(await demo.locator('#qf-movimiento').getAttribute('data-quick-filter'), 'movimiento');
         assert.equal((await demo.locator('label[for="qf-movimiento"]').textContent()).trim(), 'Movimiento terapéutico registrado');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes', 'qf-desde', 'qf-hasta'], 'since/hasta (#690) appended after concurrentes, last in the row');
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes', 'qf-desde', 'qf-hasta', 'qf-dosis', 'qf-via', 'qf-pauta'], 'since/hasta (#690) appended after concurrentes; dosis/via/pauta (#687/#688/#689) after hasta');
         ok('demo: movimiento control before concurrentes in the row; no gravedad');
     } catch (error) { bad('demo: movimiento control before concurrentes in the row; no gravedad', error.message); }
 

@@ -551,6 +551,115 @@
         return value === '3plus' ? count >= 3 : count === Number(value);
     }
 
+    // LINE #687/#688/#689 (contrato FARMACIA_ESTADISTICAS_FILTROS_COHORTE_CONTRACT
+    // §3-§5): filtros de texto EXACTO sobre el valor vigente de los campos de
+    // línea («Dosis», «Vía», «Pauta»). Valor vigente = el de la ÚLTIMA foto de
+    // la línea según el orden de `record.events[]` (mismo criterio que
+    // `concurrentLineCount`: un `source_event_id` fuera de `events[]` cuenta
+    // como el más antiguo; empate → la foto posterior del array), sustituido
+    // después por cada movimiento de esa línea con `new_*` no vacío, en el
+    // orden del array (el último no vacío manda). Pauta: código de línea si no
+    // vacío, si no etiqueta; en el movimiento, código nuevo si no vacío, si no
+    // etiqueta nueva. Vacío o sólo espacios = «no registrado»: no se devuelve.
+    // Los agregados `*_values` del paciente NO se usan. Comparación de texto
+    // exacta, sin recortar ni minúsculas.
+    var LINE_FIELDS = {
+        dose: { line: 'dose_text', move: 'new_dose_text' },
+        route: { line: 'route', move: 'new_route' },
+        schedule: {
+            line: 'schedule_code', lineFallback: 'schedule_label',
+            move: 'new_schedule_code', moveFallback: 'new_schedule_label'
+        }
+    };
+
+    function lineFieldSpec(field) {
+        return own(LINE_FIELDS, field) ? LINE_FIELDS[field] : null;
+    }
+
+    // Valor declarado en una foto de línea; `schedule` usa el código si no
+    // vacío y si no la etiqueta.
+    function linePhotoValue(line, spec) {
+        if (spec.lineFallback !== undefined) {
+            return present(line[spec.line]) ? line[spec.line] : line[spec.lineFallback];
+        }
+        return line[spec.line];
+    }
+
+    // Valor declarado en un movimiento; `schedule` usa el código nuevo si no
+    // vacío y si no la etiqueta nueva.
+    function lineMovementValue(movement, spec) {
+        if (spec.moveFallback !== undefined) {
+            return present(movement[spec.move]) ? movement[spec.move] : movement[spec.moveFallback];
+        }
+        return movement[spec.move];
+    }
+
+    // Valores vigentes del campo, uno por `line_id` distinto (las líneas sin
+    // `line_id` se ignoran), sin vacíos ni sólo espacios. Nunca lanza.
+    function lineFieldValues(record, field) {
+        var spec = lineFieldSpec(field);
+        if (!spec) return [];
+        var events = record && Array.isArray(record.events) ? record.events : [];
+        var lines = record && Array.isArray(record.lines) ? record.lines : [];
+        var position = Object.create(null);
+        events.forEach(function (event, index) {
+            if (!event) return;
+            position[String(event.source_event_id)] = index;
+        });
+        var latest = Object.create(null);
+        lines.forEach(function (line) {
+            if (!line || !present(line.line_id)) return;
+            var lineId = String(line.line_id);
+            var eventId = line.source_event_id === null || line.source_event_id === undefined
+                ? '' : String(line.source_event_id);
+            // Un `source_event_id` fuera de events[] cuenta como el más antiguo;
+            // empate de índice → la foto posterior en el array.
+            var index = own(position, eventId) ? position[eventId] : -1;
+            if (!own(latest, lineId) || index >= latest[lineId].index) {
+                latest[lineId] = { index: index, value: linePhotoValue(line, spec) };
+            }
+        });
+        var current = Object.create(null);
+        Object.keys(latest).forEach(function (lineId) {
+            current[lineId] = latest[lineId].value;
+        });
+        var movements = record && Array.isArray(record.therapeutic_movements)
+            ? record.therapeutic_movements : [];
+        movements.forEach(function (movement) {
+            if (!movement || !present(movement.line_id)) return;
+            var lineId = String(movement.line_id);
+            if (!own(current, lineId)) return;
+            var value = lineMovementValue(movement, spec);
+            if (present(value)) current[lineId] = value; // el último no vacío manda
+        });
+        return Object.keys(current).filter(function (lineId) {
+            return present(current[lineId]);
+        }).map(function (lineId) {
+            return String(current[lineId]);
+        });
+    }
+
+    function lineFieldMatches(record, field, value) {
+        if (!lineFieldSpec(field) || typeof value !== 'string' || value === '') {
+            throw new TypeError('LINE_FILTER_INVALID');
+        }
+        // Record nulo o sin líneas: sin valores vigentes, no entra y nunca lanza.
+        return lineFieldValues(record, field).indexOf(value) !== -1;
+    }
+
+    function lineFieldOptions(records, field) {
+        if (!Array.isArray(records) || !records.length || !lineFieldSpec(field)) return [];
+        var seen = Object.create(null);
+        var values = [];
+        records.forEach(function (record) {
+            lineFieldValues(record, field).forEach(function (value) {
+                if (seen[value]) return;
+                seen[value] = true;
+                values.push(value);
+            });
+        });
+        return values.sort(compareText);
+    }
     // TIME #690 (contrato FARMACIA_ESTADISTICAS_FILTROS_COHORTE_CONTRACT §6):
     // ventana temporal «Desde»/«Hasta» sobre clinical_date. Límites
     // opcionales e inclusivos. Un límite declarado debe ser una fecha
@@ -1160,6 +1269,8 @@
         concurrentLineCount: concurrentLineCount,
         concurrentFilterOptions: concurrentFilterOptions,
         concurrentMatches: concurrentMatches,
+        lineFieldMatches: lineFieldMatches,
+        lineFieldOptions: lineFieldOptions,
         timeWindowMatches: timeWindowMatches,
         timeWindowAvailable: timeWindowAvailable
     });
