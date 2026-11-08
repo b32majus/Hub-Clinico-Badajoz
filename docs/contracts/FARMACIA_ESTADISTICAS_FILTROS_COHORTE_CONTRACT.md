@@ -45,6 +45,8 @@ Referencias: [exportación analítica longitudinal](FARMACIA_ANALYTICAL_LONGITUD
 
 **No fijado.** No consta un campo «unidad» separado (no verificado). Hasta que el equipo de FH lo confirme, la unidad forma parte del texto libre de la dosis.
 
+**Implementado (#687, 08-11-2026).** Control rápido de lista con los valores presentes en los datos; igualdad exacta de texto sobre el valor vigente de cada línea: última foto por `line_id` (orden de `events[]`), sustituida por el último movimiento posterior de esa línea con `new_*` no vacío. Vacío o solo espacios = «no registrado»: no entra. No usa los agregados `*_values`. La unidad forma parte del texto de la dosis. Checks: `tools/farmacia_statistics_line_fields_filter_check.js` y `tools/farmacia_statistics_line_fields_browser_check.mjs`.
+
 **Casos sintéticos.**
 
 | Caso | Datos | ¿Entra en la cohorte? |
@@ -65,6 +67,8 @@ Referencias: [exportación analítica longitudinal](FARMACIA_ANALYTICAL_LONGITUD
 
 **No fijado.** La lista de etiquetas y códigos autorizados la debe aportar el equipo de FH. Hasta entonces, el filtro usa solo los valores presentes en los datos.
 
+**Implementado (#688, 08-11-2026).** Control rápido de lista con los valores presentes en los datos; igualdad exacta de texto sobre el valor vigente de cada línea: última foto por `line_id` (orden de `events[]`), sustituida por el último movimiento posterior de esa línea con `new_*` no vacío. Vacío o solo espacios = «no registrado»: no entra. No usa los agregados `*_values`. La lista autorizada de vías sigue pendiente del equipo de FH. Checks: `tools/farmacia_statistics_line_fields_filter_check.js` y `tools/farmacia_statistics_line_fields_browser_check.mjs`.
+
 **Casos sintéticos.**
 
 | Caso | Datos | ¿Entra en la cohorte? |
@@ -83,6 +87,8 @@ Referencias: [exportación analítica longitudinal](FARMACIA_ANALYTICAL_LONGITUD
 **Regla fijada.** La pauta «otro texto» cuenta como pauta libre, distinta del código y de la etiqueta, y no se mezcla con ellas. Hoy se funde con la etiqueta, lo que borra la distinción: hallazgo para la futura implementación. Igualdad exacta, misma línea.
 
 **No fijado.** La lista de códigos válidos la debe aportar el equipo de FH. Queda sin fijar la pauta actual frente al cambio temporal (`new_*` de optimización).
+
+**Implementado (#689, 08-11-2026).** Control rápido de lista con los valores presentes en los datos; igualdad exacta de texto sobre el valor vigente de cada línea: última foto por `line_id` (orden de `events[]`), sustituida por el último movimiento posterior de esa línea con `new_*` no vacío. Vacío o solo espacios = «no registrado»: no entra. No usa los agregados `*_values`. Pauta = código si lo hay, si no etiqueta; la pauta libre (`*_other_text`) llega ya fundida con la etiqueta en `lines[]`, así que no se distingue de ella (pendiente). La pauta cuenta la vigente (con `new_*`), no la histórica. La lista de códigos válidos sigue pendiente de FH. Checks: `tools/farmacia_statistics_line_fields_filter_check.js` y `tools/farmacia_statistics_line_fields_browser_check.mjs`.
 
 **Casos sintéticos.**
 

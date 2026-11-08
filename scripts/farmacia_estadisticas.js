@@ -229,6 +229,10 @@
         values.ea_metodo = eaOptions.methods;
         values.validacion = Cohort.validationFilterOptions(eaRecords(allPatients));
         values.concurrentes = Cohort.concurrentFilterOptions(eaRecords(allPatients));
+        // Dosis/Vía/Pauta (#687/#688/#689): valores vigentes de línea.
+        values.dosis = Cohort.lineFieldOptions(eaRecords(allPatients), 'dose');
+        values.via = Cohort.lineFieldOptions(eaRecords(allPatients), 'route');
+        values.pauta = Cohort.lineFieldOptions(eaRecords(allPatients), 'schedule');
         return values;
     }
 
@@ -258,6 +262,9 @@
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
         fillSelect('qf-validacion', options.validacion, 'Todas', careLabel);
         fillSelect('qf-concurrentes', options.concurrentes, 'Todas', concurrentLabel);
+        fillSelect('qf-dosis', options.dosis, 'Todas');
+        fillSelect('qf-via', options.via, 'Todas');
+        fillSelect('qf-pauta', options.pauta, 'Todas');
         fillSelect('qf-ea', options.ea, 'Todos', adverseLabel);
         fillSelect('qf-adherencia', options.adherencia, 'Todas', function (value) {
             return value === 'multiple' ? 'Múltiple' : (value === 'not_recorded' ? 'No registrado' : value);
@@ -294,6 +301,11 @@
         var from = filters.desde || '', to = filters.hasta || '';
         if (from && to && from > to) return false; // ventana invertida: cero resultados, sin error
         if ((from || to) && !Cohort.timeWindowMatches(item.record, from, to)) return false;
+        // Dosis/Vía/Pauta (#687/#688/#689): igualdad exacta con algún valor
+        // vigente de línea del paciente.
+        if (filters.dosis && !Cohort.lineFieldMatches(item.record, 'dose', filters.dosis)) return false;
+        if (filters.via && !Cohort.lineFieldMatches(item.record, 'route', filters.via)) return false;
+        if (filters.pauta && !Cohort.lineFieldMatches(item.record, 'schedule', filters.pauta)) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
         if (Object.keys(eaFilters).length && !Cohort.eaMatches(item.record, eaFilters)) return false;
@@ -374,7 +386,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación', concurrentes: 'Líneas activas', desde: 'Desde', hasta: 'Hasta' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación', concurrentes: 'Líneas activas', dosis: 'Dosis', via: 'Vía', pauta: 'Pauta', desde: 'Desde', hasta: 'Hasta' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));

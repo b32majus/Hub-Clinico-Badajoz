@@ -231,7 +231,7 @@ async function assertReachable(page, label) {
         }
         return { overlap, scrollW: row.scrollWidth, clientW: row.clientWidth, count: groups.length };
     });
-    assert.equal(rowCheck.count, 14, `${label}: fourteen groups in the row (D3c-2: gravedad → sospechoso + método de EA; #691: + concurrentes; #690: + Desde/Hasta)`);
+    assert.equal(rowCheck.count, 17, `${label}: seventeen groups in the row (D3c-2: gravedad → sospechoso + método de EA; #691: + concurrentes; #690: + Desde/Hasta; #687/#688/#689: + Dosis/Vía/Pauta)`);
     assert.equal(rowCheck.overlap, '', `${label}: no quick-filter group overlaps another (${rowCheck.overlap})`);
     assert(rowCheck.scrollW <= rowCheck.clientW + 1, `${label}: row contains its groups (scroll=${rowCheck.scrollW} client=${rowCheck.clientW})`);
     const docOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -250,13 +250,13 @@ try {
     await waitForMode(demo, 'demo', DEMO_COUNT);
 
     try {
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 14, 'fourteen quick-filter groups');
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 17, 'seventeen quick-filter groups');
         assert.equal(await demo.locator('#qf-principio').getAttribute('data-quick-filter'), 'principio');
         assert.equal((await demo.locator('label[for="qf-principio"]').textContent()).trim(), 'Principio activo registrado');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes', 'qf-desde', 'qf-hasta'], 'desde/hasta (#690) appended after concurrentes in the approved order');
-        ok('demo: fourteen controls present, labelled, appended in approved order');
-    } catch (error) { bad('demo: fourteen controls present, labelled, appended in approved order', error.message); }
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes', 'qf-desde', 'qf-hasta', 'qf-dosis', 'qf-via', 'qf-pauta'], 'desde/hasta (#690) appended after concurrentes; dosis/via/pauta (#687/#688/#689) after hasta');
+        ok('demo: seventeen controls present, labelled, appended in approved order');
+    } catch (error) { bad('demo: seventeen controls present, labelled, appended in approved order', error.message); }
 
     try {
         const options = await principioOptions(demo);
