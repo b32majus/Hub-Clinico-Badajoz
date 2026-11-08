@@ -42,14 +42,15 @@ const page = await context.newPage();
 const consoleErrors = [];
 const pageErrors = [];
 const observations = [];
-let dialogAction = 'dismiss';
+let dialogAction = 'accept';
+const dialogs = [];
 
 page.on('console', (message) => {
   observations.push(`console.${message.type()}: ${message.text()}`);
   if (message.type() === 'error') consoleErrors.push(message.text());
 });
 page.on('pageerror', (error) => pageErrors.push(error.message));
-page.on('dialog', (dialog) => dialogAction === 'accept' ? dialog.accept() : dialog.dismiss());
+page.on('dialog', (dialog) => { dialogs.push({ type: dialog.type(), message: dialog.message(), action: dialogAction }); return dialogAction === 'accept' ? dialog.accept() : dialog.dismiss(); });
 
 try {
   const validationSource = readFileSync(path.join(ROOT, 'scripts', 'farmacia_validacion.js'), 'utf8');
@@ -251,7 +252,9 @@ try {
   const requestedSnapshot = async (cip) => Object.values((await snapshotRegistry()).snapshots)
     .find((snapshot) => snapshot.context?.slot === 'validacion.solicitado' && snapshot.context?.cip === cip);
 
-  const chooseFirst = async ({ cip, childSelector, label, query = SEARCH_QUERY }) => {
+  /* Política común (2b, DECISIONES 08-11): elegir otro fármaco con pauta, dosis o vía escritas pide confirmar y, al aceptar, borra lo escrito.
+     `expectReplacement` fija si debe aparecer el aviso; sin él, se adapta a lo que ocurra. */
+  const chooseFirst = async ({ cip, childSelector, label, query = SEARCH_QUERY, expectReplacement }) => {
     await page.locator('#fhManualCip').fill(cip);
     await requestedFields.principioActivo.fill('');
     await requestedFields.dosis.fill('');
@@ -267,7 +270,13 @@ try {
     assert.equal((await first.locator('.drug-source-tag').textContent()).trim(), 'CIMA', `${label}: first result source`);
     const eventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
 
+    const dialogsBefore = dialogs.length;
+    const pautaBefore = await pauta.inputValue();
     await first.locator(childSelector).click();
+    const replaced = dialogs.length > dialogsBefore;
+    if (expectReplacement !== undefined) assert.equal(replaced, expectReplacement, `${label}: replacement confirmation ${expectReplacement ? 'shown' : 'not shown'}`);
+    if (replaced) assert.match(dialogs[dialogs.length - 1].message, /se borrarán/, `${label}: confirmation says written data is deleted`);
+    const expectedPauta = replaced ? '' : pautaBefore;
     const immediate = await readRequested();
     const summaryImmediate = cip ? await copyRequestedSummary() : null;
     await page.waitForTimeout(500);
@@ -282,14 +291,14 @@ try {
     assertAssociatedFields(immediate, expected, `${label}: immediately after click`);
     assert.deepEqual(delayed, immediate, `${label}: values stable after 500 ms`);
     assertAssociatedFields(delayed, expected, `${label}: after 500 ms`);
-    assert.equal(immediate.pauta, 'CADA_3_SEMANAS', `${label}: pauta preserved`);
+    assert.equal(immediate.pauta, expectedPauta, `${label}: pauta ${replaced ? 'cleared by the confirmed replacement' : 'preserved'}`);
     assert.equal(immediate.induccion, 'si', `${label}: induccion preserved`);
     if (cip) {
       const sectionImmediate = requestedSection(summaryImmediate);
       const sectionDelayed = requestedSection(summaryDelayed);
       assertRequestedSummary(sectionImmediate, expected, `${label}: immediately after click`);
       assertRequestedSummary(sectionDelayed, expected, `${label}: after 500 ms`);
-      assert.match(sectionDelayed, /Pauta: Cada 3 semanas/, `${label}: JARA exports Cada 3 semanas`);
+      if (expectedPauta === 'CADA_3_SEMANAS') assert.match(sectionDelayed, /Pauta: Cada 3 semanas/, `${label}: JARA exports Cada 3 semanas`);
       assert.equal(sectionDelayed, sectionImmediate, `${label}: requested summary stable after 500 ms`);
     } else {
       assert.ok(await page.locator('#fhValExportTxt').isDisabled(), `${label}: empty CIP keeps JARA disabled`);
@@ -343,7 +352,7 @@ try {
   }, 'selecting requested treatment does not populate any validated field');
 
   const registryBeforeEmpty = await snapshotRegistry();
-  const emptyCip = await chooseFirst({ cip: '', childSelector: '.autocomplete-item-name', label: 'empty CIP / first result name' });
+  const emptyCip = await chooseFirst({ cip: '', childSelector: '.autocomplete-item-name', label: 'empty CIP / first result name', expectReplacement: true });
   assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP remains visible without creating or changing a snapshot');
   await requested.fill('');
   await requested.fill('tociliz');
@@ -351,6 +360,7 @@ try {
   const emptySecondItem = dropdown.locator('.autocomplete-item').nth(1);
   const emptySecondExpected = await visibleCandidate(emptySecondItem);
   assert.notEqual(emptySecondExpected.dosis, emptyCip.expected.dosis, 'empty-CIP second fixture has a distinct catalog dose');
+  const dialogsBeforeEmptySecond = dialogs.length;
   const emptySecondEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
   await emptySecondItem.locator('.autocomplete-item-name').click();
   const emptySecondImmediate = await readRequested();
@@ -361,7 +371,8 @@ try {
   observations.push(`empty CIP second distinct product: after500ms=${JSON.stringify(emptySecondDelayed)}`);
   assertAssociatedFields(emptySecondImmediate, emptySecondExpected, 'empty CIP second distinct product');
   assert.deepEqual(emptySecondDelayed, emptySecondImmediate, 'empty CIP second distinct product remains stable after 500 ms');
-  assert.equal(emptySecondImmediate.pauta, 'CADA_3_SEMANAS', 'empty CIP second product preserves pauta');
+  assert.equal(dialogs.length, dialogsBeforeEmptySecond, 'empty CIP second product shows no confirmation: nothing was written since the last replacement');
+  assert.equal(emptySecondImmediate.pauta, '', 'empty CIP second product keeps pauta empty (cleared by the confirmed replacement above)');
   assert.equal(emptySecondImmediate.induccion, 'si', 'empty CIP second product preserves induction');
   assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP second product still creates no snapshot');
   const transientProfessionalEdit = { dosis: '888 mg edición profesional', via: 'Oral' };
@@ -372,6 +383,7 @@ try {
   await dropdown.waitFor({ state: 'visible' });
   const emptyEditedThirdItem = dropdown.locator('.autocomplete-item').first();
   const emptyEditedThirdExpected = await visibleCandidate(emptyEditedThirdItem);
+  const dialogsBeforeEditedThird = dialogs.length;
   const emptyEditedThirdEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
   await emptyEditedThirdItem.locator('.autocomplete-item-name').click();
   const emptyEditedThirdImmediate = await readRequested();
@@ -382,9 +394,12 @@ try {
   observations.push(`empty CIP product after professional edit: after500ms=${JSON.stringify(emptyEditedThirdDelayed)}`);
   assert.equal(emptyEditedThirdImmediate.farmaco, emptyEditedThirdExpected.farmaco, 'empty CIP later selection replaces product identity after professional edit');
   assert.equal(emptyEditedThirdImmediate.principioActivo, emptyEditedThirdExpected.principioActivo, 'empty CIP later selection replaces active ingredient after professional edit');
-  assert.equal(emptyEditedThirdImmediate.dosis, transientProfessionalEdit.dosis, 'empty CIP later selection preserves professionally edited dose');
-  assert.equal(emptyEditedThirdImmediate.via, transientProfessionalEdit.via, 'empty CIP later selection preserves professionally edited route');
-  assert.equal(emptyEditedThirdImmediate.pauta, 'CADA_3_SEMANAS', 'empty CIP later selection preserves pauta after professional edit');
+  /* Política común (2b): dosis/vía escritas a mano → aviso; al aceptar se borran y queda la propuesta del catálogo. */
+  assert.equal(dialogs.length, dialogsBeforeEditedThird + 1, 'empty CIP later selection asks to confirm because dose/route were written by hand');
+  assert.match(dialogs[dialogs.length - 1].message, /se borrarán/, 'confirmation says written data is deleted');
+  assert.equal(emptyEditedThirdImmediate.dosis, emptyEditedThirdExpected.dosis, 'confirmed replacement drops the professionally edited dose for the catalog proposal');
+  assert.equal(emptyEditedThirdImmediate.via, emptyEditedThirdExpected.via, 'confirmed replacement drops the professionally edited route for the catalog proposal');
+  assert.equal(emptyEditedThirdImmediate.pauta, '', 'empty CIP later selection keeps pauta empty');
   assert.equal(emptyEditedThirdImmediate.induccion, 'si', 'empty CIP later selection preserves induction after professional edit');
   assert.deepEqual(emptyEditedThirdDelayed, emptyEditedThirdImmediate, 'empty CIP professional edits remain stable after 500 ms');
   assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP professional-edit selection creates no snapshot');
@@ -399,6 +414,7 @@ try {
   const transitionItem = dropdown.locator('.autocomplete-item').nth(1);
   const transitionExpected = await visibleCandidate(transitionItem);
   assert.notEqual(transitionExpected.dosis, transitionSeed.expected.dosis, 'new-context fixture has a distinct proposed dose');
+  const transitionPautaBefore = await pauta.inputValue();
   const transitionEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
   await transitionItem.locator('.autocomplete-item-name').click();
   const transitionImmediate = await readRequested();
@@ -409,7 +425,7 @@ try {
   observations.push(`empty CIP to new synthetic context: after500ms=${JSON.stringify(transitionDelayed)}`);
   assertAssociatedFields(transitionImmediate, transitionExpected, 'new synthetic CIP uses transient proposals for distinct selection');
   assert.deepEqual(transitionDelayed, transitionImmediate, 'new synthetic CIP distinct selection remains stable after 500 ms');
-  assert.equal(transitionImmediate.pauta, 'CADA_3_SEMANAS', 'new synthetic CIP transition preserves pauta');
+  assert.equal(transitionImmediate.pauta, transitionPautaBefore, 'new synthetic CIP transition keeps the current pauta (nothing written since the last replacement)');
   assert.equal(transitionImmediate.induccion, 'si', 'new synthetic CIP transition preserves induction');
   const transitionRegistry = await snapshotRegistry();
   const transitionSnapshots = Object.values(transitionRegistry.snapshots).filter((snapshot) => snapshot.context?.slot === 'validacion.solicitado' && snapshot.context?.cip === transitionSyntheticCip);
@@ -502,11 +518,14 @@ try {
   const professionalTransition = { dosis: '919 mg profesional', via: 'Oral' };
   await requestedFields.dosis.fill(professionalTransition.dosis);
   await requestedFields.via.selectOption(professionalTransition.via);
+  const dialogsBeforeEdited = dialogs.length;
   const priorityEdited = await selectVisibleProduct({ cip: cipB, query: SEARCH_QUERY, index: 0, label: 'valid CIP transition after professional edits' });
   assert.equal(priorityEdited.actual.farmaco, priorityEdited.expected.farmaco, 'professional transition changes product identity');
   assert.equal(priorityEdited.actual.principioActivo, priorityEdited.expected.principioActivo, 'professional transition changes active ingredient identity');
-  assert.equal(priorityEdited.actual.dosis, professionalTransition.dosis, 'professional transition preserves manually edited dose');
-  assert.equal(priorityEdited.actual.via, professionalTransition.via, 'professional transition preserves manually edited route');
+  /* Política común (2b): dosis/vía escritas a mano → aviso; al aceptar se borran y queda la propuesta del catálogo. */
+  assert.equal(dialogs.length, dialogsBeforeEdited + 1, 'professional transition asks to confirm because dose/route were written by hand');
+  assert.equal(priorityEdited.actual.dosis, priorityEdited.expected.dosis, 'confirmed professional transition drops the edited dose for the catalog proposal');
+  assert.equal(priorityEdited.actual.via, priorityEdited.expected.via, 'confirmed professional transition drops the edited route for the catalog proposal');
   assert.equal((await requestedSnapshot(cipB))?.nombre_snapshot, priorityEdited.expected.farmaco, 'professional transition updates CIP-B snapshot identity');
   await assertClinicalUnchanged('valid CIP transition after professional edits');
 
@@ -529,6 +548,7 @@ try {
   const secondExpected = await visibleCandidate(second);
   const secondName = secondExpected.farmaco;
   assert.ok(Object.values(secondExpected).every(Boolean), 'second visible result exposes all associated therapeutic values');
+  const secondPautaBefore = await pauta.inputValue();
   const secondEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
   await second.locator('.autocomplete-item-name').click();
   const secondImmediate = await readRequested();
@@ -544,13 +564,26 @@ try {
   assertAssociatedFields(secondImmediate, secondExpected, 'second product immediately after rerender click');
   assert.deepEqual(secondDelayed, secondImmediate, 'second product stable after 500 ms');
   assertAssociatedFields(secondDelayed, secondExpected, 'second product after rerender and 500 ms');
-  assert.equal(secondImmediate.pauta, 'CADA_3_SEMANAS', 'second product preserves pauta');
+  assert.equal(secondImmediate.pauta, secondPautaBefore, 'second product keeps the current pauta (nothing written since the last replacement)');
   assert.equal(secondImmediate.induccion, 'si', 'second product preserves induccion');
   const secondSectionImmediate = requestedSection(secondSummaryImmediate);
   const secondSectionDelayed = requestedSection(secondSummaryDelayed);
   assertRequestedSummary(secondSectionImmediate, secondExpected, 'second product summary immediately after rerender click');
   assertRequestedSummary(secondSectionDelayed, secondExpected, 'second product summary after rerender and 500 ms');
   assert.equal(secondSectionDelayed, secondSectionImmediate, 'second product requested summary stable after 500 ms');
+
+  /* Política común (2b): rechazar el aviso deja el fármaco y lo escrito como estaban. */
+  await pauta.selectOption('CADA_3_SEMANAS');
+  const declineBefore = await readRequested();
+  const declineDialogs = dialogs.length;
+  dialogAction = 'dismiss';
+  await requested.fill('');
+  await requested.fill('tociliz');
+  await dropdown.waitFor({ state: 'visible' });
+  await dropdown.locator('.autocomplete-item').first().locator('.autocomplete-item-name').click();
+  dialogAction = 'accept';
+  assert.equal(dialogs.length, declineDialogs + 1, 'choosing another drug over a written pauta asks to confirm');
+  assert.deepEqual(await readRequested(), declineBefore, 'declining the confirmation keeps the previous drug and everything written');
 
   const validated = page.locator('#fhValidadoFarmaco');
   await validatedFields.pauta.selectOption('CADA_3_SEMANAS');
