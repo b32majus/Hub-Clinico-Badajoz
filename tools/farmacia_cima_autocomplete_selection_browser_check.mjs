@@ -13,7 +13,7 @@
 //  B. after selecting, the list is closed and stays closed 500 ms later;
 //  C. every form field with catalogue data is filled from the chosen product;
 //  D. a second selection replaces every catalogue field, with no CIP context;
-//  E. a professional edit survives a later selection (agreed product decision);
+//  E. a professional edit asks for confirmation before a later selection replaces it;
 //  F. filled fields remain editable and the edited value is preserved;
 //  G. keyboard ArrowDown + Enter still selects;
 //  H. an entry that cannot be selected is not offered.
@@ -293,19 +293,29 @@ try {
     });
   }
 
-  // E — agreed product decision: a professional edit is never overwritten.
-  await check('validated: a professional edit survives a later catalogue selection', async () => {
+  // E — política común (#881, 2b): una dosis escrita a mano pide confirmación
+  // antes de cambiar de fármaco; descartar lo conserva todo y aceptar la sustituye.
+  await check('validated: a professional edit asks before a later selection replaces it', async () => {
     const { fields } = SURFACES.validated;
     await resetFields(page, 'validated');
     let dropdown = await openList(page, SURFACES.validated);
     await optionFor(dropdown, PRODUCT_A.name).click();
     await page.locator('#fhValidadoDosis').fill('175 mg profesional');
+    const messages = [];
+    page.once('dialog', (dialog) => { messages.push(dialog.message()); return dialog.dismiss(); });
     dropdown = await openList(page, SURFACES.validated);
     await optionFor(dropdown, PRODUCT_B.name).click();
-    const values = await readValues(page, Object.keys(fields));
-    assert.equal(values.fhValidadoDosis, '175 mg profesional', 'validated: the professional dose is preserved');
-    assert.equal(values.fhValidadoPresentacion, PRODUCT_B.presentation, 'validated: the untouched presentation follows the second product');
-    assert.equal(values.fhValidadoVia, PRODUCT_B.route, 'validated: the untouched route follows the second product');
+    let values = await readValues(page, Object.keys(fields));
+    assert.equal(messages.length, 1, 'validated: one confirmation is asked');
+    assert.equal(values.fhValidadoDosis, '175 mg profesional', 'validated: dismissing keeps the professional dose');
+    assert.equal(await page.locator(`#${SURFACES.validated.inputId}`).inputValue(), PRODUCT_A.name, 'validated: dismissing keeps the first product');
+    page.once('dialog', (dialog) => dialog.accept());
+    dropdown = await openList(page, SURFACES.validated);
+    await optionFor(dropdown, PRODUCT_B.name).click();
+    values = await readValues(page, Object.keys(fields));
+    assert.notEqual(values.fhValidadoDosis, '175 mg profesional', 'validated: accepting replaces the professional dose');
+    assert.equal(values.fhValidadoPresentacion, PRODUCT_B.presentation, 'validated: the presentation follows the second product');
+    assert.equal(values.fhValidadoVia, PRODUCT_B.route, 'validated: the route follows the second product');
   });
 
   // F — filled fields remain editable and the edited value is kept.

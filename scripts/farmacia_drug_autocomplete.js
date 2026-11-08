@@ -3,8 +3,8 @@
 /* Widget común de búsqueda de fármaco (catálogo) para los formularios de
    Farmacia. Tramo 2a: Seguimiento (primer fármaco y otros fármacos);
    Validación y Primera visita lo adoptarán en el 2b con el mismo widget.
-   Publica `window.FarmaciaDrugAutocomplete = { attach, replacementDecision,
-   confirmReplacement, MESSAGES }`. El DOM se construye con
+   Publica `window.FarmaciaDrugAutocomplete = { attach, hasWrittenData,
+   replacementDecision, confirmReplacement, MESSAGES }`. El DOM se construye con
    createElement/textContent. Sin estilos en línea. */
 
 (function () {
@@ -31,6 +31,28 @@
         if (state.dispensed) return 'blocked_dispensed';
         if (state.writtenData) return 'confirm';
         return 'replace';
+    }
+
+    /* Al reemplazar un fármaco ya elegido: ¿ha escrito el profesional dosis,
+       vía o pauta? Lo que propuso el
+       catálogo (previousSnapshot.proposal_values) no cuenta como escrito:
+       la misma regla que conserva el campo editado a mano al reconciliar. */
+    function hasWrittenData(current, previousSnapshot) {
+        current = current || {};
+        /* Sin selección previa del catálogo no hay fármaco que reemplazar: la
+           primera elección conserva lo que el profesional ya hubiera escrito. */
+        if (!previousSnapshot) return false;
+        var previous = previousSnapshot && previousSnapshot.proposal_values &&
+            typeof previousSnapshot.proposal_values === 'object'
+            ? previousSnapshot.proposal_values : {};
+        function clean(value) { return String(value == null ? '' : value).trim(); }
+        if (clean(current.pauta)) return true;
+        var fields = ['dosis_texto', 'via'];
+        for (var i = 0; i < fields.length; i++) {
+            var value = clean(current[fields[i]]);
+            if (value && value !== clean(previous[fields[i]])) return true;
+        }
+        return false;
     }
 
     function confirmReplacement(state) {
@@ -202,6 +224,7 @@
 
     window.FarmaciaDrugAutocomplete = {
         attach: attach,
+        hasWrittenData: hasWrittenData,
         replacementDecision: replacementDecision,
         confirmReplacement: confirmReplacement,
         MESSAGES: MESSAGES

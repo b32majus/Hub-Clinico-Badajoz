@@ -59,7 +59,7 @@ try {
   assert.doesNotMatch(validationSource, /enableRequestedAutocomplete\("fhManualFarmaco"\)/, 'manual requested field is not wired through the generic binder');
   const manualSelectionSource = validationSource.slice(
     validationSource.indexOf('function selectManualRequestedDrug'),
-    validationSource.indexOf('function renderManualRequestedAutocompleteDropdown')
+    validationSource.indexOf('function enableAutocompleteManualRequested')
   );
   assert.match(manualSelectionSource, /cipEl \? cipEl\.value\.trim\(\) : ""/, 'manual selection reads the direct literal CIP');
   assert.doesNotMatch(manualSelectionSource, /selectedCip|catalogContext/, 'manual selection does not use fallback patient context');
@@ -68,7 +68,7 @@ try {
   assert.match(manualSelectionSource, /if \(contextValid && typeof C\.selectDrug[\s\S]*manualRequestedTransientProposal = \{\s*proposal_values: Object\.assign\(\{\}, reconciled\.proposal_values\)/, 'every explicit selection retains its reconciled proposal after optional persistence');
   const requestedConfigSource = validationSource.slice(
     validationSource.indexOf('function requestedAutocompleteConfig'),
-    validationSource.indexOf('function renderRequestedAutocompleteDropdown')
+    validationSource.indexOf('function enableRequestedAutocomplete')
   );
   assert.doesNotMatch(requestedConfigSource, /fhManual/, 'generic requested config contains no manual branch');
 

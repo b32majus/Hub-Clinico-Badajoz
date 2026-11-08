@@ -136,6 +136,10 @@ vm.createContext(sandbox);
 vm.runInContext(pautasSrc, sandbox);
 vm.runInContext(helperSrc, sandbox);
 vm.runInContext(excelSrc, sandbox);
+const drugConfirms = [];
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_drug_autocomplete.js'), 'utf8'), sandbox);
+sandbox.window.confirm = function (message) { drugConfirms.push(message); return true; };
+sandbox.window.alert = function () {};
 vm.runInContext(js, sandbox);
 
 const api = sandbox.window.FarmaciaPrimeraVisita;
@@ -235,7 +239,7 @@ if (api && typeof api.searchCIP === 'function') {
   assert(elements.fhPvDosis.value === 'Dosis profesional PV' && elements.fhPvVia.value === 'Oral', 'PV typing does not mutate combined dose or route');
   elements.fhPvAutocompleteDropdown.children[0].click();
   assert(elements.fhPvFarmaco.value === 'Producto PV A', 'PV click replaces partial query with catalog product identity');
-  assert(elements.fhPvDosis.value === 'Dosis profesional PV' && elements.fhPvVia.value === 'Oral', 'PV click preserves professional combined dose and route edits');
+  assert(elements.fhPvDosis.value === 'Dosis profesional PV' && elements.fhPvVia.value === 'Oral' && drugConfirms.length === 0, 'PV click preserves professional combined dose and route edits');
   elements.fhPvDosis.value = '';
   elements.fhPvVia.value = '';
   elements.fhPvFarmaco.value = 'segundo';
@@ -412,6 +416,9 @@ const sandboxNoHelper = {
   clearTimeout
 };
 vm.createContext(sandboxNoHelper);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_drug_autocomplete.js'), 'utf8'), sandboxNoHelper);
+sandboxNoHelper.window.confirm = function (message) { drugConfirms.push(message); return true; };
+sandboxNoHelper.window.alert = function () {};
 vm.runInContext(js, sandboxNoHelper);
 const fallbackApi = sandboxNoHelper.window.FarmaciaPrimeraVisita;
 const fallbackTreatment = fallbackApi.buildPrimaryTreatmentFromContext({ cip: 'CIP-PV-003', patient: null });

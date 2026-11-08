@@ -172,6 +172,9 @@ const validationSandbox = {
   console, setTimeout, clearTimeout, Event: function Event(type) { this.type = type; }, Array
 };
 vm.createContext(validationSandbox);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_drug_autocomplete.js'), 'utf8'), validationSandbox);
+validationSandbox.window.confirm = function () { return true; };
+validationSandbox.window.alert = function () {};
 vm.runInContext(js, validationSandbox);
 validationSandbox.window.FarmaciaValidacion.enableRequestedAutocomplete();
 
@@ -195,7 +198,7 @@ dom.get('fhDermaFarmaco').value = 'marca';
 dom.get('fhDermaFarmaco').dispatchEvent({ type: 'input' });
 dom.get('autocompleteDropdown').children[1].click();
 check(persistenceCalls.getSnapshot === 1 && persistenceCalls.selectDrug === 1 && snapshots.size === 1, 'Selección concreta posterior con contexto válido persiste por el flujo público');
-check(dom.get('fhDermaPauta').value === 'PAUTA-MANUAL' && dom.get('fhDermaInduccion').value === 'si', 'Selección posterior preserva pauta e inducción');
+check(dom.get('fhDermaPauta').value === '' && dom.get('fhDermaInduccion').value === 'si', 'Selección posterior sobre fármaco ya elegido borra la pauta escrita (tras confirmar) y preserva la inducción');
 
 dom.get('fhDermaDosis').value = 'Dosis profesional';
 dom.get('fhDermaVia').value = 'Oral';
@@ -203,7 +206,7 @@ dom.get('fhDermaFarmaco').value = 'marca';
 dom.get('fhDermaFarmaco').dispatchEvent({ type: 'input' });
 dom.get('autocompleteDropdown').children[0].click();
 check(dom.get('fhDermaFarmaco').value === products[0].display_name && dom.get('fhDermaPrincipioActivo').value === 'Activo A', 'Click en Dermatología sustituye el fragmento por la identidad de catálogo');
-check(dom.get('fhDermaDosis').value === 'Dosis profesional' && dom.get('fhDermaVia').value === 'Oral' && dom.get('fhDermaPauta').value === 'PAUTA-MANUAL' && dom.get('fhDermaInduccion').value === 'si' && dom.get('fhDermaJustificacion').value === 'Justificación profesional', 'Selección Dermatología preserva edición profesional, pauta, inducción y justificación');
+check(dom.get('fhDermaDosis').value !== 'Dosis profesional' && dom.get('fhDermaVia').value !== 'Oral' && dom.get('fhDermaPauta').value === '' && dom.get('fhDermaInduccion').value === 'si' && dom.get('fhDermaJustificacion').value === 'Justificación profesional', 'Selección Dermatología con dosis/vía escritas (tras confirmar) las sustituye por la propuesta y preserva inducción y justificación');
 
 dom.get('fhOrigenEntrada').value = 'manual_farmacia';
 dom.get('fhManualCip').value = 'CIP-SYN-MANUAL';
