@@ -34,6 +34,7 @@ REN-OPEN-001…008: ver `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACI
 - Nomenclatura SES de programas FH (SIL-REV-001): falta la fuente.
 - Medicación especial (ensayo, compasivo, extranjera; SIL-REV-020): requiere discovery.
 - ~~«Revisión de línea» en el tipo de movimiento de Seguimiento~~ RESUELTO (Sil, 08-11): no aporta; el desplegable queda en Sin cambios, Optimización y Suspensión. El valor `revision_linea` se sigue leyendo en datos antiguos.
+- Prebiológico (QA #676, Sil 08-11, para el grupo de trabajo): hoy el veredicto prebiológico (completo/bloqueado) solo se calcula en Pendientes; Inicio y Validación no usan `FarmaciaPrebiologico` y el módulo no produce «incompleto». ¿Deben las tres pantallas mostrar el mismo veredicto?
 
 ## EA
 - Decidido el 27-10: se cierra «EA v1 demo» (ver `docs/DECISIONES.md`).

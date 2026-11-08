@@ -35,6 +35,7 @@ Estados: **VIGENTE**, **SUSTITUIDA** (con por qué), **HISTÓRICA** (contexto de
 | 26-10 | Metis solo para trabajo grande, de riesgo y desatendido; lo atendido va directo o por DIA. Versión de Metis congelada durante cada funcionalidad | Sil, 26-10 | VIGENTE |
 | 26-10 | Seguimiento por issues + etiquetas + epics con lista de tareas + `ESTADO.md`; el tablero Project queda como vista opcional posterior | Sil, 26-10 | VIGENTE |
 | 27-10 | Engram conectado a Claude Code solo como MCP, sin plugin ni hooks; auxiliar, nunca autoridad | Sil, 27-10 | VIGENTE |
+| 08-11 | Morisky-Green: el export a Excel escribe `Alta`/`Media`/`Baja`/`No evaluada` (valores de la plantilla); Seguimiento sigue mostrando «alta adherencia», «adherencia media / parcial», «baja adherencia», «pendiente de completar». Vacío sigue vacío; un valor desconocido no se inventa. La educación farmacoterapéutica se registra solo en la primera visita: Seguimiento NO tiene campo de educación. Inducción: en Validación hay dos (solicitada y validada); en la primera visita solo realizada o no realizada (#680, #674) | Sil, 08-11; `scripts/farmacia_excel_row_export.js`, `tools/farmacia_morisky_export_normalization_check.mjs` | VIGENTE |
 
 ## 2. Arquitectura (publicadas en el repo)
 
