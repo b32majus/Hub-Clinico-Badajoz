@@ -262,6 +262,14 @@
         fillSelect('qf-adherencia', options.adherencia, 'Todas', function (value) {
             return value === 'multiple' ? 'Múltiple' : (value === 'not_recorded' ? 'No registrado' : value);
         });
+        // Ventana temporal (#690): sin ninguna fecha clínica en la población
+        // los campos se deshabilitan y lo explican; con fechas quedan activos.
+        var timeAvailable = Cohort.timeWindowAvailable(eaRecords(allPatients));
+        Array.prototype.forEach.call(document.querySelectorAll('#qf-desde, #qf-hasta'), function (input) {
+            input.disabled = !timeAvailable;
+            if (timeAvailable) input.removeAttribute('title');
+            else input.setAttribute('title', 'Sin fecha clínica registrada');
+        });
     }
 
     function readFilters() {
@@ -283,6 +291,9 @@
         if (filters.estado && profile.careStatus !== filters.estado) return false;
         if (filters.validacion && !Cohort.validationMatches(item.record, filters.validacion)) return false;
         if (filters.concurrentes && !Cohort.concurrentMatches(item.record, filters.concurrentes)) return false;
+        var from = filters.desde || '', to = filters.hasta || '';
+        if (from && to && from > to) return false; // ventana invertida: cero resultados, sin error
+        if ((from || to) && !Cohort.timeWindowMatches(item.record, from, to)) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
         if (Object.keys(eaFilters).length && !Cohort.eaMatches(item.record, eaFilters)) return false;
@@ -363,7 +374,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación', concurrentes: 'Líneas activas' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación', concurrentes: 'Líneas activas', desde: 'Desde', hasta: 'Hasta' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
