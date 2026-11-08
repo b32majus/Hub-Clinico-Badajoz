@@ -24,7 +24,7 @@ REN-OPEN-001…008: ver `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACI
 - **LES y Sjögren:** lo decide el equipo clínico.
 
 ## Etiquetas de puntuación del Quick View (hallazgo 26-10)
-- **DLQI:** el Quick View usa «Muy grave» (11–20) y «Extremadamente grave» (>20); la revisión de Sil del 14-07 fija 11–20 «Efecto grave» y 21–30 «Efecto muy grave». Los dashboards sí usan los cortes de Sil. Decide Sil.
+- ~~**DLQI:**~~ RESUELTO (Sil, 08-11): Quick View y dashboards usan 0–1 «Sin efecto», 2–5 «Efecto pequeño», 6–10 «Efecto moderado», 11–20 «Efecto grave», 21–30 «Efecto muy grave».
 - **IHS4 y HAQ:** cortes por confirmar con Dermatología/Farmacia contra una fuente citada (no confirmados en esta sesión).
 - Solo afecta a la etiqueta visual de la ficha rápida; datos sintéticos.
 
@@ -33,7 +33,7 @@ REN-OPEN-001…008: ver `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACI
 - Comorbilidades y actividad clínica en la cohorte raw.
 - Nomenclatura SES de programas FH (SIL-REV-001): falta la fuente.
 - Medicación especial (ensayo, compasivo, extranjera; SIL-REV-020): requiere discovery.
-- «Revisión de línea» en el tipo de movimiento de Seguimiento: Sil pidió eliminarla o redefinirla; sin decisión de redefinición.
+- ~~«Revisión de línea» en el tipo de movimiento de Seguimiento~~ RESUELTO (Sil, 08-11): no aporta; el desplegable queda en Sin cambios, Optimización y Suspensión. El valor `revision_linea` se sigue leyendo en datos antiguos.
 
 ## EA
 - Decidido el 27-10: se cierra «EA v1 demo» (ver `docs/DECISIONES.md`).

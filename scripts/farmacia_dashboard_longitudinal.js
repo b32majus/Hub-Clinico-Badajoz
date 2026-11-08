@@ -926,7 +926,7 @@
         var body = divEl('longitudinal-legend-body');
 
         var thresholds = [
-            'DLQI: 0-1 sin efecto \u00b7 2-5 efecto peque\u00f1o \u00b7 6-10 efecto moderado \u00b7 11-20 efecto muy importante \u00b7 21-30 efecto extremadamente importante',
+            'DLQI: 0-1 sin efecto \u00b7 2-5 efecto peque\u00f1o \u00b7 6-10 efecto moderado \u00b7 11-20 efecto grave \u00b7 21-30 efecto muy grave',
             'EVA dolor: 0-3 bajo \u00b7 4-6 moderado \u00b7 7-10 alto',
             'EVA prurito: 0-3 bajo \u00b7 4-6 moderado \u00b7 7-10 alto',
             'IHS4: 0-3 leve \u00b7 4-10 moderado \u00b7 \u226511 severo',

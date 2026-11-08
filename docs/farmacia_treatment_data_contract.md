@@ -128,7 +128,7 @@ Riesgo principal:
 - `tratamiento_anadido`
 - `cambio_terapeutico`
 - `suspension`
-- `revision_linea`
+- `revision_linea` (obsoleto: Seguimiento ya no lo ofrece desde 08-11; se sigue leyendo en datos antiguos)
 - `no_aplica`
 
 ### `fase_tratamiento`
