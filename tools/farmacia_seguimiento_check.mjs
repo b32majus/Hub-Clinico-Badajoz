@@ -595,8 +595,8 @@ assert(js.includes('currentFollowupVisit') && js.includes('selected_line_ids') &
     'PR57B mantiene el modelo de visita y línea exclusivamente en memoria JS');
 assert(js.includes('captureEditingLineState();') && js.includes('restoreEditingLineState();'),
     'PR57B captura y restaura el editor al cambiar de línea');
-assert(js.includes('if (jara) jara.disabled = count < 1') && js.includes('button.disabled = dispensedCount < 1'),
-    'PR57D habilita JARA con líneas evaluadas y limita filas a dispensaciones explícitas');
+assert(js.includes('if (jara) jara.disabled = count < 1'),
+    'PR57D habilita JARA con líneas evaluadas (#867: retirado el Excel que se limitaba a dispensaciones)');
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
