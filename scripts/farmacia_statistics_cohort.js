@@ -81,6 +81,35 @@
             row.recorded_at, event && event.recorded_at);
     }
 
+    // TIME #690 (contrato FARMACIA_ESTADISTICAS_FILTROS_COHORTE_CONTRACT §6,
+    // decisión de Sil 08-11-2026): fecha CLÍNICA estricta del acto. Se toma la
+    // primera declarada entre visit_date / first_visit_date / request_date /
+    // movement_effective_date; NUNCA occurred_at/recorded_at ni la fecha de
+    // importación. Sólo la parte yyyy-mm-dd literal y de calendario real
+    // (2026-02-30 no lo es), sin conversión de zona horaria. Sin fecha clínica
+    // declarada el acto queda «no registrado» ('').
+    function isCalendarDate(value) {
+        if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+        var year = Number(value.slice(0, 4));
+        var month = Number(value.slice(5, 7));
+        var day = Number(value.slice(8, 10));
+        if (month < 1 || month > 12 || day < 1) return false;
+        var leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+        var monthDays = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        return day <= monthDays[month - 1];
+    }
+
+    function clinicalDateString(value) {
+        var head = typeof value === 'string' ? value.slice(0, 10) : '';
+        return isCalendarDate(head) ? head : '';
+    }
+
+    function clinicalEventDate(event) {
+        var row = firstCanonicalRow(event);
+        return clinicalDateString(firstPresent(row.visit_date, row.first_visit_date,
+            row.request_date, row.movement_effective_date));
+    }
+
     function eventMap(events) {
         var result = {};
         (events || []).forEach(function (event, index) {
@@ -99,6 +128,7 @@
                 event_date: eventDate(event),
                 occurred_at: firstPresent(row.occurred_at, event.occurred_at),
                 recorded_at: firstPresent(row.recorded_at, event.recorded_at),
+                clinical_date: clinicalEventDate(event),
                 source_sheet: event.source_sheet || '',
                 source_table: event.source_table || '',
                 stable_position: index
@@ -521,6 +551,47 @@
         return value === '3plus' ? count >= 3 : count === Number(value);
     }
 
+    // TIME #690 (contrato FARMACIA_ESTADISTICAS_FILTROS_COHORTE_CONTRACT §6):
+    // ventana temporal «Desde»/«Hasta» sobre clinical_date. Límites
+    // opcionales e inclusivos. Un límite declarado debe ser una fecha
+    // yyyy-mm-dd completa y de calendario real, o el filtro es inválido
+    // (TypeError TIME_FILTER_INVALID, también con ventana invertida). Sin
+    // límites no filtra, aunque el record sea null. Con algún límite, el
+    // paciente entra si ALGÚN acto tiene clinical_date dentro; los actos sin
+    // fecha clínica son «no registrado» y no entran en ninguna ventana con
+    // límite. Comparación literal de cadenas, sin zona horaria; nunca lanza
+    // por el record.
+    function timeWindowLimit(value) {
+        if (value === undefined || value === null || value === '') return { has: false, date: '' };
+        if (typeof value !== 'string' || !isCalendarDate(value)) throw new TypeError('TIME_FILTER_INVALID');
+        return { has: true, date: value };
+    }
+
+    function timeWindowMatches(record, from, to) {
+        var lower = timeWindowLimit(from);
+        var upper = timeWindowLimit(to);
+        if (lower.has && upper.has && lower.date > upper.date) throw new TypeError('TIME_FILTER_INVALID');
+        if (!lower.has && !upper.has) return true;
+        var events = record && Array.isArray(record.events) ? record.events : [];
+        return events.some(function (event) {
+            var date = event && event.clinical_date || '';
+            if (!date) return false;
+            if (lower.has && date < lower.date) return false;
+            if (upper.has && date > upper.date) return false;
+            return true;
+        });
+    }
+
+    function timeWindowAvailable(records) {
+        if (!Array.isArray(records)) return false;
+        return records.some(function (record) {
+            var events = record && Array.isArray(record.events) ? record.events : [];
+            return events.some(function (event) {
+                return present(event && event.clinical_date);
+            });
+        });
+    }
+
     // EA 0..N por paciente: envelope V2 tal cual se lee, traducido por el modelo
     // de pantalla. Ausente ≠ NO: sin contrato o sin modelo se declara
     // `unavailable`, nunca «sin EA».
@@ -854,7 +925,8 @@
     function demoEvent(type, date, index) {
         return {
             source_event_id: '', event_id: '', event_type: type || '', event_date: date || '',
-            occurred_at: date || '', recorded_at: '', source_sheet: '', source_table: '', stable_position: index
+            occurred_at: date || '', recorded_at: '', source_sheet: '', source_table: '', stable_position: index,
+            clinical_date: clinicalDateString(date)
         };
     }
 
@@ -1087,6 +1159,8 @@
         validationMatches: validationMatches,
         concurrentLineCount: concurrentLineCount,
         concurrentFilterOptions: concurrentFilterOptions,
-        concurrentMatches: concurrentMatches
+        concurrentMatches: concurrentMatches,
+        timeWindowMatches: timeWindowMatches,
+        timeWindowAvailable: timeWindowAvailable
     });
 })(typeof window !== 'undefined' ? window : globalThis);

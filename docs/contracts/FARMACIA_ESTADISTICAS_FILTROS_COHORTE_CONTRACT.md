@@ -104,6 +104,8 @@ Referencias: [exportación analítica longitudinal](FARMACIA_ANALYTICAL_LONGITUD
 
 **No fijado.** El formato y la zona horaria de las fechas (no verificado). La semántica de los pacientes sin fecha: se tratan como «no registrado» y no entran.
 
+**Implementado (#690, decisión de Sil 08-11-2026).** Dos campos «Desde» y «Hasta», opcionales, límites inclusivos (un solo lado es válido; ventana invertida = cero resultados). Cada acto lleva `clinical_date` = primera fecha declarada entre `visit_date`, `first_visit_date`, `request_date` y `movement_effective_date`; solo la parte `yyyy-mm-dd` literal y de calendario real, sin conversión de zona horaria; nunca `occurred_at`, `recorded_at` ni la importación. Sin fecha clínica = «no registrado». En la demo se usa la `fecha` declarada del episodio. Sin ninguna fecha clínica en la población, los campos se deshabilitan. Checks: `tools/farmacia_statistics_time_window_check.mjs` y `tools/farmacia_statistics_time_window_browser_check.mjs`. Sin verificar: el formato y la zona horaria reales de las fechas en los libros de producción.
+
 **Casos sintéticos.** Ventana: 01-01-2026 a 31-03-2026.
 
 | Caso | Datos | ¿Entra en la cohorte? |

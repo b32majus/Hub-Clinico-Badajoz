@@ -108,8 +108,8 @@ try {
     await check('demo: filtros EA nuevos, sin gravedad, EA no registrado', async () => {
         assert.equal(await demo.locator('#qf-gravedad').count(), 0, 'sin #qf-gravedad');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes']);
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 12);
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-validacion', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-ea_sospechoso', 'qf-ea_metodo', 'qf-movimiento', 'qf-concurrentes', 'qf-desde', 'qf-hasta']);
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 14);
         assert.equal((await demo.locator('label[for="qf-ea_sospechoso"]').textContent()).trim(), 'Sospechoso de EA');
         assert.equal((await demo.locator('label[for="qf-ea_metodo"]').textContent()).trim(), 'Método de causalidad');
         assert.equal(await demo.locator('#qf-ea_sospechoso').getAttribute('data-quick-filter'), 'ea_sospechoso');
