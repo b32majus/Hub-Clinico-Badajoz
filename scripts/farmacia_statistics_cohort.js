@@ -437,10 +437,37 @@
         });
     }
 
-    function careStatus(latestValidation, latestFollowup) {
-        if (latestFollowup) return 'followup';
+    // VAL #684 (contrato FARMACIA_ESTADISTICAS_FILTROS_COHORTE_CONTRACT §2):
+    // regla compartida de «validación explícita»: el valor del filtro se lee de
+    // la ÚLTIMA validación (`latest_validation.validation_result`). Solicitado
+    // ≠ validado; ausente, vacío o valor no reconocido es `not_recorded`,
+    // nunca `validated` ni `denied`. `careStatus` reutiliza esta misma regla
+    // sin cambiar de comportamiento: con seguimiento devuelve `followup` y por
+    // eso oculta la validación, de ahí el filtro «Validación» independiente.
+    var VALIDATION_FILTER_KEYS = ['validated', 'denied', 'pending', 'not_recorded'];
+
+    function explicitValidationResult(latestValidation) {
         var result = latestValidation && latestValidation.validation_result;
         return result === 'validated' || result === 'denied' || result === 'pending' ? result : 'not_recorded';
+    }
+
+    function careStatus(latestValidation, latestFollowup) {
+        if (latestFollowup) return 'followup';
+        return explicitValidationResult(latestValidation);
+    }
+
+    function validationFilterOptions(records) {
+        if (!Array.isArray(records) || !records.length) return [];
+        var seen = {};
+        (records || []).forEach(function (record) {
+            seen[explicitValidationResult(record && record.latest_validation)] = true;
+        });
+        return VALIDATION_FILTER_KEYS.filter(function (value) { return seen[value]; });
+    }
+
+    function validationMatches(record, value) {
+        if (VALIDATION_FILTER_KEYS.indexOf(value) === -1) throw new TypeError('VALIDATION_FILTER_INVALID');
+        return explicitValidationResult(record && record.latest_validation) === value;
     }
 
     // EA 0..N por paciente: envelope V2 tal cual se lee, traducido por el modelo
@@ -1004,6 +1031,8 @@
         eaCategory: eaCategory,
         eaFilterOptions: eaFilterOptions,
         eaMatches: eaMatches,
-        eaSummary: eaSummary
+        eaSummary: eaSummary,
+        validationFilterOptions: validationFilterOptions,
+        validationMatches: validationMatches
     });
 })(typeof window !== 'undefined' ? window : globalThis);
