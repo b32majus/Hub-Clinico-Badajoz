@@ -182,6 +182,12 @@
         return labels[value] || text(value);
     }
 
+    // «Líneas activas» (#691): opciones del filtro en lenguaje de pantalla.
+    function concurrentLabel(value) {
+        var labels = { '1': '1 línea activa', '2': '2 líneas activas', '3plus': '3 o más líneas activas' };
+        return labels[value] || text(value);
+    }
+
     // Filtros EA declarados en la página, en el vocabulario del modelo puro.
     // Sólo se envían las claves presentes: nunca se completa lo no declarado.
     function eaFiltersOf(filters) {
@@ -222,6 +228,7 @@
         values.ea_sospechoso = eaOptions.suspects;
         values.ea_metodo = eaOptions.methods;
         values.validacion = Cohort.validationFilterOptions(eaRecords(allPatients));
+        values.concurrentes = Cohort.concurrentFilterOptions(eaRecords(allPatients));
         return values;
     }
 
@@ -250,6 +257,7 @@
         fillSelect('qf-movimiento', options.movimiento, 'Todos');
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
         fillSelect('qf-validacion', options.validacion, 'Todas', careLabel);
+        fillSelect('qf-concurrentes', options.concurrentes, 'Todas', concurrentLabel);
         fillSelect('qf-ea', options.ea, 'Todos', adverseLabel);
         fillSelect('qf-adherencia', options.adherencia, 'Todas', function (value) {
             return value === 'multiple' ? 'Múltiple' : (value === 'not_recorded' ? 'No registrado' : value);
@@ -274,6 +282,7 @@
         if (filters.movimiento && profile.movementTypes.indexOf(filters.movimiento) === -1) return false;
         if (filters.estado && profile.careStatus !== filters.estado) return false;
         if (filters.validacion && !Cohort.validationMatches(item.record, filters.validacion)) return false;
+        if (filters.concurrentes && !Cohort.concurrentMatches(item.record, filters.concurrentes)) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
         if (Object.keys(eaFilters).length && !Cohort.eaMatches(item.record, eaFilters)) return false;
@@ -354,7 +363,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación', concurrentes: 'Líneas activas' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
