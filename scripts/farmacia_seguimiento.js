@@ -2773,6 +2773,32 @@
         refreshEaCausalityEditor();
     }
 
+    // HANDOFF punto 3 (decisión de Sil 08-11): episodio del modelo de EA del
+    // paciente de sesión con el episode_id dado (mismo patrón que
+    // priorSuspectsForEvent). Devuelve null si no está disponible: el detalle
+    // de causalidad es informativo y nunca lanza.
+    function modelEpisodeForCausalityDetail(episodeId) {
+        var targetEpisodeId = String(episodeId || '');
+        if (targetEpisodeId === '') return null;
+        var patient = null;
+        try {
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            patient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        } catch (error) {
+            patient = null;
+        }
+        if (!patient) return null;
+        var model = patient.ea_episodes && patient.ea_episodes.model ? patient.ea_episodes.model : null;
+        var episodes = model && Array.isArray(model.episodes) ? model.episodes : [];
+        for (var index = 0; index < episodes.length; index += 1) {
+            var modelEpisode = episodes[index];
+            if (!modelEpisode || typeof modelEpisode !== 'object') continue;
+            if (String(modelEpisode.episode_id || '') !== targetEpisodeId) continue;
+            return modelEpisode;
+        }
+        return null;
+    }
+
     // D4b-2 (#867): lista real de episodios anteriores del libro. Un episodio
     // sin acciones ofrecidas (ambiguo) se muestra sin botones: se revisa en
     // origen, nunca se elige por el clínico.
@@ -2787,6 +2813,21 @@
         if (String(episode.statusText || '').trim() !== '') meta.push(String(episode.statusText).trim());
         if (meta.length) textGroup.appendChild(createElement('p', 'search-card__hint', meta.join(' · ')));
         if (episode.ambiguous === true) textGroup.appendChild(createElement('p', 'search-card__hint', 'Revisar en origen: estado ambiguo'));
+        // Detalle de causalidad en solo lectura (HANDOFF punto 3): el episodio
+        // del modelo con este episode_id, debajo de la descripción/estado y
+        // antes de los botones. Sin módulo cargado o sin episodio no se añade
+        // nada (sin error); los botones de continuidad no cambian.
+        var causalityDetailModule = window.FarmaciaEaCausalityDetail;
+        if (causalityDetailModule && typeof causalityDetailModule.render === 'function') {
+            var causalityEpisode = modelEpisodeForCausalityDetail(episode && episode.episode_id);
+            if (causalityEpisode) {
+                try {
+                    textGroup.appendChild(causalityDetailModule.render(causalityEpisode));
+                } catch (causalityProblem) {
+                    // Bloque informativo: sin detalle no hay error.
+                }
+            }
+        }
         item.appendChild(textGroup);
         var actions = Array.isArray(episode.actions) ? episode.actions : [];
         var actionsRow = createElement('div', 'form-actions');
