@@ -464,6 +464,9 @@ sandbox.window.FarmaciaDataImports = {
 // Load validation model in sandbox
 if (modelSrc) vm.runInContext(modelSrc, sandbox);
 
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_drug_autocomplete.js'), 'utf8'), sandbox);
+sandbox.window.confirm = function () { return true; };
+sandbox.window.alert = function () {};
 vm.runInContext(validacionSrc, sandbox);
 // Fire DOMContentLoaded
 for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { await DOMContentLoadedCallbacks[di](); }
@@ -574,7 +577,7 @@ var requestedSearchBody = (vSrc.match(/function handleAutocompleteInput\(\)[\s\S
 var validatedSearchBody = (vSrc.match(/function handleValidadoAutocompleteInput\(\)[\s\S]*?^    \}/m) || [''])[0];
 assert(!requestedSearchBody.includes('updateValidationModuleSummaries') && !validatedSearchBody.includes('updateValidationModuleSummaries'), '32h. Escribir/buscar no precarga otros campos');
 var validatedSelectionBody = (vSrc.match(/function selectValidadoDrug\(drug\)[\s\S]*?^    \}/m) || [''])[0];
-assert(!validatedSelectionBody.includes('fhValidadoPauta') && !validatedSelectionBody.includes('fhValidadoInduccion'), '32i. Selección validada no propone pauta ni inducción');
+assert(!/drug\.(pauta|induccion)/.test(validatedSelectionBody) && !validatedSelectionBody.includes('fhValidadoInduccion'), '32i. Selección validada no propone pauta ni inducción (solo la borra si el profesional la había escrito, política 2b)');
 
 // Real validated autocomplete path with exactly the scripts loaded by farmacia_validacion.html.
 assertEqual(typeof sandbox.window.FarmaciaTratamiento, 'undefined', '32j. Sandbox no carga FarmaciaTratamiento');
@@ -609,9 +612,9 @@ $('fhDermaFarmaco').dispatchEvent({ type: 'input' });
 $('autocompleteDropdown').firstChild.dispatchEvent({ type: 'click' });
 assertEqual(v('fhDermaFarmaco'), 'Producto Validado B', '32jg. Segunda selección solicitada reemplaza identidad');
 assertEqual(v('fhDermaPrincipioActivo'), 'Activo B', '32jh. Segunda selección solicitada reemplaza principio activo');
-assertEqual(v('fhDermaDosis'), 'Dosis solicitada manual', '32ji. Segunda selección solicitada preserva dosis manual');
-assertEqual(v('fhDermaVia'), 'Oral', '32jj. Segunda selección solicitada preserva vía manual');
-assertEqual(v('fhDermaPauta'), 'Pauta solicitada profesional', '32jk. Segunda selección solicitada mantiene pauta');
+assertEqual(v('fhDermaDosis'), '200 mg', '32ji. Segunda selección solicitada con dosis escrita (tras confirmar) la sustituye por la propuesta del catálogo');
+assertEqual(v('fhDermaVia'), 'Otra', '32jj. Segunda selección solicitada con vía escrita (tras confirmar) la sustituye por la propuesta');
+assertEqual(v('fhDermaPauta'), '', '32jk. Segunda selección solicitada con pauta escrita (tras confirmar) la borra');
 assertEqual(v('fhDermaInduccion'), 'no', '32jl. Segunda selección solicitada mantiene inducción');
 $('fhValidadoPauta').value = 'Pauta profesional';
 $('fhValidadoInduccion').value = 'si';
@@ -654,9 +657,9 @@ $('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
 assertEqual(v('fhValidadoFarmaco'), 'Producto Validado B', '32t. Segunda selección reemplaza identidad');
 assertEqual(v('fhValidadoPrincipioActivo'), 'Activo B', '32u. Segunda selección reemplaza principio activo');
 assertEqual(v('fhValidadoPresentacion'), 'Presentación profesional', '32v. Segunda selección preserva presentación manual');
-assertEqual(v('fhValidadoDosis'), 'Dosis profesional', '32w. Segunda selección preserva dosis manual');
-assertEqual(v('fhValidadoVia'), 'Oral', '32x. Segunda selección preserva vía manual');
-assertEqual(v('fhValidadoPauta'), 'Pauta profesional', '32y. Segunda selección mantiene pauta');
+assertEqual(v('fhValidadoDosis'), '200 mg', '32w. Segunda selección con dosis escrita (tras confirmar) la sustituye por la propuesta');
+assertEqual(v('fhValidadoVia'), 'IM', '32x. Segunda selección con vía escrita (tras confirmar) la sustituye por la propuesta');
+assertEqual(v('fhValidadoPauta'), '', '32y. Segunda selección con pauta escrita (tras confirmar) la borra');
 assertEqual(v('fhValidadoInduccion'), 'si', '32z. Segunda selección mantiene inducción');
 assertEqual(v('fhValEstado'), 'pending', '32aa. Segunda selección mantiene estado');
 
