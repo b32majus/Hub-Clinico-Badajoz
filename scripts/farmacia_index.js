@@ -126,7 +126,7 @@
 
     var SCORE_INTERPRETATIONS = {
         IHS4: function (v) { return v <= 10 ? 'Leve' : v <= 25 ? 'Moderado' : 'Grave'; },
-        DLQI: function (v) { return v <= 1 ? 'Sin efecto' : v <= 5 ? 'Leve' : v <= 10 ? 'Moderado' : v <= 20 ? 'Muy grave' : 'Extremadamente grave'; },
+        DLQI: function (v) { return v <= 1 ? 'Sin efecto' : v <= 5 ? 'Efecto pequeño' : v <= 10 ? 'Efecto moderado' : v <= 20 ? 'Efecto grave' : 'Efecto muy grave'; },
         DAS28: function (v) { return v <= 2.6 ? 'Remisi\u00f3n' : v <= 3.2 ? 'Baja' : v <= 5.1 ? 'Moderada' : 'Alta'; },
         HAQ: function (v) { return v <= 1 ? 'Leve' : v <= 2 ? 'Moderado' : 'Grave'; }
     };

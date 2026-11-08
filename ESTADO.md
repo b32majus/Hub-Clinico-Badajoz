@@ -16,7 +16,7 @@ Una página. La verdad del producto es GitHub `promueve/nexus-v4` (cabeza al red
 - **EA 0..N de Farmacia: cerrar «EA v1 demo»** (decidido 27-10; las farmacéuticas lo pidieron, el problema fue la ejecución). Las tres superficies que ya existen —Dashboard del paciente, Quick View y Estadísticas— aún leen el modelo antiguo de EA; el modelo nuevo (`modules/farmacia_ea_patient_projection.js`) no lo usa ninguna pantalla. Tramo 1: conectarlas con un fixture sintético. Tramo 2: guardar en Bridge → reabrir en Excel Windows (lo prueba Sil). Avance 07-11 (PR #868, borrador): Seguimiento ya escribe la visita completa en 166 con EA 0..N, historia, sospechosos, causalidad y línea de la primera visita; formulario de EA simplificado. Falta la prueba manual de Sil y el tramo 2 (guardar/reabrir por Bridge). Detalle: `docs/contracts/FH_SEGUIMIENTO_EA_V1_DEMO_PANTALLA_20261107.md`. Seguimiento en [#860](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/860).
 
 ## Siguiente (máx. 3)
-1. Reparaciones de FH de las auditorías de Sil, de menor a mayor esfuerzo: etiquetas DLQI del Quick View; «Revisión de línea»; Dashboard FH (quitar «Copiar fila Excel FH» y «Vista completa», añadir comorbilidades); «Inducción solicitada» ≠ «validada»; simplificación de Validación (#645); PROMs por patología.
+1. Reparaciones de FH de las auditorías de Sil, de menor a mayor esfuerzo: PROMs por patología (idea no decidida). Hechas: etiquetas DLQI, «Revisión de línea», Dashboard FH, «Inducción», simplificación de Validación (#645).
 2. Reuma: solo seguridad y errores hasta las revisiones de proceso.
 3. Desarrollo real de Reuma **después** de las revisiones de proceso (Mérida desde el 26-10; Badajoz desde el 06-11).
 

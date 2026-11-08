@@ -167,7 +167,7 @@ assert(html.indexOf('value="suspension"') !== -1, 'HTML incluye movimiento suspe
 const movementSelect = (html.match(/<select class="form-select" id="fhSegTipoRelacionTerapia">[\s\S]*?<\/select>/) || [''])[0];
 assert(!movementSelect.includes('value="tratamiento_anadido"'), 'Seguimiento no permite iniciar tratamiento añadido');
 assert(!movementSelect.includes('value="cambio_terapeutico"'), 'Seguimiento no permite iniciar cambio terapéutico');
-assert(movementSelect.includes('value="revision_linea"'), 'Seguimiento conserva revisión de línea');
+assert(!movementSelect.includes('value="revision_linea"'), 'Seguimiento ya no ofrece revisión de línea (Sil 08-11)');
 
 // 3. Grid de resumen presente
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento presente');
