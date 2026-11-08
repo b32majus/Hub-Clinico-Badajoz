@@ -215,6 +215,8 @@
         input.addEventListener('blur', function () {
             window.setTimeout(function () {
                 var focus = document.activeElement;
+                /* Si el foco ya volvió al campo, el cierre pendiente es de un blur viejo. */
+                if (focus === input) return;
                 if (!focus || !dropdown.contains(focus)) clear();
             }, 150);
         });
