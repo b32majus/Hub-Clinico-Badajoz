@@ -1263,6 +1263,10 @@ try {
             await clickTxtAndWait(page);
             const bodyAfterTxt = await page.evaluate(() => document.body.innerText);
             await checkpoint(page, jl, 'after-txt-unavailable');
+            // T21-01 (#633), posterior a este paquete: sin Clipboard API se abre el
+            // modal de copia manual. Se cierra sin copiar ni atestar, para que la
+            // historia 6 siga probando que no hay autorización CSV sin confirmación.
+            await closeModal(page);
 
             const obs = await clickCsvAndObserve(page);
             const honestFeedback = /error|no se pudo/i.test(bodyAfterTxt);
