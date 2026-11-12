@@ -775,28 +775,38 @@ function collectPrebiologicFields() {
     return collectFieldsByIds(PREBIOLOGIC_FIELD_IDS, id => getSelectValue(id));
 }
 
-function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId) {
+function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId, primaryPautaId) {
     const entries = [];
+    const withPauta = typeof primaryPautaId === 'string' && primaryPautaId.length > 0;
 
-    const addEntry = (farmaco, dosis) => {
+    const addEntry = (farmaco, dosis, pauta, pautaOtro) => {
         const drug = (farmaco || '').trim();
         if (!drug || drug.toLowerCase() === 'no') return;
-        entries.push({
+        const entry = {
             farmaco: drug,
             dosis: (dosis || '').trim()
-        });
+        };
+        if (withPauta) {
+            entry.pauta = pauta || '';
+            entry.pautaOtro = pauta === 'OTRO' ? (pautaOtro || '').trim() : '';
+        }
+        entries.push(entry);
     };
 
     const primarySelect = document.getElementById(primarySelectId);
     const primaryDose = document.getElementById(primaryDoseId);
-    addEntry(primarySelect?.value, primaryDose?.value);
+    const primaryPauta = withPauta ? document.getElementById(primaryPautaId) : null;
+    const primaryPautaOtro = withPauta ? document.getElementById(primaryPautaId + 'Otro') : null;
+    addEntry(primarySelect?.value, primaryDose?.value, primaryPauta?.value, primaryPautaOtro?.value);
 
     const container = extrasContainerId ? document.getElementById(extrasContainerId) : null;
     if (container) {
         container.querySelectorAll('.treatment-extra').forEach(line => {
             const select = line.querySelector('select');
-            const dose = line.querySelector('input[type="text"]');
-            addEntry(select?.value, dose?.value);
+            const dose = line.querySelector('.treatment-dose-input, .treatment-dose-input-improved');
+            const pautaSelect = withPauta ? line.querySelector('select.treatment-pauta-select') : null;
+            const pautaOtroInput = withPauta ? line.querySelector('.treatment-pauta-otro') : null;
+            addEntry(select?.value, dose?.value, pautaSelect?.value, pautaOtroInput?.value);
         });
     }
 
@@ -830,6 +840,80 @@ function createHomunculusMap(regions, selectedRegions) {
 // TRATAMIENTOS PREVIOS Y PLAN TERAPÉUTICO
 // =====================================
 
+// ---- Pauta de tratamiento (issue #919, catálogo común Farmacia/Reuma) ----
+// La pauta nunca se infiere del fármaco ni de la dosis: se elige del catálogo
+// común (`window.FarmaciaPautasCatalog.getPautaOptions()`); «Otra pauta» (OTRO)
+// abre un texto libre. Sin fármaco o «No»: vacía y deshabilitada (no consta).
+
+function findPautaOtroInput(select) {
+    if (!select) return null;
+    if (select.id) {
+        const byId = document.getElementById(select.id + 'Otro');
+        if (byId) return byId;
+    }
+    const line = select.closest('.treatment-line, .treatment-line-improved, .treatment-controls, .treatment-controls-improved');
+    return line ? line.querySelector('.treatment-pauta-otro') : null;
+}
+
+function syncPautaOtroForSelect(select) {
+    const otro = findPautaOtroInput(select);
+    if (!otro) return;
+    if (select.value === 'OTRO') {
+        otro.hidden = false;
+    } else {
+        otro.hidden = true;
+        otro.value = '';
+    }
+}
+
+function populatePautaSelect(select) {
+    if (!select || select.dataset.pautaReady === 'true') return;
+    while (select.firstChild) select.removeChild(select.firstChild);
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = 'Pauta';
+    select.appendChild(emptyOption);
+    select.dataset.pautaReady = 'true';
+    const catalog = (typeof window !== 'undefined' && window.FarmaciaPautasCatalog && typeof window.FarmaciaPautasCatalog.getPautaOptions === 'function')
+        ? window.FarmaciaPautasCatalog.getPautaOptions()
+        : null;
+    if (!Array.isArray(catalog)) {
+        console.warn('Catálogo de pautas (FarmaciaPautasCatalog) no disponible; solo la opción vacía');
+        return;
+    }
+    catalog.forEach(option => {
+        const optionEl = document.createElement('option');
+        optionEl.value = option.value;
+        optionEl.textContent = option.label;
+        select.appendChild(optionEl);
+    });
+}
+
+function wirePautaControls(root) {
+    const scope = root || document;
+    if (!scope || typeof scope.querySelectorAll !== 'function') return;
+    scope.querySelectorAll('select.treatment-pauta-select').forEach(select => {
+        populatePautaSelect(select);
+        if (select.__pautaChangeHandler) return;
+        const handler = () => syncPautaOtroForSelect(select);
+        select.__pautaChangeHandler = handler;
+        select.addEventListener('change', handler);
+    });
+}
+
+function syncPautaStateForLine(container, inactive) {
+    if (!container) return;
+    const pautaSelect = container.querySelector('.treatment-pauta-select');
+    if (!pautaSelect) return;
+    if (inactive) {
+        pautaSelect.value = '';
+        pautaSelect.disabled = true;
+        syncPautaOtroForSelect(pautaSelect);
+    } else {
+        pautaSelect.disabled = false;
+    }
+}
+
 function setupTreatmentControls(selectId, doseId) {
     const selectEl = document.getElementById(selectId);
     const doseEl = document.getElementById(doseId);
@@ -853,6 +937,7 @@ function setupTreatmentControls(selectId, doseId) {
                 doseEl.focus();
             }, 100);
         }
+        syncPautaStateForLine(doseEl.closest('.treatment-controls, .treatment-controls-improved, .treatment-line, .treatment-group'), inactive);
     };
 
     selectEl.addEventListener('change', handler);
@@ -887,6 +972,7 @@ function inicializarEventosTratamientos() {
                 doseInput.style.background = '#fff';
                 doseInput.style.color = '#1e293b';
             }
+            syncPautaStateForLine(container, inactive);
         };
 
         select.__treatmentChangeHandler = handler;
@@ -942,6 +1028,10 @@ function inicializarEventosTratamientos() {
             }
         });
     });
+
+    // 3. Selectores de pauta (catálogo común): poblar y engancharse una vez.
+    //    Se llama en cada pasada para que también valga para las líneas añadidas.
+    wirePautaControls();
 }
 
 
@@ -967,8 +1057,27 @@ function createTreatmentLine(type, options, improved = false, category = '') {
     input.type = 'text';
     input.classList.add(improved ? 'treatment-dose-input-improved' : 'treatment-dose-input');
     if (improved) input.classList.add('dosis-input');
-    input.placeholder = 'Dosis / frecuencia';
+    // Solo las líneas del plan (plan-*) y del cambio (cambio-*) llevan pauta;
+    // los tratamientos previos y el resto de tipos quedan como estaban.
+    const withPauta = typeof type === 'string' && (type.indexOf('plan-') === 0 || type.indexOf('cambio-') === 0);
+    input.placeholder = withPauta ? 'Dosis' : 'Dosis / frecuencia';
     input.disabled = true;
+
+    let pautaSelect = null;
+    let pautaOtroInput = null;
+    if (withPauta) {
+        pautaSelect = document.createElement('select');
+        pautaSelect.classList.add('treatment-pauta-select');
+        pautaSelect.setAttribute('data-no-custom-select', 'true');
+        pautaSelect.setAttribute('aria-label', 'Pauta');
+        pautaSelect.disabled = true;
+
+        pautaOtroInput = document.createElement('input');
+        pautaOtroInput.type = 'text';
+        pautaOtroInput.classList.add('treatment-pauta-otro');
+        pautaOtroInput.placeholder = 'Otra pauta';
+        pautaOtroInput.hidden = true;
+    }
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
@@ -984,6 +1093,10 @@ function createTreatmentLine(type, options, improved = false, category = '') {
     controls.classList.add(improved ? 'treatment-controls-improved' : 'treatment-controls');
     controls.appendChild(select);
     controls.appendChild(input);
+    if (pautaSelect) {
+        controls.appendChild(pautaSelect);
+        controls.appendChild(pautaOtroInput);
+    }
     controls.appendChild(removeBtn);
 
     line.appendChild(controls);
@@ -1363,9 +1476,9 @@ function recopilarDatosFormulario() {
     const imc = document.getElementById('imc').value;
     const ta = document.getElementById('ta').value;
 
-    const planSistemicosEntries = collectTreatmentEntries('sistemicoSelect', 'sistemicoDose', 'planSistemicosExtras');
-    const planFamesEntries = collectTreatmentEntries('fameSelect', 'fameDose', 'planFamesExtras');
-    const planBiologicosEntries = collectTreatmentEntries('biologicoSelect', 'biologicoDose', 'planBiologicosExtras');
+    const planSistemicosEntries = collectTreatmentEntries('sistemicoSelect', 'sistemicoDose', 'planSistemicosExtras', 'sistemicoPauta');
+    const planFamesEntries = collectTreatmentEntries('fameSelect', 'fameDose', 'planFamesExtras', 'famePauta');
+    const planBiologicosEntries = collectTreatmentEntries('biologicoSelect', 'biologicoDose', 'planBiologicosExtras', 'biologicoPauta');
 
     const previoSistemicosEntries = collectTreatmentEntries('previoSistemicoSelect', 'previoSistemicoDose', 'sistemicosExtras');
     const previoFamesEntries = collectTreatmentEntries('previoFameSelect', 'previoFameDose', 'famesExtras');
@@ -2029,9 +2142,9 @@ function recopilarDatosFormularioSeguimiento() {
     const nat = homunculusData?.nat || [];
     const dactilitis = homunculusData?.dactilitis || [];
 
-    const cambioSistemicosEntries = collectTreatmentEntries('cambioSistemicoSelect', 'cambioSistemicoDose', 'cambioSistemicosExtras');
-    const cambioFamesEntries = collectTreatmentEntries('cambioFameSelect', 'cambioFameDose', 'cambioFamesExtras');
-    const cambioBiologicosEntries = collectTreatmentEntries('cambioBiologicoSelect', 'cambioBiologicoDose', 'cambioBiologicosExtras');
+    const cambioSistemicosEntries = collectTreatmentEntries('cambioSistemicoSelect', 'cambioSistemicoDose', 'cambioSistemicosExtras', 'cambioSistemicoPauta');
+    const cambioFamesEntries = collectTreatmentEntries('cambioFameSelect', 'cambioFameDose', 'cambioFamesExtras', 'cambioFamePauta');
+    const cambioBiologicosEntries = collectTreatmentEntries('cambioBiologicoSelect', 'cambioBiologicoDose', 'cambioBiologicosExtras', 'cambioBiologicoPauta');
 
     const sistemicoSlot1 = getTreatmentSlot(cambioSistemicosEntries, 0);
     const fameSlot1 = getTreatmentSlot(cambioFamesEntries, 0);

@@ -12,7 +12,7 @@
  *     published type; the collectors publish a boolean, so `false`).
  *   - The old `text.includes('ALCANZADO')` derivation is a defect: the string
  *     'MDA NO ALCANZADO' contains 'ALCANZADO' and exported true.
- *   - No layout/column-count change in the legacy 497 rows, no other MDA
+ *   - No layout/column-count change in the legacy 533 rows, no other MDA
  *     field change, no clinical rule change (C2 #519 owns the verdicts).
  *
  * The oracle is independent from the implementation and must be able to fail
@@ -34,12 +34,12 @@
  *
  *   B. Legacy export mapping:
  *      B1 APs Seguimiento row: mdaCumple true -> column 193 = 'SI',
- *         false -> 'NO'; the row keeps 497 columns and column 186-192 (the
+ *         false -> 'NO'; the row keeps 533 columns and column 186-192 (the
  *         seven MDA value spans) keep their positions.
  *      B2 Primera Visita rows keep the published layout (MDA block empty at
- *         186-193, 497 columns) — C3 must not start exporting MDA there.
+ *         186-193, 533 columns) — C3 must not start exporting MDA there.
  *      B3 AR-base rows (AR/LES/Sjögren) keep column 193 = SI/NO mapping and
- *         497 columns.
+ *         533 columns.
  *
  *   C. Clinical note (`generarNotaClinica`) never claims MDA achieved for a
  *      negative/pending/blank verdict.
@@ -70,7 +70,7 @@ const WATCHED_IDS = [
 
 const MDA_COL_193 = 193;
 const MDA_VALUE_BLOCK = [186, 187, 188, 189, 190, 191, 192];
-const EXPORT_COLUMN_COUNT = 497;
+const EXPORT_COLUMN_COUNT = 533;
 const BUILDER_PATHOLOGY = { aps: 'APs', espa: 'EspA', ar: 'AR', les: 'LES', sjogren: 'SJOGREN' };
 
 // Frozen verdict table (published strings from C2 #519 / T4 #516).
@@ -343,14 +343,14 @@ for (const page of PAGES) {
     const rowFalse = buildRow(sandbox, 'aps', visit, notAchieved);
     const rowPending = buildRow(sandbox, 'aps', visit, pending);
     const rowBlank = buildRow(sandbox, 'aps', visit, blank);
-    record(`B1 ${page} APs fila: mdaCumple true -> col ${MDA_COL_193} 'SI' (497 columnas)`,
+    record(`B1 ${page} APs fila: mdaCumple true -> col ${MDA_COL_193} 'SI' (533 columnas)`,
       rowTrue[MDA_COL_193 - 1] === 'SI' && rowTrue.length === EXPORT_COLUMN_COUNT,
       `valor='${rowTrue[MDA_COL_193 - 1]}', len=${rowTrue.length}`);
     record(`B1 ${page} APs fila: NO ALCANZADO/PENDIENTE/vacío -> col ${MDA_COL_193} 'NO'`,
       rowFalse[MDA_COL_193 - 1] === 'NO' && rowPending[MDA_COL_193 - 1] === 'NO' &&
         rowBlank[MDA_COL_193 - 1] === 'NO',
       JSON.stringify([rowFalse[MDA_COL_193 - 1], rowPending[MDA_COL_193 - 1], rowBlank[MDA_COL_193 - 1]]));
-    record(`B1 ${page} APs fila: bloque de valores MDA ${MDA_VALUE_BLOCK.join('/')} intacto (497)`,
+    record(`B1 ${page} APs fila: bloque de valores MDA ${MDA_VALUE_BLOCK.join('/')} intacto (533)`,
       MDA_VALUE_BLOCK.every((col) => typeof rowTrue[col - 1] === 'string') &&
         rowTrue.length === EXPORT_COLUMN_COUNT,
       JSON.stringify(MDA_VALUE_BLOCK.map((col) => rowTrue[col - 1])));
@@ -365,7 +365,7 @@ for (const page of PAGES) {
       const rowF = buildRow(sandbox, pathology, visit, notAchieved);
       const expectedTrue = 'SI';
       const expectedFalse = 'NO';
-      record(`B3 ${page} ${pathology.toUpperCase()} fila: col ${MDA_COL_193} '${expectedTrue}'/'${expectedFalse}' (497)`,
+      record(`B3 ${page} ${pathology.toUpperCase()} fila: col ${MDA_COL_193} '${expectedTrue}'/'${expectedFalse}' (533)`,
         rowT[MDA_COL_193 - 1] === expectedTrue && rowF[MDA_COL_193 - 1] === expectedFalse &&
           rowT.length === EXPORT_COLUMN_COUNT,
         `true='${rowT[MDA_COL_193 - 1]}', false='${rowF[MDA_COL_193 - 1]}', len=${rowT.length}`);
@@ -373,14 +373,14 @@ for (const page of PAGES) {
   } else {
     const rowTrue = buildRow(sandbox, 'aps', visit, achieved);
     const rowFalse = buildRow(sandbox, 'aps', visit, notAchieved);
-    record(`B2 ${page} fila APs: bloque MDA ${MDA_VALUE_BLOCK[0]}-${MDA_COL_193} vacío y 497 columnas (layout intacto)`,
+    record(`B2 ${page} fila APs: bloque MDA ${MDA_VALUE_BLOCK[0]}-${MDA_COL_193} vacío y 533 columnas (layout intacto)`,
       rowTrue.length === EXPORT_COLUMN_COUNT &&
         MDA_VALUE_BLOCK.every((col) => rowTrue[col - 1] === '') &&
         rowTrue[MDA_COL_193 - 1] === '' && rowFalse[MDA_COL_193 - 1] === '',
       JSON.stringify({ len: rowTrue.length, block: rowTrue.slice(MDA_VALUE_BLOCK[0] - 1, MDA_COL_193) }));
 
     const espRow = buildRow(sandbox, 'espa', visit, achieved);
-    record(`B2 ${page} fila EspA: 497 columnas y bloque MDA vacío`,
+    record(`B2 ${page} fila EspA: 533 columnas y bloque MDA vacío`,
       espRow.length === EXPORT_COLUMN_COUNT &&
         MDA_VALUE_BLOCK.every((col) => espRow[col - 1] === '') && espRow[MDA_COL_193 - 1] === '',
       JSON.stringify({ len: espRow.length, block: espRow.slice(MDA_VALUE_BLOCK[0] - 1, MDA_COL_193) }));
@@ -388,7 +388,7 @@ for (const page of PAGES) {
     for (const pathology of ['les', 'sjogren', 'ar']) {
       const rowT = buildRow(sandbox, pathology, visit, achieved);
       const rowF = buildRow(sandbox, pathology, visit, notAchieved);
-      record(`B3 ${page} ${pathology.toUpperCase()} fila: col ${MDA_COL_193} 'SI'/'NO' (497)`,
+      record(`B3 ${page} ${pathology.toUpperCase()} fila: col ${MDA_COL_193} 'SI'/'NO' (533)`,
         rowT[MDA_COL_193 - 1] === 'SI' && rowF[MDA_COL_193 - 1] === 'NO' &&
           rowT.length === EXPORT_COLUMN_COUNT,
         `true='${rowT[MDA_COL_193 - 1]}', false='${rowF[MDA_COL_193 - 1]}', len=${rowT.length}`);

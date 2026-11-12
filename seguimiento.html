@@ -2208,7 +2208,9 @@
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioSistemicoDose" class="treatment-dose-input"
-                                                placeholder="Dosis / frecuencia" disabled>
+                                                placeholder="Dosis" disabled>
+                                            <select id="cambioSistemicoPauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                            <input type="text" id="cambioSistemicoPautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                             <button type="button" class="add-treatment-line-btn"
                                                 data-type="cambio-sistemico" title="Añadir otro"><i
                                                     class="fas fa-plus-circle"></i></button>
@@ -2223,7 +2225,9 @@
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioFameDose" class="treatment-dose-input"
-                                                placeholder="Dosis / frecuencia" disabled>
+                                                placeholder="Dosis" disabled>
+                                            <select id="cambioFamePauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                            <input type="text" id="cambioFamePautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                             <button type="button" class="add-treatment-line-btn" data-type="cambio-fame"
                                                 title="Añadir otro"><i class="fas fa-plus-circle"></i></button>
                                         </div>
@@ -2237,7 +2241,9 @@
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioBiologicoDose" class="treatment-dose-input"
-                                                placeholder="Dosis / frecuencia" disabled>
+                                                placeholder="Dosis" disabled>
+                                            <select id="cambioBiologicoPauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                            <input type="text" id="cambioBiologicoPautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                             <button type="button" class="add-treatment-line-btn"
                                                 data-type="cambio-biologico" title="Añadir otro"><i
                                                     class="fas fa-plus-circle"></i></button>
@@ -2340,11 +2346,12 @@
     <script src="modules/scoreCalculators.js?v=20260928a"></script>
     <script src="modules/homunculus.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307s"></script>
-    <script src="modules/exportManager.js?v=20261010-txt-gate-21-csv-noapi-r1"></script>
+    <script src="modules/exportManager.js?v=20261112b"></script>
     <script src="modules/reuma_export_boundary.js?v=20260928a"></script>
     <script src="modules/reuma_act_contract.js?v=20260929a"></script>
     <script src="modules/reuma_legacy_export_adapter.js?v=20260929a"></script>
-    <script src="modules/formController.js?v=20261010d"></script>
+    <script src="scripts/farmacia_pautas_catalog.js?v=20261112b"></script>
+    <script src="modules/formController.js?v=20261112b"></script>
     <script src="modules/drugCatalog.js?v=20261112a"></script>
     <script src="modules/cimaSearch.js?v=20261112a"></script>
     <script src="modules/drugAutocomplete.js?v=20261112a"></script>

@@ -301,7 +301,7 @@ async function run() {
     //    es fecha de visita". `extractTreatmentHistory()` manufactures
     //    `startDate = visit date` for a row with a treatment but no
     //    documented start date; the prefill payload must NEVER propagate it
-    //    (this payload feeds both the display and the TXT/CSV 497 export).
+    //    (this payload feeds both the display and the TXT/CSV 533 export).
     //    Synthetic date-less found patient appended to the TEMP in-memory
     //    workbook; the frozen corpus fixture is untouched.
     // =====================================================================

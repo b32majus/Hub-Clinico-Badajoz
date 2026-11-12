@@ -36,11 +36,11 @@
  *   C8      Primera Visita: TXT gate BLOCKS CSV when TXT was not exported for
  *           the visit (gate keeps working: explicit error notification, NO
  *           modal, NO clipboard delivery attempt).
- *   C9      Primera Visita: gated TXT→CSV path reaches the 497-column CSV
+ *   C9      Primera Visita: gated TXT→CSV path reaches the 533-column CSV
  *           manual modal ('Copia manual de CSV'); the shared Copiar handler
- *           must keep the modal open with the byte-identical 497-field payload
+ *           must keep the modal open with the byte-identical 533-field payload
  *           on failure (no success claim).
- *   C10     Seguimiento: same gate-blocked + gated 497 CSV manual modal pair.
+ *   C10     Seguimiento: same gate-blocked + gated 533 CSV manual modal pair.
  *   C11     Solicitud FH on Primera Visita (pharmacyRequest
  *           copyRequestToClipboard -> renderRequestModal -> shared modal):
  *           reject+false (truthful failure) then reject+true (recovery).
@@ -80,7 +80,7 @@
  *   modules/formController.js  mostrarModalTexto (~line 1042) and its
  *   #copyToClipboardModalBtn 'Copiar' click handler.
  * Consumers: modules/exportManager.js (exportarTXT TXT journey,
- *   exportarYCopiarCSV gated 497 journey, openManualCopyModal), and
+ *   exportarYCopiarCSV gated 533 journey, openManualCopyModal), and
  *   modules/pharmacyRequest.js:renderRequestModal (Solicitud FH) shared by
  *   primera_visita.html, seguimiento.html and dashboard_paciente.html.
  *
@@ -129,7 +129,7 @@
  *
  * T20-02 BOUNDED RECONCILIATION (Train 20 / #621, mandated by the accepted
  * handoff §3 "Oráculos antiguos que fijan persistencia deben reconciliarse
- * con nueva autoridad, sin debilitar igualdad 497/no recursión/no storage"):
+ * con nueva autoridad, sin debilitar igualdad 533/no recursión/no storage"):
  *   The accepted T20-01/T20-02 gate authority (ephemeral, memory-only, zero
  *   Web Storage; authorization ONLY after a really-confirmed copy or an
  *   explicit professional attestation) changes the preconditions of three
@@ -140,12 +140,12 @@
  *     was the DEFECT the new authority removed. The record is now a
  *     STRENGTHENING: the TXT export attempt must write NO session gate key
  *     (`txtGateKeys === 0`) even though the auto-copy failed.
- *   - C9/C10: the gated 497 CSV manual-modal journeys previously relied on
+ *   - C9/C10: the gated 533 CSV manual-modal journeys previously relied on
  *     the legacy defect ("TXT export registers the gate on modal open").
  *     They now satisfy the gate through the NEW accepted authority — a
  *     really-confirmed modal «Copiar» success (writeText rejected + armed
  *     execCommand('copy') TRUE) inside the TXT modal, exactly the #620
- *     semantics — before the gated CSV journey. The 497 byte-equality,
+ *     semantics — before the gated CSV journey. The 533 byte-equality,
  *     truthful-failure, no-success-claim and no-storage purposes are
  *     unchanged; the plant-count records were re-derived for the extra
  *     really-confirmed copy (writeAttempts 3→4, execCommandCalls 1→2 in C9)
@@ -179,7 +179,7 @@ const GATE_BLOCK_TEXT = 'Debe exportar TXT de esta visita antes de exportar CSV.
 const MANUAL_COPY_TITLE_TOKEN = 'Copia Manual'; // TXT modal title token ('...Generada - Copia Manual')
 const CSV_MODAL_TITLE_TOKEN = 'Copia manual de CSV';
 const FH_MODAL_TITLE_TOKEN = 'Solicitud a Farmacia Hospitalaria - Copia Manual';
-const CSV_FIELD_COUNT = 497; // frozen legacy row shape (reuma_export_boundary_check.mjs)
+const CSV_FIELD_COUNT = 533; // frozen legacy row shape (reuma_export_boundary_check.mjs)
 const TXT_GATE_KEY_PREFIX = 'HubClinico_TxtExportDone_';
 const CLASSIFIED_CONSOLE_ERRORS = [
     'Error al copiar al portapapeles automáticamente', // exportManager TXT auto-copy failure (controlled)
@@ -970,7 +970,7 @@ try {
     // =====================================================================
     // C8 — Primera Visita: the TXT gate BLOCKS CSV when TXT was not exported
     // for this visit. The gate must keep working: explicit legal message, NO
-    // modal, NO clipboard delivery attempt of any 497 payload.
+    // modal, NO clipboard delivery attempt of any 533 payload.
     // =====================================================================
     {
         const label = 'C8 PV TXT gate blocks CSV (gate keeps working):';
@@ -1006,16 +1006,16 @@ try {
     }
 
     // =====================================================================
-    // C9 — Primera Visita gated TXT→CSV path reaches the 497-column CSV
+    // C9 — Primera Visita gated TXT→CSV path reaches the 533-column CSV
     // manual modal; the shared Copiar handler must fail TRUTHFULLY there
-    // (no success claim, byte-identical 497 payload preserved).
+    // (no success claim, byte-identical 533 payload preserved).
     // =====================================================================
     {
-        const label = 'C9 PV 497-column CSV manual modal (gated TXT→CSV, reject + execCommand FALSE):';
-        caseHeader('C9 — Primera Visita: TXT export (gate authorized through the accepted T20-02 authority) -> #btnEstructurarCSV -> 497 CSV manual modal -> truthful Copiar failure');
+        const label = 'C9 PV 533-column CSV manual modal (gated TXT→CSV, reject + execCommand FALSE):';
+        caseHeader('C9 — Primera Visita: TXT export (gate authorized through the accepted T20-02 authority) -> #btnEstructurarCSV -> 533 CSV manual modal -> truthful Copiar failure');
         const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`);
         try {
-            await fillClinicalBase(page, { cip: 'SYN-CSV-497-001', isSeguimiento: false });
+            await fillClinicalBase(page, { cip: 'SYN-CSV-533-001', isSeguimiento: false });
             const txtBefore = await txtExportAwaitModal(page);
             record(`${label} journey step 1: TXT export opened the real manual modal (auto-copy rejected)`,
                 txtBefore.modalCount === 1 && txtBefore.title.includes(MANUAL_COPY_TITLE_TOKEN),
@@ -1034,7 +1034,7 @@ try {
             await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 10000 });
             await page.waitForTimeout(400);
             const before = await readModalState(page);
-            record(`${label} journey step 2: the gated TXT→CSV path opened the real '${CSV_MODAL_TITLE_TOKEN}' modal with the FULL 497-field payload`,
+            record(`${label} journey step 2: the gated TXT→CSV path opened the real '${CSV_MODAL_TITLE_TOKEN}' modal with the FULL 533-field payload`,
                 before.modalCount === 1 && before.title.includes(CSV_MODAL_TITLE_TOKEN)
                     && before.textFields === CSV_FIELD_COUNT && before.readonly === true,
                 `modalCount=${before.modalCount} title=${JSON.stringify(before.title)} fields=${before.textFields} readonly=${before.readonly}`);
@@ -1049,7 +1049,7 @@ try {
             record(`${label} truthful contract: the FAILED CSV 'Copiar' adds NO fresh '${SUCCESS_CLAIM_TEXT}' toast (toast count unchanged — the lingering one belongs to the gate step's really-confirmed copy) and shows the honest '${FAILURE_FEEDBACK_TEXT}' failure feedback`,
                 toastsAfterCsvFailure.successToasts === toastsBeforeCsvFailure.successToasts && after.failureFeedbackVisible === true,
                 `successToasts ${toastsBeforeCsvFailure.successToasts}->${toastsAfterCsvFailure.successToasts} failureFeedbackVisible=${after.failureFeedbackVisible}`);
-            record(`${label} truthful contract: modal stays open with the byte-identical FULL ${CSV_FIELD_COUNT}-field payload (clinical 497 projection not lost/truncated)`,
+            record(`${label} truthful contract: modal stays open with the byte-identical FULL ${CSV_FIELD_COUNT}-field payload (clinical 533 projection not lost/truncated)`,
                 after.modalCount === 1 && after.textFields === CSV_FIELD_COUNT && after.text === before.text,
                 `modalCount=${after.modalCount} fields=${after.textFields} preserved=${after.text === before.text}`);
             recordErrorClassificationAll(label, entry);
@@ -1059,12 +1059,12 @@ try {
     }
 
     // =====================================================================
-    // C10 — Seguimiento: gate-blocked CSV + gated 497 CSV manual modal with
+    // C10 — Seguimiento: gate-blocked CSV + gated 533 CSV manual modal with
     // a truthful Copiar failure (same pair as C8/C9 on Seguimiento).
     // =====================================================================
     {
-        const label = 'C10 Seguimiento gate-blocked CSV + 497 CSV manual modal:';
-        caseHeader('C10 — Seguimiento: #btnEstructurarCSV blocked without TXT; after TXT the gated path opens the 497 CSV manual modal with truthful failure');
+        const label = 'C10 Seguimiento gate-blocked CSV + 533 CSV manual modal:';
+        caseHeader('C10 — Seguimiento: #btnEstructurarCSV blocked without TXT; after TXT the gated path opens the 533 CSV manual modal with truthful failure');
         const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_SEGUIMIENTO}?id=SYN-SEG-200`);
         try {
             await page.waitForFunction(() => {
@@ -1099,7 +1099,7 @@ try {
             await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 10000 });
             await page.waitForTimeout(400);
             const before = await readModalState(page);
-            record(`${label} journey step 3: the gated path opened the real '${CSV_MODAL_TITLE_TOKEN}' modal with the FULL 497-field payload`,
+            record(`${label} journey step 3: the gated path opened the real '${CSV_MODAL_TITLE_TOKEN}' modal with the FULL 533-field payload`,
                 before.modalCount === 1 && before.title.includes(CSV_MODAL_TITLE_TOKEN)
                     && before.textFields === CSV_FIELD_COUNT && before.readonly === true,
                 `modalCount=${before.modalCount} title=${JSON.stringify(before.title)} fields=${before.textFields} readonly=${before.readonly}`);

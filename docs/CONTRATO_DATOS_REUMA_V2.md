@@ -1,6 +1,6 @@
 # Contrato de Datos Reuma v2
 
-> Revisión 2026-05-04, AUDIT-FIX-2. Contrato vigente Reuma v2: 5 hojas clínicas con 497 columnas cada una. El bloque prebiológico/vacunación va embebido por visita. La Solicitud FH es una salida derivada de texto y no se persiste como hoja ni columna.
+> Revisión 2026-05-04, AUDIT-FIX-2. Contrato vigente Reuma v2: 5 hojas clínicas con 533 columnas cada una (497 + 36 de pauta, #919, 12-11-2026). El bloque prebiológico/vacunación va embebido por visita. La Solicitud FH es una salida derivada de texto y no se persiste como hoja ni columna.
 
 ---
 
@@ -22,7 +22,7 @@ No existen hojas clínicas obligatorias separadas para `Prebiologico`, `Solicitu
 
 ## 2. Columnas comunes a todas las hojas clínicas
 
-Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) tienen **497 columnas**. Las primeras 321 columnas preservan el contrato histórico; las columnas v2 añaden bloque prebiológico/vacunación, LES, Sjögren y APs/DAPSA sin crear hojas clínicas adicionales.
+Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) tienen **533 columnas**. Las primeras 321 columnas preservan el contrato histórico; las columnas v2 añaden bloque prebiológico/vacunación, LES, Sjögren y APs/DAPSA sin crear hojas clínicas adicionales.
 
 El identificador visible canónico es `CIP`, pero el contrato Excel histórico conserva `ID_Paciente` como cabecera física compatible. El loader normaliza ambos.
 
@@ -63,6 +63,7 @@ Cabeceras base históricas de referencia:
 33. Campos clínicos históricos restantes hasta columna 321.
 34. Bloque v2 común embebido por visita desde columna 322, incluyendo `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico`.
 35. Bloque APs/DAPSA en columnas 492-497: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`. En hojas no APs exporta `NA`.
+36. Pauta de las líneas de tratamiento en columnas 498-533 (#919): por grupo (`Trat_Sistemico`, `Trat_FAME`, `Trat_Biologico`, `Cambio_Sistemico`, `Cambio_FAME`, `Cambio_Biologico`) y hueco 1-3, `<grupo>_Pauta_<n>` (código del catálogo común `scripts/farmacia_pautas_catalog.js`) y `<grupo>_Pauta_Otro_<n>` (texto libre solo si la pauta es `OTRO`). Sin unidad ni vía. Vacío = no consta.
 
 > **Nota de compatibilidad**: Las hojas ESPA/APS/AR existentes usan `ID_Paciente` en lugar de `CIP`. El loader normaliza ambos campos mediante `HubTools.normalizer.getPatientCIP()`.
 
@@ -85,6 +86,7 @@ Cabeceras base históricas de referencia:
 - Columnas específicas de **LES**: ver `docs/template_les_excel.md`
 - Columnas específicas de **Sjögren**: ver `docs/template_sjogren_excel.md`
 - Columnas específicas de **APs/DAPSA**: ver `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`, posiciones 492-497.
+- Columnas de **pauta** de las líneas de tratamiento: ver `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`, posiciones 498-533.
 - Columnas de **prebiológico**: bloque común embebido por visita; ver `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`.
 - Estructura de **Solicitud FH**: salida derivada de texto; no columna/hoja persistida.
 - Columnas históricas ESPA/APS/AR: ver `docs/CONTRATO_DATOS_UNIFICADO.md`

@@ -18,7 +18,7 @@
  *   Seguimiento controls (`#btnExportarTXT` → `#btnEstructurarCSV`), the
  *   shared text modal (`mostrarModalTexto`) and its real `Copiar`/`Cerrar`
  *   buttons, real notifications (toast DOM), the real delivered TXT note and
- *   497-column CSV payload (clipboard / manual modal), console/pageerror
+ *   533-column CSV payload (clipboard / manual modal), console/pageerror
  *   streams and Web Storage snapshots. No private/internal method is used as
  *   an assertion basis (the only internal seams read, `HubTools.
  *   reumaActContract.createVisitAct` + `HubTools.reumaLegacyExportAdapter.
@@ -39,8 +39,8 @@
  *   W01 story 1  CSV blocked before any TXT + pending-step message (PV).
  *   W02 story 16 empty identity context fail-closed, no crash (PV).
  *   W03 story 16 storage denied fail-closed, no crash (PV).
- *   W04 story 2  clipboard writeText resolving enables the 497 CSV (PV).
- *   W05 story 15 delivered 497 row byte-equals the cutover adapter row (PV).
+ *   W04 story 2  clipboard writeText resolving enables the 533 CSV (PV).
+ *   W05 story 15 delivered 533 row byte-equals the cutover adapter row (PV).
  *   W06 story 15 TXT note text unchanged (stable invariants, PV).
  *   W07 story 13 same instance + unchanged data re-exports CSV (PV).
  *   W08 story 9  change-then-restore (payload identical) does not force repeat (PV).
@@ -68,7 +68,7 @@
  *   W23 story 12/11 reopening the same visit identity (same CIP/fecha/tipo/
  *                diagnóstico, Seguimiento ?id= route) => no inherited authorization.
  *   W24 story 2/13 Seguimiento clipboard resolve enables CSV + re-export (Seg).
- *   W25 story 15 497 byte equality with the cutover adapter (Seg).
+ *   W25 story 15 533 byte equality with the cutover adapter (Seg).
  *   W26 story 14 planted legacy `HubClinico_TxtExportDone_*` marker matching
  *                CIP/fecha NEVER authorizes (PV).
  *   W27 story 14 planted markers + `hubPendingRows` byte-unchanged across ALL
@@ -124,7 +124,7 @@ const PAGE_PRIMERA = 'primera_visita.html';
 const PAGE_SEGUIMIENTO = 'seguimiento.html';
 const PAGE_DASHBOARD = 'dashboard_paciente.html';
 
-const CSV_FIELD_COUNT = 497;
+const CSV_FIELD_COUNT = 533;
 const CSV_MODAL_TITLE_TOKEN = 'Copia manual de CSV';
 const TXT_MODAL_TITLE_TOKEN = 'Copia Manual';
 const FH_MODAL_TITLE_TOKEN = 'Solicitud a Farmacia Hospitalaria';
@@ -170,8 +170,8 @@ function witnessSkip(w, detail) { w.verdict = 'SKIP'; w.detail = detail || ''; c
 const W01 = defineWitness('W01', 'story 1', 'CSV blocked before any TXT with a pending-step message (PV)', 'PASS');
 const W02 = defineWitness('W02', 'story 16', 'empty identity context fail-closed, no crash (PV)', 'PASS');
 const W03 = defineWitness('W03', 'story 16', 'denied storage fail-closed, no crash (PV)', 'PASS');
-const W04 = defineWitness('W04', 'story 2', 'clipboard writeText resolving enables the 497 CSV (PV)', 'PASS');
-const W05 = defineWitness('W05', 'story 15', 'delivered 497 row byte-equals the cutover adapter row (PV)', 'PASS');
+const W04 = defineWitness('W04', 'story 2', 'clipboard writeText resolving enables the 533 CSV (PV)', 'PASS');
+const W05 = defineWitness('W05', 'story 15', 'delivered 533 row byte-equals the cutover adapter row (PV)', 'PASS');
 const W06 = defineWitness('W06', 'story 15', 'TXT note text unchanged across repeated exports (PV)', 'PASS');
 const W07 = defineWitness('W07', 'story 13', 'same instance, unchanged data: CSV re-export without repeating TXT (PV)', 'PASS');
 const W08 = defineWitness('W08', 'story 9', 'presentation-only change (payload restored identical) does not force repetition (PV)', 'PASS');
@@ -190,8 +190,8 @@ const W20 = defineWitness('W20', 'story 11', 'Primera Visita \u00abNuevo pacient
 const W21 = defineWitness('W21', 'story 11', 'navigation away + back: authorization lost (PV)', 'RED');
 const W22 = defineWitness('W22', 'story 11', 'bfcache restore (pageshow.persisted): authorization lost (PV)', 'RED');
 const W23 = defineWitness('W23', 'story 12', 'reopening the same visit identity (identical CIP/fecha/tipo/diagn\u00f3stico): no inherited authorization (Seguimiento)', 'RED');
-const W24 = defineWitness('W24', 'story 2/13', 'Seguimiento clipboard resolve enables the 497 CSV + same-instance re-export', 'PASS');
-const W25 = defineWitness('W25', 'story 15', 'delivered 497 row byte-equals the cutover adapter row (Seguimiento)', 'PASS');
+const W24 = defineWitness('W24', 'story 2/13', 'Seguimiento clipboard resolve enables the 533 CSV + same-instance re-export', 'PASS');
+const W25 = defineWitness('W25', 'story 15', 'delivered 533 row byte-equals the cutover adapter row (Seguimiento)', 'PASS');
 const W26 = defineWitness('W26', 'story 14', 'planted legacy marker matching CIP/fecha NEVER authorizes CSV (PV)', 'RED');
 const W27 = defineWitness('W27', 'story 14', 'planted markers + hubPendingRows byte-unchanged across ALL journeys', 'PASS');
 const W28 = defineWitness('W28', 'Impl. decisions', 'zero NEW Web Storage writes by the TXT\u2192CSV gate across ALL journeys', 'RED');
@@ -658,7 +658,7 @@ async function readClipboardText(page) {
 }
 
 /** Click the real Estructurar CSV button and read the post-state. The
- * clipboard delivery signal requires a FRESH 497-row (pre-click clipboard is
+ * clipboard delivery signal requires a FRESH 533-row (pre-click clipboard is
  * compared so a stale row from an earlier step is never mistaken for a new
  * delivery); after observation any open manual modal is closed through its
  * real `Cerrar` button so later supported clicks are not intercepted. */
@@ -698,8 +698,8 @@ function csvDelivered(obs) {
 }
 
 function csvDeliveredVia(obs) {
-    if (obs.freshClipboardRow === true) return 'clipboard-497';
-    if (obs.modalTitle.includes(CSV_MODAL_TITLE_TOKEN) && typeof obs.modalText === 'string' && obs.modalText.split('\t').length === CSV_FIELD_COUNT) return 'csv-manual-modal-497';
+    if (obs.freshClipboardRow === true) return 'clipboard-533';
+    if (obs.modalTitle.includes(CSV_MODAL_TITLE_TOKEN) && typeof obs.modalText === 'string' && obs.modalText.split('\t').length === CSV_FIELD_COUNT) return 'csv-manual-modal-533';
     return 'none';
 }
 
@@ -870,7 +870,7 @@ try {
             let obs = await clickCsvAndObserve(page);
             const pendingStepMessageShown = /txt/i.test(obs.bodyText);
             if (!csvDelivered(obs) && pendingStepMessageShown) {
-                witnessPass(W01, `no 497 delivery (${csvDeliveredVia(obs)}), pending-step feedback present`);
+                witnessPass(W01, `no 533 delivery (${csvDeliveredVia(obs)}), pending-step feedback present`);
             } else {
                 witnessFail(W01, `delivered=${csvDelivered(obs)} via=${csvDeliveredVia(obs)} pendingStepMessage=${pendingStepMessageShown}`);
             }
@@ -882,7 +882,7 @@ try {
             obs = await clickCsvAndObserve(page);
             const identityObs = obs;
             if (!csvDelivered(identityObs)) {
-                witnessPass(W02, `no 497 delivery with empty CIP (via=${csvDeliveredVia(identityObs)})`);
+                witnessPass(W02, `no 533 delivery with empty CIP (via=${csvDeliveredVia(identityObs)})`);
             } else {
                 witnessFail(W02, `CSV delivered with empty identity context (via=${csvDeliveredVia(identityObs)})`);
             }
@@ -895,7 +895,7 @@ try {
             obs = await clickCsvAndObserve(page);
             const storageDeniedCalls = await page.evaluate(() => window.__tg.storageDeniedCalls);
             if (!csvDelivered(obs)) {
-                witnessPass(W03, `no 497 delivery under storage denial (via=${csvDeliveredVia(obs)}, denial-hit=${storageDeniedCalls})`);
+                witnessPass(W03, `no 533 delivery under storage denial (via=${csvDeliveredVia(obs)}, denial-hit=${storageDeniedCalls})`);
             } else {
                 witnessFail(W03, `CSV delivered under storage denial (via=${csvDeliveredVia(obs)})`);
             }
@@ -908,7 +908,7 @@ try {
     }
 
     // =====================================================================
-    // J-POS (PV): clipboard-resolving TXT authorizes; 497 equality; TXT text
+    // J-POS (PV): clipboard-resolving TXT authorizes; 533 equality; TXT text
     // invariants; same-instance re-export; presentation-only change.
     // =====================================================================
     {
@@ -957,12 +957,12 @@ try {
                 witnessFail(W06, `header/CIP ok=${txt1Ok} stable=${txtStable} txt1=${txt1.ok ? 'ok' : txt1.error} txt2=${txt2.ok ? 'ok' : txt2.error}`);
             }
 
-            // W04 + W05 — CSV enabled after clipboard-confirmed TXT; 497 equality.
+            // W04 + W05 — CSV enabled after clipboard-confirmed TXT; 533 equality.
             let obs = await clickCsvAndObserve(page);
             if (!csvDelivered(obs)) {
                 witnessFail(W04, `CSV not delivered after clipboard-confirmed TXT (via=${csvDeliveredVia(obs)})`);
             } else {
-                witnessPass(W04, `497 CSV delivered (${csvDeliveredVia(obs)}) after resolving clipboard TXT`);
+                witnessPass(W04, `533 CSV delivered (${csvDeliveredVia(obs)}) after resolving clipboard TXT`);
             }
             await checkpoint(page, jl, 'after-csv-1');
             const ref = await adapterReferenceRow(page, { kind: 'primera_visita', pathology: 'espa' });
@@ -1038,7 +1038,7 @@ try {
                 witnessFail(W09, `precondition failed: TXT reject did not open the real manual modal (modalCount=${modal.modalCount}, title=${JSON.stringify(modal.title)})`);
                 witnessFail(W10, 'precondition failed: modal not opened by the supported TXT journey');
             } else if (!csvDelivered(obs) && bannedAfterClose.length === 0) {
-                witnessPass(W09, `reject + modal merely opened/closed: no 497 delivery (via=${csvDeliveredVia(obs)})`);
+                witnessPass(W09, `reject + modal merely opened/closed: no 533 delivery (via=${csvDeliveredVia(obs)})`);
                 witnessPass(W10, `no success claim after close (banned tokens absent), CSV blocked`);
             } else {
                 witnessFail(W09, `CSV delivered after reject + modal open/close (via=${csvDeliveredVia(obs)}) — legacy marker written on modal open`);
@@ -1101,7 +1101,7 @@ try {
 
             const copySucceeded = afterCopy.includes('Contenido copiado al portapapeles.');
             if (modal.modalCount === 1 && copySucceeded && csvDelivered(obs)) {
-                witnessPass(W11, `modal Copiar real success (claim shown) enabled the 497 CSV (via=${csvDeliveredVia(obs)})`);
+                witnessPass(W11, `modal Copiar real success (claim shown) enabled the 533 CSV (via=${csvDeliveredVia(obs)})`);
             } else {
                 witnessFail(W11, `modal=${modal.modalCount} copySuccessClaim=${copySucceeded} delivered=${csvDelivered(obs)} via=${csvDeliveredVia(obs)}`);
             }
@@ -1192,7 +1192,7 @@ try {
             } else if (!attestation.found) {
                 witnessFail(W13, `real manual copy worked (${clip.text.length} chars) but NO explicit attestation control («He copiado el TXT» / «He guardado el TXT») exists anywhere in the flow`);
             } else if (csvOk) {
-                witnessPass(W13, `manual copy + explicit attestation control (${attestation.label}) enabled the 497 CSV (via=${csvDeliveredVia(obs)})`);
+                witnessPass(W13, `manual copy + explicit attestation control (${attestation.label}) enabled the 533 CSV (via=${csvDeliveredVia(obs)})`);
             } else {
                 witnessFail(W13, `attestation control present (${attestation.label}) but CSV not delivered after clicking it (via=${obs ? csvDeliveredVia(obs) : 'n/a'})`);
             }
@@ -1577,7 +1577,7 @@ try {
     }
 
     // =====================================================================
-    // J-SEG-POS (Seguimiento): clipboard resolve enables CSV; 497 equality;
+    // J-SEG-POS (Seguimiento): clipboard resolve enables CSV; 533 equality;
     // same-instance re-export (stories 2/13/15).
     // =====================================================================
     {
@@ -1609,7 +1609,7 @@ try {
             if (!csvDelivered(firstCsv) || !csvDelivered(reCsv)) {
                 witnessFail(W24, `Seguimiento clipboard-confirmed TXT -> CSV delivered=${csvDelivered(firstCsv)} (${csvDeliveredVia(firstCsv)}); same-instance re-export delivered=${csvDelivered(reCsv)} (${csvDeliveredVia(reCsv)})`);
             } else {
-                witnessPass(W24, `Seguimiento 497 CSV delivered after clipboard-confirmed TXT (${csvDeliveredVia(firstCsv)}) and re-exported in the same instance without repeating TXT (${csvDeliveredVia(reCsv)})`);
+                witnessPass(W24, `Seguimiento 533 CSV delivered after clipboard-confirmed TXT (${csvDeliveredVia(firstCsv)}) and re-exported in the same instance without repeating TXT (${csvDeliveredVia(reCsv)})`);
             }
 
             if (!ref.ok) {

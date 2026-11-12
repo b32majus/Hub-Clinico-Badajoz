@@ -13,9 +13,9 @@
  *   Primera Visita: ALCANZADO -> mdaCumple true (+ 'MDA: true' in the note),
  *                   NO ALCANZADO -> false (+ 'MDA: false'),
  *                   PENDIENTE    -> false (+ 'MDA: false').
- *   Seguimiento: the same three verdicts additionally mapped to legacy 497
+ *   Seguimiento: the same three verdicts additionally mapped to legacy 533
  *                   column 193 ('SI' only for ALCANZADO, 'NO' otherwise) with
- *                   the row keeping 497 columns.
+ *                   the row keeping 533 columns.
  *
  * page.evaluate only reads observables or runs production read/derivation code
  * (`HubTools.form.recopilar*`, `HubTools.export.generarFilaCSV_*`,
@@ -242,11 +242,11 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       check(`${pagePath} ALCANZADO -> nota clínica 'MDA: true'`,
         read.notaMda === 'MDA: true', `nota='${read.notaMda}'`);
       if (rowMappingApplies(pagePath)) {
-        check(`${pagePath} ALCANZADO -> legacy col 193 'SI' y 497 columnas`,
-          read.col193 === 'SI' && read.len === 497, JSON.stringify({ col193: read.col193, len: read.len }));
+        check(`${pagePath} ALCANZADO -> legacy col 193 'SI' y 533 columnas`,
+          read.col193 === 'SI' && read.len === 533, JSON.stringify({ col193: read.col193, len: read.len }));
       } else {
-        check(`${pagePath} Primera Visita: layout 497 intacto (bloque MDA vacío en col 193)`,
-          read.len === 497 && read.col193 === '', JSON.stringify({ col193: read.col193, len: read.len }));
+        check(`${pagePath} Primera Visita: layout 533 intacto (bloque MDA vacío en col 193)`,
+          read.len === 533 && read.col193 === '', JSON.stringify({ col193: read.col193, len: read.len }));
       }
       check(`${pagePath} ALCANZADO console.error=0 pageerror=0`,
         errs.length === 0 && perrs.length === 0, JSON.stringify([...errs, ...perrs].slice(0, 5)));
@@ -272,11 +272,11 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       check(`${pagePath} NO ALCANZADO -> nota clínica sin 'MDA: true'`,
         read.notaMda === 'MDA: false', `nota='${read.notaMda}'`);
       if (rowMappingApplies(pagePath)) {
-        check(`${pagePath} NO ALCANZADO -> legacy col 193 'NO' y 497 columnas`,
-          read.col193 === 'NO' && read.len === 497, JSON.stringify({ col193: read.col193, len: read.len }));
+        check(`${pagePath} NO ALCANZADO -> legacy col 193 'NO' y 533 columnas`,
+          read.col193 === 'NO' && read.len === 533, JSON.stringify({ col193: read.col193, len: read.len }));
       } else {
-        check(`${pagePath} NO ALCANZADO: layout 497 intacto`,
-          read.len === 497 && read.col193 === '', JSON.stringify({ col193: read.col193, len: read.len }));
+        check(`${pagePath} NO ALCANZADO: layout 533 intacto`,
+          read.len === 533 && read.col193 === '', JSON.stringify({ col193: read.col193, len: read.len }));
       }
       check(`${pagePath} NO ALCANZADO console.error=0 pageerror=0`,
         errs.length === 0 && perrs.length === 0, JSON.stringify([...errs, ...perrs].slice(0, 5)));
@@ -307,11 +307,11 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       check(`${pagePath} PENDIENTE -> nota clínica sin 'MDA: true'`,
         read.notaMda === 'MDA: false', `nota='${read.notaMda}'`);
       if (rowMappingApplies(pagePath)) {
-        check(`${pagePath} PENDIENTE -> legacy col 193 'NO' y 497 columnas`,
-          read.col193 === 'NO' && read.len === 497, JSON.stringify({ col193: read.col193, len: read.len }));
+        check(`${pagePath} PENDIENTE -> legacy col 193 'NO' y 533 columnas`,
+          read.col193 === 'NO' && read.len === 533, JSON.stringify({ col193: read.col193, len: read.len }));
       } else {
-        check(`${pagePath} PENDIENTE: layout 497 intacto`,
-          read.len === 497 && read.col193 === '', JSON.stringify({ col193: read.col193, len: read.len }));
+        check(`${pagePath} PENDIENTE: layout 533 intacto`,
+          read.len === 533 && read.col193 === '', JSON.stringify({ col193: read.col193, len: read.len }));
       }
       check(`${pagePath} PENDIENTE console.error=0 pageerror=0`,
         errs.length === 0 && perrs.length === 0, JSON.stringify([...errs, ...perrs].slice(0, 5)));

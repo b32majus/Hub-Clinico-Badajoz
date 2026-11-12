@@ -2540,7 +2540,9 @@
                                         </select>
                                         <input type="text" id="sistemicoDose"
                                             class="dosis-input treatment-dose-input-improved"
-                                            placeholder="Dosis / frecuencia" disabled>
+                                            placeholder="Dosis" disabled>
+                                        <select id="sistemicoPauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                        <input type="text" id="sistemicoPautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                         <button type="button" class="add-treatment-line-btn" data-type="plan-sistemico"
                                             title="Añadir otro"><i class="fas fa-plus-circle"></i></button>
                                     </div>
@@ -2554,7 +2556,9 @@
                                         </select>
                                         <input type="text" id="fameDose"
                                             class="dosis-input treatment-dose-input-improved"
-                                            placeholder="Dosis / frecuencia" disabled>
+                                            placeholder="Dosis" disabled>
+                                        <select id="famePauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                        <input type="text" id="famePautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                         <button type="button" class="add-treatment-line-btn" data-type="plan-fame"
                                             title="Añadir otro"><i class="fas fa-plus-circle"></i></button>
                                     </div>
@@ -2569,7 +2573,9 @@
                                         </select>
                                         <input type="text" id="biologicoDose"
                                             class="dosis-input treatment-dose-input-improved"
-                                            placeholder="Dosis / frecuencia" disabled>
+                                            placeholder="Dosis" disabled>
+                                        <select id="biologicoPauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                        <input type="text" id="biologicoPautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                         <button type="button" class="add-treatment-line-btn" data-type="plan-biologico"
                                             title="Añadir otro"><i class="fas fa-plus-circle"></i></button>
                                     </div>
@@ -2671,11 +2677,12 @@
     <script src="modules/scoreCalculators.js?v=20260928a"></script>
     <script src="modules/homunculus.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307s"></script>
-    <script src="modules/exportManager.js?v=20261010-txt-gate-21-csv-noapi-r1"></script>
+    <script src="modules/exportManager.js?v=20261112b"></script>
     <script src="modules/reuma_export_boundary.js?v=20260928a"></script>
     <script src="modules/reuma_act_contract.js?v=20260929a"></script>
     <script src="modules/reuma_legacy_export_adapter.js?v=20260929a"></script>
-    <script src="modules/formController.js?v=20261010d"></script>
+    <script src="scripts/farmacia_pautas_catalog.js?v=20261112b"></script>
+    <script src="modules/formController.js?v=20261112b"></script>
     <script src="modules/drugCatalog.js?v=20261112a"></script>
     <script src="modules/cimaSearch.js?v=20261112a"></script>
     <script src="modules/drugAutocomplete.js?v=20261112a"></script>

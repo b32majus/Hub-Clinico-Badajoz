@@ -1234,6 +1234,38 @@ body:has(.hub-shell) {
     color: #94a3b8;
 }
 
+/* Pauta de tratamiento (issue #919): mismo alto/borde que .treatment-dose-input. */
+.treatment-pauta-select {
+    flex: 0 1 170px;
+    min-width: 130px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.treatment-pauta-select:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.treatment-pauta-otro {
+    flex: 1 1 160px;
+    min-width: 150px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.treatment-pauta-otro[hidden] {
+    display: none;
+}
+
 /* Plan de revisión */
 .plan-next-review-card {
     margin-top: 18px;

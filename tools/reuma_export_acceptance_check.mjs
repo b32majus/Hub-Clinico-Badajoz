@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Acceptance oracle for the legacy Reuma 497-column export transport
+ * Acceptance oracle for the legacy Reuma 533-column export transport
  * (F1.3B WU-B, issue #396).
  *
  * Two visibly separated parts:
@@ -10,7 +10,7 @@
  *   function `violationsFor(result)` over the harness output:
  *
  *     A1 exact length: every one of the 10 supported journeys produces exactly
- *        FINAL_V2_EXPORT_COLUMN_COUNT (497) fields, counted by the oracle
+ *        FINAL_V2_EXPORT_COLUMN_COUNT (533) fields, counted by the oracle
  *        itself by splitting the TSV row on '\t'. The legacy in-band
  *        `validateExportRowLength` console.warn is NEVER a PASS source; it is
  *        characterization evidence only (PART B).
@@ -59,7 +59,7 @@
  * Planted negatives (each must produce >= 1 violation of the expected class;
  * mutations live in memory only, never in files):
  *   N1 length drift   - all ten valid journeys are kept and ONLY the target
- *                        row is altered from 497 to 496 fields, so the sole
+ *                        row is altered from 533 to 532 fields, so the sole
  *                        possible A1 source is the length check itself
  *                        (isolated, non-vacuous; issue #434 / NEXUS-DEBT-007)
  *   N2 journey mix    - two journeys' rows swapped violate A2
@@ -146,11 +146,11 @@ function deriveExportAuthority() {
   const legacyBase = readConstant('LEGACY_BASE_COLUMN_COUNT');
   const historical = readConstant('HISTORICAL_EXPORT_COLUMN_COUNT');
   const finalCount = exp?.FINAL_V2_EXPORT_COLUMN_COUNT;
-  if (legacyBase !== 220 || historical !== 321 || finalCount !== 497) {
+  if (legacyBase !== 220 || historical !== 321 || finalCount !== 533) {
     throw new Error(
       `production authority mismatch: LEGACY_BASE_COLUMN_COUNT=${legacyBase} ` +
       `(expect 220), HISTORICAL_EXPORT_COLUMN_COUNT=${historical} (expect 321), ` +
-      `FINAL_V2_EXPORT_COLUMN_COUNT=${finalCount} (expect 497)`
+      `FINAL_V2_EXPORT_COLUMN_COUNT=${finalCount} (expect 533)`
     );
   }
 
@@ -160,6 +160,7 @@ function deriveExportAuthority() {
     les: exp.LES_V2_HEADERS,
     sjogren: exp.SJOGREN_V2_HEADERS,
     apsDapsa: exp.APS_DAPSA_V2_HEADERS,
+    pauta: exp.PAUTA_V2_HEADERS,
   };
   for (const [name, array] of Object.entries(headers)) {
     if (!Array.isArray(array) || array.length === 0) {
@@ -167,7 +168,7 @@ function deriveExportAuthority() {
     }
   }
 
-  // Block offsets (0-based field indexes into a 497-field row):
+  // Block offsets (0-based field indexes into a 533-field row):
   //   [0 .. 219]                 legacy base block (inline in the generators,
   //                              block size backed by LEGACY_BASE_COLUMN_COUNT=220)
   //   [220 .. 320]               LEGACY_EXTENSION_HEADERS_221_321 (101 columns)
@@ -175,15 +176,17 @@ function deriveExportAuthority() {
   //   [365 .. 437]               LES_V2_HEADERS
   //   [438 .. 490]               SJOGREN_V2_HEADERS
   //   [491 .. 496]               APS_DAPSA_V2_HEADERS
+  //   [497 .. 532]               PAUTA_V2_HEADERS (36 columns, #919)
   const extStart = legacyBase;
   const commonStart = extStart + headers.legacyExtension.length;
   const lesStart = commonStart + headers.common.length;
   const sjogrenStart = lesStart + headers.les.length;
   const apsStart = sjogrenStart + headers.sjogren.length;
-  if (commonStart !== historical || apsStart + headers.apsDapsa.length !== finalCount) {
+  const pautaStart = apsStart + headers.apsDapsa.length;
+  if (commonStart !== historical || pautaStart + headers.pauta.length !== finalCount) {
     throw new Error(
       `production block arithmetic mismatch: commonStart=${commonStart} (expect ${historical}), ` +
-      `final=${apsStart + headers.apsDapsa.length} (expect ${finalCount})`
+      `final=${pautaStart + headers.pauta.length} (expect ${finalCount})`
     );
   }
 
@@ -362,8 +365,8 @@ async function main() {
   const record = makeRecord(acceptanceResults);
   const recordChar = makeRecord(characterizationResults, { ok: 'CHAR', drift: 'DRIFT' });
   record(
-    'production authority derivable and consistent (LEGACY_BASE=220, HISTORICAL=321, FINAL=497, five exposed header blocks)',
-    authority.finalCount === 497 && authority.legacyBase === 220 && authority.historical === 321,
+    'production authority derivable and consistent (LEGACY_BASE=220, HISTORICAL=321, FINAL=533, five exposed header blocks)',
+    authority.finalCount === 533 && authority.legacyBase === 220 && authority.historical === 321,
     'authority derivation failed closed'
   );
 
@@ -372,7 +375,7 @@ async function main() {
   const frozenViolations = violationsFor(frozen);
 
   const a1 = violationsOf(frozenViolations, 'A1');
-  record('A1 frozen corpus: all 10 journeys produce exactly 497 fields (counted by the oracle itself)', a1.length === 0, a1.join('; ') || 'all journeys OK');
+  record('A1 frozen corpus: all 10 journeys produce exactly 533 fields (counted by the oracle itself)', a1.length === 0, a1.join('; ') || 'all journeys OK');
 
   const a2 = violationsOf(frozenViolations, 'A2');
   record('A2 frozen corpus: identity/visit/pathology markers correct, no foreign journey marker', a2.length === 0, a2.join('; ') || 'all journeys OK');
@@ -397,7 +400,7 @@ async function main() {
   }
 
   // N1 length drift, isolated: keep ALL ten valid journeys and alter ONLY the
-  // target row from 497 to 496 fields. Because no journey is absent, the only
+  // target row from 533 to 532 fields. Because no journey is absent, the only
   // possible A1 source is the length check on the target row (issue #434 /
   // NEXUS-DEBT-007); the previous single-journey form failed A1 mainly for the
   // nine absent journeys, not for the declared length falsification.
@@ -412,18 +415,18 @@ async function main() {
     n1A1[0].startsWith(`A1 ${n1TargetKey}:`) &&
     n1A1[0].includes(`row has ${authority.finalCount - 1} fields`);
   record(
-    'N1 length drift isolated (all 10 journeys present; only the target row is 496 fields and only it violates A1)',
+    'N1 length drift isolated (all 10 journeys present; only the target row is 532 fields and only it violates A1)',
     n1Isolated,
     `A1 violations: ${n1A1.length} -> ${n1A1.join('; ') || 'none'}`
   );
 
-  // N1 non-vacuity: with the 496-length detection removed, the SAME isolated
+  // N1 non-vacuity: with the 532-length detection removed, the SAME isolated
   // mutation produces zero A1 violations. If it still failed, the planted
   // negative would be proving something other than the length check.
   const violationsForWithoutLength = makeViolationsFor(authority, { detectLength: false });
   const n1WithoutLengthA1 = violationsOf(violationsForWithoutLength({ journeys: n1Journeys }), 'A1');
   record(
-    'N1 falsification non-vacuous (removing 496-length detection leaves zero A1 violations for the same mutation)',
+    'N1 falsification non-vacuous (removing 532-length detection leaves zero A1 violations for the same mutation)',
     n1WithoutLengthA1.length === 0,
     `A1 violations with length detection disabled: ${n1WithoutLengthA1.length} -> ${n1WithoutLengthA1.join('; ') || 'none'}`
   );
@@ -484,10 +487,10 @@ async function main() {
   // --- Planted gating self-test G1: acceptance failure drives the gate ---
   // Fabricate an acceptance result set containing one failure, built from the
   // SAME isolated N1 mutation (all ten journeys present, only the target row
-  // at 496 fields) through the pure evaluation path, and assert the gate
+  // at 532 fields) through the pure evaluation path, and assert the gate
   // reports failure / would exit non-zero.
   const fabricatedAcceptanceFailure = {
-    name: 'planted fabricated A1 acceptance violation (isolated 496-field row via violationsFor)',
+    name: 'planted fabricated A1 acceptance violation (isolated 532-field row via violationsFor)',
     pass: violationsOf(n1Violations, 'A1').length === 0,
     detail: `${violationsOf(n1Violations, 'A1').length} A1 violation(s) from the fabricated row`,
   };
@@ -510,7 +513,7 @@ async function main() {
   );
 
   // (1) Length enforcement is warn-only: validateExportRowLength returns
-  // undefined and can never block or fail; demonstrated on a 496-field row.
+  // undefined and can never block or fail; demonstrated on a 532-field row.
   const probe = createLegacySandbox();
   const logsBefore = probe.sink.logs.length;
   const driftedRow = Array(authority.finalCount - 1).fill('X');
@@ -562,7 +565,7 @@ async function main() {
 
   console.log('');
   console.log('Classification summary (details in docs/engineering/REUMA_EXPORT_KNOWN_LEGACY.md):');
-  console.log('  ACCEPTANCE (golden): A1 exact 497 length; A2 identity/visit/pathology at legacy fields 1/5/7 + marker isolation;');
+  console.log('  ACCEPTANCE (golden): A1 exact 533 length; A2 identity/visit/pathology at legacy fields 1/5/7 + marker isolation;');
   console.log('  A3 sentinels at production-derived positions (Hemograma_Fecha_Solicitud, ANA, Decision_Clinica_Manual,');
   console.log('  ExtraAR_Anemia, Estado_Prebiologico_Final, Hemograma_Observaciones, Observaciones_Prebiologico, comorbilidad.hta');
   console.log('  legacy col 115); A4 synthetic-only identifiers.');

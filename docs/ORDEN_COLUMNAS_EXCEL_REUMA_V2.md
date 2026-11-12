@@ -17,8 +17,9 @@ El orden final es:
 3. Columnas `366-438`: LES, incluyendo trazabilidad de SLEDAI-2K y SLICC/ACR SDI.
 4. Columnas `439-491`: Sjogren, incluyendo trazabilidad de ESSDAI.
 5. Columnas `492-497`: APs/DAPSA explicito. En hojas no APs exporta `NA`.
+6. Columnas `498-533`: pauta de las lineas de tratamiento del plan actual y del cambio (#919, 12-11-2026). Vacio = no consta, en todas las patologias.
 
-Total final vigente: `497` columnas por hoja clinica.
+Total final vigente: `533` columnas por hoja clinica.
 
 ## 2. Columnas 1-321: bloque historico
 
@@ -229,6 +230,49 @@ Las columnas `1-321` se copian exactamente desde `Hub_Clinico_Maestro.xlsx`, hoj
 | 496 | `DAPSA_EVA_Global_Paciente` |
 | 497 | `DAPSA_PCR` |
 
+### 3.5 Pauta de las lineas de tratamiento (#919)
+
+Una pareja por hueco (1-3) y grupo: `..._Pauta_N` lleva el codigo del catalogo comun de pautas de Farmacia (`scripts/farmacia_pautas_catalog.js`, p. ej. `SEMANAL`, `CADA_2_SEMANAS`, `OTRO`); `..._Pauta_Otro_N` lleva el texto libre solo cuando la pauta es `OTRO`. Los huecos son los mismos que las columnas de farmaco y dosis (`Trat_*`, `Cambio_*`). Sin unidad ni via: la presentacion elegida en el buscador ya fija la via, y no se deduce. Vacio = no consta.
+
+| Posicion | Columna |
+|---:|---|
+| 498 | `Trat_Sistemico_Pauta_1` |
+| 499 | `Trat_Sistemico_Pauta_Otro_1` |
+| 500 | `Trat_Sistemico_Pauta_2` |
+| 501 | `Trat_Sistemico_Pauta_Otro_2` |
+| 502 | `Trat_Sistemico_Pauta_3` |
+| 503 | `Trat_Sistemico_Pauta_Otro_3` |
+| 504 | `Trat_FAME_Pauta_1` |
+| 505 | `Trat_FAME_Pauta_Otro_1` |
+| 506 | `Trat_FAME_Pauta_2` |
+| 507 | `Trat_FAME_Pauta_Otro_2` |
+| 508 | `Trat_FAME_Pauta_3` |
+| 509 | `Trat_FAME_Pauta_Otro_3` |
+| 510 | `Trat_Biologico_Pauta_1` |
+| 511 | `Trat_Biologico_Pauta_Otro_1` |
+| 512 | `Trat_Biologico_Pauta_2` |
+| 513 | `Trat_Biologico_Pauta_Otro_2` |
+| 514 | `Trat_Biologico_Pauta_3` |
+| 515 | `Trat_Biologico_Pauta_Otro_3` |
+| 516 | `Cambio_Sistemico_Pauta_1` |
+| 517 | `Cambio_Sistemico_Pauta_Otro_1` |
+| 518 | `Cambio_Sistemico_Pauta_2` |
+| 519 | `Cambio_Sistemico_Pauta_Otro_2` |
+| 520 | `Cambio_Sistemico_Pauta_3` |
+| 521 | `Cambio_Sistemico_Pauta_Otro_3` |
+| 522 | `Cambio_FAME_Pauta_1` |
+| 523 | `Cambio_FAME_Pauta_Otro_1` |
+| 524 | `Cambio_FAME_Pauta_2` |
+| 525 | `Cambio_FAME_Pauta_Otro_2` |
+| 526 | `Cambio_FAME_Pauta_3` |
+| 527 | `Cambio_FAME_Pauta_Otro_3` |
+| 528 | `Cambio_Biologico_Pauta_1` |
+| 529 | `Cambio_Biologico_Pauta_Otro_1` |
+| 530 | `Cambio_Biologico_Pauta_2` |
+| 531 | `Cambio_Biologico_Pauta_Otro_2` |
+| 532 | `Cambio_Biologico_Pauta_3` |
+| 533 | `Cambio_Biologico_Pauta_Otro_3` |
+
 ## 4. Aliases de implementacion
 
 Estos aliases no son cabeceras nuevas; sirven para mapear formulario/codigo a cabecera estable:
@@ -268,13 +312,14 @@ Solicitud FH se genera desde datos fuente persistidos en la ultima visita clinic
 
 ## 6. Implicacion para la implementacion
 
-El siguiente cambio funcional debe hacer que `exportManager.js` genere exactamente `497` valores por fila clinica, en este orden:
+El siguiente cambio funcional debe hacer que `exportManager.js` genere exactamente `533` valores por fila clinica, en este orden:
 
 - Posiciones `1-321`: sin cambios.
 - Posiciones `322-365`: nuevo bloque comun/prebiologico.
 - Posiciones `366-438`: LES, `NA` si no aplica.
 - Posiciones `439-491`: Sjogren, `NA` si no aplica.
 - Posiciones `492-497`: APs/DAPSA, `NA` si no aplica.
+- Posiciones `498-533`: pauta del plan y del cambio, vacio si no consta.
 
 La demo v2 no debe generarse hasta que formulario/export/dashboard/FH esten alineados con este orden.
 
@@ -300,3 +345,11 @@ La demo v2 no debe generarse hasta que formulario/export/dashboard/FH esten alin
   - No usar `mg/mL`.
   - No inferir unidad por magnitud del valor.
   - No usar heurísticas tipo `if (pcr > 10) pcr = pcr / 10`.
+
+## #919 — pauta en las lineas de tratamiento (12-11-2026)
+
+- Decision de Sil: la linea de tratamiento es igual en Reuma y Farmacia: farmaco (presentacion AEMPS) + dosis (texto libre) + pauta del catalogo comun. Sin unidad ni via.
+- El contrato pasa de `497` a `533` columnas por hoja clinica; las 36 nuevas van al final (seccion 3.5).
+- Alcance: plan actual (primera visita) y cambio de tratamiento (seguimiento). Previos, psoriasis y Sjogren sin cambios.
+- La demo `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` incorpora las 36 cabeceras.
+- Las funciones `generateLegacyRow497`, `projectVisitAct497` y `exportarAct497` conservan su nombre; la longitud la fija `FINAL_V2_EXPORT_COLUMN_COUNT`.
