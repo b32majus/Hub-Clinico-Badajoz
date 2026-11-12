@@ -184,7 +184,7 @@ for (const page of PAGES) {
   const statusTexts = Array.from({ length: 7 }, (_, i) => initialText(html, `mdaStatus${i + 1}`));
   const cumplidosText = initialText(html, 'mdaCumplidos');
   // Re-freeze #516 correction: the seven collected value spans and #haqTotal
-  // start empty. '—' here would leak into the legacy 497 export and a static
+  // start empty. '—' here would leak into the legacy 533 export and a static
   // `0.00` in #haqTotal would fabricate HAQ evidence.
   const valueTexts = VALUE_SPAN_IDS.map((id) => initialText(html, id));
   const haqTotalText = initialText(html, 'haqTotal');
@@ -662,7 +662,7 @@ for (const page of PAGES) {
         somePending,
       `final='${finalText}', cumplidos='${cumplidos}', s3='${statusText(doc, 3)}', s6='${statusText(doc, 6)}'`);
     // Re-freeze #516 correction: the seven COLLECTED value spans (read
-    // verbatim by both collectors and exported to legacy 497 columns 186-192)
+    // verbatim by both collectors and exported to legacy 533 columns 186-192)
     // never render '—'; absent source -> ''. #haqTotal starts empty.
     const c1Values = VALUE_SPAN_IDS.map((id) => doc.getElementById(id).textContent);
     const c1HaqTotal = doc.getElementById('haqTotal').textContent;

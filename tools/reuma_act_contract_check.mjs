@@ -12,7 +12,7 @@
  *     patientRef, pathology, payload })` in `modules/reuma_act_contract.js`.
  *   - ADR-005 (clinical write contracts): caso de uso por intención
  *     profesional; envelope técnico mínimo; el payload pertenece al dominio;
- *     la fila 152/497 es proyección posterior, no dominio.
+ *     la fila 152/533 es proyección posterior, no dominio.
  *   - ADR-006 (persistence adapters): la UI/casos de uso no conocen hojas
  *     Excel, columnas ni portapapeles.
  *   - CODING_STANDARDS §7 (verification must be able to disagree), §8 (fail
@@ -97,7 +97,7 @@
  *
  *   D10 Transport ignorance is checked BOTH statically (the module source
  *      must not reference FINAL_V2_EXPORT_COLUMN_COUNT, generarFilaCSV,
- *      reumaExportBoundary, exportManager, HubTools.export, 497, TSV,
+ *      reumaExportBoundary, exportManager, HubTools.export, 533, TSV,
  *      clipboard, Excel, the Excel sheet-name tokens 'ESPA'/'APS'/'AR'/
  *      'LES'/'SJOGREN', and must not import/require anything) and
  *      behaviorally (D9). Forbidden-token occurrences fail even inside
@@ -564,7 +564,7 @@ function familyD(create, degradedDetail) {
 }
 
 const E_FORBIDDEN_SUBSTRINGS = [
-    ['FINAL_V2_EXPORT_COLUMN_COUNT', '497 column-count constant'],
+    ['FINAL_V2_EXPORT_COLUMN_COUNT', '533 column-count constant'],
     ['generarFilaCSV', 'legacy generator names'],
     ['reumaExportBoundary', 'legacy compatibility boundary'],
     ['exportManager', 'legacy export manager module'],
@@ -573,7 +573,7 @@ const E_FORBIDDEN_SUBSTRINGS = [
 ];
 
 const E_FORBIDDEN_PATTERNS = [
-    [/\b497\b/, '497-column transport count'],
+    [/\b497\b/, '533-column transport count'],
     [/\bTSV\b/i, 'TSV transport'],
     [/clipboard/i, 'clipboard transport'],
     [/\bexcel\b/i, 'Excel transport'],
@@ -597,7 +597,7 @@ const E_CASE_NAMES = [
 ];
 
 function familyE(create, sandbox, moduleSource, degradedDetail) {
-    console.log('  Family E — transport ignorance: static + behavioral independence from 497/Excel/clipboard');
+    console.log('  Family E — transport ignorance: static + behavioral independence from 533/Excel/clipboard');
     if (!moduleSource) {
         record(E_CASE_NAMES[0], false, degradedDetail);
         for (const name of E_CASE_NAMES.slice(1)) record(name, false, 'module under test unavailable');
@@ -621,7 +621,7 @@ function familyE(create, sandbox, moduleSource, degradedDetail) {
         for (; i < E_CASE_NAMES.length; i++) record(E_CASE_NAMES[i], false, 'contract surface unavailable');
     }
     plantedSink.length = 0;
-    plantedRecord('planted lie: contract source references the 497 transport count', /\b497\b/.test(moduleSource), 'source is clean (expected for the planted lie)');
+    plantedRecord('planted lie: contract source references the 533 transport count', /\b497\b/.test(moduleSource), 'source is clean (expected for the planted lie)');
     record('E-f planted lie (transport reference) is detected as false',
         plantedDetectedAsFalse(), plantedSummary());
 }

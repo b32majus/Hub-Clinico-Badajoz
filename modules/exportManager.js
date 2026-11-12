@@ -33,7 +33,9 @@ function expandirDactilitis(array) {
 
 const LEGACY_BASE_COLUMN_COUNT = 220;
 const HISTORICAL_EXPORT_COLUMN_COUNT = 321;
-const FINAL_V2_EXPORT_COLUMN_COUNT = 497;
+// Issue #919 (tramo 2 buscador común): 36 columnas de pauta al final
+// (220 base + 277 históricas + 36 de pauta = 533).
+const FINAL_V2_EXPORT_COLUMN_COUNT = 533;
 
 const LEGACY_EXTENSION_HEADERS_221_321 = [
     'Trat_Sistemico_2', 'Trat_Sistemico_Dosis_2', 'Trat_Sistemico_3', 'Trat_Sistemico_Dosis_3',
@@ -158,13 +160,29 @@ const APS_DAPSA_V2_HEADERS = [
     'DAPSA_PCR'
 ];
 
+// Cabeceras de pauta (issue #919, tramo 2 buscador común): 36 columnas al
+// final de la fila. Para cada grupo y hueco 1..3: código de pauta del
+// catálogo común y texto libre de «Otra pauta». Ausente = vacío (no consta);
+// nada se infiere del fármaco ni de la dosis.
+const PAUTA_V2_HEADER_GROUPS = [
+    'Trat_Sistemico', 'Trat_FAME', 'Trat_Biologico',
+    'Cambio_Sistemico', 'Cambio_FAME', 'Cambio_Biologico'
+];
+const PAUTA_V2_HEADERS = [];
+PAUTA_V2_HEADER_GROUPS.forEach(group => {
+    [1, 2, 3].forEach(slot => {
+        PAUTA_V2_HEADERS.push(group + '_Pauta_' + slot, group + '_Pauta_Otro_' + slot);
+    });
+});
+
 // Cabeceras añadidas a las 220 columnas construidas inline por los generadores legacy.
 const FINAL_V2_EXPORT_HEADERS = [
     ...LEGACY_EXTENSION_HEADERS_221_321,
     ...COMMON_V2_HEADERS,
     ...LES_V2_HEADERS,
     ...SJOGREN_V2_HEADERS,
-    ...APS_DAPSA_V2_HEADERS
+    ...APS_DAPSA_V2_HEADERS,
+    ...PAUTA_V2_HEADERS
 ];
 
 const EXTRA_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
@@ -327,6 +345,41 @@ function buildLegacyExtensionColumns(datos, pathology) {
 
     extra.push(...arValues);
     return extra;
+}
+
+// Columnas de pauta (issue #919): mismos grupos y huecos que el bloque
+// histórico extendido (plan y cambio, huecos 0..2). El código se exporta
+// siempre; el texto libre solo cuando la pauta es OTRO. Hueco vacío = '', ''.
+function buildPautaV2Columns(datos) {
+    const planSistemicos = getTreatmentEntriesExport(datos.planSistemicosEntries, datos.sistemicoSelect, datos.sistemicoDose);
+    const planFames = getTreatmentEntriesExport(datos.planFamesEntries, datos.fameSelect, datos.fameDose);
+    const planBiologicos = getTreatmentEntriesExport(datos.planBiologicosEntries, datos.biologicoSelect, datos.biologicoDose);
+
+    const cambioSistemicos = getTreatmentEntriesExport(
+        datos.cambioSistemicosEntries,
+        datos.tratamientoData?.cambio?.sistemicos?.farmaco,
+        datos.tratamientoData?.cambio?.sistemicos?.dosis
+    );
+    const cambioFames = getTreatmentEntriesExport(
+        datos.cambioFamesEntries,
+        datos.tratamientoData?.cambio?.fames?.farmaco,
+        datos.tratamientoData?.cambio?.fames?.dosis
+    );
+    const cambioBiologicos = getTreatmentEntriesExport(
+        datos.cambioBiologicosEntries,
+        datos.tratamientoData?.cambio?.biologicos?.farmaco,
+        datos.tratamientoData?.cambio?.biologicos?.dosis
+    );
+
+    const columns = [];
+    [planSistemicos, planFames, planBiologicos, cambioSistemicos, cambioFames, cambioBiologicos].forEach(group => {
+        [0, 1, 2].forEach(slot => {
+            const item = getTreatmentSlotExport(group, slot);
+            columns.push(item.pauta || '');
+            columns.push(item.pauta === 'OTRO' ? (item.pautaOtro || '') : '');
+        });
+    });
+    return columns;
 }
 
 function buildCommonV2Columns(datos) {
@@ -565,12 +618,18 @@ function buildExtendedColumns(datos, pathology) {
     }
     validateV2BlockLengths(commonV2, lesV2, sjogrenV2, apsDapsaV2);
 
+    const pautaV2 = buildPautaV2Columns(datos);
+    if (pautaV2.length !== PAUTA_V2_HEADERS.length) {
+        console.warn('Export v2 invalido: bloque pauta esperaba ' + PAUTA_V2_HEADERS.length + ' columnas y genero ' + pautaV2.length);
+    }
+
     return [
         ...legacy,
         ...commonV2,
         ...lesV2,
         ...sjogrenV2,
-        ...apsDapsaV2
+        ...apsDapsaV2,
+        ...pautaV2
     ];
 }
 
@@ -2435,6 +2494,7 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.LES_V2_HEADERS = LES_V2_HEADERS;
     HubTools.export.SJOGREN_V2_HEADERS = SJOGREN_V2_HEADERS;
     HubTools.export.APS_DAPSA_V2_HEADERS = APS_DAPSA_V2_HEADERS;
+    HubTools.export.PAUTA_V2_HEADERS = PAUTA_V2_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT = FINAL_V2_EXPORT_COLUMN_COUNT;
     HubTools.export.validateExportRowLength = validateExportRowLength;

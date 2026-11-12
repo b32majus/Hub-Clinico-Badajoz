@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * FROZEN PRINCIPAL ACCEPTANCE ORACLE — Reuma legacy 497 export adapter
+ * FROZEN PRINCIPAL ACCEPTANCE ORACLE — Reuma legacy 533 export adapter
  * WO-NEXUS-REUMA-F5.4B / issue #463 (parent train #461)
  * =====================================================================
  *
@@ -16,11 +16,11 @@
  *     pathology, payload }, produced by `HubTools.reumaActContract.createVisitAct`.
  *   - F5.3 boundary (#457, `modules/reuma_export_boundary.js`,
  *     `HubTools.reumaExportBoundary.generateLegacyRow497({ datos, pathology,
- *     tipoVisita })`) — the ONLY route to the legacy 497 generators. Its ok
+ *     tipoVisita })`) — the ONLY route to the legacy 533 generators. Its ok
  *     result shape is { ok, row, fields, meta:{ pathology, tipoVisita, sheet,
  *     generatorName, columnCount } }.
  *   - ADR-005 (clinical write contracts): acto por intención profesional; la
- *     fila 497 es proyección posterior, no dominio.
+ *     fila 533 es proyección posterior, no dominio.
  *   - ADR-006 (persistence adapters): Excel es adapter soportado; el caso de
  *     uso no conoce hojas, columnas ni portapapeles.
  *   - CODING_STANDARDS §7 (verification must be able to disagree), §8 (fail
@@ -102,7 +102,7 @@
  *      tokens 'ESPA' | 'APS' | 'SJOGREN' (the tokens 'AR'/'LES' are not
  *      checked: as substrings they are too ambiguous in source text; sheet
  *      fidelity is already proven byte-level by E/I). It MUST reference
- *      `reumaExportBoundary` and `generateLegacyRow497`. The literal `497`
+ *      `reumaExportBoundary` and `generateLegacyRow497`. The literal `533`
  *      is allowed ONLY inside the two mandated identifiers
  *      `projectVisitAct497` (surface name) and `generateLegacyRow497`
  *      (boundary method name); any other occurrence anywhere in the source —
@@ -114,7 +114,7 @@
  *      (act object identity, payload object identity, nested-object
  *      identity). This is stronger than "the row looks right".
  *
- *   D9 The 497 count is counted BY THE CHECKER ITSELF (`row.split('\t')`),
+ *   D9 The 533 count is counted BY THE CHECKER ITSELF (`row.split('\t')`),
  *      never trusted from metadata, and both `row` and `fields` must agree
  *      on it.
  *
@@ -226,7 +226,7 @@ function isTypedFailure(result) {
 
 /**
  * D3 + D9: adapter ok result must equal the boundary ok result:
- * keys, byte-identical row, element-wise fields, consistent 497 count
+ * keys, byte-identical row, element-wise fields, consistent 533 count
  * (counted by this checker), deep-equal meta.
  */
 function boundaryEquivalent(result, boundary) {
@@ -242,7 +242,7 @@ function boundaryEquivalent(result, boundary) {
         if (result.fields[i] !== boundary.fields[i]) return { pass: false, why: `fields[${i}] differs from boundary` };
     }
     const counted = result.row.split('\t').length; // D9: counted by the checker itself
-    if (counted !== 497) return { pass: false, why: `row has ${counted} fields, expected 497` };
+    if (counted !== 533) return { pass: false, why: `row has ${counted} fields, expected 533` };
     if (result.fields.length !== counted) return { pass: false, why: 'fields array and row disagree on field count' };
     if (JSON.stringify(result.meta) !== JSON.stringify(boundary.meta)) return { pass: false, why: `meta differs: ${JSON.stringify(result.meta)} vs ${JSON.stringify(boundary.meta)}` };
     if (sortedKeys(result.meta).join('|') !== EXPECTED_META_KEYS.join('|')) return { pass: false, why: `meta keys=${sortedKeys(result.meta)}` };
@@ -264,7 +264,7 @@ function makeAct(contract, journey) {
 // memory into isolated sandboxes to prove this checker can disagree).
 // ---------------------------------------------------------------------------
 
-const PLANTED_FAKE_ROW = (() => { const f = Array(497).fill(''); f[0] = 'SYN-PLANTED-FAKE'; return f.join('\t'); })();
+const PLANTED_FAKE_ROW = (() => { const f = Array(533).fill(''); f[0] = 'SYN-PLANTED-FAKE'; return f.join('\t'); })();
 
 // PLANT E: wrong kind mapping (seguimiento mis-mapped to 'primera').
 const PLANT_E_SOURCE = `(function () {
@@ -279,7 +279,7 @@ const PLANT_E_SOURCE = `(function () {
     } };
 })();`;
 
-// PLANT F: fabricates a plausible 497-field row for an INVALID act.
+// PLANT F: fabricates a plausible 533-field row for an INVALID act.
 const PLANT_F_SOURCE = `(function () {
     'use strict';
     if (typeof window === 'undefined' || !window.HubTools) return;
@@ -287,7 +287,7 @@ const PLANT_F_SOURCE = `(function () {
     var FAKE = ${JSON.stringify(PLANTED_FAKE_ROW)};
     HT.reumaLegacyExportAdapter = { projectVisitAct497: function (act) {
         var valid = act && act.contractVersion === 'reuma-visit-act/v1' && (act.kind === 'primera_visita' || act.kind === 'seguimiento');
-        if (!valid) return { ok: true, row: FAKE, fields: FAKE.split('\\t'), meta: { pathology: 'ar', tipoVisita: 'primera', sheet: 'AR', generatorName: 'FAKE', columnCount: 497 } }; /* PLANTED LIE */
+        if (!valid) return { ok: true, row: FAKE, fields: FAKE.split('\\t'), meta: { pathology: 'ar', tipoVisita: 'primera', sheet: 'AR', generatorName: 'FAKE', columnCount: 533 } }; /* PLANTED LIE */
         var b = HT.reumaExportBoundary.generateLegacyRow497({ datos: act.payload, pathology: act.pathology, tipoVisita: act.kind === 'primera_visita' ? 'primera' : 'seguimiento' });
         if (!b || b.ok !== true) return { ok: false, error: b && b.error ? b.error : { code: 'X', message: 'x' } };
         return { ok: true, row: b.row, fields: b.fields, meta: b.meta };
@@ -315,7 +315,7 @@ const PLANT_H_SOURCE = `(function () {
     HT.reumaLegacyExportAdapter = { projectVisitAct497: function (act) {
         var tipo = act.kind === 'primera_visita' ? 'primera' : 'seguimiento';
         var row = window.HubTools.export.generarFilaCSV_AR_PrimeraVisita(act.payload, tipo); /* PLANTED LIE: direct generator, no boundary */
-        return { ok: true, row: row, fields: row.split('\\t'), meta: { pathology: 'ar', tipoVisita: tipo, sheet: 'AR', generatorName: 'generarFilaCSV_AR_PrimeraVisita', columnCount: 497 } };
+        return { ok: true, row: row, fields: row.split('\\t'), meta: { pathology: 'ar', tipoVisita: tipo, sheet: 'AR', generatorName: 'generarFilaCSV_AR_PrimeraVisita', columnCount: 533 } };
     } };
 })();`;
 
@@ -337,7 +337,7 @@ const PLANT_I_SOURCE = `(function () {
 // ---------------------------------------------------------------------------
 
 async function main() {
-    console.log('Reuma legacy 497 export adapter check (F5.4B, #463, 100% synthetic corpus)');
+    console.log('Reuma legacy 533 export adapter check (F5.4B, #463, 100% synthetic corpus)');
     const corpus = JSON.parse(fs.readFileSync(path.join(ROOT, CORPUS), 'utf8'));
     const journeys = corpus.journeys;
     if (journeys.length !== 10) throw new Error(`Expected 10 corpus journeys, found ${journeys.length}`);
@@ -386,7 +386,7 @@ async function main() {
             const eq = boundaryEquivalent(outcome.result, expected);
             if (!eq.pass) details.push(`${journey.pathology}/${journey.tipoVisita}: ${eq.why}`);
         }
-        record('E all 10 journeys: projectVisitAct497(act).row is byte-equivalent to the direct boundary call, fields equal, exactly 497 fields counted by the checker, meta identical',
+        record('E all 10 journeys: projectVisitAct497(act).row is byte-equivalent to the direct boundary call, fields equal, exactly 533 fields counted by the checker, meta identical',
             details.length === 0, details.join('; ') || 'unexpected');
 
         // Explicit closed kind mapping (D2): kind=seguimiento must reach the
@@ -583,12 +583,12 @@ async function main() {
                 false, `adapter module not found: ${ADAPTER_MODULE}`);
         } else {
             const hits = forbiddenTokens.filter((t) => adapterSource.includes(t));
-            // D7: the literal 497 is allowed ONLY inside the mandated
+            // D7: the literal 533 is allowed ONLY inside the mandated
             // identifiers projectVisitAct497 and generateLegacyRow497.
             const surfaceName = 'projectVisitAct497';
             const boundaryMethodName = 'generateLegacyRow497';
             const withoutMandated = adapterSource.split(surfaceName).join('').split(boundaryMethodName).join('');
-            const stray497 = withoutMandated.includes('497');
+            const stray497 = withoutMandated.includes('533');
             record('H static: adapter source contains no direct transport access (generarFilaCSV_*, FINAL_V2_EXPORT_COLUMN_COUNT, HubTools.export, tab join/split, clipboard, sheet tokens)',
                 hits.length === 0 && !stray497,
                 `forbiddenHits=${JSON.stringify(hits)} stray497=${stray497}`);
@@ -602,13 +602,13 @@ async function main() {
         // still projects — through the boundary (D6a).
         {
             const plant = createOracleStack(null);
-            const markerRow = (() => { const f = Array(497).fill(''); f[0] = 'SYN-BOUNDARY-MARKER'; return f.join('\t'); })();
+            const markerRow = (() => { const f = Array(533).fill(''); f[0] = 'SYN-BOUNDARY-MARKER'; return f.join('\t'); })();
             plant.sandbox.HubTools.export.generarFilaCSV_AR_PrimeraVisita = undefined;
             plant.sandbox.HubTools.export.generarFilaCSV_AR_Seguimiento = undefined;
             plant.sandbox.HubTools.reumaExportBoundary = {
                 generateLegacyRow497: (request) => Object.freeze({
                     ok: true, row: markerRow, fields: Object.freeze(markerRow.split('\t')),
-                    meta: Object.freeze({ pathology: request.pathology, tipoVisita: request.tipoVisita, sheet: 'AR', generatorName: 'SYN-BOUNDARY-DOUBLE', columnCount: 497 })
+                    meta: Object.freeze({ pathology: request.pathology, tipoVisita: request.tipoVisita, sheet: 'AR', generatorName: 'SYN-BOUNDARY-DOUBLE', columnCount: 533 })
                 })
             };
             const act = makeAct(plant.sandbox.HubTools.reumaActContract, arPrimera);

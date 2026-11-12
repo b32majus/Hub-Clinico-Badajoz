@@ -16,7 +16,7 @@
 //       Estadísticas, Reuma index, manage drugs/professionals) show no gate
 //       controls and no gate messaging.
 //   I8  Two real journeys (Primera Visita + Seguimiento) end-to-end: TXT note
-//       delivered by real clipboard success, 497-field CSV delivered.
+//       delivered by real clipboard success, 533-field CSV delivered.
 //   I9  Storage hygiene across ALL journeys: legacy sentinels
 //       (HubClinico_TxtExportDone_* + hubPendingRows) stay byte-unchanged, no
 //       legacy marker is created, zero NEW Web Storage keys from the gate.
@@ -36,7 +36,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
 const XLSX = require(path.join(ROOT, 'vendor', 'sheetjs', 'xlsx.full.min.js'));
 
-const NEW_EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261010-txt-gate-21-csv-noapi-r1';
+const NEW_EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261112b';
 const OLD_EXPORT_MANAGER_TOKEN_FRAGMENT = '20261009-export-safety-18-exportmanager-r1';
 const PREREQUISITE_MESSAGE = 'Debe exportar TXT de esta visita antes de exportar CSV.';
 const STORY8_MESSAGE = 'Los datos de la visita han cambiado desde el TXT. Vuelve a exportarlo y revisa que la historia cl\u00ednica refleje la versi\u00f3n actual antes de generar el CSV';
@@ -311,7 +311,7 @@ SENTINEL_EXPECTED[SENTINEL_PENDING_KEY] = '[{"idPaciente":"SYN-LEGACY-PENDING","
         await page.click('#btnEstructurarCSV');
         await page.waitForTimeout(900);
         const afterRestore = await readClipboard(page);
-        record('I2 story 9: change-then-restore does not force repeating TXT (497 delivered)', afterRestore.split('\t').length === 497, `fields=${afterRestore.split('\t').length}`);
+        record('I2 story 9: change-then-restore does not force repeating TXT (533 delivered)', afterRestore.split('\t').length === 533, `fields=${afterRestore.split('\t').length}`);
 
         // Recovery: edit again, repeat TXT, CSV works again.
         await page.fill('#evaGlobal', '7');
@@ -327,7 +327,7 @@ SENTINEL_EXPECTED[SENTINEL_PENDING_KEY] = '[{"idPaciente":"SYN-LEGACY-PENDING","
         await page.click('#btnEstructurarCSV');
         await page.waitForTimeout(900);
         const afterRetxt = await readClipboard(page);
-        record('I3 recovery: fresh TXT after the edit re-enables CSV (497 delivered)', afterRetxt.split('\t').length === 497, `fields=${afterRetxt.split('\t').length}`);
+        record('I3 recovery: fresh TXT after the edit re-enables CSV (533 delivered)', afterRetxt.split('\t').length === 533, `fields=${afterRetxt.split('\t').length}`);
 
         record('I1-I3 journey: pageerror=0', pageErrors.length === 0, JSON.stringify(pageErrors.slice(0, 3)));
 
@@ -383,7 +383,7 @@ SENTINEL_EXPECTED[SENTINEL_PENDING_KEY] = '[{"idPaciente":"SYN-LEGACY-PENDING","
     await pageA.click('#btnEstructurarCSV');
     await pageA.waitForTimeout(900);
     const csvA = await readClipboard(pageA);
-    record('I5 instance A authorizes its own CSV after its TXT', clipA.trim().length > 0 && csvA.split('\t').length === 497, `txt=${clipA.length} fields=${csvA.split('\t').length}`);
+    record('I5 instance A authorizes its own CSV after its TXT', clipA.trim().length > 0 && csvA.split('\t').length === 533, `txt=${clipA.length} fields=${csvA.split('\t').length}`);
 
     const contextB = await newJourneyContext(browser); // separate browser context = separate page instance
     const pageB = await openThroughGate(contextB, 'primera_visita.html');
@@ -462,7 +462,7 @@ SENTINEL_EXPECTED[SENTINEL_PENDING_KEY] = '[{"idPaciente":"SYN-LEGACY-PENDING","
 // ---------------------------------------------------------------------------
 
 async function journeyEndToEnd(pageFile, isSeguimiento, urlQuery = '') {
-    console.log(`I8 ${pageFile} real journey (TXT -> 497 CSV)`);
+    console.log(`I8 ${pageFile} real journey (TXT -> 533 CSV)`);
     const context = await newJourneyContext(browser);
     const page = await openThroughGate(context, `${pageFile}${urlQuery}`);
     const pageErrors = trackedPage(page);
@@ -484,7 +484,7 @@ async function journeyEndToEnd(pageFile, isSeguimiento, urlQuery = '') {
     const fields = csv.split('\t');
     record(`I8 ${pageFile}: TXT note delivered by real clipboard success`, txt.trim().length > 0 && txt !== CLIP_CLEAR_SENTINEL, `len=${txt.length}`);
     record(`I8 ${pageFile}: TXT contains the generated clinical note`, txt.includes('\u2593\u2593\u2593') || txt.includes('Historia'), `head=${JSON.stringify(txt.slice(0, 40))}`);
-    record(`I8 ${pageFile}: 497-field CSV delivered after the TXT`, fields.length === 497, `fields=${fields.length}`);
+    record(`I8 ${pageFile}: 533-field CSV delivered after the TXT`, fields.length === 533, `fields=${fields.length}`);
     record(`I8 ${pageFile}: no gate block message on the happy path`, !obsBody.includes(PREREQUISITE_MESSAGE) && !obsBody.includes(STORY8_MESSAGE), 'gate message shown');
     record(`I8 ${pageFile}: pageerror=0`, pageErrors.length === 0, JSON.stringify(pageErrors.slice(0, 3)));
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Deterministic compatibility-boundary check for the legacy Reuma 497-column
+ * Deterministic compatibility-boundary check for the legacy Reuma 533-column
  * export writer (F5.3, #457).
  *
  * The boundary under test is `modules/reuma_export_boundary.js`
@@ -13,7 +13,7 @@
  * Cases:
  *   C1  all 10 supported journeys cross the boundary byte/field-equivalent to
  *       the direct legacy generator call (same sandbox, same payload).
- *   C2  incompatible shapes fail closed with a typed error: 496 / 498 field
+ *   C2  incompatible shapes fail closed with a typed error: 532 / 534 field
  *       rows, non-string rows (array/object/number/null/undefined) and a
  *       throwing generator. No truncation, no padding, no silent coercion;
  *       no `row` is ever exposed on a non-ok result.
@@ -96,7 +96,7 @@ async function main() {
     if (journeys.length !== 10) throw new Error(`Expected 10 corpus journeys, found ${journeys.length}`);
 
     // =====================================================================
-    // C1 — 497-valid rows cross identically for all 10 supported journeys.
+    // C1 — 533-valid rows cross identically for all 10 supported journeys.
     // =====================================================================
     {
         const { sandbox } = createLegacySandbox();
@@ -109,11 +109,11 @@ async function main() {
             const ok =
                 result && result.ok === true &&
                 result.row === direct &&
-                result.fields.length === 497 &&
+                result.fields.length === 533 &&
                 result.meta.pathology === journey.pathology &&
                 result.meta.tipoVisita === journey.tipoVisita &&
                 result.meta.sheet === EXPECTED_SHEET[journey.pathology] &&
-                result.meta.columnCount === 497;
+                result.meta.columnCount === 533;
             if (!ok) details.push(`${journey.pathology}/${journey.tipoVisita}: ok=${result && result.ok} rowEqual=${result && result.row === direct} fields=${result && result.fields ? result.fields.length : 'n/a'}`);
         }
         record('C1 all 10 supported journeys cross the boundary byte/field-equivalent to the legacy generator',
@@ -148,14 +148,14 @@ async function main() {
             loadBoundaryModule(sandbox);
             return sandbox.HubTools.export.generarFilaCSV_AR_PrimeraVisita(structuredClone(base.datos), 'primera');
         })();
-        if (goldenRow.split('\t').length !== 497) throw new Error('Precondition failed: golden AR primera row is not 497 fields');
+        if (goldenRow.split('\t').length !== 533) throw new Error('Precondition failed: golden AR primera row is not 533 fields');
 
         const doubles = [
-            { name: 'row with 496 fields', make: () => goldenRow.split('\t').slice(0, 496).join('\t'), code: 'ROW_LENGTH_INVALID' },
-            { name: 'row with 498 fields', make: () => goldenRow.split('\t').concat('SYN-EXTRA').join('\t'), code: 'ROW_LENGTH_INVALID' },
-            { name: 'non-string array of 497 fields', make: () => goldenRow.split('\t'), code: 'ROW_NOT_STRING' },
+            { name: 'row with 532 fields', make: () => goldenRow.split('\t').slice(0, 532).join('\t'), code: 'ROW_LENGTH_INVALID' },
+            { name: 'row with 534 fields', make: () => goldenRow.split('\t').concat('SYN-EXTRA').join('\t'), code: 'ROW_LENGTH_INVALID' },
+            { name: 'non-string array of 533 fields', make: () => goldenRow.split('\t'), code: 'ROW_NOT_STRING' },
             { name: 'non-string object shape', make: () => ({ fields: goldenRow.split('\t') }), code: 'ROW_NOT_STRING' },
-            { name: 'non-string number', make: () => 497, code: 'ROW_NOT_STRING' },
+            { name: 'non-string number', make: () => 533, code: 'ROW_NOT_STRING' },
             { name: 'null row', make: () => null, code: 'ROW_NOT_STRING' },
             { name: 'undefined row', make: () => undefined, code: 'ROW_NOT_STRING' },
             { name: 'empty string row', make: () => '', code: 'ROW_LENGTH_INVALID' },
@@ -186,10 +186,10 @@ async function main() {
         {
             const { sandbox } = createLegacySandbox();
             const boundary = loadBoundaryModule(sandbox);
-            sandbox.HubTools.export.generarFilaCSV_AR_PrimeraVisita = () => goldenRow.split('\t').slice(0, 496).join('\t');
+            sandbox.HubTools.export.generarFilaCSV_AR_PrimeraVisita = () => goldenRow.split('\t').slice(0, 532).join('\t');
             const result = boundary.generateLegacyRow497({ datos: structuredClone(base.datos), pathology: 'ar', tipoVisita: 'primera' });
             record('C2 length-drift error carries expected and received counts (no truncation, no padding, no inference)',
-                result && result.error && result.error.message.includes('497') && result.error.message.includes('496'),
+                result && result.error && result.error.message.includes('533') && result.error.message.includes('532'),
                 `message=${result && result.error ? result.error.message : 'n/a'}`);
         }
     }
@@ -281,7 +281,7 @@ async function main() {
             const arPrimera = journeys.find((j) => j.pathology === 'ar' && j.tipoVisita === 'primera');
             const datos = structuredClone(arPrimera.datos);
             const markerRow = (() => {
-                const fields = Array(497).fill('');
+                const fields = Array(533).fill('');
                 fields[0] = 'SYN-BOUNDARY-MARKER';
                 return fields.join('\t');
             })();
@@ -292,7 +292,7 @@ async function main() {
             sandbox.HubTools.reumaExportBoundary = Object.freeze({
                 generateLegacyRow497: (request) => Object.freeze({
                     ok: true, row: markerRow, fields: Object.freeze(markerRow.split('\t')),
-                    meta: Object.freeze({ pathology: request.pathology, tipoVisita: request.tipoVisita, sheet: 'AR', columnCount: 497 })
+                    meta: Object.freeze({ pathology: request.pathology, tipoVisita: request.tipoVisita, sheet: 'AR', columnCount: 533 })
                 })
             });
             sandbox.markTxtExportDone(datos, { tipoVisita: 'primera', diagnostico: 'ar' });
@@ -337,8 +337,8 @@ async function main() {
 
     // Harness regression on the same run: the legacy surface must be untouched.
     const harness = await runReumaExportHarness({ corpusFile: CORPUS });
-    record('legacy writer surface unchanged: harness still generates all 10 rows with 497 fields',
-        harness.journeys.length === 10 && harness.journeys.every((j) => j.fields.length === 497),
+    record('legacy writer surface unchanged: harness still generates all 10 rows with 533 fields',
+        harness.journeys.length === 10 && harness.journeys.every((j) => j.fields.length === 533),
         harness.journeys.map((j) => j.fields.length).join(','));
 
     const failed = results.filter((r) => !r.pass).length;

@@ -23,7 +23,7 @@
  *      B1 APs + EVA Global=4  -> mirror '', collected asdasEvaGlobal '',
  *                                ASDAS-CRP/ESR '' (T1 intact); legacy ASDAS
  *                                EVA slot (col 158) empty on the data-driven
- *                                rows, 497 columns preserved.
+ *                                rows, 533 columns preserved.
  *      B2 APs + EVA Global=0  -> mirror '' (an explicit zero is not ASDAS
  *                                state outside EspA either).
  *      B3 APs -> EspA         -> mirror reuses '4' with no re-entry (the
@@ -40,7 +40,7 @@
  *      B7 AR / LES / Sjögren  -> mirror '' ; LES + Sjögren legacy slot '',
  *                                AR legacy slot 'NA' (published AR rule).
  *      B8 regression          -> APs DAPSA still '11.0' (T1/T2 cascade).
- *      B9 layout              -> every row keeps 497 columns and the ASDAS
+ *      B9 layout              -> every row keeps 533 columns and the ASDAS
  *                                block stays pinned at legacy columns
  *                                156-160 (characterised with sentinels from
  *                                the generator itself).
@@ -84,11 +84,11 @@ const ASDAS_CRP_EVA4 = '3.42';
 const ASDAS_CRP_EVA0 = '2.98';
 const APS_DAPSA_TOTAL = (1 + 1 + 2 + 4 + 3).toFixed(1);
 
-// Legacy 497 layout: ASDAS block occupies columns 156-160 and the EVA mirror
+// Legacy 533 layout: ASDAS block occupies columns 156-160 and the EVA mirror
 // slot is column 158 (characterised from the row generators with sentinels).
 const LEGACY_ASDAS_BLOCK = [156, 157, 158, 159, 160];
 const LEGACY_ASDAS_EVA_COL = 158;
-const EXPORT_COLUMN_COUNT = 497;
+const EXPORT_COLUMN_COUNT = 533;
 
 const BUILDER_PATHOLOGY = { aps: 'APs', espa: 'EspA', ar: 'AR', les: 'LES', sjogren: 'SJOGREN' };
 
@@ -504,7 +504,7 @@ for (const page of PAGES) {
     record(`B10 ${page} sin console.error (B8)`, consoleErrors.length === 0, JSON.stringify(consoleErrors.slice(0, 3)));
   }
 
-  // --- B9: layout guard (497 + frozen ASDAS block position) --------------
+  // --- B9: layout guard (533 + frozen ASDAS block position) --------------
   {
     const { sandbox } = loadScenario(page);
     for (const pathology of ['aps', 'espa', 'ar', 'les', 'sjogren']) {
