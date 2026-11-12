@@ -61,6 +61,18 @@
     }
 
     /**
+     * Determina si el texto de tratamiento (ya normalizado por
+     * getTreatmentCurrent) declara explícitamente que NO hay tratamiento.
+     * «no» = sin tratamiento explícito; vacío = no consta (la suspensión
+     * solo se declara de forma explícita, nunca se inventa).
+     * @param {string} tx - Texto de tratamiento normalizado.
+     * @returns {boolean}
+     */
+    function isExplicitNoTreatment(tx) {
+        return tx === 'no';
+    }
+
+    /**
      * Determina si la fila de visita declara explícitamente que es un Seguimiento.
      *
      * Conjunto de tokens aceptados (decisión cerrada T22-03): exactamente
@@ -285,8 +297,9 @@
     function detectTreatmentStart(currentVisit, previousVisit) {
         var currentTx = getTreatmentCurrent(currentVisit);
 
-        // Sin tratamiento actual → no hay inicio
-        if (currentTx === '') return null;
+        // Un inicio requiere un fármaco actual: «no» es sin tratamiento
+        // explícito y una celda vacía es «no consta» → sin evento
+        if (currentTx === '' || isExplicitNoTreatment(currentTx)) return null;
 
         // Caso 1: primera visita (no hay visita previa)
         if (!previousVisit) {
@@ -302,9 +315,10 @@
             };
         }
 
-        // Caso 2: visita previa sin tratamiento
+        // Caso 2: inicio solo si la visita previa declaró explícitamente «no».
+        // Una celda vacía en la previa es «no consta» y no inventa un inicio.
         var prevTx = getTreatmentCurrent(previousVisit);
-        if (prevTx === '') {
+        if (isExplicitNoTreatment(prevTx)) {
             return {
                 type: EVENT_TYPES.TREATMENT_START,
                 description: 'Inicio de tratamiento: ' + currentTx,
@@ -328,8 +342,8 @@
         var currentTx = getTreatmentCurrent(currentVisit);
         var prevTx = getTreatmentCurrent(previousVisit);
 
-        // Ambos deben tener tratamiento no vacío
-        if (currentTx === '' || prevTx === '') return null;
+        // Ambos deben ser fármaco («no» explícito o celda vacía no generan cambio)
+        if (currentTx === '' || prevTx === '' || isExplicitNoTreatment(currentTx) || isExplicitNoTreatment(prevTx)) return null;
 
         // Diferente → cambio
         if (currentTx !== prevTx) {
@@ -376,12 +390,15 @@
             };
         }
 
-        // Caso 2: visita previa tenía tratamiento y actual no
+        // Caso 2: la visita previa tenía fármaco y la actual declara
+        // explícitamente «no» (sin tratamiento). Una celda vacía es «no
+        // consta» y no inventa una suspensión (regla de Farmacia).
         if (!previousVisit) return null;
         var currentTx = getTreatmentCurrent(currentVisit);
         var prevTxForSuspend = getTreatmentCurrent(previousVisit);
 
-        if (prevTxForSuspend !== '' && currentTx === '') {
+        if (currentTx === '') return null;
+        if (prevTxForSuspend !== '' && !isExplicitNoTreatment(prevTxForSuspend) && isExplicitNoTreatment(currentTx)) {
             return {
                 type: EVENT_TYPES.TREATMENT_SUSPEND,
                 description: 'Suspensión de tratamiento: ' + prevTxForSuspend,

@@ -69,10 +69,14 @@ N5 non-synthetic id (DNI-shaped id → A4).
 
 ## KNOWN_LEGACY / NON_GOLDEN (characterization, never asserted)
 
-1. **Length enforcement is warn-only.** `validateExportRowLength` inside
-   production only emits a `console.warn` when a row is not 497 columns; it
-   returns `undefined`, never blocks, never fails. A drifted row still
-   reaches the transport. The oracle's A1 is the independent guard.
+1. **Internal length check is warn-only; the transport is fail-closed.**
+   `validateExportRowLength` inside the generators only emits a
+   `console.warn` when a row is not 497 columns. The row does NOT reach the
+   transport: `exportarYCopiarCSV` obtains it exclusively through
+   `HubTools.reumaExportBoundary.generateLegacyRow497`
+   (`modules/reuma_export_boundary.js`), which returns `ROW_LENGTH_INVALID`
+   and nothing is copied (verified 12-11-2026, #913). The oracle's A1 stays
+   as the independent guard.
 2. **Legacy-base positions without exposed header arrays.** Column meanings
    set only by inline generator code are not asserted golden: hlaB27
    (column 9), dolorNocturno (column 106), extraArticular.digestiva
@@ -82,6 +86,10 @@ N5 non-synthetic id (DNI-shaped id → A4).
    fallback `'NO'` and mdaCumple a `? 'SI' : 'NO'` ternary: explicit `false`
    and a missing key render identically. Demonstrated by the oracle's
    characterization case (removing the key leaves the row byte-identical).
+   Reviewed 12-11-2026 (#913): `dolorNocturno` and `digestiva` come from
+   checkboxes, which have no "not recorded" state, and `mdaCumple` = `NO`
+   when MDA is not computed is the published #520 contract. Changing any of
+   them is a form/contract decision, not an export fix.
 4. **Raw `datos.X || ''` reads in the EspA/APs generators.** Fields such as
    hlaB27, peso or others read with `|| ''` would collapse numeric `0` and
    `false` to `''`. Verified read-only: on the frozen corpus no sentinel
