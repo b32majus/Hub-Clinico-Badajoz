@@ -14,6 +14,12 @@
 | **F4 — Pantallas consumidoras** | Quick View, dashboard individual, historia, filtros/estadísticas con **una única lectura del mismo contrato**, diferenciando `pendiente`, `incompleto`, `no consta` y resultado disponible | Datos F1/F2 + contrato F3 y reglas de evaluabilidad firmadas | KPIs clínicos, líneas terapéuticas o categorías de control inventadas |
 | **F5 — Pulido visual común** | Homogeneizar tipografía, proporciones, espaciado y accesibilidad de Inicio, sidebar y formularios con Reuma | Flujos revisados y estables | Refactor transversal prematuro de todos los módulos |
 
+## Estado de ejecución local de F1 — 12-11-2026
+
+**Implementado exclusivamente en rama local de demo:** mapa de captura con 11 apartados en 4 grupos, botones de salto a sección y «Siguiente apartado», indicador de respuestas consignadas por bloque, reconocimiento de cero legítimo y chips con revisión negativa explícita. La navegación no escribe datos ni decide validación; todos los cálculos y decisiones clínicas siguen bloqueados. No se ha iniciado F2 (Seguimiento), F3 (persistencia) ni se han conectado consumidores longitudinales F4. La versión privada Tailscale y PR #916 no se han actualizado con F1.
+
+**Verificación técnica:** tests Chromium F1, PsO anterior y Reuma-shell, 8/8 cada uno; capturas locales 1400/390 px examinadas. No hay revisión humana clínica ni auditoría independiente DIA. El producto no está homologado ni apto para piloto. Hasta publicar por GO, el estado en Nexus canónico permanece sin cambiar.
+
 ## Contrato del primer corte F1 · Primera Visita
 
 **Se conservan los 174 nombres de campos de Valme como inventario de trazabilidad (incluidos seguimiento y derivados), no como 174 inputs ni esquema de Nexus.** Primera Visita solo expone grupos y entradas aplicables a su acto. No introducir nuevos datos de salud, algoritmos o catálogos no aprobados.

@@ -115,6 +115,21 @@
           <div><strong>Formulario de Psoriasis</strong><p>Secciones plegables de Valme adaptadas a controles de selección rápida.</p></div>
           <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
         </div>
+        <section id="firstVisitGuide" class="first-visit-guide hidden" aria-labelledby="firstVisitGuideTitle">
+          <div class="first-visit-guide__top">
+            <div>
+              <p class="eyebrow">PRIMERA VISITA · MAPA DE CAPTURA</p>
+              <h2 id="firstVisitGuideTitle">¿Qué necesitas registrar?</h2>
+              <p class="help">Puedes empezar por cualquier apartado. Este índice solo cuenta respuestas del borrador, no su validez clínica.</p>
+            </div>
+            <div class="first-visit-guide__meta">
+              <span id="firstVisitProgress" aria-live="polite">0 apartados con respuestas</span>
+              <button id="firstVisitNextPending" type="button" class="first-visit-guide__next">Ir al primer apartado sin datos</button>
+            </div>
+          </div>
+          <nav id="firstVisitSectionNav" class="first-visit-section-nav" aria-label="Índice de apartados de Primera Visita"></nav>
+          <p class="first-visit-guide__safety">«Con datos» no significa revisado ni completo. Los apartados sin datos pueden ser opcionales; no se presuponen respuestas negativas.</p>
+        </section>
         <div id="clinicalSections" class="sections"></div>
         <footer class="form-footer">No hay botón Guardar. Estos datos solo existen en memoria hasta cerrar o recargar la página. No se realizan solicitudes a Farmacia.</footer>
       </form>

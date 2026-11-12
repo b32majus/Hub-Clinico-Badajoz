@@ -17,6 +17,15 @@ const sections = [
   ['12 Seguimiento terapéutico', 'Seguimiento terapéutico'],
   ['13 Plan', 'Plan y observaciones'],
 ];
+// Navegación F1: grupos editoriales, NO obligatoriedad ni validación clínica.
+const firstVisitGroups=[
+  ['Contexto y antecedentes', ['01 Datos de consulta','02 Historia de PsO','03 Comorbilidades']],
+  ['Exploración y síntomas', ['04 Localizaciones','05 Exploración/PASI','06 Síntomas']],
+  ['Cuestionarios candidatos', ['07 DLQI','08 PURE-4']],
+  ['Tratamiento y plan', ['09 Derivaciones/plan','10 Tratamiento primera visita','13 Plan']],
+];
+const firstVisitSectionKeys=firstVisitGroups.flatMap(([,keys])=>keys);
+let lastFirstVisitSection='01 Datos de consulta';
 const therapyGroups=[
   {key:'topicos',name:'Tópicos',options:['Corticoides Tópicos','Calcipotriol/Betametasona','Tacrolimus Tópico']},
   {key:'sinteticos_convencionales',name:'Sintéticos convencionales',options:['Metotrexato','Ciclosporina','Acitretina','Apremilast']},
@@ -49,10 +58,71 @@ function answers(){
 }
 function valueFor(key){return Object.hasOwn(answers(),key)?answers()[key]:''}
 function setField(key,value){answers()[key]=value;updateStatus()}
-function filledCount(){return Object.values(answers()).filter(v=>v!==''&&v!==null&&v!==undefined).length}
+function filledCount(){return Object.values(answers()).filter(isConsigned).length}
+function isConsigned(value){
+  return value!==null&&value!==undefined&&
+    (typeof value!=='string'||value.trim().length>0);
+}
+function firstVisitCaptureStatus(sectionKey){
+  const captured=answers();
+  const source=PSO_VALME_FIELDS.filter(f=>f.section===sectionKey);
+  const inputs=source.filter(f=>!['derivado','derivado-presentacion'].includes(f.kind) &&
+    !['nusha','tipo_visita','tratamiento_previo_consulta'].includes(f.key));
+  const count=inputs.filter(f=>isConsigned(captured[f.key])).length;
+  const tri=inputs.filter(f=>f.kind==='triestado');
+  const groupReviewed=tri.length>0&&tri.every(f=>captured[f.key]==='0'||captured[f.key]==='1');
+  return {count,groupReviewed};
+}
+function jumpToFirstVisitSection(key){
+  if(current.view!=='visit'||current.visit!=='primera'||current.pathology!=='pso'||!current.patient)return;
+  const section=[...document.querySelectorAll('.section')].find(el=>el.dataset.section===key);
+  if(!section)return;
+  section.open=true;
+  lastFirstVisitSection=key;
+  document.querySelectorAll('[data-jump-section]').forEach(btn=>{
+    if(btn.dataset.jumpSection===key)btn.setAttribute('aria-current','step');
+    else btn.removeAttribute('aria-current');
+  });
+  section.querySelector('summary').scrollIntoView({behavior:'auto',block:'start'});
+  section.querySelector('summary').focus();
+}
+function refreshFirstVisitGuide(){
+  const guide=$('#firstVisitGuide');
+  const shown=current.view==='visit'&&current.visit==='primera'&&current.pathology==='pso'&&!!current.patient;
+  guide.classList.toggle('hidden',!shown);
+  if(!shown)return;
+  const summaries=new Map(firstVisitSectionKeys.map(key=>[key,firstVisitCaptureStatus(key)]));
+  const recorded=[...summaries].filter(([,status])=>status.count>0).length;
+  $('#firstVisitProgress').textContent=recorded+' de '+firstVisitSectionKeys.length+' apartados con datos en borrador';
+  const target=$('#firstVisitSectionNav');
+  target.innerHTML=firstVisitGroups.map(([group,keys])=>
+    '<div class="first-visit-section-nav__group"><h3>'+escapeText(group)+'</h3><div class="first-visit-section-nav__items">'+
+    keys.map(key=>{
+      const name=sections.find(([k])=>k===key)?.[1]||key;
+      const status=summaries.get(key);
+      const state=status.count===0?'Sin consignar':status.count+' respuesta'+(status.count!==1?'s':'');
+      const reviewed=status.groupReviewed?' · Chips revisados':'';
+      return '<button type="button" class="first-visit-section-link" data-jump-section="'+escapeText(key)+'" '+
+        (key===lastFirstVisitSection?'aria-current="step" ':'')+
+        'aria-label="'+escapeText(name+', '+state+reviewed)+'"><span class="first-visit-section-link__name">'+escapeText(name)+'</span>'+
+        '<span class="first-visit-section-link__state" data-consigned="'+(status.count>0?'true':'false')+'">'+escapeText(state+reviewed)+'</span></button>';
+    }).join('')+'</div></div>').join('');
+  target.querySelectorAll('[data-jump-section]').forEach(btn=>btn.addEventListener('click',()=>jumpToFirstVisitSection(btn.dataset.jumpSection)));
+  for(const el of document.querySelectorAll('.section[data-section]')){
+    const status=summaries.get(el.dataset.section);
+    if(!status)continue;
+    const meta=el.querySelector('summary .section-meta');
+    if(meta)meta.textContent=status.count===0?'Sin consignar':status.count+' respuestas en borrador'+(status.groupReviewed?' · Chips revisados':'');
+  }
+  const pending=firstVisitSectionKeys.find(key=>summaries.get(key).count===0);
+  const button=$('#firstVisitNextPending');
+  button.disabled=!pending;
+  button.title=pending?'Abre el primer apartado que todavía no tiene respuestas':'No quedan apartados completamente vacíos; esto no significa validación';
+}
 function updateStatus(){
   $('#draftScope').textContent=(current.patient||'Sin paciente')+' · '+(current.visit==='primera'?'Primera Visita':'Seguimiento');
   $('#draftStatus').textContent=filledCount()+' respuestas de borrador · sin guardar';
+  refreshFirstVisitGuide();
 }
 function optionHtml(options,selected,emptyLabel='Sin consignar'){
   return '<option value="">'+escapeText(emptyLabel)+'</option>'+options.map(o=>{
@@ -147,11 +217,20 @@ function renderSection(section){
     if(key==='07 DLQI'||key==='08 PURE-4'||key==='12 Seguimiento terapéutico')body+='<p class="warning-inline">Texto, versión, derechos de uso y puntuación requieren aprobación. Respuestas solo para ilustrar el flujo; no constituyen evaluación clínica.</p>';
     body+='<div class="fields">'+other.map(fieldHtml).join('')+'</div>';
   }
+  if(current.visit==='primera'){
+    const nextKey=firstVisitSectionKeys[firstVisitSectionKeys.indexOf(key)+1];
+    if(nextKey){
+      const nextName=sections.find(([k])=>k===nextKey)?.[1]||nextKey;
+      body+='<div class="first-visit-section-next"><button type="button" data-next-first-section="'+escapeText(nextKey)+'">Siguiente apartado: '+escapeText(nextName)+'</button></div>';
+    }
+  }
   return '<details class="section" data-section="'+escapeText(key)+'"'+(['01 Datos de consulta','02 Historia de PsO','03 Comorbilidades'].includes(key)?' open':'')+'>'+
     '<summary><span>'+escapeText(name)+'</span><small class="section-meta">'+fields.length+' campos fuente</small></summary>'+
     '<div class="section-body">'+body+'</div></details>';
 }
 function bind(){
+  document.querySelectorAll('[data-next-first-section]').forEach(el=>
+    el.addEventListener('click',()=>jumpToFirstVisitSection(el.dataset.nextFirstSection)));
   document.querySelectorAll('[data-chip]').forEach(el=>el.addEventListener('click',()=>{
     const key=el.dataset.chip,val=valueFor(key);
     setField(key,val==='1'?'':'1');
@@ -188,6 +267,7 @@ function selectPatient(id){
   if(current.patient!==normalized){
     current.patient=normalized;
     current.pathology=pathologyByVisit.get(patientVisitKey())||'';
+    lastFirstVisitSection='01 Datos de consulta'; // estado de navegación, no dato clínico
   }
   $('#demoPatient').value=current.patient;
   $('#pathology').value=current.pathology;
@@ -238,7 +318,10 @@ function render(preserveOpen=false){
   const ready=current.patient&&current.pathology==='pso';
   form.classList.toggle('hidden',!ready);empty.classList.toggle('hidden',!!ready);
   $('#visitTitle').textContent=current.visit==='primera'?'Primera Visita':'Seguimiento';
-  if(current.view!=='visit'||!ready)return;
+  if(current.view!=='visit'||!ready){
+    $('#firstVisitGuide').classList.add('hidden');
+    return;
+  }
   const opened=preserveOpen?new Set([...document.querySelectorAll('.section[open]')].map(x=>x.dataset.section)):null;
   const selected=sections.filter(([key])=>!(['10 Tratamiento primera visita','11 Tratamiento seguimiento','12 Seguimiento terapéutico'].includes(key))||
     (current.visit==='primera'&&key==='10 Tratamiento primera visita')||
@@ -299,6 +382,10 @@ document.addEventListener('keydown',e=>{
       else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
     }
   }
+});
+$('#firstVisitNextPending').addEventListener('click',()=>{
+  const pending=firstVisitSectionKeys.find(key=>firstVisitCaptureStatus(key).count===0);
+  if(pending)jumpToFirstVisitSection(pending);
 });
 $('#demoPatient').addEventListener('change',e=>selectPatient(e.target.value));
 $('#pathology').addEventListener('change',e=>{
