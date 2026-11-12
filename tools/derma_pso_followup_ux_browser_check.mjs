@@ -98,7 +98,8 @@ try{
    await page.locator('[data-field="pasi_cabeza_eritema"]').selectOption('0');
    assert(await page.locator('[data-field="bsa"]').inputValue()==='0','BSA cero legítimo perdido');
    assert(await page.locator('[data-field="pasi_cabeza_eritema"]').inputValue()==='0','PASI cero legítimo perdido');
-   assert((await page.locator('#pasiStatus').textContent()).includes('Sin cálculo clínico'),'PASI clínico fabricado');
+   const pasiPartial=await page.locator('#pasiStatus').textContent();
+   assert(pasiPartial.includes('1/16')&&pasiPartial.includes('Sin PASI calculado'),'PASI parcial se calculó: '+pasiPartial);
    if(process.env.DERMA_F2_UX_PASI)await section('05 Exploración/PASI').screenshot({path:process.env.DERMA_F2_UX_PASI});
   }],
   ['UX5 Instrumentos sin texto NO respondibles; DLQI candidato conserva preguntas',async()=>{

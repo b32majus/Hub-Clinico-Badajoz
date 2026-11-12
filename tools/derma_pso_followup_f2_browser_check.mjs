@@ -72,7 +72,8 @@ try{
    await page.locator('[data-field="pga"]').selectOption('0');
    assert(await page.locator('[data-field="bsa"]').inputValue()==='0','BSA cero perdido');
    assert(await page.locator('[data-field="pga"]').inputValue()==='0','PGA cero perdido');
-   assert((await page.locator('#pasiStatus').textContent()).includes('Sin cálculo clínico'),'PASI inferido');
+   const pasiState=await page.locator('#pasiStatus').textContent();
+   assert(pasiState.includes('0/16')&&pasiState.includes('Sin PASI calculado'),'PASI sin respuestas aparece calculado');
    await page.locator('[data-section="07 DLQI"] > summary').click();
    assert(await page.locator('[data-question^="dlqi_q"]').count()===10,'DLQI incompleto en seguimiento');
    await page.locator('[data-field="dlqi_q1"]').selectOption('0');

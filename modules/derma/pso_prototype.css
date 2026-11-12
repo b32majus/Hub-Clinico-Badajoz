@@ -248,7 +248,10 @@ body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,san
 .followup-intensity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:15px}
 .followup-intensity-grid .followup-choice-group{border:1px solid #e0ebec;background:#f9fcfb;border-radius:12px;padding:14px}
 .followup-activity-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:620px;margin:4px 0 15px}
-.followup-score{margin:14px 0}
+.followup-score{margin:14px 0;flex-wrap:wrap}
+.followup-score #pasiStatus{font-variant-numeric:tabular-nums;text-align:right;max-width:100%;overflow-wrap:anywhere}
+.followup-score #pasiStatus[data-state="complete"]{font-weight:750;color:#166c57}
+.followup-score #pasiStatus[data-state="invalid"]{font-weight:700;color:#ae513e}
 .followup-pasi-regions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:16px 0}
 .followup-pasi-region{background:#f8fbfc;border:1px solid #dbe9ed;border-radius:13px;padding:15px;min-width:0}
 .followup-pasi-region h4{font-size:14px;color:#245e61;margin:0 0 13px;padding-bottom:10px;border-bottom:1px solid #e2ebec}

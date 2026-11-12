@@ -83,7 +83,69 @@ function answers(){
   return drafts.get(key);
 }
 function valueFor(key){return Object.hasOwn(answers(),key)?answers()[key]:''}
-function setField(key,value){answers()[key]=value;updateStatus()}
+function setField(key,value){
+  answers()[key]=value;
+  updateStatus();
+  if(current.visit==='seguimiento'&&key.startsWith('pasi_'))updatePasiStatus();
+}
+// PASI estándar (EMA CHMP/EWP/2454/02, apéndice; DermNet PASI): demo exclusivamente.
+// 4 regiones x 4 datos explícitos. NO inferir 0 de campos vacíos ni escribir en answers().
+const PASI_REGIONS=Object.freeze([
+  {key:'cabeza',weight:0.1,label:'cabeza'},
+  {key:'brazos',weight:0.2,label:'brazos'},
+  {key:'tronco',weight:0.3,label:'tronco'},
+  {key:'piernas',weight:0.4,label:'piernas'},
+]);
+const PASI_METRICS=['eritema','induracion','escamas','area'];
+function calculatePasi(draft){
+  let completed=0,score=0;
+  const invalid=[];
+  for(const region of PASI_REGIONS){
+    const values={};
+    for(const metric of PASI_METRICS){
+      const key='pasi_'+region.key+'_'+metric;
+      const raw=Object.hasOwn(draft,key)?draft[key]:'';
+      if(raw===null||raw===undefined||String(raw).trim()==='')continue;
+      // Únicamente categorías enteras explícitas dentro de sus límites.
+      const max=metric==='area'?6:4;
+      if(!/^[0-9]$/.test(String(raw))||Number(raw)>max){
+        invalid.push(region.label+' · '+metric);
+        continue;
+      }
+      values[metric]=Number(raw);
+      completed++;
+    }
+    if(PASI_METRICS.every(metric=>Object.hasOwn(values,metric))){
+      const severity=values.eritema+values.induracion+values.escamas;
+      // No presentar puntuación ante entradas clínicamente contradictorias.
+      if(values.area===0&&severity>0)
+        invalid.push(region.label+' (extensión 0 con signos de actividad)');
+      if(values.area>0&&severity===0)
+        invalid.push(region.label+' (extensión positiva con signos 0)');
+      score+=region.weight*values.area*severity;
+    }
+  }
+  if(invalid.length)return {state:'invalid',completed,invalid};
+  if(completed!==16)return {state:completed===0?'empty':'partial',completed};
+  return {state:'complete',completed,score:Math.round(score*10)/10};
+}
+function updatePasiStatus(){
+  if(current.visit!=='seguimiento')return;
+  const el=$('#pasiStatus');
+  if(!el)return;
+  const result=calculatePasi(answers());
+  el.dataset.state=result.state;
+  if(result.state==='complete'){
+    el.textContent='PASI calculado: '+result.score.toLocaleString('es-ES',{minimumFractionDigits:1,maximumFractionDigits:1})+
+      ' / 72 · cálculo de demo, no validado clínicamente';
+  }else if(result.state==='invalid'){
+    el.textContent='Revisar coherencia ('+result.invalid.join('; ')+'). Sin PASI calculado.';
+  }else{
+    el.textContent=result.completed+'/16 componentes consignados · '+
+      (result.state==='empty'?'sin datos':'evaluación incompleta')+'. Sin PASI calculado.';
+  }
+}
+
 function filledCount(){return Object.values(answers()).filter(isConsigned).length}
 function isConsigned(value){
   return value!==null&&value!==undefined&&
@@ -370,7 +432,12 @@ function followupPasiHtml(fields){
       const f=fields.find(x=>x.key==='pasi_'+key+'_'+metric);
       if(!f)return '';
       const label={eritema:'Eritema',induracion:'Induración',escamas:'Descamación',area:'Extensión'}[metric];
-      const choices=Array.from({length:(metric==='area'?7:5)},(_,i)=>String(i));
+      const choices=metric==='area'?[
+        {value:'0',text:'0 · 0 %'}, {value:'1',text:'1 · 1–9 %'},
+        {value:'2',text:'2 · 10–29 %'}, {value:'3',text:'3 · 30–49 %'},
+        {value:'4',text:'4 · 50–69 %'}, {value:'5',text:'5 · 70–89 %'},
+        {value:'6',text:'6 · 90–100 %'},
+      ]:Array.from({length:5},(_,i)=>String(i));
       return '<label>'+label+'<select data-field="'+escapeText(f.key)+'">'+
         optionHtml(choices,valueFor(f.key))+'</select></label>';
     }).join('');
@@ -382,8 +449,8 @@ function followupPasiHtml(fields){
     '<div class="followup-activity-top">'+
     '<label>BSA (%)<input data-field="bsa" type="number" min="0" max="100" step="0.1" value="'+escapeText(valueFor('bsa'))+'" placeholder="Sin consignar"></label>'+
     '<label>PGA (0–5)<select data-field="pga">'+optionHtml(['0','1','2','3','4','5'],valueFor('pga'))+'</select></label></div>'+
-    '<div class="derived followup-score"><strong>PASI · total</strong><span id="pasiStatus">Sin cálculo clínico · no homologado</span></div>'+
-    '<p class="help">Componentes de PASI agrupados por región corporal; no se aplica fórmula ni se interpreta el resultado.</p>'+
+    '<div class="derived followup-score"><strong>PASI · total</strong><span id="pasiStatus" data-state="empty" role="status" aria-live="polite">0/16 componentes consignados · sin datos. Sin PASI calculado.</span></div>'+
+    '<p class="help">Cálculo automático de demostración solo con 16/16 categorías explícitas, sin imputar ceros. Cabeza 10 %, brazos 20 %, tronco 30 % y piernas 40 %. BSA y PGA no entran en la fórmula. No está homologado para uso clínico ni se guarda en historia.</p>'+
     '<div class="followup-pasi-regions">'+html+'</div>'+
     triStateHtml(nails)+
     '<div class="fields">'+(notes?fieldHtml(notes):'')+'</div>';
@@ -684,7 +751,7 @@ function render(preserveOpen=false){
     sections.filter(([key])=>!['11 Tratamiento seguimiento','12 Seguimiento terapéutico'].includes(key));
   $('#clinicalSections').innerHTML=selected.map(renderSection).join('');
   if(opened)document.querySelectorAll('.section').forEach(el=>el.open=opened.has(el.dataset.section));
-  if(followup)updateFollowupTherapyPreview();
+  if(followup){updateFollowupTherapyPreview();updatePasiStatus();}
   bind();updateStatus();
 }
 const overlay=$('#quickViewOverlay');

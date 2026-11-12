@@ -4,6 +4,21 @@
 **Base:** `b32majus/Hub-Clinico-Badajoz` rama `promueve/nexus-v4`, prototipo aislado `work/derma-pso-reuma-shell-20261112@444f9d1`. PR #916 DRAFT sigue sin merge. Contratos #697 (Derma base) y #728 (PsO) abiertos sin firma clínica.
 **Instrucción:** sil 12-11: «Primera Visita y Seguimiento deben alimentar lo demás»; «deja primero documentado cómo vamos a proceder y empieza por Primera Visita». Diseño UX de Reuma como referencia; catálogo de variables Valme como **donante**, no como norma médica ni identidad institucional.
 
+## F2.2 · PASI calculado solo en Seguimiento, CANDIDATO LOCAL — 12-11-2026
+
+**Petición funcional:** Sil validó visualmente F2.1 pero señaló que «el PASI no se autocalcula». Confirmado en el formulario: los 16 campos existían, pero el total de PASI estaba deshabilitado expresamente. **Esta WO habilita únicamente el cálculo derivado demostrativo de F2**, sin tocar Primera Visita ni otros scores; requiere GO separado antes de actualizar la demo privada.
+
+**Fuente metodológica externa contrastada, NO contrato clínico aprobado:** EMA/CHMP/EWP/2454/02, apéndice PASI (https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-clinical-investigation-medicinal-products-indicated-treatment-psoriasis_en.pdf), y DermNet PASI score (https://dermnetnz.org/topics/PASI-score). Fórmula estándar por región: (eritema + induración + descamación) × grado de área × ponderación. Regiones: cabeza 0,1, extremidades superiores 0,2, tronco 0,3 y extremidades inferiores 0,4. Categorías de signos 0–4 y extensión 0–6 por región; resultado 0–72.
+
+**Reglas técnicas del candidato:**
+- Requiere **las 16 categorías introducidas expresamente** (4 por región). El resultado muestra 0/16 sin datos, N/16 parcial sin score, y solo PASI calculado si hay 16/16. Se permite cero expresamente seleccionado, nunca se infiere desde ausencia.
+- Si los signos son positivos con grado de extensión 0, o extensión positiva con signos todos 0, se solicita revisar coherencia y se oculta la cifra, sin decidir clínicamente qué dato corregir. Esto es una regla conservadora del prototipo que requiere revisión profesional.
+- BSA (%) y PGA son campos independientes y **no forman parte del cálculo PASI**. Se muestran grados de área con bandas porcentuales en el selector, sin convertir automáticamente BSA global en categorías regionales.
+- El resultado se expresa como **«PASI calculado ... / 72 · cálculo de demo, no validado clínicamente»**. Se recalcula al editar una categoría, se invalida si falta dato y **no escribe** en el campo fuente derivado PASI ni en datos persistentes, historial, Quick View, Farmacia o exportaciones.
+- Primera Visita sigue sin cálculo por estar fuera del alcance de esta WO. DLQI, PURE-4 y Morisky siguen sin cálculo y sin homologación. El resultado numérico NO constituye aprobación clínica ni piloto.
+
+**QA:** batería nueva de Chromium con 0/16, parcial, 16 ceros=0, máximo=72, comprobación independiente de 4 ponderaciones, incoherencias, modificación/invalidez, aislamiento CIP/visita, recarga/móvil; y regresiones completas previas. No desplegado, no push/PR/merge ni cambio de contratos Nexus publicados.
+
 ## F2.1 · Corrección funcional y UX tras revisión humana — CANDIDATA LOCAL (12-11-2026)
 
 **Origen de la revisión:** Sil validó el CIP nuevo y detectó que el contenido F2 «no está bien», y que se habían perdido chips, botones, estética y UX/UI de Primera Visita. Inspección real de los 11 apartados: la primera pantalla estaba dominada por PASI en desplegables, chips escondidos, PURE-4/Morisky respondibles sin enunciados, tratamiento anterior como campo sin fuente. Las 38 pruebas técnicas previas no fueron aprobación clínica ni de UX.
