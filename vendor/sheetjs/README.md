@@ -60,3 +60,7 @@ limitations under the License.
 ## Added
 
 2026-06-06 — vendored for Farmacia v0.2 dual drug-catalog autocomplete.
+
+## Uso en Reuma
+
+Desde el tramo 3 (12-11) las pantallas de Reuma cargan esta copia local (SheetJS 0.18.5, idéntica a cdnjs salvo finales de línea) en lugar del CDN. Chart.js y sus plugins siguen por CDN, ahora con SRI (sha384) y `crossorigin="anonymous"`. Ver `tools/reuma_cdn_sri_check.mjs`.
