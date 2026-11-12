@@ -319,7 +319,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const patologiaParam = (urlParams.get('patologia') || '').toLowerCase();
 
     if (patientId) {
-        console.log(`🔎 Cargando datos de seguimiento para ${patientId}`);
 
         const outcome = await readSeguimientoBundle(patientId);
 
@@ -398,7 +397,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 renderPrebiologicBadge(prefillPayload.idPaciente, prefillPayload);
             } else {
-                console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
+                console.warn(`⚠️ No se pudo pre-rellenar el formulario del paciente`);
                 const idInput = document.getElementById('idPaciente');
                 if (idInput) {
                     idInput.value = patientId;

@@ -187,7 +187,7 @@
 
         try {
             sessionStorage.setItem(getStorageKey(cip), JSON.stringify(record));
-            console.log('[prebiologicManager] Estado guardado para CIP', cip, ':', estado);
+            console.log('[prebiologicManager] Estado prebiológico guardado.');
             return true;
         } catch (e) {
             console.error('[prebiologicManager] Error guardando estado:', e);
@@ -214,7 +214,7 @@
     function clearStatus(cip) {
         if (!cip) return;
         sessionStorage.removeItem(getStorageKey(cip));
-        console.log('[prebiologicManager] Estado eliminado para CIP', cip);
+        console.log('[prebiologicManager] Estado prebiológico eliminado.');
     }
 
     /**

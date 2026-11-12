@@ -141,7 +141,6 @@ const FAIL_CLOSED_ERROR = 'No se pudo consultar los pacientes. Inténtalo de nue
 
 document.addEventListener('DOMContentLoaded', async () => {
     const patientId = getPatientIdFromURL();
-    console.log(' Iniciando dashboard premium del paciente', patientId);
 
     if (!patientId) {
         showEmptyState('Busca un paciente para cargar su cuadro de mando.');
@@ -435,12 +434,12 @@ function populateDashboard() {
     applyBiomarkerStatus('biomarkerApcc', pickValue(latest, ['apcc', 'APCC']));
 
     // Tarjeta 3: Resumen Clínico
-    const comorbidities = (latest.comorbilidades || '').split(',').filter(Boolean).map(s => `<li>${s.trim()}</li>`).join('') || '<li>Sin comorbilidades registradas</li>';
+    const comorbidities = (latest.comorbilidades || '').split(',').filter(Boolean).map(s => `<li>${escapeHtml(s.trim())}</li>`).join('') || '<li>Sin comorbilidades registradas</li>';
     document.getElementById('comorbiditiesList').innerHTML = comorbidities;
 
     const extraArticularManifestations = collectManifestations(latest);
     document.getElementById('extraArticularManifestationsList').innerHTML = extraArticularManifestations.length
-        ? extraArticularManifestations.map(item => `<li>${item}</li>`).join('')
+        ? extraArticularManifestations.map(item => `<li>${escapeHtml(item)}</li>`).join('')
         : '<li>Sin manifestaciones registradas</li>';
 
     // Tarjeta 4: Tratamiento Activo
@@ -955,7 +954,7 @@ function renderVisitsTable() {
             <td>${visit.asdas !== null ? Number(visit.asdas).toFixed(1) : '---'}</td>
             <td>${visit.evaDolor !== null ? Number(visit.evaDolor).toFixed(0) : '---'}</td>
             <td>${visit.pcr !== null ? Number(visit.pcr).toFixed(1) : '---'}</td>
-            <td>${visit.tratamiento}</td>
+            <td>${escapeHtml(visit.tratamiento)}</td>
         </tr>
     `).join('');
 
@@ -1406,7 +1405,7 @@ function populateKeyEvents() {
             '<div class="timeline-date">' + formatDate(event.date) + '</div>' +
             '<div class="timeline-content">' +
             '<div class="timeline-title">' + capitalizeFirst(event.type) + '</div>' +
-            '<div class="timeline-description">' + event.description + '</div>' +
+            '<div class="timeline-description">' + escapeHtml(event.description) + '</div>' +
             '</div></div>';
     }).join('');
 }

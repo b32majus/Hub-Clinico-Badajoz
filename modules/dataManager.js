@@ -396,7 +396,7 @@ async function loadDatabase(file) {
         appState.lastLoadedTime = Date.now();
         DB_CACHE_STORAGE.setItem('hubClinicoDB_loadTime', String(appState.lastLoadedTime));
 
-        console.log('Base de datos cargada y procesada con éxito:', appState.db);
+        console.log('Base de datos cargada y procesada con éxito.');
 
         // Guardar en localStorage antes de notificar para que el shell lea un estado consistente
         saveToSessionStorage();
@@ -505,7 +505,6 @@ function findPatientById(patientId) {
     if (typeof window.MockPatients?.getById === 'function') {
         const mockPatient = window.MockPatients.getById(patientId);
         if (mockPatient) {
-            console.log(`findPatientById: Paciente ${patientId} encontrado en MockPatients.`);
             const summary = { ...mockPatient.summary };
             if (!summary.pathology) {
                 summary.pathology = mockPatient.pathology || null;
@@ -514,7 +513,7 @@ function findPatientById(patientId) {
         }
     }
 
-    console.warn(`findPatientById: Paciente ${patientId} no encontrado en base de datos ni en MockPatients.`);
+    console.warn(`findPatientById: Paciente no encontrado en base de datos ni en MockPatients.`);
     return null;
 }
 
@@ -598,7 +597,6 @@ function getPatientHistory(patientId) {
     if (typeof window.MockPatients?.getById === 'function') {
         const mockPatient = window.MockPatients.getById(patientId);
         if (mockPatient) {
-            console.log(`getPatientHistory: Paciente ${patientId} encontrado en MockPatients.`);
             // The mock data is already sorted chronologically
             const sortedVisits = [...mockPatient.visits].sort((a, b) => new Date(b.fechaVisita) - new Date(a.fechaVisita));
             return {
@@ -1532,17 +1530,6 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
 
 function generateRealChartData(patients, filters = {}) {
     const pathologyFilter = filters.pathology || 'Todos';
-
-    // Debug: mostrar columnas disponibles en primer paciente
-    if (patients.length > 0) {
-        console.log('?? Columnas del primer paciente:', Object.keys(patients[0]).slice(0, 20));
-        console.log('?? Valores de mtricas del primer paciente:', {
-            BASDAI_Result: patients[0].BASDAI_Result,
-            HAQ_Total: patients[0].HAQ_Total,
-            ASDAS_CRP_Result: patients[0].ASDAS_CRP_Result,
-            pathology: patients[0].pathology
-        });
-    }
 
     // =====================
     // GRFICO DE ACTIVIDAD (Donut)
