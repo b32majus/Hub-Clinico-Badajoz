@@ -46,7 +46,7 @@ try{
  });
  check('S2 circuito y patología explícita',async()=>{
    await page.getByRole('button',{name:'Primera Visita'}).click();
-   await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
+   await page.locator('#patientCip').fill('DEMO-PSO-001');await page.locator('#lookupCip').click();
    if(await page.locator('#visitForm').isVisible())throw Error('visible sin patología explícita');
    await page.locator('#pathology').selectOption('pso');
    await page.locator('#visitForm').waitFor({state:'visible'});
@@ -77,7 +77,7 @@ try{
    const fieldKeys=await page.evaluate(()=>window.__dermaPrototypeFieldKeys||[]);
    if(JSON.stringify(fieldKeys)!==JSON.stringify(VALME_HEADERS))throw Error('crosswalk no coincide con HEADERS de Valme');
    const observed=new Set();
-   const snapshot=async()=>{for(const k of await page.locator('[data-field]').evaluateAll(els=>els.map(el=>el.dataset.field)))observed.add(k);for(const k of await page.locator('[data-chip]').evaluateAll(els=>els.map(el=>el.dataset.chip)))observed.add(k)};
+   const snapshot=async()=>{for(const k of await page.locator('[data-field]').evaluateAll(els=>els.map(el=>el.dataset.field)))if(!k.startsWith('extra_'))observed.add(k);for(const k of await page.locator('[data-chip]').evaluateAll(els=>els.map(el=>el.dataset.chip)))observed.add(k);if(await page.locator('[data-field=\"extra_dlqi_q7_main\"]').count())observed.add('dlqi_q7')};
    for(const [visit,section] of [['primera','10 Tratamiento primera visita'],['seguimiento','11 Tratamiento seguimiento']]){
      if(visit==='seguimiento'){await page.getByRole('button',{name:'Seguimiento'}).click(); await page.locator('#pathology').selectOption('pso')}
      await page.locator('[data-section="'+section+'"] > summary').click();
@@ -95,7 +95,7 @@ try{
  check('S5 dosis sin inferencias',async()=>{
    await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
    const drug=page.locator('[data-field="tx_primera_biologicos_farmaco_1"]');
-   await drug.selectOption('Secukinumab');
+   await drug.fill('Secukinumab');
    const pos=await page.locator('[data-field="tx_primera_biologicos_posologia_1"]').inputValue();
    if(pos!=='')throw Error('posología inferida: '+pos);
    await page.getByRole('button',{name:'Seguimiento'}).click();
@@ -109,7 +109,7 @@ try{
    await page.locator('[data-field="pasi_cabeza_eritema"]').selectOption('1');
    const status=await page.locator('#pasiStatus').textContent();
    if(!/sin cálculo|no homologado/i.test(status))throw Error('PASI calculado o sin cautela: '+status);
-   for(const label of ['Total DLQI','Total PURE-4']){
+   for(const label of ['DLQI total','Total PURE-4']){
      const displayed=await page.locator('.derived').filter({hasText:label}).textContent();
      if(!/sin cálculo clínico|no homologado/i.test(displayed))throw Error(label+' aparenta estar homologado');
    }
@@ -123,11 +123,11 @@ try{
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('carga primera en seguimiento');
    await page.getByRole('button',{name:'Primera Visita'}).click();
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='true')throw Error('se perdió borrador en memoria');
-   await page.locator('#demoPatient').selectOption('DEMO-PSO-002');
+   await page.locator('#patientCip').fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
    if(await page.locator('#visitForm').isVisible())throw Error('patología inferida tras cambiar paciente');
    await page.locator('#pathology').selectOption('pso');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('contaminación paciente');
-   await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
+   await page.locator('#patientCip').fill('DEMO-PSO-001');await page.locator('#lookupCip').click();
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='true')throw Error('borrador sintético previo no restaurado');
  });
  check('S8 sin persistencia ni errores de consola',async()=>{
@@ -138,9 +138,9 @@ try{
    if((await page.context().cookies()).length)throw Error('cookies escritas');
    await page.reload({waitUntil:'networkidle'});
    if(!await page.locator('#homeView').isVisible())throw Error('recarga no devuelve a Inicio');
-   if(await page.locator('#demoPatient').inputValue()!==''||await page.locator('#pathology').inputValue()!=='')throw Error('contexto restaurado sin fuente tras recarga');
+   if(await page.locator('#patientCip').inputValue()!==''||await page.locator('#pathology').inputValue()!=='')throw Error('contexto restaurado sin fuente tras recarga');
    await page.getByRole('button',{name:'Primera Visita'}).click();
-   await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
+   await page.locator('#patientCip').fill('DEMO-PSO-001');await page.locator('#lookupCip').click();
    await page.locator('#pathology').selectOption('pso');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('la recarga no borró el borrador');
    if(errors.length||externalRequests.length)throw Error('errores o peticiones tras recarga');

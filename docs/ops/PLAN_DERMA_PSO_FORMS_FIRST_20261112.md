@@ -4,6 +4,16 @@
 **Base:** `b32majus/Hub-Clinico-Badajoz` rama `promueve/nexus-v4`, prototipo aislado `work/derma-pso-reuma-shell-20261112@444f9d1`. PR #916 DRAFT sigue sin merge. Contratos #697 (Derma base) y #728 (PsO) abiertos sin firma clínica.
 **Instrucción:** sil 12-11: «Primera Visita y Seguimiento deben alimentar lo demás»; «deja primero documentado cómo vamos a proceder y empieza por Primera Visita». Diseño UX de Reuma como referencia; catálogo de variables Valme como **donante**, no como norma médica ni identidad institucional.
 
+## F1 · Revisión UX solicitada por Sil (12-11-2026) — CANDIDATA LOCAL
+
+- La pantalla empieza como Reuma: **buscar CIP** y, si aún no consta, introducirlo; después **nombre y apellidos, sexo y patología** explícitos. En la demo solo se aceptan identidades ficticias con prefijo `DEMO-`, sin conexión hospitalaria, sin historia persistida ni autorización de uso con pacientes.
+- **Retirada por revisión humana:** tarjeta «¿Qué necesitas registrar?», índice por secciones y botones «Siguiente apartado». La sección/visita conserva el acordeón clínico. Chips seleccionados solo cambian de color (ARIA pressed preservado, sin ✓ visible).
+- **Datos nuevos propuestos, FUERA de los 174 de Valme:** situación tabaquismo (`Fumador actual` / `Exfumador`), cigarrillos/día o años de abandono; consumo de alcohol (`Consumo actual` / `Consumo anterior`) y bebidas/semana. Solo aparecen tras seleccionar el chip correspondiente y son entradas explícitas editables. No se calcula ningún riesgo y los no seleccionados no son negativos.
+- **DLQI 10 ítems:** mostrado el texto completo **de la fuente Valme**, con ítem 7 condicional y «Sin relación» distinguido de «Nada». **Hallazgo crítico:** el ítem 9 de `scripts/farmacia_primera_visita.js` trata de sueño, mientras que Valme lo describe como dificultades sexuales. No se ha copiado esa variante contradictoria ni aprobado instrumento/versiones/licencia. Sin total clínico ni interpretación.
+- **Tratamientos:** cuatro grupos Tópicos, Sistémicos convencionales, Biológicos y Fototerapia, con búsqueda preliminar por sugerencias Valme (nativa `datalist`), filas añadibles, fármaco/modalidad, **dosis/vía/pauta separadas** e inicialmente vacías. La lista es provisional: **NO es el autocompletado unificado de Reuma/Farmacia**. El componente compartido actual solo reconoce categorías explícitas Reuma (`Sistemicos`, `FAMEs`, `Biologicos`), no topicos/fototerapia PsO. Integración unificada requiere contrato de categorías propio y QA específico.
+- **Límite clínico obligatorio:** elegir solo el nombre del fármaco no puede escribir ni sugerir dosis, vía, pauta, inducción o duración. Una eventual selección **explícita de presentación o régimen** podría proponer valores editables únicamente tras aprobación clínica y reglas versionadas; ahora no está implementada.
+- No se ha actualizado GitHub canónico ni la demo privada con este refinamiento; no está homologado ni apto para piloto. F2 Seguimiento, F3 almacenamiento y consumidores F4 permanecen en sus fases independientes.
+
 ## Orden de ejecución acordado (separar entregables y WOs)
 
 | Fase | Qué se termina | Qué la habilita | Qué NO debe presentarse todavía |

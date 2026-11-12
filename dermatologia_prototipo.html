@@ -87,13 +87,25 @@
         <span class="draft-pill">NO HOMOLOGADO</span>
       </header>
       <div class="context card">
-        <div class="context-head"><h2>Contexto de visita</h2><span id="fieldCoverage">174 campos de origen Valme mapeados</span></div>
-        <div class="context-grid">
-          <label>Paciente ficticio
-            <select id="demoPatient">
-              <option value="">Seleccionar paciente sintético…</option>
-              <option value="DEMO-PSO-001">Paciente sintético A</option>
-              <option value="DEMO-PSO-002">Paciente sintético B</option>
+        <div class="context-head"><h2>Datos del paciente</h2><span id="fieldCoverage">174 campos de origen Valme mapeados</span></div>
+        <div class="patient-identity-search">
+          <label for="patientCip">CIP de demostración</label>
+          <div class="identity-cip-row">
+            <input id="patientCip" type="search" placeholder="Buscar o introducir CIP (DEMO-...)" autocomplete="off" spellcheck="false">
+            <button id="lookupCip" type="button" class="action-btn action-primary">Buscar CIP</button>
+          </div>
+          <p id="cipStatus" class="help" role="status">Busca DEMO-PSO-001 o DEMO-PSO-002, o introduce un CIP ficticio que empiece por DEMO-.</p>
+        </div>
+        <div class="context-grid patient-identity-fields">
+          <label>Nombre y apellidos
+            <input id="patientName" type="text" maxlength="100" placeholder="Solo datos ficticios" disabled autocomplete="off">
+          </label>
+          <label>Sexo
+            <select id="patientSex" disabled>
+              <option value="">Sin consignar</option>
+              <option value="Hombre">Hombre</option>
+              <option value="Mujer">Mujer</option>
+              <option value="Otro">Otro</option>
             </select>
           </label>
           <label>Patología de esta visita
@@ -103,33 +115,18 @@
             </select>
           </label>
         </div>
-        <p class="help">La patología se selecciona dentro de la visita. La búsqueda solo selecciona al paciente; no decide su diagnóstico ni su tipo de acto.</p>
+        <p class="help">Esta demo no consulta el hospital. Los nuevos CIP deben ser sintéticos y comienzan por DEMO-. Nombre y sexo no se rellenan automáticamente. La patología requiere selección expresa.</p>
       </div>
       <section id="emptyState" class="empty card">
         <span class="empty-symbol">◇</span>
-        <h2>Selecciona un paciente ficticio y la patología</h2>
-        <p>El formulario permanece vacío hasta la elección explícita de Psoriasis. Ningún dato previo se presupone.</p>
+        <h2>Busca o introduce un CIP de demostración y selecciona Psoriasis</h2>
+        <p>Un CIP nuevo crea únicamente un borrador temporal. No hay consulta hospitalaria ni historia clínica real.</p>
       </section>
       <form id="visitForm" class="hidden" novalidate aria-label="Borrador Psoriasis" onsubmit="return false">
         <div class="summary card">
           <div><strong>Formulario de Psoriasis</strong><p>Secciones plegables de Valme adaptadas a controles de selección rápida.</p></div>
           <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
         </div>
-        <section id="firstVisitGuide" class="first-visit-guide hidden" aria-labelledby="firstVisitGuideTitle">
-          <div class="first-visit-guide__top">
-            <div>
-              <p class="eyebrow">PRIMERA VISITA · MAPA DE CAPTURA</p>
-              <h2 id="firstVisitGuideTitle">¿Qué necesitas registrar?</h2>
-              <p class="help">Puedes empezar por cualquier apartado. Este índice solo cuenta respuestas del borrador, no su validez clínica.</p>
-            </div>
-            <div class="first-visit-guide__meta">
-              <span id="firstVisitProgress" aria-live="polite">0 apartados con respuestas</span>
-              <button id="firstVisitNextPending" type="button" class="first-visit-guide__next">Ir al primer apartado sin datos</button>
-            </div>
-          </div>
-          <nav id="firstVisitSectionNav" class="first-visit-section-nav" aria-label="Índice de apartados de Primera Visita"></nav>
-          <p class="first-visit-guide__safety">«Con datos» no significa revisado ni completo. Los apartados sin datos pueden ser opcionales; no se presuponen respuestas negativas.</p>
-        </section>
         <div id="clinicalSections" class="sections"></div>
         <footer class="form-footer">No hay botón Guardar. Estos datos solo existen en memoria hasta cerrar o recargar la página. No se realizan solicitudes a Farmacia.</footer>
       </form>

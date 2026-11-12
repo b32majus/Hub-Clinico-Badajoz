@@ -67,7 +67,7 @@ try{
    await page.locator('[data-chip="comorb_hta"]').click();
    await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='true','chip no marcado');
    await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
-   await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').selectOption('Secukinumab');
+   await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').fill('Secukinumab');
    await assert(await page.locator('[data-field="tx_primera_biologicos_posologia_1"]').inputValue()==='','dosis inferida');
   }],
   ['S5 Búsqueda sidebar y Seguimiento independiente', async()=>{
@@ -85,12 +85,12 @@ try{
    await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='true','borrador primera no restaurado');
   }],
   ['S6 Cambio paciente no infiere patología', async()=>{
-   await page.locator('#demoPatient').selectOption('DEMO-PSO-002');
+   await page.locator('#patientCip').fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
    await assert(await page.locator('#pathology').inputValue()==='','patología inferida al cambiar paciente');
    await assert(!await page.locator('#visitForm').isVisible(),'formulario heredado entre pacientes');
    await page.locator('#pathology').selectOption('pso');
    await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='false','datos heredados');
-   await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
+   await page.locator('#patientCip').fill('DEMO-PSO-001');await page.locator('#lookupCip').click();
    await assert(await page.locator('#pathology').inputValue()==='pso','no se restaura selección explícita previa');
    await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='true','se perdió borrador de paciente original');
   }],
@@ -112,7 +112,7 @@ try{
    await assert((await page.context().cookies()).length===0,'escribió cookies');
    await page.reload({waitUntil:'networkidle'});
    await assert(await page.locator('#homeView').isVisible(),'no abre Inicio tras reload');
-   await assert(await page.locator('#demoPatient').inputValue()==='','identidad rehidratada sin origen');
+   await assert(await page.locator('#patientCip').inputValue()==='','identidad rehidratada sin origen');
    await assert(await page.locator('#pathology').inputValue()==='','patología rehidratada sin origen');
    await assert(errors.length===0&&external.length===0,'error tras recarga');
    await page.setViewportSize({width:390,height:844});

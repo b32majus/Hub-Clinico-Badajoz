@@ -29,95 +29,138 @@ try{
  page.on('console',m=>{if(m.type()==='error')logs.push('console: '+m.text())});
  page.on('request',r=>{if(new URL(r.url()).origin!==origin)external.push(r.url())});
  const tests=[
-  ['F1-1 Paciente y PsO explícitos',async()=>{
+  ['F1-1 CIP de demo obligatorio y no hospitalario',async()=>{
     await page.goto(origin+'/dermatologia_prototipo.html',{waitUntil:'networkidle'});
     await page.getByRole('button',{name:'Primera Visita'}).click();
-    assert(!await page.locator('#visitForm').isVisible(),'formulario sin paciente/diagnóstico');
-    assert(!await page.locator('#firstVisitGuide').isVisible(),'guía sin patología');
-    await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
-    assert(!await page.locator('#visitForm').isVisible(),'formulario sin diagnóstico');
+    assert(!await page.locator('#visitForm').isVisible(),'formulario sin CIP');
+    await page.locator('#patientCip').fill('CIP-REAL-NO-VALIDO');
+    await page.locator('#lookupCip').click();
+    assert((await page.locator('#cipStatus').textContent()).includes('Formato de demo no válido'),'formato no restringido');
+    assert(!await page.locator('#visitForm').isVisible(),'acepta identificadores sin DEMO-');
+    await page.locator('#patientCip').fill('DEMO-F1-NUEVO');
+    await page.locator('#lookupCip').click();
+    assert((await page.locator('#cipStatus').textContent()).includes('CIP nuevo en esta demo'),'CIP nuevo demo no declarado');
+    assert(!await page.locator('#visitForm').isVisible(),'patología deducida al crear CIP');
+    await page.locator('#patientName').fill('Paciente sintético Nuevo');
+    await page.locator('#patientSex').selectOption('Otro');
     await page.locator('#pathology').selectOption('pso');
-    assert(await page.locator('#firstVisitGuide').isVisible(),'guía no se activó');
+    assert(await page.locator('#visitForm').isVisible(),'formulario no abrió tras PsO explícita');
   }],
-  ['F1-2 Índice de 11 apartados y navegación real',async()=>{
-    assert(await page.locator('[data-jump-section]').count()===11,'11 secciones no accesibles');
-    assert(await page.locator('.first-visit-section-nav__group').count()===4,'grupos editoriales incorrectos');
-    assert((await page.locator('#firstVisitProgress').textContent()).includes('0 de 11'),'progreso inicial no vacío');
-    await page.locator('#firstVisitNextPending').click();
-    assert(await page.locator('[data-section="01 Datos de consulta"]').getAttribute('open')!==null,'primer apartado no abrió');
-    assert(await page.locator('[data-section="01 Datos de consulta"] > summary').evaluate(el=>document.activeElement===el),'foco no se movió al apartado');
-    await page.locator('[data-jump-section="05 Exploración/PASI"]').click();
-    assert(await page.locator('[data-section="05 Exploración/PASI"]').getAttribute('open')!==null,'índice no abrió exploración');
-    assert(await page.locator('[data-jump-section="05 Exploración/PASI"]').getAttribute('aria-current')==='step','índice no indica destino');
-  }],
-  ['F1-3 Cero válido, ausencia distinta y solo cuenta de borrador',async()=>{
+  ['F1-2 Sin tarjeta/next; secciones clínicas siguen visibles',async()=>{
+    assert(await page.locator('#firstVisitGuide').count()===0,'sigue la tarjeta ¿Qué necesitas registrar?');
+    assert(await page.locator('[data-next-first-section]').count()===0,'quedan botones Siguiente apartado');
+    assert(await page.locator('.section').count()===11,'se perdieron secciones de primera visita');
+    assert(await page.locator('[data-field="fecha_visita"]').count()===1,'fecha de consulta ausente');
+    await page.locator('[data-section="05 Exploración/PASI"] > summary').click();
     await page.locator('[data-field="pga"]').selectOption('0');
-    assert((await page.locator('#firstVisitProgress').textContent()).includes('1 de 11'),'cero válido no cuenta como respuesta');
-    assert((await page.locator('[data-jump-section="05 Exploración/PASI"]').textContent()).includes('1 respuesta'),'apartado no refleja el 0 registrado');
-    const absent=await page.locator('[data-jump-section="04 Localizaciones"]').textContent();
-    assert(absent.includes('Sin consignar'),'ausencia de registro aparece como dato');
-    await page.locator('[data-jump-section="01 Datos de consulta"]').click();
-    await page.locator('[data-field="fecha_visita"]').fill('2026-11-12');
-    assert((await page.locator('#firstVisitProgress').textContent()).includes('2 de 11'),'fecha explícita no cuenta');
-    assert(!(await page.locator('#firstVisitGuide').textContent()).includes('validado clínicamente'),'se anuncia validación no realizada');
+    assert(await page.locator('[data-field="pga"]').inputValue()==='0','0 válido no preservado');
   }],
-  ['F1-4 Chips y revisión explícita, sin negativos inferidos',async()=>{
-    await page.locator('[data-chip="comorb_hta"]').click();
-    assert(await page.locator('[data-chip="comorb_obesidad"]').getAttribute('data-status')==='unknown','obesidad inferida');
-    assert((await page.locator('#firstVisitProgress').textContent()).includes('3 de 11'),'chip positivo no contó');
+  ['F1-3 Chips solo color, negativo no inferido',async()=>{
+    const hta=page.locator('[data-chip="comorb_hta"]');
+    const obes=page.locator('[data-chip="comorb_obesidad"]');
+    await hta.click();
+    assert(await hta.getAttribute('aria-pressed')==='true','no queda seleccionado');
+    assert(await obes.getAttribute('data-status')==='unknown','chip no seleccionado tratado como No');
+    assert(await hta.evaluate(el=>getComputedStyle(el,'::before').content)==='none','sigue mostrando check');
+    let declined=false;
+    page.once('dialog',async dialog=>{declined=true;await dialog.dismiss()});
+    await page.locator('[data-section="03 Comorbilidades"] [data-review]').click();
+    assert(declined&&await obes.getAttribute('data-status')==='unknown','negativo registrado sin consentimiento');
+  }],
+  ['F1-4 Tabaco y alcohol visibles solo tras marcar; valores explícitos',async()=>{
+    assert(await page.locator('[data-field="extra_tabaco_situacion"]').count()===0,'tabaco sin marca ya visible');
+    await page.locator('[data-chip="comorb_tabaquismo"]').click();
+    assert(await page.locator('[data-field="extra_tabaco_situacion"]').isVisible(),'no muestra detalles tabaco');
+    assert(await page.locator('[data-field="extra_tabaco_situacion"]').inputValue()==='','asume fumador actual');
+    await page.locator('[data-field="extra_tabaco_situacion"]').selectOption('Fumador actual');
+    await page.locator('[data-field="extra_tabaco_cigarrillos_dia"]').fill('8');
+    let declineStatus=false;
+    page.once('dialog',async dialog=>{declineStatus=true;await dialog.dismiss()});
+    await page.locator('[data-field="extra_tabaco_situacion"]').selectOption('Exfumador');
+    assert(declineStatus&&await page.locator('[data-field="extra_tabaco_situacion"]').inputValue()==='Fumador actual','cambio de situación sin confirmación');
+    let acceptStatus=false;
+    page.once('dialog',async dialog=>{acceptStatus=true;await dialog.accept()});
+    await page.locator('[data-field="extra_tabaco_situacion"]').selectOption('Exfumador');
+    assert(acceptStatus&&await page.locator('[data-field="extra_tabaco_cigarrillos_dia"]').count()===0,'cantidad anterior sigue visible');
+    assert(await page.locator('[data-field="extra_tabaco_anos_abandono"]').isVisible(),'exfumador sin periodo abandono');
+    await page.locator('[data-field="extra_tabaco_anos_abandono"]').fill('3');
+    await page.locator('[data-chip="comorb_alcohol"]').click();
+    assert(await page.locator('[data-field="extra_alcohol_situacion"]').inputValue()==='','asume consumo alcohol actual');
+    await page.locator('[data-field="extra_alcohol_situacion"]').selectOption('Consumo actual');
+    await page.locator('[data-field="extra_alcohol_bebidas_semana"]').fill('2');
     let canceled=false;
     page.once('dialog',async dialog=>{canceled=true;await dialog.dismiss()});
-    await page.locator('[data-section="03 Comorbilidades"] [data-review]').click();
-    assert(canceled&&await page.locator('[data-chip="comorb_obesidad"]').getAttribute('data-status')==='unknown','cancelación alteró negativos');
+    await page.locator('[data-chip="comorb_alcohol"]').click();
+    assert(canceled&&await page.locator('[data-field="extra_alcohol_situacion"]').count()===1,'cancelación borró consumo');
     let accepted=false;
     page.once('dialog',async dialog=>{accepted=true;await dialog.accept()});
-    await page.locator('[data-section="03 Comorbilidades"] [data-review]').click();
-    assert(accepted&&await page.locator('[data-chip="comorb_obesidad"]').getAttribute('data-status')==='absent','ausencia no registrada tras confirmar');
-    assert((await page.locator('[data-jump-section="03 Comorbilidades"]').textContent()).includes('Chips revisados'),'no refleja revisión explícita del grupo');
-    assert(await page.locator('[data-chip="loc_tronco"]').getAttribute('data-status')==='unknown','contaminó otras secciones');
+    await page.locator('[data-chip="comorb_alcohol"]').click();
+    assert(accepted&&await page.locator('[data-field="extra_alcohol_situacion"]').count()===0,'desmarcar no oculta los detalles');
   }],
-  ['F1-5 Siguiente apartado y tratamiento sin inferencia',async()=>{
-    await page.locator('[data-jump-section="02 Historia de PsO"]').click();
-    await page.locator('[data-section="02 Historia de PsO"] [data-next-first-section]').click();
-    assert(await page.locator('[data-section="03 Comorbilidades"] > summary').evaluate(el=>document.activeElement===el),'siguiente apartado no navega');
-    await page.locator('[data-jump-section="10 Tratamiento primera visita"]').click();
-    await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').selectOption('Secukinumab');
-    assert(await page.locator('[data-field="tx_primera_biologicos_posologia_1"]').inputValue()==='','posología inferida');
-    assert((await page.locator('[data-jump-section="10 Tratamiento primera visita"]').textContent()).includes('1 respuesta'),'línea explícita no aparece contada');
-    assert((await page.locator('#pasiStatus').textContent()).includes('Sin cálculo clínico'),'se ha generado PASI no homologado');
+  ['F1-5 DLQI: 10 textos, q7 condicional, sin resultado',async()=>{
+    await page.locator('[data-section="07 DLQI"] > summary').click();
+    assert(await page.locator('[data-question^="dlqi_q"]').count()===10,'no hay 10 enunciados');
+    assert((await page.locator('[data-question="dlqi_q9"]').textContent()).includes('dificultades sexuales'),'q9 incorrecta como Farmacia');
+    assert(await page.locator('[data-field="extra_dlqi_q7_detail"]').count()===0,'subpregunta visible sin No');
+    await page.locator('[data-field="extra_dlqi_q7_main"]').selectOption('No');
+    assert(await page.locator('[data-field="extra_dlqi_q7_detail"]').isVisible(),'no abre q7 condicional');
+    await page.locator('[data-field="extra_dlqi_q7_detail"]').selectOption('Un poco');
+    await page.locator('[data-field="dlqi_q3"]').selectOption('NR');
+    assert(await page.locator('[data-field="dlqi_q3"]').inputValue()==='NR','NR colapsa a 0');
+    assert((await page.locator('.dlqi-candidate .derived').textContent()).includes('Sin cálculo clínico'),'total calculado antes de homologación');
   }],
-  ['F1-6 Aislamiento pacientes y circuitos',async()=>{
-    const before=await page.locator('#firstVisitProgress').textContent();
-    await page.locator('#demoPatient').selectOption('DEMO-PSO-002');
-    assert(!await page.locator('#firstVisitGuide').isVisible(),'borrador visible sin elección en otro paciente');
+  ['F1-6 Tratamientos: familias y nombres, dosis/vía/pauta vacías',async()=>{
+    await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
+    for(const title of ['Tópicos','Sistémicos convencionales','Biológicos','Fototerapia']){
+      assert(await page.locator('.therapy-group h3').filter({hasText:title}).count()===1,'falta grupo '+title);
+    }
+    const name=page.locator('[data-field="tx_primera_biologicos_farmaco_1"]');
+    await name.fill('Secukinumab');
+    for(const key of ['extra_tx_primera_biologicos_dosis_1','extra_tx_primera_biologicos_via_1','tx_primera_biologicos_posologia_1']){
+      assert(await page.locator('[data-field="'+key+'"]').inputValue()==='',key+' inferido');
+    }
+    await page.locator('[data-field="extra_tx_primera_biologicos_dosis_1"]').fill('Dato demo explícito');
+    await page.locator('[data-field="extra_tx_primera_biologicos_via_1"]').fill('Dato demo explícito');
+    await page.locator('[data-field="tx_primera_biologicos_posologia_1"]').fill('Dato demo explícito');
+    await page.locator('[data-section="10 Tratamiento primera visita"] [data-more="biologicos"]').click();
+    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_2"]').count()===1,'no añade segunda línea');
+    assert((await page.locator('.warning-inline').first().textContent()).length>0,'falta advertencia');
+    if(process.env.DERMA_F1_DESKTOP_SCREENSHOT)await page.screenshot({path:process.env.DERMA_F1_DESKTOP_SCREENSHOT,fullPage:true});
+  }],
+  ['F1-7 Pacientes/circuitos independientes; CIP y perfil restaurados',async()=>{
+    await page.locator('#patientCip').fill('DEMO-PSO-001');
+    await page.locator('#lookupCip').click();
+    assert(await page.locator('#pathology').inputValue()==='','patología transferida desde paciente nuevo');
+    assert(await page.locator('#patientName').inputValue()==='Paciente sintético A','perfil demo existente incorrecto');
     await page.locator('#pathology').selectOption('pso');
-    assert((await page.locator('#firstVisitProgress').textContent()).includes('0 de 11'),'datos del paciente A copiados al B');
-    await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
-    assert(await page.locator('#firstVisitProgress').textContent()===before,'borrador A no restauró conteos');
+    assert(await page.locator('[data-chip="comorb_tabaquismo"]').getAttribute('aria-pressed')==='false','consumos de otro paciente');
+    await page.locator('#patientCip').fill('DEMO-F1-NUEVO');
+    await page.locator('#lookupCip').click();
+    assert(await page.locator('#patientName').inputValue()==='Paciente sintético Nuevo','no recuperó perfil borrador');
+    assert(await page.locator('#patientSex').inputValue()==='Otro','no recuperó sexo');
+    assert(await page.locator('#pathology').inputValue()==='pso','no recuperó PsO de ese mismo borrador');
     await page.getByRole('button',{name:'Seguimiento'}).click();
-    assert(!await page.locator('#firstVisitGuide').isVisible(),'índice Primera activo en seguimiento');
+    assert(!await page.locator('#visitForm').isVisible(),'Seguimiento hereda patología');
     await page.getByRole('button',{name:'Primera Visita'}).click();
-    assert((await page.locator('#firstVisitProgress').textContent())===before,'borrador Primera perdido tras Seguimiento');
-    if(process.env.DERMA_FIRST_VISIT_DESKTOP)await page.screenshot({path:process.env.DERMA_FIRST_VISIT_DESKTOP,fullPage:true});
+    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()==='Secukinumab','perdió el borrador propio');
   }],
-  ['F1-7 Móvil y ausencia de errores',async()=>{
+  ['F1-8 Recarga/móvil/sin almacenamiento ni red externa',async()=>{
     await page.setViewportSize({width:390,height:844});
-    const width=await page.evaluate(()=>({window:innerWidth,scroll:document.documentElement.scrollWidth}));
-    assert(width.scroll<=width.window+1,'scroll horizontal '+JSON.stringify(width));
-    assert(await page.locator('#firstVisitSectionNav').isVisible(),'índice no accesible en móvil');
-    assert(logs.length===0&&external.length===0,'consola/red '+JSON.stringify({logs,external}));
+    const dimensions=await page.evaluate(()=>({window:innerWidth,scroll:document.documentElement.scrollWidth}));
+    assert(dimensions.scroll<=dimensions.window+1,'desbordamiento móvil '+JSON.stringify(dimensions));
+    if(process.env.DERMA_F1_MOBILE_SCREENSHOT)await page.screenshot({path:process.env.DERMA_F1_MOBILE_SCREENSHOT,fullPage:true});
+    assert(logs.length===0&&external.length===0,'errores/red ajena '+JSON.stringify({logs,external}));
+    const st=await page.evaluate(()=>({ls:localStorage.length,ss:sessionStorage.length}));
+    assert(!st.ls&&!st.ss&&(await page.context().cookies()).length===0,'storage o cookies no autorizadas');
     if(process.env.DERMA_FIRST_VISIT_MOBILE)await page.screenshot({path:process.env.DERMA_FIRST_VISIT_MOBILE,fullPage:true});
-  }],
-  ['F1-8 Recarga y falta de persistencia',async()=>{
-    const st=await page.evaluate(()=>({local:localStorage.length,session:sessionStorage.length}));
-    assert(st.local===0&&st.session===0&&(await page.context().cookies()).length===0,'escritura no autorizada');
     await page.reload({waitUntil:'networkidle'});
-    assert(await page.locator('#homeView').isVisible(),'Inicio tras reload');
     await page.getByRole('button',{name:'Primera Visita'}).click();
-    await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
-    await page.locator('#pathology').selectOption('pso');
-    assert((await page.locator('#firstVisitProgress').textContent()).includes('0 de 11'),'guardado tácito en reload');
-    assert(logs.length===0&&external.length===0,'errores tras reload');
+    assert(await page.locator('#patientCip').inputValue()==='','CIP restaurado sin fuente');
+    assert(await page.locator('#pathology').inputValue()==='','patología restaurada sin fuente');
+    await page.locator('#patientCip').fill('DEMO-F1-NUEVO');
+    await page.locator('#lookupCip').click();
+    assert(await page.locator('#patientName').inputValue()==='','perfil nuevo sobrevivió a recarga');
+    assert(logs.length===0&&external.length===0,'errores después de recarga');
   }],
  ];
  for(const [label,fn] of tests){

@@ -52,7 +52,7 @@ textarea{min-height:72px;resize:vertical}
 .chips{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 3px}
 .chip{background:#f4f8f8;border:1px solid #d6e2e4;border-radius:12px;padding:10px 13px;color:#4b656d;font-size:12px;font-weight:650;min-height:40px;text-align:left;transition:.1s}
 .chip[aria-pressed=true]{background:#e0f4ed;border-color:#54a98c;color:#176d57;box-shadow:inset 0 0 0 1px #86c7b0}
-.chip[aria-pressed=true]::before{content:"✓ ";font-weight:900}
+
 .chip[data-status=absent]{text-decoration:line-through;color:#8a999e;opacity:.7}
 .review-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
 .review-button{border:1px dashed #acc6c8;background:#f8fbfa;border-radius:9px;padding:8px 11px;color:#476b6f;font-size:12px;font-weight:650}
@@ -175,29 +175,31 @@ body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,san
   .nav-link small{display:none}
 }
 
-/* F1 Psoriasis: índice de captura del borrador, sin semántica de validación clínica. */
-.first-visit-guide{padding:21px 22px;background:linear-gradient(140deg,#fff 0%,#f7fbfa 100%);border:1px solid #d6e7e2;border-radius:16px;box-shadow:0 8px 24px rgba(20,80,75,.045);margin-bottom:19px}
-.first-visit-guide__top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:15px}
-.first-visit-guide__top h2{font-size:20px;color:#17335b;margin:5px 0 4px}
-.first-visit-guide__top .help{margin-top:2px;max-width:57ch}
-.first-visit-guide__meta{min-width:210px;max-width:240px;display:grid;gap:9px}
-#firstVisitProgress{display:block;font-size:12px;font-weight:700;color:#24756b;text-align:right}
-.first-visit-guide__next{min-height:39px;background:#e7f5f0;color:#147867;border:1px solid #bbdcd2;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:750}
-.first-visit-guide__next:hover:not(:disabled){background:#d2ede4}
-.first-visit-guide__next:disabled{opacity:.52;cursor:default}
-.first-visit-section-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-.first-visit-section-nav__group{min-width:0;border-radius:13px;border:1px solid #e0e9ea;background:#fff;padding:12px}
-.first-visit-section-nav__group h3{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:#71918b;margin:0 0 8px 5px;font-weight:750}
-.first-visit-section-nav__items{display:grid;gap:5px}
-.first-visit-section-link{display:flex;justify-content:space-between;align-items:center;gap:9px;min-width:0;width:100%;border-radius:9px;border:1px solid transparent;background:#f6f9fa;color:#3c5b64;padding:8px 10px;text-align:left;min-height:38px}
-.first-visit-section-link:hover{border-color:#b8dcd2;background:#eff9f5}
-.first-visit-section-link[aria-current=step]{border-color:#74bca9;background:#e9f6f1;box-shadow:inset 3px 0 0 #008777}
-.first-visit-section-link__name{min-width:0;font-size:11px;font-weight:680}
-.first-visit-section-link__state{font-size:10px;color:#869ba0;white-space:nowrap}
-.first-visit-section-link__state[data-consigned=true]{color:#23806d;font-weight:730}
-.first-visit-guide__safety{margin:13px 2px 0;font-size:11px;line-height:1.55;color:#7b8e94}
-.first-visit-section-next{display:flex;justify-content:flex-end;border-top:1px solid #edf1f2;padding-top:14px;margin-top:20px}
-.first-visit-section-next button{color:#157666;background:#edf8f4;border:1px solid #c9e5db;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:740}
-.first-visit-section-next button:hover{background:#d9f1e7}
-@media(max-width:1110px){.first-visit-section-nav{grid-template-columns:1fr}.first-visit-guide__top{display:block}.first-visit-guide__meta{max-width:none;display:flex;align-items:center;flex-wrap:wrap;margin-top:14px}.first-visit-guide__meta #firstVisitProgress{text-align:left}}
-@media(max-width:610px){.first-visit-guide{padding:15px}.first-visit-section-link{flex-wrap:wrap;gap:5px}.first-visit-section-link__state{white-space:normal}.first-visit-guide__next{width:100%}.first-visit-guide__meta{display:grid}.first-visit-guide__top h2{font-size:17px}}
+
+/* Primera Visita F1: identificación CIP sintético, coherente con la estructura de Reuma. */
+.patient-identity-search{margin:0 0 18px}
+.patient-identity-search>label{margin-bottom:8px}
+.identity-cip-row{display:flex;gap:10px;align-items:stretch}
+.identity-cip-row input{min-width:0;flex:1}
+.identity-cip-row .action-btn{min-width:128px}
+.patient-identity-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+#cipStatus{margin:8px 0 0}
+.chip[aria-pressed=true]{background:#d9f4e9;border-color:#269374;color:#12644c;box-shadow:inset 0 0 0 1px #62b69e}
+@media(max-width:760px){.patient-identity-fields{grid-template-columns:1fr}}
+@media(max-width:560px){.identity-cip-row{display:grid;grid-template-columns:1fr}.identity-cip-row .action-btn{width:100%}}
+/* Anamnesis condicional: no asumir consumo actual ni ausencia por un chip apagado. */
+.habit-detail-group{display:grid;gap:12px;margin:14px 0}
+.habit-detail{display:grid;gap:11px;background:#f7fbfa;border:1px solid #c9e3dd;border-radius:12px;padding:16px}
+.habit-detail h4{font-size:13px;color:#175e55;margin:0}
+.habit-detail .help{margin:0}
+.habit-detail label{max-width:320px}
+.dlqi-candidate__list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.dlqi-candidate__item{border:1px solid #e2eaf0;border-radius:12px;background:#fafcfe;padding:14px;display:grid;gap:11px}
+.dlqi-candidate__question{font-size:13px;font-weight:650;line-height:1.5;color:#254454}
+.dlqi-candidate__item label{font-size:12px}
+@media(max-width:860px){.dlqi-candidate__list{grid-template-columns:1fr}}
+.therapy-line{display:grid;grid-template-columns:1.2fr repeat(3,minmax(0,1fr));gap:10px;border-bottom:1px solid #e4eaed;padding:10px 0;margin-bottom:9px}
+.therapy-line label{font-size:11px}
+.therapy-line label input{margin-top:3px}
+@media(max-width:1150px){.therapy-line{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.therapy-line{grid-template-columns:1fr}}
