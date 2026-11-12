@@ -284,6 +284,8 @@ async function satisfyArForm(page, kind) {
     await page.locator('.ana-btn[data-value="positivo"]').first().click();
 
     await page.locator('#pcrValue').first().fill('30');
+    // #668: la unidad PCR ya no viene preseleccionada; sin ella no se calcula DAS28-CRP.
+    await page.locator('#pcrUnit').first().selectOption('mg/L');
     await page.locator('#vsgValue').first().fill('20');
     await page.locator('#evaGlobal').first().fill('3');
     await page.locator('#evaMedico').first().fill('2');
