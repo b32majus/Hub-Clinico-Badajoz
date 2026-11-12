@@ -384,16 +384,21 @@ function initDbStatusIndicator() {
 }
 
 
+function escapeQuickViewHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 function renderQuickViewMetric(label, value) {
-    return '<div class="quick-view-metric-card"><div class="quick-view-metric-card__label">' + label + '</div><div class="quick-view-metric-card__value">' + value + '</div></div>';
+    return '<div class="quick-view-metric-card"><div class="quick-view-metric-card__label">' + escapeQuickViewHtml(label) + '</div><div class="quick-view-metric-card__value">' + escapeQuickViewHtml(value) + '</div></div>';
 }
 
 function renderQuickViewEmptyState(id) {
-    return '<div class="quick-view-empty-card"><i class="fas fa-search quick-view-empty-card__icon" aria-hidden="true"></i><p class="quick-view-empty-card__text">No se encontraron resultados para el ID proporcionado (' + id + ').</p><p class="quick-view-empty-card__subtext">¿Desea crear una nueva historia clínica para este paciente?</p><a href="primera_visita.html?id=' + id + '" class="action-btn primary-btn quick-view-link-btn"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Nueva Historia Clínica</a></div>';
+    return '<div class="quick-view-empty-card"><i class="fas fa-search quick-view-empty-card__icon" aria-hidden="true"></i><p class="quick-view-empty-card__text">No se encontraron resultados para el ID proporcionado (' + escapeQuickViewHtml(id) + ').</p><p class="quick-view-empty-card__subtext">¿Desea crear una nueva historia clínica para este paciente?</p><a href="primera_visita.html?id=' + encodeURIComponent(id) + '" class="action-btn primary-btn quick-view-link-btn"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Nueva Historia Clínica</a></div>';
 }
 
 function renderQuickViewNewPatient(id) {
-    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content">                    <div class="quick-view-patient-chip__label">CIP</div><div class="quick-view-patient-chip__value">' + id + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html?id=' + id + '" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
+    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content">                    <div class="quick-view-patient-chip__label">CIP</div><div class="quick-view-patient-chip__value">' + escapeQuickViewHtml(id) + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html?id=' + encodeURIComponent(id) + '" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
 }
 
 function createQuickViewOverlay() {
@@ -617,11 +622,11 @@ function renderQuickViewLayout(viewModel) {
             <div class="patient-summary-card quick-view-summary-card">
                 <div class="quick-view-summary-card__body">
                     <div class="quick-view-eyebrow">Paciente</div>
-                    <div class="quick-view-patient-name">${viewModel.patientName}</div>
+                    <div class="quick-view-patient-name">${escapeQuickViewHtml(viewModel.patientName)}</div>
                     <div class="quick-view-meta">
-                        <span><strong>CIP:</strong> ${viewModel.id}</span>
-                        <span><strong>Diagnóstico:</strong> ${viewModel.pathologyLabel}</span>
-                        <span><strong>Última visita:</strong> ${viewModel.lastVisit}</span>
+                        <span><strong>CIP:</strong> ${escapeQuickViewHtml(viewModel.id)}</span>
+                        <span><strong>Diagnóstico:</strong> ${escapeQuickViewHtml(viewModel.pathologyLabel)}</span>
+                        <span><strong>Última visita:</strong> ${escapeQuickViewHtml(viewModel.lastVisit)}</span>
                     </div>
                 </div>
                 <button id="btnVerDashboardCompleto" class="action-btn purple-btn quick-view-dashboard-btn">
@@ -634,13 +639,13 @@ function renderQuickViewLayout(viewModel) {
                 <div class="patient-info-card quick-view-panel-card">
                     <h3 class="quick-view-panel-card__title">Resumen Clínico</h3>
                     <div class="quick-view-clinical-list">
-                        <div><strong>Tratamiento activo:</strong> ${viewModel.treatment}</div>
-                        <div><strong>Inicio tratamiento:</strong> ${viewModel.treatmentStart}</div>
-                        <div><strong>Evaluación global:</strong> ${formatDisplayValue(viewModel.evaGlobal)}</div>
-                        <div><strong>${viewModel.pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(viewModel.pathologyCode === 'ar' ? viewModel.das28Crp : viewModel.basdai)}</div>
-                        <div><strong>Estado prebiológico:</strong> ${formatDisplayValue(viewModel.prebiologicStatus)}</div>
-                        <div><strong>Validación prebiológica:</strong> ${formatDisplayValue(viewModel.prebiologicValidationDate)}</div>
-                        <div><strong>Listo para biológico:</strong> ${formatDisplayValue(viewModel.biologicReadiness)}</div>
+                        <div><strong>Tratamiento activo:</strong> ${escapeQuickViewHtml(viewModel.treatment)}</div>
+                        <div><strong>Inicio tratamiento:</strong> ${escapeQuickViewHtml(viewModel.treatmentStart)}</div>
+                        <div><strong>Evaluación global:</strong> ${escapeQuickViewHtml(formatDisplayValue(viewModel.evaGlobal))}</div>
+                        <div><strong>${viewModel.pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${escapeQuickViewHtml(formatDisplayValue(viewModel.pathologyCode === 'ar' ? viewModel.das28Crp : viewModel.basdai))}</div>
+                        <div><strong>Estado prebiológico:</strong> ${escapeQuickViewHtml(formatDisplayValue(viewModel.prebiologicStatus))}</div>
+                        <div><strong>Validación prebiológica:</strong> ${escapeQuickViewHtml(formatDisplayValue(viewModel.prebiologicValidationDate))}</div>
+                        <div><strong>Listo para biológico:</strong> ${escapeQuickViewHtml(formatDisplayValue(viewModel.biologicReadiness))}</div>
                     </div>
                 </div>
 
@@ -656,10 +661,10 @@ function renderQuickViewLayout(viewModel) {
                 <div class="patient-actions-card quick-view-panel-card">
                     <h3 class="quick-view-panel-card__title">Acciones rápidas</h3>
                     <div class="quick-view-actions">
-                        <a href="seguimiento.html?id=${viewModel.id}&patologia=${viewModel.pathologyCode}" class="action-btn green-btn quick-view-action-link">
+                        <a href="seguimiento.html?id=${encodeURIComponent(viewModel.id)}&patologia=${encodeURIComponent(viewModel.pathologyCode)}" class="action-btn green-btn quick-view-action-link">
                             <i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar Seguimiento
                         </a>
-                        <a href="primera_visita.html?id=${viewModel.id}" class="action-btn turquoise-btn quick-view-action-link">
+                        <a href="primera_visita.html?id=${encodeURIComponent(viewModel.id)}" class="action-btn turquoise-btn quick-view-action-link">
                             <i class="fas fa-file-alt" aria-hidden="true"></i> Revisar Primera Visita
                         </a>
                     </div>
