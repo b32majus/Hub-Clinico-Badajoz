@@ -162,7 +162,7 @@
      *
      * @param {string} cip - Identificador CIP del paciente.
      * @param {string} estado - Uno de: APTO | EN_CURSO | NO_APTO | NO_EVALUADO.
-     * @param {string} [fechaValidacion] - Fecha ISO de validación manual (si no se pasa, se usa ahora).
+     * @param {string} [fechaValidacion] - Fecha ISO de validación manual (si no se pasa, queda vacía; nunca se inventa).
      * @param {string} [notasClinico] - Notas adicionales del clínico.
      * @returns {boolean} - true si se guardó correctamente.
      */
@@ -180,7 +180,7 @@
         var record = {
             cip: cip.toString().trim(),
             estado: estado,
-            fechaValidacion: fechaValidacion || new Date().toISOString(),
+            fechaValidacion: fechaValidacion || '',
             notasClinico: notasClinico || '',
             fechaRegistro: new Date().toISOString()
         };

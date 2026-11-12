@@ -359,6 +359,14 @@ async function loadDatabase(file) {
             }
         }
 
+        var unreadableDates = countUnreadableVisitDates(dbData);
+        if (unreadableDates > 0) {
+            console.warn('Visitas con fecha ilegible: ' + unreadableDates);
+            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                HubTools.utils.mostrarNotificacion('Aviso: ' + unreadableDates + ' visitas con fecha ilegible en el Excel. Revise la columna Fecha_Visita.', 'warning');
+            }
+        }
+
         // 4. Procesa la hoja 'Frmacos' para crear un objeto anidado.
         // Estructura vacía por defecto (fallback si la hoja no existe o está vacía)
         dbData['Frmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
@@ -620,25 +628,48 @@ function getPatientHistory(patientId) {
  * @returns {Date} - Objeto Date
  */
 function parseVisitDate(dateStr) {
-    if (!dateStr) return new Date();
-    if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? new Date() : dateStr;
+    if (!dateStr) return new Date(NaN);
+    if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? new Date(NaN) : dateStr;
 
     var str = String(dateStr).trim();
 
-    // Intentar formato DD/MM/YYYY
+    // Intentar formato DD/MM/YYYY (exige 3 partes numéricas estrictas)
     if (str.includes('/')) {
-        var parts = str.split('/');
-        var parsed = new Date(parts[2], parts[1] - 1, parts[0]);
-        if (!isNaN(parsed.getTime())) return parsed;
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+            var parts = str.split('/');
+            var parsed = new Date(parts[2], parts[1] - 1, parts[0]);
+            if (!isNaN(parsed.getTime())) return parsed;
+        }
     }
 
     // Intentar formato YYYY-MM-DD u otros formatos nativos
     var fallback = new Date(str);
     if (!isNaN(fallback.getTime())) return fallback;
 
-    // Si nada funciona, retornar fecha actual con warning
-    console.warn('parseVisitDate: fecha no vlida "' + dateStr + '", usando fecha actual.');
-    return new Date();
+    // Si nada funciona, devolver fecha inválida (no inventar «hoy»)
+    console.warn('parseVisitDate: fecha no válida');
+    return new Date(NaN);
+}
+
+/**
+ * Cuenta las visitas de las hojas clínicas cuya fecha está vacía, ausente o
+ * ilegible (parseVisitDate devuelve una fecha inválida). Las fechas no se
+ * inventan: la fecha de hoy nunca sustituye a un dato que no consta.
+ * @param {Object} dbData - Base de datos cargada (hojas -> filas).
+ * @returns {number} Número de visitas con fecha ilegible.
+ */
+function countUnreadableVisitDates(dbData) {
+    var count = 0;
+    var clinicalSheets = ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN'];
+    clinicalSheets.forEach(function(sheet) {
+        var rows = dbData && Array.isArray(dbData[sheet]) ? dbData[sheet] : null;
+        if (!rows) return;
+        rows.forEach(function(row) {
+            var value = row ? (row.Fecha_Visita || row.fechaVisita) : null;
+            if (!value || isNaN(parseVisitDate(value).getTime())) count++;
+        });
+    });
+    return count;
 }
 
 function getPatientIdentityKey(record, fallbackPathology) {
@@ -1707,7 +1738,7 @@ function generateRealChartData(patients, filters = {}) {
     // =====================
     const treatmentCounts = {};
     patients.forEach(p => {
-        let tto = p.Tratamiento_Actual || 'Sin tratamiento';
+        let tto = p.Tratamiento_Actual || 'No consta';
         if (typeof tto === 'string' && tto.length > 25) tto = tto.substring(0, 22) + '...';
         treatmentCounts[tto] = (treatmentCounts[tto] || 0) + 1;
     });
@@ -1907,7 +1938,7 @@ function getRealPoblationalData(filters = {}) {
                     _nombre: canonicalVisit?.nombrePaciente || visit.Nombre_Paciente || '',
                     _sexo: canonicalVisit?.sexoPaciente || visit.Sexo || '',
                     _fecha: canonicalVisit?.fechaVisita || visit.Fecha_Visita || '',
-                    _tratamiento: canonicalVisit?.tratamientoActual || visit.Tratamiento_Actual || 'Sin tratamiento'
+                    _tratamiento: canonicalVisit?.tratamientoActual || visit.Tratamiento_Actual || ''
                 };
                 allVisits.push(normalizedVisit);
             });

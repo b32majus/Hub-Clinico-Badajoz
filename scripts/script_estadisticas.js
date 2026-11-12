@@ -145,7 +145,7 @@ function getCohortPatientView(patient) {
         nombre: normalized.nombrePaciente || patient._nombre || patient.Nombre || patient.Nombre_Paciente || '-',
         pathology,
         fecha: normalized.fechaVisita || patient._fecha || patient.Fecha_Visita || '',
-        tratamiento: normalized.tratamientoActual || patient._tratamiento || patient.Tratamiento_Actual || 'Sin tratamiento',
+        tratamiento: normalized.tratamientoActual || patient._tratamiento || patient.Tratamiento_Actual || 'No consta',
         metricValue: metric.value,
         metricLabel: metric.label
     };
