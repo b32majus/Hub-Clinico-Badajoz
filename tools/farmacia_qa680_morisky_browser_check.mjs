@@ -284,13 +284,22 @@ try {
         assert.deepEqual(bridge.line.adherence_answers_json, { mg1: 'si', mg2: 'no', mg3: 'si', mg4: 'si' }, 'respuestas exactas (4 incorrectas)');
     });
 
-    await paso('paso 6 etiqueta de pantalla == export en cada caso completo', async () => {
+    const EXCEL_MORISKY = {
+        'alta adherencia': 'Alta',
+        'adherencia media / parcial': 'Media',
+        'baja adherencia': 'Baja',
+        'pendiente de completar': 'No evaluada',
+    };
+    await paso('paso 6 etiqueta de pantalla == export (Excel normalizado, #903) en cada caso completo', async () => {
         assert.ok(caseRecords.length >= 5, `casos completos registrados: ${caseRecords.length}`);
         const mismatches = [];
         for (const record of caseRecords) {
-            for (const surface of ['modelo_moriskyResultFromAnswers', 'informe', 'excel_adherencia_morisky', 'bridge']) {
+            for (const surface of ['modelo_moriskyResultFromAnswers', 'informe', 'bridge']) {
                 if (record[surface] !== record.pantalla) mismatches.push(`${record.caso}: pantalla '${record.pantalla}' vs ${surface} '${record[surface]}'`);
             }
+            // #903 (decisión de Sil 08-11): el Excel lleva el valor normalizado de la plantilla.
+            const expectedExcel = EXCEL_MORISKY[record.pantalla];
+            if (record.excel_adherencia_morisky !== expectedExcel) mismatches.push(`${record.caso}: pantalla '${record.pantalla}' → Excel esperado '${expectedExcel}' vs '${record.excel_adherencia_morisky}'`);
         }
         assert.deepEqual(mismatches, [], mismatches.join(' ; '));
     });
@@ -301,8 +310,10 @@ try {
         assert.ok(match, 'lista «adherencia_morisky» no encontrada en scripts/build_excel_template.py');
         const accepted = match[1].split(',').map((piece) => piece.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
         const seguimiento = Array.from(screenLabelsSeen).sort();
-        const coincide = accepted.length === seguimiento.length && accepted.every((value) => seguimiento.indexOf(value) >= 0);
-        info('paso 8', `plantilla Excel acepta adherencia_morisky [${accepted.join(', ')}] | Seguimiento produce [${seguimiento.join(', ')}] | coinciden: ${coincide ? 'SÍ' : 'NO (sospecha confirmada: Alta/Media/Baja/No evaluada vs alta adherencia/...)'}`);
+        const excelValues = seguimiento.map((label) => EXCEL_MORISKY[label]);
+        const fuera = excelValues.filter((value) => accepted.indexOf(value) < 0);
+        assert.deepEqual(fuera, [], `valores de Excel fuera de la plantilla: ${fuera.join(', ')}`);
+        info('paso 8', `plantilla Excel acepta adherencia_morisky [${accepted.join(', ')}] | Seguimiento muestra [${seguimiento.join(', ')}] | el Excel escribe [${excelValues.join(', ')}] (normalizado, #903): todos en la plantilla`);
     } catch (error) {
         fail('paso 8', (error && error.message) ? error.message : String(error));
     }
