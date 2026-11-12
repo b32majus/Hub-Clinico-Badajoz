@@ -1,0 +1,57 @@
+# Actualiza cada mes (y a mano) la hoja CATALOGO_CIMA del catálogo farmacológico
+# publicado desde la API pública de CIMA (deuda CDC-001, buscador tramo 5).
+# Decisión de Sil 12-11-2026: sin filtro hospitalario (queda como columna
+# informativa), CATALOGO_LOCAL_ESPECIAL se copia intacta y el resultado se
+# commitea directamente en promueve/nexus-v4 (sin PR).
+name: Actualizar catálogo CIMA
+
+on:
+  schedule:
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cima-catalog
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout promueve/nexus-v4
+        uses: actions/checkout@v4
+        with:
+          ref: promueve/nexus-v4
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Regenerar CATALOGO_CIMA desde la AEMPS
+        run: node tools/update_cima_catalog.mjs
+
+      - name: Contrato de actualización CIMA
+        run: node tools/cima_catalog_update_check.mjs
+
+      - name: Catálogo de fármacos reuma
+        run: node tools/reuma_drug_catalog_check.mjs
+
+      - name: Categorías de fármacos reuma
+        run: node tools/reuma_drug_category_check.mjs
+
+      - name: Comprobación común farmacia
+        run: node tools/farmacia_common_check.mjs
+
+      - name: Commit y push del catálogo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx
+          if git diff --cached --quiet; then echo "Catálogo sin cambios"; exit 0; fi
+          git commit -m "chore(catalogo): actualizar CATALOGO_CIMA desde la AEMPS"
+          git push origin HEAD:promueve/nexus-v4
