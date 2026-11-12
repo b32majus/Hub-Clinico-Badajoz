@@ -76,7 +76,6 @@ const HTML_CONSUMERS = [
   'dashboard_paciente.html',
   'dashboard_search.html',
   'estadisticas.html',
-  'manage_drugs.html',
   'manage_professionals.html',
   'primera_visita.html',
   'reuma_index.html',

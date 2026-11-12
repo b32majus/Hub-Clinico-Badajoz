@@ -38,8 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- TRATAMIENTOS: eventos de dosis y añadir línea ---
     // Los campos de fármaco se buscan contra el catálogo farmacológico publicado
-    // mediante modules/drugAutocomplete.js (HubTools.catalog). Ya no se pueblan
-    // desde la hoja manual Frmacos de la base cargada.
+    // mediante modules/drugAutocomplete.js (HubTools.catalog).
     if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.inicializarEventosTratamientos === 'function') {
         HubTools.form.inicializarEventosTratamientos();
         console.log('✅ Eventos de tratamientos (activación/añadir) inicializados');

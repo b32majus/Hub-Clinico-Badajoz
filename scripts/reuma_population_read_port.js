@@ -2,7 +2,7 @@
  * Classic repo pattern (no import/export): IIFE publishing globalThis.ReumaPopulationReadPort.
  *
  * Ownership: this module owns ONLY the population/aggregate reads consumed by
- * Estadísticas (`HubTools.data.getPoblationalData`, `HubTools.data.getFarmsDataFromState`).
+ * Estadísticas (`HubTools.data.getPoblationalData`, `HubTools.data.getTreatmentFilterOptions`).
  * Patient/history reads stay in the adjacent `scripts/reuma_patient_read_port.js`, whose
  * frozen contract this module intentionally does not change. The seam never writes
  * appState/sessionStorage, never reinterprets clinical filters and never invents clinical
@@ -13,9 +13,8 @@
     'use strict';
 
     var PORT_VERSION = '1.0.0';
-    var REQUIRED_METHODS = ['getPoblationalData', 'getFarmsDataFromState'];
+    var REQUIRED_METHODS = ['getPoblationalData', 'getTreatmentFilterOptions'];
     var READINESS_KEY = 'hubClinicoDB';
-    var DRUG_CATEGORIES = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
 
     var databaseLoadedObserved = false;
     var registeredRootAdd = null;
@@ -81,12 +80,6 @@
         return Object.freeze({ status: 'unavailable' });
     }
 
-    function emptyDrugCategories() {
-        var categories = {};
-        for (var i = 0; i < DRUG_CATEGORIES.length; i += 1) categories[DRUG_CATEGORIES[i]] = [];
-        return categories;
-    }
-
     function makeImplementation(implementation) {
         var methods = {};
 
@@ -120,20 +113,21 @@
             });
         }
 
-        // Drug filter options come from the same synchronous source as today while this
-        // WO stays migration-neutral: same set/order, no clinical inference.
+        // Drug filter options: distinct treatments of the Estadísticas cohort
+        // (K6: the «Frmacos» sheet is gone). Same text the cohort filter matches
+        // against; no splitting of free text, no classification, no inference.
         function readDrugFilterOptions() {
             ensureReadinessListener();
-            var categories;
+            var options;
             try {
-                categories = implementation.getFarmsDataFromState();
+                options = implementation.getTreatmentFilterOptions();
             } catch (error) {
-                return { status: 'error', error_code: 'drug_options_read_failed', categories: emptyDrugCategories() };
+                return { status: 'error', error_code: 'drug_options_read_failed', options: [] };
             }
-            if (!categories || typeof categories !== 'object') {
-                return { status: 'error', error_code: 'drug_options_invalid', categories: emptyDrugCategories() };
+            if (!Array.isArray(options)) {
+                return { status: 'error', error_code: 'drug_options_invalid', options: [] };
             }
-            return { status: 'ok', categories: deepCopy(categories) };
+            return { status: 'ok', options: deepCopy(options) };
         }
 
         methods.readPopulation = readPopulation;
@@ -175,7 +169,6 @@
 
     root.ReumaPopulationReadPort = Object.freeze({
         PORT_VERSION: PORT_VERSION,
-        DRUG_CATEGORIES: Object.freeze(DRUG_CATEGORIES.slice()),
         create: create,
         getPort: getPort
     });

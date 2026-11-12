@@ -42,7 +42,7 @@ const PREREQUISITE_MESSAGE = 'Debe exportar TXT de esta visita antes de exportar
 const STORY8_MESSAGE = 'Los datos de la visita han cambiado desde el TXT. Vuelve a exportarlo y revisa que la historia cl\u00ednica refleje la versi\u00f3n actual antes de generar el CSV';
 
 const PAGE_INDEX = 'reuma_index.html';
-const NON_GATE_PAGES = ['dashboard_paciente.html', 'estadisticas.html', 'reuma_index.html', 'manage_drugs.html', 'manage_professionals.html'];
+const NON_GATE_PAGES = ['dashboard_paciente.html', 'estadisticas.html', 'reuma_index.html', 'manage_professionals.html'];
 const CONSUMERS = ['primera_visita.html', 'seguimiento.html', ...NON_GATE_PAGES];
 
 // Synthetic legacy sentinels (same shape as the frozen acceptance package).

@@ -13,7 +13,7 @@
  * `error` probe.
  *
  * Fixtures are synthetic only: `tools/fixtures/reuma_read/corpus_v1.json` (ids SYN-*)
- * plus synthetic `Frmacos`/`Profesionales` sheets materialized into a temporary XLSX
+ * plus synthetic `Profesionales` sheets materialized into a temporary XLSX
  * outside the repository.
  *
  * Cases:
@@ -68,16 +68,8 @@ const ESPA_FAME_A_PATIENTS = 1;
 const APRIL_ONWARD_PATIENTS = 1;
 // Synthetic drug catalogue; FAME sintetico A/B/C match the synthetic cohort treatments
 // so the therapeutic filter is exercised through a real supported interaction.
-const SYNTHETIC_DRUGS = {
-    Tratamientos_Sistemicos: ['Sintetico Sist A'],
-    FAMEs: ['FAME sintetico A', 'FAME sintetico B', 'FAME sintetico C'],
-    Biologicos: ['Sintetico Bio A'],
-};
-const SYNTHETIC_DRUGS_ORDER = [
-    ...SYNTHETIC_DRUGS.Tratamientos_Sistemicos,
-    ...SYNTHETIC_DRUGS.FAMEs,
-    ...SYNTHETIC_DRUGS.Biologicos,
-];
+// Fármacos del filtro = tratamientos distintos de la cohorte (sin hoja «Frmacos», K6).
+const EXPECTED_DRUG_OPTIONS = ['FAME sintetico A', 'FAME sintetico B', 'FAME sintetico C'];
 
 const results = [];
 function record(name, pass, detail) {
@@ -144,19 +136,6 @@ const workbookPath = path.join(tempDir, 'reuma_estadisticas_synthetic.xlsx');
     for (const [sheetName, rows] of Object.entries(corpus.sheets)) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
     }
-    const drugRowCount = Math.max(...Object.values(SYNTHETIC_DRUGS).map((list) => list.length));
-    const drugRows = [];
-    for (let i = 0; i < drugRowCount; i += 1) {
-        drugRows.push([
-            SYNTHETIC_DRUGS.Tratamientos_Sistemicos[i] || '',
-            SYNTHETIC_DRUGS.FAMEs[i] || '',
-            SYNTHETIC_DRUGS.Biologicos[i] || '',
-        ]);
-    }
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
-        ['Sistemicos', 'FAMEs', 'Biologicos'],
-        ...drugRows,
-    ]), 'Frmacos');
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         { Nombre_Completo: 'Sintetico Profesional Uno', Cargo: 'Reumatologia' },
     ]), 'Profesionales');
@@ -242,9 +221,9 @@ async function waitForTotal(page, expected) {
 const plantedErrorDouble = () => {
     const port = {
         readPopulation: async () => ({ status: 'error', error_code: 'planted_read_error' }),
-        readDrugFilterOptions: () => ({ status: 'error', error_code: 'planted_read_error', categories: { Tratamientos_Sistemicos: [], FAMEs: [], Biologicos: [] } }),
+        readDrugFilterOptions: () => ({ status: 'error', error_code: 'planted_read_error', options: [] }),
     };
-    const double = { getPort: () => port, create: () => port, PORT_VERSION: 'error-double', DRUG_CATEGORIES: ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'] };
+    const double = { getPort: () => port, create: () => port, PORT_VERSION: 'error-double' };
     Object.defineProperty(window, 'ReumaPopulationReadPort', {
         configurable: true,
         get: () => double,
@@ -294,7 +273,7 @@ try {
             const happyChecks = [
                 loaded.kpiTotal === String(TOTAL_PATIENTS),
                 loaded.tableRows === TOTAL_PATIENTS,
-                JSON.stringify(loaded.drugOptions) === JSON.stringify(['Todos', ...SYNTHETIC_DRUGS_ORDER]),
+                JSON.stringify(loaded.drugOptions) === JSON.stringify(['Todos', ...EXPECTED_DRUG_OPTIONS]),
                 loaded.activityChart,
                 loaded.nextDisabled,
                 estadisticasErrors(entry).length === 0,

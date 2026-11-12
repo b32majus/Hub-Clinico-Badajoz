@@ -2499,33 +2499,6 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT = FINAL_V2_EXPORT_COLUMN_COUNT;
     HubTools.export.validateExportRowLength = validateExportRowLength;
 
-    HubTools.export.copyDrugsListToClipboard = function(drugsData) {
-        const headers = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
-        const maxLength = Math.max(
-            drugsData.Sistemicos?.length || 0,
-            drugsData.FAMEs?.length || 0,
-            drugsData.Biologicos?.length || 0
-        );
-
-        let csvString = headers.join(',') + '\n';
-
-        for (let i = 0; i < maxLength; i++) {
-            const row = [
-                drugsData.Sistemicos?.[i] || '',
-                drugsData.FAMEs?.[i] || '',
-                drugsData.Biologicos?.[i] || ''
-            ];
-            csvString += row.join(',') + '\n';
-        }
-
-        navigator.clipboard.writeText(csvString).then(() => {
-            HubTools.utils.mostrarNotificacion('¡Copiado al portapapeles! Pega en Excel.', 'success');
-        }).catch(err => {
-            console.error('Error al copiar al portapapeles:', err);
-            HubTools.utils.mostrarNotificacion('Error al copiar la lista de fármacos.', 'error');
-        });
-    };
-
     HubTools.export.copyProfessionalsListToClipboard = function(professionalsData) {
         const headers = ['Nombre_Completo', 'Cargo'];
         let csvString = headers.join(',') + '\n';

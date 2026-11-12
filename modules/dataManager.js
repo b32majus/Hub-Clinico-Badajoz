@@ -367,37 +367,6 @@ async function loadDatabase(file) {
             }
         }
 
-        // 4. Procesa la hoja 'Frmacos' para crear un objeto anidado.
-        // Estructura vacía por defecto (fallback si la hoja no existe o está vacía)
-        dbData['Frmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
-
-        const farmacosSheetKey = Object.keys(workbook.Sheets).find(function(k) {
-            var normalizedKey = normalizeSheetKey(k);
-            return normalizedKey === 'farmacos' || normalizedKey === 'frmacos';
-        });
-
-        if (farmacosSheetKey && workbook.Sheets[farmacosSheetKey]) {
-            const farmacosSheet = workbook.Sheets[farmacosSheetKey];
-            const farmacosJSON = XLSX.utils.sheet_to_json(farmacosSheet, { header: 1 });
-
-            if (farmacosJSON.length > 1) {
-                for (let i = 1; i < farmacosJSON.length; i++) {
-                    const row = farmacosJSON[i];
-                    if (row[0]) { // Columna 0: Sistemicos
-                        dbData['Frmacos'].Sistemicos.push(row[0]);
-                    }
-                    if (row[1]) { // Columna 1: FAMEs
-                        dbData['Frmacos'].FAMEs.push(row[1]);
-                    }
-                    if (row[2]) { // Columna 2: Biologicos
-                        dbData['Frmacos'].Biologicos.push(row[2]);
-                    }
-                }
-            }
-        } else {
-            console.warn('Hoja de Frmacos no encontrada en el Excel. Se usará catálogo vacío.');
-        }
-
         // 5. Actualiza el estado global de la aplicación.
         appState.db = dbData;
         appState.isLoaded = true;
@@ -436,39 +405,6 @@ async function loadDatabase(file) {
 function getProfesionales() {
     if (!appState.isLoaded) return [];
     return appState.db?.Profesionales || [];
-}
-
-/**
- * Devuelve la lista de fármacos para un tipo específico.
- * @param {string} tipo - El tipo de fármaco (e.g., 'Tratamientos_Sistemicos', 'FAMEs', 'Biologicos').
- * @returns {Array} Array de strings con los nombres de los frmacos.
- */
-function getFarmacosPorTipo(tipo) {
-    console.log('DEBUG: getFarmacosPorTipo called with tipo:', tipo);
-    if (!appState.isLoaded) {
-        console.warn('Base de datos no cargada. No se pueden obtener fármacos.');
-        return [];
-    }
-
-    // Mapeo para mayor flexibilidad y compatibilidad
-    const tipoMapping = {
-        'Sistemicos': ['Sistemicos', 'Tratamientos_Sistemicos', 'sistemicos'],
-        'FAMEs': ['FAMEs', 'fames'],
-        'Biologicos': ['Biologicos', 'biologicos']
-    };
-
-    // Intentar encontrar el tipo solicitado en múltiples posibles claves
-    const possibleKeys = tipoMapping[tipo] || [tipo];
-
-    for (const key of possibleKeys) {
-        if (appState.db?.['Frmacos']?.[key] && Array.isArray(appState.db['Frmacos'][key])) {
-            console.log(`Encontrados ${appState.db['Frmacos'][key].length} fármacos del tipo "${tipo}" (clave: ${key})`);
-            console.log('DEBUG: Returning farmacos:', appState.db['Frmacos'][key]);
-            return appState.db['Frmacos'][key];
-        }
-    }
-    console.warn(`No se encontraron fármacos para el tipo: ${tipo} con las claves posibles: ${possibleKeys.join(', ')}`);
-    return [];
 }
 
 /**
@@ -1903,24 +1839,13 @@ function generateRealChartData(patients, filters = {}) {
 }
 
 /**
- * Obtiene datos poblacionales reales del Excel.
- * Para estadísticas poblacionales se usa una única fila por paciente:
- * siempre la última visita registrada, para reflejar el estado actual.
+ * Construye la lista de visitas normalizadas de las hojas indicadas
+ * (ayudante compartido por getRealPoblationalData y getTreatmentFilterOptions).
+ * @param {Array} sheetsToProcess - Nombres de hoja a recorrer.
+ * @returns {Array} Array de visitas normalizadas.
  */
-function getRealPoblationalData(filters = {}) {
-    if (!appState.isLoaded || !appState.db) {
-        console.warn('Base de datos no cargada para estadísticas poblacionales.');
-        return { filteredCohort: [], kpis: null, chartData: null };
-    }
-
-    const pathologyFilter = filters.pathology || 'Todos';
-    console.log('getRealPoblationalData - Filtro patología:', pathologyFilter);
-
+function buildNormalizedAllVisits(sheetsToProcess) {
     let allVisits = [];
-    const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
-        ? ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN']
-        : [pathologyFilter];
-
     sheetsToProcess.forEach(sheetName => {
         if (appState.db?.[sheetName]) {
             console.log(`Procesando hoja ${sheetName}: ${appState.db[sheetName].length} registros`);
@@ -1944,7 +1869,28 @@ function getRealPoblationalData(filters = {}) {
             });
         }
     });
+    return allVisits;
+}
 
+/**
+ * Obtiene datos poblacionales reales del Excel.
+ * Para estadísticas poblacionales se usa una única fila por paciente:
+ * siempre la última visita registrada, para reflejar el estado actual.
+ */
+function getRealPoblationalData(filters = {}) {
+    if (!appState.isLoaded || !appState.db) {
+        console.warn('Base de datos no cargada para estadísticas poblacionales.');
+        return { filteredCohort: [], kpis: null, chartData: null };
+    }
+
+    const pathologyFilter = filters.pathology || 'Todos';
+    console.log('getRealPoblationalData - Filtro patología:', pathologyFilter);
+
+    const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
+        ? ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN']
+        : [pathologyFilter];
+
+    const allVisits = buildNormalizedAllVisits(sheetsToProcess);
     const latestPatients = selectLatestVisitPerPatient(allVisits);
 
     console.log('Cohorte estadística consolidada:', {
@@ -2030,18 +1976,28 @@ function getPoblationalData(filters = {}) {
 
 
 
-function getFarmsDataFromState() {
-    if (!appState.isLoaded || !appState.db['Frmacos']) {
-        return { Tratamientos_Sistemicos: [], FAMEs: [], Biologicos: [] };
-    }
+/**
+ * Devuelve los tratamientos distintos de la cohorte de Estadísticas
+ * (última visita por paciente en todas las patologías). Usa exactamente el
+ * texto del registro (`_tratamiento`), sin partir texto libre, sin clasificar
+ * y sin inferir nada.
+ * @returns {Array} Array de strings ordenado con localeCompare('es').
+ */
+function getTreatmentFilterOptions() {
+    if (!appState.isLoaded) return [];
 
-    // La estructura de Frmacos ya es { Sistemicos: [...], FAMEs: [...], Biologicos: [...] }
-    // Solo necesitamos mapear los nombres correctamente
-    return {
-        Tratamientos_Sistemicos: appState.db['Frmacos'].Sistemicos || [],
-        FAMEs: appState.db['Frmacos'].FAMEs || [],
-        Biologicos: appState.db['Frmacos'].Biologicos || []
-    };
+    const allVisits = buildNormalizedAllVisits(['ESPA', 'APS', 'AR', 'LES', 'SJOGREN']);
+    const latestPatients = selectLatestVisitPerPatient(allVisits);
+
+    const seen = new Map();
+    latestPatients.forEach(record => {
+        const text = String(record._tratamiento || '').trim();
+        const key = text.toLowerCase();
+        if (!text || key === 'no' || key === 'no consta') return;
+        if (!seen.has(key)) seen.set(key, text);
+    });
+
+    return [...seen.values()].sort((x, y) => x.localeCompare(y, 'es'));
 }
 
 // =====================================
@@ -2061,8 +2017,6 @@ if (typeof HubTools !== 'undefined') {
 
     HubTools.data.getProfesionales = getProfesionales;
 
-    HubTools.data.getFarmacosPorTipo = getFarmacosPorTipo;
-
     HubTools.data.getAllPatients = getAllPatients;
 
     HubTools.data.findPatientById = findPatientById;
@@ -2078,14 +2032,7 @@ if (typeof HubTools !== 'undefined') {
 
     HubTools.data.getPoblationalData = getPoblationalData;
 
-    HubTools.data.getFarmsDataFromState = getFarmsDataFromState;
-
-    HubTools.data.loadDrugsData = function () {
-        if (!appState.isLoaded || !appState.db['Frmacos']) {
-            return { FAMEs: [], Biologicos: [], Sistemicos: [] };
-        }
-        return appState.db['Frmacos'];
-    };
+    HubTools.data.getTreatmentFilterOptions = getTreatmentFilterOptions;
 
     HubTools.data.loadProfessionalsData = function () {
         if (!appState.isLoaded || !appState.db.Profesionales) {

@@ -13,7 +13,7 @@
  * (select/fill/click/export) with `acceptDownloads`. No DOM/storage cheating.
  *
  * Fixtures are synthetic only: `tools/fixtures/reuma_read/corpus_v1.json`
- * (6 unique synthetic identities SYN-*) plus synthetic `Frmacos`/
+ * (6 unique synthetic identities SYN-*) plus synthetic
  * `Profesionales` sheets materialized into a temporary XLSX outside the repo.
  *
  * Cases (all through supported inputs/clicks on one journey tab):
@@ -84,11 +84,6 @@ const SEX_F_FIVE = ['SYN-APS-001', 'SYN-AR-001', 'SYN-ESPA-002', 'SYN-LES-001', 
 const ESPA_F_ONE = ['SYN-ESPA-002'];
 // Synthetic drug catalogue; FAME sintetico A/B/C match the synthetic cohort treatments
 // so the therapeutic filter is exercised through a real supported interaction.
-const SYNTHETIC_DRUGS = {
-    Tratamientos_Sistemicos: ['Sintetico Sist A'],
-    FAMEs: ['FAME sintetico A', 'FAME sintetico B', 'FAME sintetico C'],
-    Biologicos: ['Sintetico Bio A'],
-};
 
 const results = [];
 function record(name, pass, detail) {
@@ -162,19 +157,6 @@ const workbookPath = path.join(tempDir, 'reuma_estadisticas_csv_synthetic.xlsx')
     for (const [sheetName, rows] of Object.entries(corpus.sheets)) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
     }
-    const drugRowCount = Math.max(...Object.values(SYNTHETIC_DRUGS).map((list) => list.length));
-    const drugRows = [];
-    for (let i = 0; i < drugRowCount; i += 1) {
-        drugRows.push([
-            SYNTHETIC_DRUGS.Tratamientos_Sistemicos[i] || '',
-            SYNTHETIC_DRUGS.FAMEs[i] || '',
-            SYNTHETIC_DRUGS.Biologicos[i] || '',
-        ]);
-    }
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
-        ['Sistemicos', 'FAMEs', 'Biologicos'],
-        ...drugRows,
-    ]), 'Frmacos');
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         { Nombre_Completo: 'Sintetico Profesional Uno', Cargo: 'Reumatologia' },
     ]), 'Profesionales');

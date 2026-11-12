@@ -2046,66 +2046,6 @@ function prefillSeguimientoForm(visitData) {
     debugLog('? Formulario de seguimiento pre-llenado correctamente');
 }
 
-/**
- * Puebla un select con opciones desde la base de datos de fármacos
- * @param {string} selectId - ID del elemento select
- * @param {string} tipo - Tipo de fármaco ('Sistemicos', 'FAMEs', 'Biologicos')
- * @param {boolean} includeNo - Si incluir opción "No" al inicio (default: true)
- */
-function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
-    const selectElement = document.getElementById(selectId);
-    if (!selectElement) {
-        console.error(`❌ Select #${selectId} no encontrado`);
-        return;
-    }
-
-    // Verificar que HubTools está disponible
-    if (typeof HubTools === 'undefined' || !HubTools.data || !HubTools.data.getFarmacosPorTipo) {
-        console.error('❌ HubTools.data.getFarmacosPorTipo no disponible');
-        return;
-    }
-
-    // Limpiar opciones existentes
-    selectElement.innerHTML = '';
-
-    // Agregar opción "No" si se requiere
-    if (includeNo) {
-        const optionNo = document.createElement('option');
-        optionNo.value = 'No';
-        optionNo.textContent = 'No';
-        selectElement.appendChild(optionNo);
-    }
-
-    // Obtener fármacos de la base de datos
-    const farmacos = HubTools.data.getFarmacosPorTipo(tipo);
-
-    if (!farmacos || farmacos.length === 0) {
-        console.warn(`⚠ No se encontraron fármacos del tipo "${tipo}"`);
-
-        // Agregar opción indicativa
-        const optionEmpty = document.createElement('option');
-        optionEmpty.value = '';
-        optionEmpty.textContent = window.appState?.isLoaded
-            ? '-- No hay fármacos disponibles --'
-            : '-- Cargue la base de datos primero --';
-        optionEmpty.disabled = true;
-        selectElement.appendChild(optionEmpty);
-        return;
-    }
-
-    // Agregar cada fármaco como opción
-    farmacos.forEach(farmaco => {
-        if (farmaco && farmaco.trim() !== '') {
-            const option = document.createElement('option');
-            option.value = farmaco;
-            option.textContent = farmaco;
-            selectElement.appendChild(option);
-        }
-    });
-
-    debugLog(`✓ Select #${selectId} poblado con ${farmacos.length} opciones de tipo "${tipo}"`);
-}
-
 function recopilarDatosFormularioSeguimiento() {
     const getValue = (id) => document.getElementById(id)?.value || '';
     const isChecked = (id) => !!document.getElementById(id)?.checked;
@@ -3283,7 +3223,6 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.recopilarDatosFormulario = recopilarDatosFormulario;
     HubTools.form.recopilarDatosFormularioSeguimiento = recopilarDatosFormularioSeguimiento;
     HubTools.form.prefillSeguimientoForm = prefillSeguimientoForm;
-    HubTools.form.populateSelectFromDatabase = populateSelectFromDatabase;
     HubTools.form.initScoreWiring = initScoreWiring;
 
     debugLog('✅ Módulo formController cargado');

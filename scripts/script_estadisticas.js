@@ -503,19 +503,14 @@ function poblarFiltroFarmacos() {
         const port = getEstadisticasPopulationPort();
         if (!port) return;
         const read = port.readDrugFilterOptions();
-        const farmacosData = (read && read.categories) || {};
+        const tratamientos = (read && Array.isArray(read.options)) ? read.options : [];
 
-        const categories = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
-        categories.forEach(category => {
-            if (farmacosData[category]) {
-                farmacosData[category].forEach(farmaco => {
-                    if (farmaco) {
-                        const opt = document.createElement('option');
-                        opt.value = farmaco;
-                        opt.textContent = farmaco;
-                        select.appendChild(opt);
-                    }
-                });
+        tratamientos.forEach(farmaco => {
+            if (farmaco) {
+                const opt = document.createElement('option');
+                opt.value = farmaco;
+                opt.textContent = farmaco;
+                select.appendChild(opt);
             }
         });
     } catch (e) {
@@ -684,7 +679,7 @@ function clearAllFilters() {
 // === ACTUALIZAR DASHBOARD ===
 // The population reads travel through the read-only Reuma population seam
 // (`scripts/reuma_population_read_port.js`); Estadísticas no longer calls the
-// population reads (`getPoblationalData`/`getFarmsDataFromState`) directly.
+// population reads (`getPoblationalData`/`getTreatmentFilterOptions`) directly.
 function getEstadisticasPopulationPort() {
     return (typeof window !== 'undefined' && typeof window.ReumaPopulationReadPort?.getPort === 'function')
         ? window.ReumaPopulationReadPort.getPort()

@@ -145,7 +145,6 @@ export async function runReumaReadHarness(options) {
     findPatientById: {},
     getPatientHistory: {},
     loadProfessionalsData: sandbox.HubTools.data.loadProfessionalsData(),
-    loadDrugsData: sandbox.HubTools.data.loadDrugsData(),
     unknownPatientLookup: sandbox.HubTools.data.findPatientById('SYN-UNKNOWN-999'),
   };
   const patientIds = options.patientIds || [];
