@@ -11,8 +11,6 @@
  * READ observable state (selected <select> value, option count, DOM structure).
  *
  * Scenarios on BOTH pages:
- *   S0  every medication field declares its category explicitly and the added
- *       treatment line inherits the same category;
  *   S1  partial search + selection scoped to the field's category writes only
  *       the medicine name to the value holder and leaves the therapeutic dose
  *       field empty (no side write);
@@ -21,13 +19,13 @@
  *       touching the primary line;
  *   S4  re-initialisation does not duplicate wrappers, inputs or options;
  *   S5  explicit clear is a supported action (sets the neutral value);
- *   S6  category isolation: a medicine from another category is not offered
- *       (no options), while a category-valid medicine is offered;
- *   S7  with the catalogue unavailable the field is disabled, comprehensible
- *       and offers no invented options;
- *   S8  with the classification source unavailable the fields fail visibly
- *       with no invented options and no unrestricted fallback;
- *   S9  an empty category fails visibly while other categories keep working;
+ *   S6  sin categorías (Sil, 12-11): cualquier fármaco se ofrece en cualquier
+ *       campo de fármaco;
+ *   S7  con el catálogo publicado y la AEMPS sin respuesta, aviso visible y
+ *       ninguna opción inventada;
+ *   (La AEMPS se simula sin respuesta válida: este check cubre el respaldo
+ *   del catálogo publicado; el directo lo cubre
+ *   reuma_cima_live_search_browser_check.)
  *   S10 console.error === 0 and pageerror === 0.
  *   S11 a field restored with an already-authoritative selection hydrates its
  *       visible input at initialization, without an incidental blur;
@@ -138,6 +136,12 @@ const badCatalogPath = path.join(tempDir, 'bad_catalog_synthetic.xlsx');
 
 async function passSupportedGate(browser) {
     const context = await browser.newContext();
+    // La AEMPS (CIMA en directo) se simula sin respuesta válida: todos los
+    // escenarios de este check ejercitan el respaldo del catálogo publicado.
+    // El buscador en directo lo cubre reuma_cima_live_search_browser_check.
+    await context.route('https://cima.aemps.es/**', (route) => {
+        route.fulfill({ status: 200, contentType: 'application/json', body: 'sin-json' }).catch(() => {});
+    });
     const page = await context.newPage();
     await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
@@ -210,7 +214,8 @@ async function awaitCatalogReady(page, selectId) {
         const select = document.getElementById(id);
         const wrapper = select ? select.closest('.drug-autocomplete') : null;
         const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
-        return !!(input && !input.disabled);
+        const loaded = !!(window.HubTools && HubTools.catalog && HubTools.catalog.isLoaded && HubTools.catalog.isLoaded());
+        return !!(input && !input.disabled && loaded);
     }, selectId, { timeout: 30000 });
 }
 
@@ -229,8 +234,14 @@ async function selectDrug(page, selectId, query, expectSubstring) {
     await input.fill(query);
     const items = page.locator(autocompleteInputSelector(selectId) + ' ~ .drug-autocomplete__list .drug-autocomplete__item');
     await items.first().waitFor({ state: 'visible', timeout: 10000 });
-    const firstText = (await items.first().textContent()).trim();
-    await items.first().click();
+    // Sin categorías, una marca puede casar antes por principio activo
+    // (p. ej. URBASON para «metilprednisolona»): se elige el primer resultado
+    // que contiene el texto esperado, como haría el profesional.
+    const texts = (await items.allTextContents()).map((t) => t.trim());
+    let pick = expectSubstring ? texts.findIndex((t) => t.toUpperCase().includes(expectSubstring)) : 0;
+    if (pick < 0) pick = 0;
+    const firstText = texts[pick];
+    await items.nth(pick).click();
     await page.waitForTimeout(120);
     const value = (await readSelect(page, selectId)).value;
     const ok = value === firstText && (!expectSubstring || value.toUpperCase().includes(expectSubstring));
@@ -269,14 +280,6 @@ async function runSuite(browser, label, pagePath, cfg) {
         record(`${label}: los campos no farmacológicos no se convierten`,
             nonDrug.every((item) => item.wrapped === false), JSON.stringify(nonDrug));
 
-        // S0 — every medication field declares its functional category.
-        const categories = await page.evaluate((ids) => ids.map((id) => {
-            const select = document.getElementById(id);
-            return { id, category: select ? (select.dataset.drugCategory || '') : null };
-        }), cfg.allSelectIds);
-        const categoriesOk = categories.every((item) => item.category && item.category === cfg.expectedCategories[item.id]);
-        record(`${label}: cada campo declara explícitamente su categoría`, categoriesOk, JSON.stringify(categories));
-
         const inputSel = autocompleteInputSelector(cfg.selectId);
         const visible = await openAncestorCollapsibles(page, inputSel);
         record(`${label}: el campo de fármaco (autocomplete) es visible por interacción soportada`, visible, 'no hit-testable');
@@ -312,13 +315,6 @@ async function runSuite(browser, label, pagePath, cfg) {
         // S3 — additional treatment line through the supported "+" button.
         await page.locator(`.add-treatment-line-btn[data-type="${cfg.addType}"]`).click();
         await page.waitForSelector(`#${cfg.extrasId} .drug-autocomplete__input:not([disabled])`, { timeout: 10000 });
-        const extraCategory = await page.evaluate((containerId) => {
-            const line = document.getElementById(containerId).querySelector('.treatment-extra');
-            const select = line ? line.querySelector('select') : null;
-            return select ? (select.dataset.drugCategory || '') : null;
-        }, cfg.extrasId);
-        record(`${label}: la línea adicional hereda la categoría explícita de su control principal`,
-            extraCategory === cfg.expectedCategories[cfg.selectId], `extra='${extraCategory}'`);
         const extraInput = page.locator(`#${cfg.extrasId} .drug-autocomplete__input`).last();
         await extraInput.click();
         await extraInput.fill(cfg.query1);
@@ -374,16 +370,18 @@ async function runSuite(browser, label, pagePath, cfg) {
         const cleared = await readSelect(page, cfg.selectId);
         record(`${label}: limpiar selección deja el valor neutro 'No'`, cleared.value === 'No', JSON.stringify(cleared));
 
-        // S6 — category isolation through supported interaction: a medicine of
-        // another category is never offered; a category-valid one is.
+        // S6 — sin filtro por categoría (decisión de Sil, 12-11): un fármaco
+        // de cualquier familia se ofrece en cualquier campo de fármaco.
         await openAncestorCollapsibles(page, autocompleteInputSelector(cfg.crossCategorySelectId));
         const crossInput = page.locator(autocompleteInputSelector(cfg.crossCategorySelectId));
         await crossInput.click();
         await crossInput.fill('');
         await crossInput.fill('cosentyx');
-        await page.waitForTimeout(250);
-        const crossCount = await page.locator(autocompleteInputSelector(cfg.crossCategorySelectId) + ' ~ .drug-autocomplete__list .drug-autocomplete__item').count();
-        record(`${label}: un fármaco de otra categoría no se ofrece (aislamiento)`, crossCount === 0, `items=${crossCount}`);
+        const crossItems = page.locator(autocompleteInputSelector(cfg.crossCategorySelectId) + ' ~ .drug-autocomplete__list .drug-autocomplete__item');
+        await crossItems.first().waitFor({ state: 'visible', timeout: 10000 });
+        const crossName = (await crossItems.first().textContent()).trim();
+        record(`${label}: sin categorías, un biológico también se ofrece en el campo de sistémicos`, /COSENTYX/i.test(crossName), `first='${crossName}'`);
+        await crossInput.press('Escape');
         const ownInput = page.locator(autocompleteInputSelector(cfg.ownCategorySelectId));
         await openAncestorCollapsibles(page, autocompleteInputSelector(cfg.ownCategorySelectId));
         await ownInput.click();
@@ -392,7 +390,7 @@ async function runSuite(browser, label, pagePath, cfg) {
         const ownItems = page.locator(autocompleteInputSelector(cfg.ownCategorySelectId) + ' ~ .drug-autocomplete__list .drug-autocomplete__item');
         await ownItems.first().waitFor({ state: 'visible', timeout: 10000 });
         const ownName = (await ownItems.first().textContent()).trim();
-        record(`${label}: un fármaco de la propia categoría sí se ofrece`, /COSENTYX/i.test(ownName), `first='${ownName}'`);
+        record(`${label}: el mismo fármaco se ofrece en su campo habitual`, /COSENTYX/i.test(ownName), `first='${ownName}'`);
         await ownInput.press('Escape');
 
         // S6/S7 — console hygiene.
@@ -426,8 +424,19 @@ async function runUnavailableSuite(browser) {
             const select = document.getElementById(selectId);
             const wrapper = select ? select.closest('.drug-autocomplete') : null;
             const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
-            return !!(input && input.disabled && /no disponible/i.test(input.placeholder));
+            return !!(input && !input.disabled);
         }, id, { timeout: 30000 });
+        await page.waitForFunction(() => !!(window.HubTools && HubTools.catalog && HubTools.catalog.getState && /missing|error/.test(HubTools.catalog.getState().state)), null, { timeout: 30000 });
+        await openAncestorCollapsibles(page, autocompleteInputSelector(id));
+        const typed = page.locator(autocompleteInputSelector(id));
+        await typed.click();
+        await typed.fill('prednisona');
+        await page.waitForFunction((selectId) => {
+            const select = document.getElementById(selectId);
+            const wrapper = select ? select.closest('.drug-autocomplete') : null;
+            const notice = wrapper ? wrapper.querySelector('.drug-autocomplete__notice') : null;
+            return !!(notice && !notice.hidden && /no disponible/i.test(notice.textContent || ''));
+        }, id, { timeout: 10000 });
 
         const state = await page.evaluate((selectId) => {
             const select = document.getElementById(selectId);
@@ -435,12 +444,13 @@ async function runUnavailableSuite(browser) {
             const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
             return {
                 disabled: input ? input.disabled : null,
-                placeholder: input ? input.placeholder : '',
+                notice: wrapper && wrapper.querySelector('.drug-autocomplete__notice') ? wrapper.querySelector('.drug-autocomplete__notice').textContent : '',
+                items: wrapper ? wrapper.querySelectorAll('.drug-autocomplete__item:not(.drug-autocomplete__item--clear)').length : -1,
                 options: select ? Array.from(select.options).map((o) => o.value) : [],
             };
         }, id);
-        const comprehensible = state.disabled === true && /no disponible/i.test(state.placeholder);
-        record('catálogo ausente: campo deshabilitado con estado comprensible', comprehensible, JSON.stringify(state));
+        const comprehensible = state.disabled === false && /no disponible/i.test(state.notice) && state.items === 0;
+        record('catálogo ausente y AEMPS sin respuesta: aviso comprensible y sin resultados', comprehensible, JSON.stringify(state));
         const invented = state.options.filter((value) => value && value !== 'No');
         record('catálogo ausente: no se inventan opciones de fármaco', invented.length === 0, JSON.stringify(state.options));
         record('catálogo ausente: console.error === 0', consoleErrors.length === 0, JSON.stringify(consoleErrors));
@@ -450,47 +460,6 @@ async function runUnavailableSuite(browser) {
     }
 }
 
-// A versioned classification source that cannot be parsed (HTTP 200, invalid
-// body): fields must fail visibly and safely, never fall back to the full
-// catalogue.
-async function runCategoriesUnavailableSuite(browser) {
-    console.log('\n=== clasificación por categorías no disponible (primera_visita.html) ===');
-    const context = await passSupportedGate(browser);
-    await context.route('**/reuma_medication_categories.v1.json', (route) => {
-        route.fulfill({ status: 200, contentType: 'application/json', body: '{ esta-no-es-json' });
-    });
-    const page = await context.newPage();
-    const consoleErrors = [];
-    const pageErrors = [];
-    page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
-    page.on('pageerror', (err) => pageErrors.push(String(err)));
-    await page.goto(`${baseUrl}/primera_visita.html`, { waitUntil: 'domcontentloaded' });
-    try {
-        const fieldIds = [
-            'previoSistemicoSelect', 'previoFameSelect', 'previoBiologicoSelect',
-            'sistemicoSelect', 'fameSelect', 'biologicoSelect', 'psoriasisSistemicoSelect',
-        ];
-        await page.waitForFunction((ids) => ids.every((id) => {
-            const select = document.getElementById(id);
-            const wrapper = select ? select.closest('.drug-autocomplete') : null;
-            const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
-            return !!(input && input.disabled && /no disponible/i.test(input.placeholder));
-        }), fieldIds, { timeout: 30000 });
-        const fields = await page.evaluate((ids) => ids.map((id) => {
-            const select = document.getElementById(id);
-            const input = select.closest('.drug-autocomplete')?.querySelector('.drug-autocomplete__input');
-            return { id, disabled: input ? input.disabled : null, placeholder: input ? input.placeholder : '', options: Array.from(select.options).map((o) => o.value) };
-        }), fieldIds);
-        record('clasificación ausente: todos los campos fallan visibles y seguros',
-            fields.every((field) => field.disabled === true && /no disponible/i.test(field.placeholder)), JSON.stringify(fields));
-        record('clasificación ausente: sin catálogo completo como fallback',
-            fields.every((field) => field.options.filter((value) => value && value !== 'No').length === 0), JSON.stringify(fields));
-        record('clasificación ausente: console.error === 0', consoleErrors.length === 0, JSON.stringify(consoleErrors));
-        record('clasificación ausente: pageerror === 0', pageErrors.length === 0, JSON.stringify(pageErrors));
-    } finally {
-        await context.close();
-    }
-}
 
 // S11 — a medication field restored/initialized with an already-authoritative
 // selection must hydrate its VISIBLE input immediately, without waiting for an
@@ -623,47 +592,6 @@ async function runRefreshPreservesQuerySuite(browser) {
     }
 }
 
-// A versioned classification source that legitimately declares an empty
-// category: that category fails visibly while the others keep working.
-async function runEmptyCategorySuite(browser) {
-    console.log('\n=== categoría sin cobertura declarada (primera_visita.html) ===');
-    const context = await passSupportedGate(browser);
-    const synthetic = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'catalogos', 'reuma', 'reuma_medication_categories.v1.json'), 'utf8'));
-    synthetic.categories.Biologicos = { label: 'Biológicos', catalogue_tokens: [], explicit_entries: [] };
-    await context.route('**/reuma_medication_categories.v1.json', (route) => {
-        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(synthetic) });
-    });
-    const page = await context.newPage();
-    const consoleErrors = [];
-    const pageErrors = [];
-    page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
-    page.on('pageerror', (err) => pageErrors.push(String(err)));
-    await page.goto(`${baseUrl}/primera_visita.html`, { waitUntil: 'domcontentloaded' });
-    try {
-        await page.waitForFunction(() => {
-            const select = document.getElementById('previoBiologicoSelect');
-            const input = select?.closest('.drug-autocomplete')?.querySelector('.drug-autocomplete__input');
-            return !!(input && input.disabled && /sin fármacos disponibles/i.test(input.placeholder));
-        }, null, { timeout: 30000 });
-        const emptyCategory = await page.evaluate(() => {
-            const select = document.getElementById('previoBiologicoSelect');
-            const input = select.closest('.drug-autocomplete').querySelector('.drug-autocomplete__input');
-            return { disabled: input.disabled, placeholder: input.placeholder, options: Array.from(select.options).map((o) => o.value) };
-        });
-        record('categoría vacía: falla visible y segura sin opciones inventadas',
-            emptyCategory.disabled === true && /sin fármacos disponibles/i.test(emptyCategory.placeholder)
-            && emptyCategory.options.every((value) => !value || value === 'No'), JSON.stringify(emptyCategory));
-        await awaitCatalogReady(page, 'previoSistemicoSelect');
-        const openedSistemicos = await openAncestorCollapsibles(page, autocompleteInputSelector('previoSistemicoSelect'));
-        if (!openedSistemicos) throw new Error('no se pudo abrir el campo Sistemicos');
-        const sistemicos = await selectDrug(page, 'previoSistemicoSelect', 'prednisona', 'PREDNISONA');
-        record('categoría vacía: las demás categorías siguen operativas', sistemicos.ok, JSON.stringify(sistemicos));
-        record('categoría vacía: console.error === 0', consoleErrors.length === 0, JSON.stringify(consoleErrors));
-        record('categoría vacía: pageerror === 0', pageErrors.length === 0, JSON.stringify(pageErrors));
-    } finally {
-        await context.close();
-    }
-}
 
 let browser;
 try {
@@ -722,8 +650,6 @@ try {
         },
     });
     await runUnavailableSuite(browser);
-    await runCategoriesUnavailableSuite(browser);
-    await runEmptyCategorySuite(browser);
     await runRestoreHydrationSuite(browser);
     await runRefreshPreservesQuerySuite(browser);
 } catch (err) {

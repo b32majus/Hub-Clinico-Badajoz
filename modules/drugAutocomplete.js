@@ -1,6 +1,8 @@
 /**
  * drugAutocomplete.js — searchable combobox for the Reuma medicine fields,
- * backed by the read-only published catalogue (`HubTools.catalog`).
+ * backed by the common live searcher `HubTools.cimaSearch` (AEMPS CIMA REST
+ * API) with the read-only published catalogue (`HubTools.catalog`) as
+ * fallback when the AEMPS does not answer (decisión de Sil, 12-11).
  *
  * The native <select> stays in the DOM as the single value holder, so the
  * existing collection/export path (`collectTreatmentEntries`, export manager)
@@ -8,16 +10,14 @@
  * that select; it never writes dose, route, schedule, presentation, induction,
  * duration, therapeutic line, switch/add-on, renewal or validation outcome.
  *
- * Every medication control declares its functional category through the
- * `data-drug-category` attribute (Sistemicos / FAMEs / Biologicos) and the
- * search is always scoped to that category (`HubTools.catalog.search(query,
- * category)`). Options from other categories are never offered, the category
- * is never inferred at runtime, and a missing classification source, an
- * undeclared category or an empty category disables the field with a visible
- * fail-safe message — never a fallback to the unrestricted catalogue.
+ * Sin filtro por categoría: any medicine can be offered in any field. The
+ * `data-drug-category` attribute may remain in the HTML but is no longer
+ * read. A visible notice (`.drug-autocomplete__notice`) reports when the
+ * answer came from the local catalogue fallback or when no source is
+ * available; an empty AEMPS response shows no notice and offers no options.
  *
- * When the catalogue is not loaded the input stays disabled and no option is
- * invented.
+ * When the searcher module is missing the input stays disabled and no option
+ * is invented.
  *
  * Namespace: HubTools.ui.initDrugAutocomplete
  */
@@ -35,52 +35,26 @@
     var WRAPPER_CLASS = 'drug-autocomplete';
     var READY_FLAG = 'drugAutocompleteReady';
     var CLEAR_LABEL = 'Sin fármaco';
+    var SEARCH_DEBOUNCE_MS = 250;
+    var SEARCH_MIN_QUERY_FALLBACK = 2;
 
-    function catalog() {
-        return HubTools && HubTools.catalog;
-    }
-
-    function isReady() {
-        var c = catalog();
-        return !!(c && typeof c.isLoaded === 'function' && c.isLoaded());
+    /**
+     * Sin filtro por categoría (decisión de Sil, 12-11): a control is usable
+     * whenever the common live searcher module is available. The published
+     * catalogue remains the fallback inside `HubTools.cimaSearch.search`, and
+     * `data-drug-category` is no longer read.
+     */
+    function isUsable(state) {
+        return !!(HubTools.cimaSearch && typeof HubTools.cimaSearch.search === 'function');
     }
 
     function statusText() {
-        var c = catalog();
-        var state = c && typeof c.getState === 'function' ? c.getState() : { state: 'idle' };
-        if (state.state === 'loaded') return '';
-        if (state.state === 'missing' || state.state === 'error') {
-            return 'Catálogo de fármacos no disponible';
-        }
-        return 'Cargando catálogo de fármacos…';
-    }
-
-    /**
-     * A control is usable only when the catalogue AND its explicit category
-     * classification are available, the category is declared, known and has
-     * members. Anything else fails visibly and safely below.
-     */
-    function isUsable(state) {
-        if (!isReady()) return false;
-        var c = catalog().getState();
-        if (!c.categoriesLoaded) return false;
-        if (!state.category) return false;
-        if (!Object.prototype.hasOwnProperty.call(c.categoryCounts, state.category)) return false;
-        return c.categoryCounts[state.category] > 0;
+        return 'Buscador de fármacos no disponible';
     }
 
     function statusTextFor(state) {
-        if (!isReady()) return statusText();
-        var c = catalog().getState();
-        if (!c.categoriesLoaded) return 'Clasificación de fármacos no disponible';
-        if (!state.category) return 'Campo de fármaco sin categoría configurada';
-        if (!Object.prototype.hasOwnProperty.call(c.categoryCounts, state.category)) {
-            return 'Categoría de fármaco no disponible en la clasificación';
-        }
-        if (!c.categoryCounts[state.category]) {
-            return 'Sin fármacos disponibles para esta categoría';
-        }
-        return '';
+        if (isUsable(state)) return '';
+        return statusText();
     }
 
     function currentLabel(state) {
@@ -148,6 +122,28 @@
         state.activeIndex = -1;
     }
 
+    /**
+     * The notice reports the answer source of the LAST completed search.
+     * `closeList` never hides it: a new valid query updates it when it
+     * resolves, and emptying the field hides it.
+     */
+    function hideNotice(state) {
+        state.notice.hidden = true;
+        state.notice.textContent = '';
+    }
+
+    function showNoticeForSource(state, source) {
+        if (source === 'local') {
+            state.notice.hidden = false;
+            state.notice.textContent = 'Sin respuesta de la AEMPS: resultados del catálogo local.';
+        } else if (source === 'none') {
+            state.notice.hidden = false;
+            state.notice.textContent = 'Sin respuesta de la AEMPS y catálogo local no disponible.';
+        } else {
+            hideNotice(state);
+        }
+    }
+
     function highlight(state) {
         var items = state.list.querySelectorAll('.drug-autocomplete__item');
         Array.prototype.forEach.call(items, function (item, index) {
@@ -211,15 +207,36 @@
         state.input.addEventListener('input', function () {
             if (!isUsable(state)) return;
             var query = state.input.value.trim();
-            if (query.length < (catalog().MIN_QUERY || 2)) {
+            var minQuery = (HubTools.cimaSearch && HubTools.cimaSearch.MIN_QUERY) || SEARCH_MIN_QUERY_FALLBACK;
+            if (query.length < minQuery) {
+                if (state.debounceTimer !== null) {
+                    clearTimeout(state.debounceTimer);
+                    state.debounceTimer = null;
+                }
                 if (!query && state.select.value && state.select.value !== 'No') {
                     renderClear(state);
                 } else {
                     closeList(state);
                 }
+                hideNotice(state);
                 return;
             }
-            renderResults(state, catalog().search(query, state.category));
+            // Una consulta nueva válida cierra la lista de inmediato: ningún
+            // ítem obsoleto (p. ej. «Sin fármaco») queda pulsable mientras
+            // llega la respuesta.
+            closeList(state);
+            if (state.debounceTimer !== null) clearTimeout(state.debounceTimer);
+            state.debounceTimer = window.setTimeout(function () {
+                state.debounceTimer = null;
+                var token = ++state.requestSeq;
+                HubTools.cimaSearch.search(query).then(function (outcome) {
+                    // Una respuesta vieja y lenta no pisa la consulta actual.
+                    if (token !== state.requestSeq) return;
+                    if (state.input.value.trim() !== query) return;
+                    showNoticeForSource(state, outcome && outcome.source);
+                    renderResults(state, (outcome && outcome.results) || []);
+                });
+            }, SEARCH_DEBOUNCE_MS);
         });
 
         state.input.addEventListener('focus', function () {
@@ -317,12 +334,20 @@
         list.setAttribute('role', 'listbox');
         list.hidden = true;
 
+        // Aviso del origen de los resultados (AEMPS en directo o respaldo
+        // local): pequeño, role=status, oculto hasta la primera respuesta.
+        var notice = document.createElement('p');
+        notice.className = 'drug-autocomplete__notice';
+        notice.setAttribute('role', 'status');
+        notice.hidden = true;
+
         if (select.parentNode) select.parentNode.insertBefore(wrapper, select);
         wrapper.appendChild(input);
         wrapper.appendChild(list);
+        wrapper.appendChild(notice);
         wrapper.appendChild(select);
 
-        var state = { select: select, input: input, list: list, results: [], activeIndex: -1, category: (select.dataset.drugCategory || '').trim() };
+        var state = { select: select, input: input, list: list, notice: notice, results: [], activeIndex: -1, requestSeq: 0, debounceTimer: null };
         select.__drugAutocompleteState = state;
 
         ensureDefaultOption(select);
