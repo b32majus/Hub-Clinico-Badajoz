@@ -52,22 +52,8 @@ const SEAM_SOURCE = fs.readFileSync(SEAM_FILE, 'utf8');
 const CONSUMER_SOURCE = fs.readFileSync(CONSUMER_FILE, 'utf8');
 const HTML_SOURCE = fs.readFileSync(ESTADISTICAS_HTML, 'utf8');
 
-const REQUIRED_METHODS = ['getPoblationalData', 'getFarmsDataFromState'];
+const REQUIRED_METHODS = ['getPoblationalData', 'getTreatmentFilterOptions'];
 const PORT_METHODS = ['readPopulation', 'readDrugFilterOptions'];
-const DRUG_CATEGORIES = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
-
-// Synthetic-only drug catalogue (ids/names SYNTHETIC_*). It exercises the drug
-// filter source with a known set/order; never real data.
-const SYNTHETIC_DRUGS = {
-    Tratamientos_Sistemicos: ['Sintetico Sist A', 'Sintetico Sist B'],
-    FAMEs: ['Sintetico FAME A', 'Sintetico FAME B'],
-    Biologicos: ['Sintetico Bio A'],
-};
-const FARMACOS_ROWS = [
-    ['Sistemicos', 'FAMEs', 'Biologicos'],
-    ['Sintetico Sist A', 'Sintetico FAME A', 'Sintetico Bio A'],
-    ['Sintetico Sist B', 'Sintetico FAME B', ''],
-];
 
 const FILTER_SETS = [
     {},
@@ -108,8 +94,6 @@ async function loadCorpusInto(sandbox) {
     for (const [sheetName, rows] of Object.entries(CORPUS.sheets)) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
     }
-    // Frmacos is read as a positional matrix (column 0 = Sistemicos, 1 = FAMEs, 2 = Biologicos).
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(FARMACOS_ROWS), 'Frmacos');
     const bytes = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
     const file = {
         name: 'reuma_estadisticas_check.xlsx',
@@ -119,7 +103,7 @@ async function loadCorpusInto(sandbox) {
 }
 
 function emptyDrugs() {
-    return { Tratamientos_Sistemicos: [], FAMEs: [], Biologicos: [] };
+    return [];
 }
 
 async function run() {
@@ -162,7 +146,7 @@ async function run() {
         for (const missing of REQUIRED_METHODS) {
             const delegate = {
                 getPoblationalData: () => ({ filteredCohort: [], kpis: null, chartData: null }),
-                getFarmsDataFromState: () => emptyDrugs(),
+                getTreatmentFilterOptions: () => emptyDrugs(),
             };
             delete delegate[missing];
             assert.throws(
@@ -175,7 +159,7 @@ async function run() {
         assert.throws(() => Port.create({}), /ReumaPopulationReadPort: missing implementation method/);
         const port = Port.create({
             getPoblationalData: () => ({ filteredCohort: [], kpis: null, chartData: null }),
-            getFarmsDataFromState: () => emptyDrugs(),
+            getTreatmentFilterOptions: () => emptyDrugs(),
         });
         assert.equal(Object.isFrozen(port), true, 'create() must return a frozen port');
         for (const method of PORT_METHODS) assert.equal(typeof port[method], 'function');
@@ -188,10 +172,10 @@ async function run() {
         sandbox.HubTools.data = undefined;
         assert.equal(Port.getPort(), null, 'getPort() must be null without HubTools.data');
         sandbox.HubTools.data = { getPoblationalData() { return { filteredCohort: [] }; } };
-        assert.equal(Port.getPort(), null, 'getPort() must be null when getFarmsDataFromState is missing');
+        assert.equal(Port.getPort(), null, 'getPort() must be null when getTreatmentFilterOptions is missing');
         sandbox.HubTools.data = {
             getPoblationalData() { return { filteredCohort: [], kpis: null, chartData: null }; },
-            getFarmsDataFromState() { return emptyDrugs(); },
+            getTreatmentFilterOptions() { return emptyDrugs(); },
         };
         const first = Port.getPort();
         assert.ok(first, 'getPort() must build from an ambient HubTools.data exposing both reads');
@@ -237,7 +221,7 @@ async function run() {
                 received.push(filters);
                 return { filteredCohort: [], kpis: null, chartData: null };
             },
-            getFarmsDataFromState: () => emptyDrugs(),
+            getTreatmentFilterOptions: () => emptyDrugs(),
         });
         const filters = { pathology: 'AR', activityIndex: 'DAS28_CRP', nested: { values: [1, 2] } };
         const outcome = await port.readPopulation(filters);
@@ -275,11 +259,11 @@ async function run() {
         sandbox.sessionStorage.setItem('hubClinicoDB', JSON.stringify({ synthetic: true }));
         const throwing = Port.create({
             getPoblationalData() { throw new Error('planted delegate failure'); },
-            getFarmsDataFromState: () => emptyDrugs(),
+            getTreatmentFilterOptions: () => emptyDrugs(),
         });
         const nullish = Port.create({
             getPoblationalData() { return null; },
-            getFarmsDataFromState: () => emptyDrugs(),
+            getTreatmentFilterOptions: () => emptyDrugs(),
         });
         const throwingOutcome = await throwing.readPopulation({});
         const nullishOutcome = await nullish.readPopulation({});
@@ -303,7 +287,7 @@ async function run() {
         error.sandbox.sessionStorage.setItem('hubClinicoDB', JSON.stringify({ synthetic: true }));
         const errorOutcome = await error.Port.create({
             getPoblationalData() { throw new Error('planted'); },
-            getFarmsDataFromState: () => emptyDrugs(),
+            getTreatmentFilterOptions: () => emptyDrugs(),
         }).readPopulation({});
 
         record('#456 ok / ok-empty / unavailable / error are distinguishable closed states',
@@ -315,35 +299,45 @@ async function run() {
     }
 
     // =====================================================================
-    // 6. Drug filter options keep the current source's set/order.
+    // 6. Drug filter options = distinct drugs of the cohort's visits (K6: the
+    //    «Frmacos» sheet is gone). Same text the cohort filter matches against;
+    //    no splitting of free text, no classification, no inference.
     // =====================================================================
     {
         const { sandbox, Port } = createSeamSandbox();
         await loadCorpusInto(sandbox);
         const port = Port.getPort();
-        const legacy = sandbox.HubTools.data.getFarmsDataFromState();
+        const cohort = sandbox.HubTools.data.getPoblationalData({}).filteredCohort;
+        const seen = new Map();
+        for (const p of cohort) {
+            const text = String(p._tratamiento || '').trim();
+            const key = text.toLowerCase();
+            if (!text || key === 'no' || key === 'no consta') continue;
+            if (!seen.has(key)) seen.set(key, text);
+        }
+        const expected = [...seen.values()].sort((x, y) => x.localeCompare(y, 'es'));
         const read = port.readDrugFilterOptions();
-        const setOrderOk = read.status === 'ok' &&
-            canonical(read.categories) === canonical(legacy) &&
-            canonical(read.categories.Tratamientos_Sistemicos) === canonical(SYNTHETIC_DRUGS.Tratamientos_Sistemicos) &&
-            canonical(read.categories.FAMEs) === canonical(SYNTHETIC_DRUGS.FAMEs) &&
-            canonical(read.categories.Biologicos) === canonical(SYNTHETIC_DRUGS.Biologicos);
-        const consumerOrder = new RegExp(`\\[\\s*'Tratamientos_Sistemicos'\\s*,\\s*'FAMEs'\\s*,\\s*'Biologicos'\\s*\\]`).test(CONSUMER_SOURCE);
-        record('#456 drug filter options keep the current source set/order and the consumer appends them in that order',
-            setOrderOk && consumerOrder,
-            `status=${read.status} categories=${canonical(read.categories)} consumerOrder=${consumerOrder}`);
+        const direct = sandbox.HubTools.data.getTreatmentFilterOptions();
+        const optionsOk = read.status === 'ok' && expected.length > 0 &&
+            canonical(read.options) === canonical(expected) &&
+            canonical(direct) === canonical(expected) &&
+            read.categories === undefined;
+        const consumerOk = /read\.options/.test(CONSUMER_SOURCE) && !/Tratamientos_Sistemicos/.test(CONSUMER_SOURCE);
+        record('#456 drug filter options are the distinct treatments of the cohort visits and the consumer appends them',
+            optionsOk && consumerOk,
+            `status=${read.status} options=${canonical(read.options)} expected=${canonical(expected)} consumerOk=${consumerOk}`);
     }
     {
         // A missing source is fail-safe (empty options) and never throws.
         const { Port } = createSeamSandbox();
         const port = Port.create({
             getPoblationalData() { return { filteredCohort: [] }; },
-            getFarmsDataFromState() { throw new Error('planted drug failure'); },
+            getTreatmentFilterOptions() { throw new Error('planted drug failure'); },
         });
         const read = port.readDrugFilterOptions();
         record('#456 a failing drug source fails safe with empty options and no throw',
-            read.status === 'error' && canonical(read.categories) === canonical(emptyDrugs()),
-            `status=${read.status} categories=${canonical(read.categories)}`);
+            read.status === 'error' && canonical(read.options) === canonical(emptyDrugs()),
+            `status=${read.status} options=${canonical(read.options)}`);
     }
 
     // =====================================================================

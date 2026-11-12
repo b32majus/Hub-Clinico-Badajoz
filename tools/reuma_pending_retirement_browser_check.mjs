@@ -85,8 +85,8 @@
  *   R8  Empty context (fresh context, no seeded storage): the session gate
  *       and the export work from zero; no residual panel; safe without
  *       clinical storage.
- *   R9  Eight-page verification: dashboard_paciente.html, dashboard_search.html,
- *       estadisticas.html, manage_drugs.html, manage_professionals.html,
+ *   R9  Seven-page verification: dashboard_paciente.html, dashboard_search.html,
+ *       estadisticas.html, manage_professionals.html,
  *       primera_visita.html, reuma_index.html, seguimiento.html — each loads
  *       without pageerror, without #pendingRowsIndicator/pending-rows
  *       controls, with `script.js?v=20261009-export-safety-18-script-r1`, and
@@ -125,13 +125,13 @@ const PAGE_SEGUIMIENTO = 'seguimiento.html';
 const SCRIPT_TOKEN = 'script.js?v=20261009-export-safety-18-script-r1';
 const EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261112b';
 const EXPORT_MANAGER_PAGES = [
-    'dashboard_paciente.html', 'estadisticas.html', 'manage_drugs.html',
+    'dashboard_paciente.html', 'estadisticas.html',
     'manage_professionals.html', 'primera_visita.html', 'reuma_index.html',
     'seguimiento.html',
 ];
 const ALL_PAGES = [
     'dashboard_paciente.html', 'dashboard_search.html', 'estadisticas.html',
-    'manage_drugs.html', 'manage_professionals.html', 'primera_visita.html',
+    'manage_professionals.html', 'primera_visita.html',
     'reuma_index.html', 'seguimiento.html',
 ];
 const TXT_GATE_MESSAGE = 'Debe exportar TXT de esta visita antes de exportar CSV.';

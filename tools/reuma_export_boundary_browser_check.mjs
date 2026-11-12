@@ -20,7 +20,7 @@
  * observation; nothing is injected into the page.
  *
  * Fixtures are synthetic only: `tools/fixtures/reuma_read/corpus_v1.json`
- * (ids SYN-*) plus synthetic `Frmacos`/`Profesionales` sheets materialized
+ * (ids SYN-*) plus synthetic `Profesionales` sheets materialized
  * into a temporary XLSX outside the repository. Exported identifiers use
  * `SYN-EXP-BROWSER-*`.
  *
@@ -104,11 +104,6 @@ const SEGUIMIENTO_PAGE = 'seguimiento.html';
 const BOUNDARY_SCRIPT = 'modules/reuma_export_boundary.js';
 const EXPORT_MANAGER_SCRIPT = 'modules/exportManager.js';
 
-const SYNTHETIC_DRUGS = {
-    Tratamientos_Sistemicos: ['Sintetico Sist A'],
-    FAMEs: ['FAME sintetico A'],
-    Biologicos: ['Sintetico Bio A'],
-};
 
 const results = [];
 function record(name, pass, detail) {
@@ -176,9 +171,6 @@ const workbookPath = path.join(tempDir, 'reuma_export_boundary_synthetic.xlsx');
     for (const [sheetName, rows] of Object.entries(corpus.sheets)) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
     }
-    const drugRows = [['Sistemicos', 'FAMEs', 'Biologicos']];
-    drugRows.push([SYNTHETIC_DRUGS.Tratamientos_Sistemicos[0], SYNTHETIC_DRUGS.FAMEs[0], SYNTHETIC_DRUGS.Biologicos[0]]);
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(drugRows), 'Frmacos');
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         { Nombre_Completo: 'Sintetico Profesional Uno', Cargo: 'Reumatologia' },
     ]), 'Profesionales');

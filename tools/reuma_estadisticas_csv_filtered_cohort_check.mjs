@@ -78,13 +78,6 @@ const CONSUMER_RELATIVE = 'scripts/script_estadisticas.js';
 const CONSUMER_SOURCE = fs.readFileSync(CONSUMER_FILE, 'utf8');
 const SEAM_SOURCE = fs.readFileSync(SEAM_FILE, 'utf8');
 
-// Synthetic drug catalogue rows (same shape as tools/reuma_estadisticas_read_seam_check.mjs).
-const FARMACOS_ROWS = [
-    ['Sistemicos', 'FAMEs', 'Biologicos'],
-    ['Sintetico Sist A', 'Sintetico FAME A', 'Sintetico Bio A'],
-    ['Sintetico Sist B', 'Sintetico FAME B', ''],
-];
-
 // Supported UI defaults (mirror estadisticas.html first-option/empty/range-max states).
 const UI_DEFAULTS = {
     filterDateFrom: '', filterDateTo: '',
@@ -198,7 +191,6 @@ async function loadCorpusInto(sandbox) {
     for (const [sheetName, rows] of Object.entries(CORPUS.sheets)) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
     }
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(FARMACOS_ROWS), 'Frmacos');
     const bytes = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
     const file = {
         name: 'reuma_estadisticas_csv_check.xlsx',

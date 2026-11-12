@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 const root = new URL('../', import.meta.url);
 const fails = [];
-const REUMA = ['dashboard_paciente', 'dashboard_search', 'estadisticas', 'manage_drugs', 'manage_professionals', 'primera_visita', 'reuma_index', 'seguimiento'];
+const REUMA = ['dashboard_paciente', 'dashboard_search', 'estadisticas', 'manage_professionals', 'primera_visita', 'reuma_index', 'seguimiento'];
 for (const p of REUMA) {
   const h = fs.readFileSync(new URL(p + '.html', root), 'utf8');
   for (const tag of h.match(/<(script|link)\b[^>]*>/g) || []) {
