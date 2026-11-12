@@ -121,6 +121,8 @@ async function check(label, body) {
 
 function newPage() {
   return browser.newPage({ viewport: { width: 1400, height: 1000 } }).then((page) => {
+    // Buscador común (tramo 3): la AEMPS «no responde» → respaldo del catálogo de Farmacia; el check nunca sale a internet.
+    page.route('https://cima.aemps.es/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' }));
     page.on('pageerror', (error) => pageErrors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
     return page;

@@ -76,6 +76,8 @@ async function test(name, fn) {
 
 const browser = await chromium.launch({ executablePath: chromiumExecutable(), headless: true });
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+// Buscador común (tramo 3): la AEMPS «no responde» → respaldo del catálogo de Farmacia; el check nunca sale a internet.
+await context.route('https://cima.aemps.es/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' }));
 await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 const page = await context.newPage();
 page.on('dialog', (dialog) => dialog.accept());

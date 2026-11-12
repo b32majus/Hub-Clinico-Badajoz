@@ -19,6 +19,15 @@
  * `search(query)` resolves `{ source, results }` and NEVER rejects:
  *   source is 'aemps' | 'local' | 'none', results are `[{ id, name }]`.
  *
+ * `searchPresentations(query)` (decisión de Sil 12-11, tramo 3) es SOLO para
+ * Farmacia: mismo flujo que `search` (dos peticiones en paralelo con
+ * `&pagesize=15`, timeout, dedupe, máx. 15, nunca rechaza) pero cada fila es
+ * `{ id, name, nregistro, dosis, via }`, con la vía solo si la AEMPS da
+ * exactamente UNA. SIN respaldo de catálogo: si la AEMPS no responde resuelve
+ * `{ source: 'none', results: [] }` y el respaldo lo pone Farmacia (catálogo
+ * entero + aviso en pantalla); una respuesta válida (aunque vacía) es
+ * `{ source: 'aemps', results }`.
+ *
  * Namespace: HubTools.cimaSearch
  */
 (function () {
@@ -67,27 +76,51 @@
     }
 
     /**
-     * Identity-only projection of one AEMPS row: registration number plus
-     * trimmed name. Rows without `nregistro` or `nombre` are discarded.
+     * Parameterized projection of one AEMPS row. Without `withPresentation`
+     * it is the identity-only projection of Reuma (`search`): registration
+     * number plus trimmed name. With it, the presentation row for the Farmacia
+     * common search (`searchPresentations`, tramo 3): name, dosis as given,
+     * and the route ONLY when the AEMPS reports exactly ONE administration
+     * route (0 or several: empty — nothing is inferred). Rows without
+     * `nregistro` or `nombre` are discarded in both variants.
      */
-    function toRow(row) {
+    function projectRow(row, withPresentation) {
         if (!row || typeof row !== 'object') return null;
         var nregistro = row.nregistro === undefined || row.nregistro === null ? '' : String(row.nregistro).trim();
         var nombre = row.nombre === undefined || row.nombre === null ? '' : String(row.nombre).trim();
         if (!nregistro || !nombre) return null;
-        return { id: 'AEMPS:' + nregistro, name: nombre };
+        var projected = { id: 'AEMPS:' + nregistro, name: nombre };
+        if (!withPresentation) return projected;
+        var vias = Array.isArray(row.viasAdministracion) ? row.viasAdministracion : [];
+        projected.nregistro = nregistro;
+        projected.dosis = row.dosis === undefined || row.dosis === null ? '' : String(row.dosis).trim();
+        projected.via = vias.length === 1 && vias[0] && typeof vias[0] === 'object'
+            && vias[0].nombre !== undefined && vias[0].nombre !== null
+            ? String(vias[0].nombre).trim() : '';
+        return projected;
+    }
+
+    function toRow(row) {
+        return projectRow(row, false);
+    }
+
+    function toPresentationRow(row) {
+        return projectRow(row, true);
     }
 
     /**
      * Merges the `nombre` rows first and the `practiv1` rows after,
      * deduplicating by `nregistro` and by name, keeping at most MAX_RESULTS.
+     * `project` selects the row shape: identity-only (`search`) or
+     * presentation (`searchPresentations`).
      */
-    function unionRows(nombreRows, practivRows) {
+    function unionRows(nombreRows, practivRows, project) {
+        var projectRow = typeof project === 'function' ? project : toRow;
         var seen = {};
         var out = [];
         var rows = nombreRows.concat(practivRows);
         for (var i = 0; i < rows.length && out.length < MAX_RESULTS; i++) {
-            var row = toRow(rows[i]);
+            var row = projectRow(rows[i]);
             if (!row) continue;
             // Solo se guarda el nombre: dos registros con el mismo nombre
             // (p. ej. distintos envases) se muestran una sola vez.
@@ -145,8 +178,38 @@
             });
     }
 
+    /**
+     * Presentation search for the Farmacia common drug search (tramo 3).
+     * Same flow and guarantees as `search`, but each row carries dosis and
+     * the single route when available, and there is NO catalogue fallback:
+     * `source: 'none'` leaves the fallback decision to Farmacia. Never
+     * rejects.
+     */
+    function searchPresentations(query) {
+        var q = String(query === undefined || query === null ? '' : query).trim();
+        if (q.length < MIN_QUERY) {
+            return Promise.resolve({ source: 'aemps', results: [] });
+        }
+        var nombreUrl = ENDPOINT + '?nombre=' + encodeURIComponent(q) + '&pagesize=' + MAX_RESULTS;
+        var practivUrl = ENDPOINT + '?practiv1=' + encodeURIComponent(q) + '&pagesize=' + MAX_RESULTS;
+        return Promise.all([requestOnce(nombreUrl), requestOnce(practivUrl)])
+            .then(function (outcomes) {
+                if (outcomes[0].valid || outcomes[1].valid) {
+                    return {
+                        source: 'aemps',
+                        results: unionRows(outcomes[0].rows || [], outcomes[1].rows || [], toPresentationRow)
+                    };
+                }
+                return { source: 'none', results: [] };
+            })
+            .catch(function () {
+                return { source: 'none', results: [] };
+            });
+    }
+
     HubTools.cimaSearch = {
         search: search,
+        searchPresentations: searchPresentations,
         ENDPOINT: ENDPOINT,
         TIMEOUT_MS: TIMEOUT_MS,
         MAX_RESULTS: MAX_RESULTS,

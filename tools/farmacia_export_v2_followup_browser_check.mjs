@@ -89,6 +89,8 @@ async function switchCip(page, cip, enabledCards) {
 
 const browser = await chromium.launch({ headless: true, executablePath: availableChromiumExecutable() });
 const context = await browser.newContext();
+// Buscador común (tramo 3): la AEMPS «no responde» → respaldo del catálogo de Farmacia; el check nunca sale a internet.
+await context.route('https://cima.aemps.es/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' }));
 const page = await context.newPage();
 const consoleErrors = [];
 const pageErrors = [];
