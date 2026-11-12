@@ -69,3 +69,108 @@ textarea{min-height:72px;resize:vertical}
 .form-footer{font-size:12px;color:#6f858c;padding:22px 4px 6px;text-align:center}
 @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{padding:15px;gap:8px}.brand{padding-bottom:9px}.nav-title,.sidebar-foot,.nav-future{display:none}.visit-navigation{display:flex}.nav-button{padding:10px 14px}.main{padding:22px 18px 65px}.fields{grid-template-columns:repeat(2,minmax(0,1fr))}.fields .wide{grid-column:span 2}.scale-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.context-grid,.therapy-row,.fields{grid-template-columns:1fr}.fields .wide{grid-column:auto}.main-header{display:block}.draft-pill{display:inline-block;margin-top:15px}.summary{display:block}.summary-meta{text-align:left;margin-top:10px}.card{padding:16px}.section-body{padding:17px}.context-head{display:block}#fieldCoverage{display:inline-block;margin-top:10px}}
+
+/* DER-REUMA-UX — Mismo lenguaje visual del shell de Reumatología.
+   No importar scripts/estilos clínicos de Reuma: esta variante es solo demo sintética. */
+:root{--derma-green:#008777;--derma-deep:#17335b;--derma-green-pale:#e6f4f1}
+body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,sans-serif}
+.hub-shell{display:flex;min-height:calc(100vh - 46px);background:#f6f8f8}
+.hub-shell .sidebar{width:280px;flex:0 0 280px;position:sticky;top:0;min-height:calc(100vh - 46px);height:calc(100vh - 46px);background:#fff;border-right:1px solid #e2e8f0;color:#1e293b;padding:24px 22px 16px;gap:0;overflow:hidden}
+.sidebar-header{display:flex;gap:14px;align-items:center;margin-bottom:20px;flex-shrink:0}
+.logo-circle{width:46px;height:46px;display:grid;place-items:center;flex-shrink:0;border-radius:14px;background:var(--derma-green);color:#fff;font-size:16px;font-weight:800;letter-spacing:.04em}
+.logo-circle--small{width:40px;height:40px;border-radius:11px;font-size:14px}
+.sidebar-title{font-size:16px;font-weight:700;line-height:1.3;letter-spacing:.025em;margin:0;color:#183f48;text-transform:uppercase}
+.user-block{display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:11px 13px;background:#f8fafc;border-radius:12px;font-size:12px;font-weight:700}
+.user-block small{display:block;font-size:10px;color:#788b93;margin-top:3px;font-weight:500}.user-icon{font-size:21px;color:var(--derma-green)}
+.search-container{position:relative;margin-bottom:15px;flex-shrink:0}
+.search-input{width:100%;min-height:44px;padding:10px 41px 10px 13px;border-radius:13px;background:#fff;border:1px solid #d3e0e4;font-size:12px;font-weight:500}
+.sidebar-search-btn{position:absolute;right:5px;top:4px;height:36px;width:35px;border:0;background:transparent;border-radius:9px;color:var(--derma-green);font-size:24px}
+.sidebar-search-btn:hover{background:var(--derma-green-pale)}
+.sidebar-nav-area{overflow-y:auto;flex:1 1 auto;min-height:0}
+.nav-section{margin-top:19px}.nav-section:first-child{margin-top:4px}
+.nav-title{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;font-weight:750;margin:0 0 9px;padding:0 12px}
+.nav-list{display:flex;flex-direction:column;gap:4px}
+.hub-shell .nav-link{display:flex;text-align:left;gap:10px;align-items:center;width:100%;border:0;background:transparent;color:#475569;border-radius:10px;padding:10px 11px;font-size:12px;font-weight:650;min-height:40px;line-height:1.3}
+.hub-shell .nav-link:hover:not([disabled]){background:#f0faf8;color:var(--derma-green)}
+.hub-shell .nav-link.active{background:var(--derma-green-pale);color:var(--derma-green)}
+.hub-shell .nav-link[disabled]{opacity:.52;cursor:not-allowed}
+.nav-link small{display:block;margin-left:auto;font-size:9px;font-weight:450;color:#8ba1a8}
+.nav-symbol{font-size:19px;width:20px;text-align:center;line-height:1;color:var(--derma-green)}
+.db-status-indicator{display:flex;gap:10px;align-items:center;padding:13px 9px 11px;margin-top:10px;border-top:1px solid #e7eff1;font-size:11px;color:#5d7580}
+.db-status-indicator strong,.db-status-indicator small{display:block}.db-status-indicator small{margin-top:4px;color:#8da1a8}
+.db-status-dot{height:10px;width:10px;background:#e5a94b;border-radius:50%;flex-shrink:0}
+.hub-shell .sidebar-footer{margin-top:0;padding-top:12px;border-top:0;color:#90a5aa;font-size:10px}
+.hub-shell .main-content{flex:1;min-width:0;background:linear-gradient(160deg,#f9fbff 0%,#eef2ff 90%);padding:38px clamp(24px,4vw,56px) 90px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.hub-shell .hidden,.quick-view-overlay.hidden{display:none!important}
+.dashboard-content{display:grid;gap:24px}
+.home-hero__content,.home-card,.home-info-banner{background:rgba(255,255,255,.96);border:1px solid #e0e7ec;box-shadow:0 16px 40px rgba(15,23,42,.05);border-radius:24px}
+.home-hero__content{position:relative;overflow:hidden;padding:28px 32px}
+.home-hero__content::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top left,rgba(19,236,200,.11),transparent 44%);pointer-events:none}
+.home-hero__content>*{position:relative}
+.home-brand{display:flex;align-items:center;gap:12px;margin-bottom:19px}
+.home-brand strong,.home-brand small{display:block}.home-brand strong{font-size:14px;color:#356962}.home-brand small{font-size:11px;color:#87979c;margin-top:3px}
+.home-hero__eyebrow,.home-card__eyebrow{color:var(--derma-green);font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.14em;margin:0 0 10px}
+.home-hero__hospital{font-size:17px;color:var(--derma-deep);font-weight:750;margin:0 0 10px}
+.main-title{font-size:clamp(27px,3vw,44px);letter-spacing:-.04em;color:var(--derma-deep);margin:0;font-weight:830}
+.highlight{color:var(--derma-green)}
+.home-info-banner{background:#f1f5f9;padding:17px 20px;font-size:13px;color:#5b6d80;line-height:1.6;border-radius:17px}
+.home-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(285px,.85fr);gap:22px;align-items:start}
+.home-card{padding:26px;display:grid;gap:19px}
+.home-card__title{color:var(--derma-deep);font-size:18px;letter-spacing:-.015em;margin:0}
+.demo-database-state{padding:15px;border-radius:14px;background:#f5f9f9;border:1px solid #dfeceb}
+.demo-database-state strong{color:#357169;font-size:12px}.demo-database-state p{color:#688187;font-size:12px;margin-top:6px}
+.home-card label{font-weight:750}.home-card .help{margin-top:0}
+.search-inline{display:flex;gap:9px}.search-inline input{min-width:0;flex:1}
+.action-buttons{display:grid;gap:12px}
+.action-btn{display:inline-flex;gap:8px;justify-content:center;align-items:center;min-height:44px;padding:12px 15px;border-radius:13px;border:1px solid #cad7e0;background:#fff;color:#31505b;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer;line-height:1.3}
+.action-btn:hover:not([disabled]){filter:brightness(.96);transform:translateY(-1px)}
+.action-btn.action-primary{background:linear-gradient(135deg,#17335b,#008777);color:white;border:0}
+.action-btn.action-secondary{background:#e7f5f0;color:#157864;border-color:#bcdfd4}
+.action-btn[disabled]{opacity:.53;cursor:not-allowed;transform:none}
+#visitView .main-header,#patientDashboardView .main-header{margin-bottom:22px}
+.patient-header-card{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:25px}
+.patient-header-card h2{font-size:24px;margin:5px 0 8px;color:var(--derma-deep)}
+.patient-header-card p{font-size:12px;color:#6c7f8b}
+.patient-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.dashboard-panel{background:#fff;border:1px solid #d9e5e9;border-radius:16px;padding:22px;min-width:0}
+.dashboard-panel h3{color:var(--derma-deep);font-size:16px;margin:0 0 12px}
+.dashboard-panel p{color:#687e88;font-size:12px;line-height:1.7}
+.dashboard-panel .summary-counts{margin-top:12px;color:#35736c;font-weight:650}
+.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:11px 0}
+.metric-grid>div{font-size:11px;color:#587582;background:#f5f8fa;padding:13px;border-radius:10px}
+.metric-grid strong{display:block;font-size:12px;margin-top:8px;color:#8b6f37}
+.quick-view-overlay{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px}
+.quick-view-backdrop{position:absolute;inset:0;border:0;border-radius:0;background:rgba(13,33,45,.63);cursor:default}
+.quick-view-panel{position:relative;width:min(900px,100%);max-height:min(90vh,900px);overflow:auto;background:#f7fafc;border:1px solid #d5e4e6;border-radius:22px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.25)}
+.quick-view-panel:focus{outline:0}
+.results-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.results-header h2{font-size:24px;color:var(--derma-deep);margin:3px 0 0}
+.quick-view-close-btn{font-size:26px;border:0;background:#edf3f5;color:#4b6972;border-radius:11px;width:39px;height:39px}
+.quick-view-summary-card,.quick-view-panel-card,.quick-view-empty-card{background:#fff;border:1px solid #e1e9ed;border-radius:15px;padding:22px;margin-bottom:15px;box-shadow:0 3px 12px rgba(15,23,42,.04)}
+.quick-view-summary-card{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.quick-view-summary-card h3{font-size:20px;color:var(--derma-deep);margin:6px 0 8px}
+.quick-view-summary-card p,.quick-view-panel-card p,.quick-view-empty-card p{font-size:12px;color:#617783;margin:5px 0;line-height:1.6}
+.quick-view-two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.quick-view-panel-card h3{font-size:15px;color:var(--derma-deep);margin:0 0 13px}
+.quick-view-actions{display:flex;flex-wrap:wrap;gap:10px}
+.quick-view-empty-card{padding:28px}
+.quick-view-open{overflow:hidden}
+@media(max-width:1100px){.home-grid{grid-template-columns:1fr}.hub-shell .main-content{padding:26px 26px 70px}}
+@media(max-width:880px){.hub-shell{display:block}.hub-shell .sidebar{position:static;height:auto;min-height:0;width:100%;padding:17px 20px}.sidebar-nav-area{overflow:visible}.sidebar-nav-area .nav-section{margin-top:11px}.nav-list{flex-direction:row;flex-wrap:wrap}.hub-shell .nav-link{width:auto}.db-status-indicator,.sidebar-footer{display:none}.home-grid,.patient-grid{grid-template-columns:1fr}.hub-shell .main-content{min-height:0}}
+@media(max-width:580px){.home-hero__content,.home-card,.quick-view-panel{padding:18px}.quick-view-two-col{grid-template-columns:1fr}.quick-view-summary-card,.patient-header-card{display:block}.quick-view-summary-card .action-btn,.patient-header-card .action-btn{margin-top:13px}.search-inline{display:block}.search-inline .action-btn{margin-top:10px;width:100%}.hub-shell .main-content{padding:20px 15px 55px}.nav-list{gap:3px}.nav-symbol{font-size:14px}.hub-shell .nav-link{padding:8px}.sidebar-header{margin-bottom:10px}}
+/* Barra lateral compacta en pantallas estrechas: circuitos, búsqueda y paciente siguen visibles. */
+@media(max-width:880px){
+  .hub-shell .sidebar{gap:0}
+  .sidebar-header{margin-bottom:8px}
+  .user-block{padding:8px 11px;margin-bottom:9px}
+  .search-container{margin-bottom:6px}
+  .sidebar-nav-area{display:flex;gap:8px;flex-wrap:wrap;align-items:center;overflow:visible}
+  .sidebar-nav-area .nav-section{margin:0}
+  .nav-title{display:none}
+  .sidebar-nav-area .nav-section:nth-child(2) .nav-link[disabled],
+  .sidebar-nav-area .nav-section:nth-child(3){display:none}
+  .nav-list{gap:2px;flex-wrap:wrap}
+  .hub-shell .nav-link{font-size:11px;min-height:35px}
+  .nav-link small{display:none}
+}

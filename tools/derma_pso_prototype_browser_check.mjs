@@ -79,7 +79,7 @@ try{
    const observed=new Set();
    const snapshot=async()=>{for(const k of await page.locator('[data-field]').evaluateAll(els=>els.map(el=>el.dataset.field)))observed.add(k);for(const k of await page.locator('[data-chip]').evaluateAll(els=>els.map(el=>el.dataset.chip)))observed.add(k)};
    for(const [visit,section] of [['primera','10 Tratamiento primera visita'],['seguimiento','11 Tratamiento seguimiento']]){
-     if(visit==='seguimiento')await page.getByRole('button',{name:'Seguimiento'}).click();
+     if(visit==='seguimiento'){await page.getByRole('button',{name:'Seguimiento'}).click(); await page.locator('#pathology').selectOption('pso')}
      await page.locator('[data-section="'+section+'"] > summary').click();
      for(const group of ['topicos','sinteticos_convencionales','fototerapia','biologicos']){
        for(let slot=1;slot<3;slot++)await page.locator('[data-section="'+section+'"] [data-more="'+group+'"]').click();
@@ -124,6 +124,8 @@ try{
    await page.getByRole('button',{name:'Primera Visita'}).click();
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='true')throw Error('se perdió borrador en memoria');
    await page.locator('#demoPatient').selectOption('DEMO-PSO-002');
+   if(await page.locator('#visitForm').isVisible())throw Error('patología inferida tras cambiar paciente');
+   await page.locator('#pathology').selectOption('pso');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('contaminación paciente');
    await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='true')throw Error('borrador sintético previo no restaurado');
@@ -135,7 +137,9 @@ try{
    if(externalRequests.length)throw Error('peticiones externas '+JSON.stringify(externalRequests));
    if((await page.context().cookies()).length)throw Error('cookies escritas');
    await page.reload({waitUntil:'networkidle'});
+   if(!await page.locator('#homeView').isVisible())throw Error('recarga no devuelve a Inicio');
    if(await page.locator('#demoPatient').inputValue()!==''||await page.locator('#pathology').inputValue()!=='')throw Error('contexto restaurado sin fuente tras recarga');
+   await page.getByRole('button',{name:'Primera Visita'}).click();
    await page.locator('#demoPatient').selectOption('DEMO-PSO-001');
    await page.locator('#pathology').selectOption('pso');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('la recarga no borró el borrador');

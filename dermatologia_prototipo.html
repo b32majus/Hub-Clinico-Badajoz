@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
   <title>DermaNEXus · Prototipo Psoriasis</title>
   <link rel="stylesheet" href="modules/derma/pso_prototype.css">
 </head>
@@ -11,58 +12,136 @@
   <strong>Demostración sintética sin persistencia.</strong>
   No introduce datos clínicos, no calcula escalas no homologadas y no está conectada a Farmacia.
 </div>
-<div class="app">
+<div class="hub-shell">
   <aside class="sidebar" aria-label="Navegación Dermatología">
-    <div class="brand"><span class="brand-icon">✳</span><span>Derma<span class="accent">NEX</span>us<small>PROMueve Extremadura</small></span></div>
-    <div class="nav-title">Circuitos asistenciales</div>
-    <nav class="visit-navigation" aria-label="Seleccionar tipo de visita">
-      <button type="button" class="nav-button active" data-visit="primera" aria-current="page">Primera Visita</button>
-      <button type="button" class="nav-button" data-visit="seguimiento">Seguimiento</button>
-    </nav>
-    <div class="nav-future" aria-label="Secciones futuras">
-      <span>Pacientes <small>Próximamente</small></span>
-      <span>Estadísticas <small>Próximamente</small></span>
+    <div class="sidebar-header">
+      <div class="logo-circle" aria-hidden="true">DN</div>
+      <h1 class="sidebar-title">Hub Clínico<br>Dermatología</h1>
     </div>
-    <div class="sidebar-foot">Prototipo local · No apto para piloto</div>
+    <div class="user-block"><span class="user-icon" aria-hidden="true">◉</span><span>Profesional ficticio<small>Sin autenticación clínica</small></span></div>
+    <div class="search-container">
+      <label class="sr-only" for="patientSearch">Buscar paciente sintético por CIP</label>
+      <input id="patientSearch" class="search-input" type="search" placeholder="Buscar paciente por CIP..." autocomplete="off">
+      <button id="sidebarSearchButton" class="sidebar-search-btn" type="button" aria-label="Buscar paciente">⌕</button>
+    </div>
+    <div class="sidebar-nav-area">
+      <div class="nav-section">
+        <h2 class="nav-title">Consulta</h2>
+        <nav class="nav-list" aria-label="Circuitos de Dermatología">
+          <button type="button" data-view="home" class="nav-link active" aria-current="page"><span class="nav-symbol" aria-hidden="true">⌂</span>Inicio</button>
+          <button type="button" class="nav-link" data-visit="primera" aria-label="Primera Visita"><span class="nav-symbol" aria-hidden="true">＋</span>Nueva Visita</button>
+          <button type="button" class="nav-link" data-visit="seguimiento" aria-label="Seguimiento"><span class="nav-symbol" aria-hidden="true">▤</span>Visita de Seguimiento</button>
+        </nav>
+      </div>
+      <div class="nav-section">
+        <h2 class="nav-title">Gestión</h2>
+        <div class="nav-list">
+          <button type="button" class="nav-link" data-view="patient" id="patientNav" disabled><span class="nav-symbol" aria-hidden="true">◉</span>Paciente <small>Selecciona primero un CIP</small></button>
+          <button type="button" class="nav-link" disabled><span class="nav-symbol" aria-hidden="true">▥</span>Estadísticas <small>Próximamente</small></button>
+          <button type="button" class="nav-link" disabled><span class="nav-symbol" aria-hidden="true">⚕</span>Fármacos <small>Próximamente</small></button>
+          <button type="button" class="nav-link" disabled><span class="nav-symbol" aria-hidden="true">♙</span>Profesionales <small>Próximamente</small></button>
+        </div>
+      </div>
+      <div class="nav-section">
+        <h2 class="nav-title">Farmacia</h2>
+        <div class="nav-list"><button type="button" class="nav-link" disabled><span class="nav-symbol" aria-hidden="true">▦</span>Solicitud a Farmacia <small>Contrato pendiente</small></button></div>
+      </div>
+    </div>
+    <div class="db-status-indicator" role="status"><span class="db-status-dot" aria-hidden="true"></span><span><strong>Solo datos sintéticos</strong><small>Sin base de datos conectada</small></span></div>
+    <div class="sidebar-footer">DermaNEXus · Prototipo no clínico</div>
   </aside>
-  <main class="main">
-    <header class="main-header">
-      <div><div class="eyebrow">DERMATOLOGÍA / BORRADOR CLÍNICO</div><h1 id="visitTitle">Primera Visita</h1><p>Propuesta de captura estructurada adaptada desde Valme.</p></div>
-      <span class="draft-pill">BORRADOR NO HOMOLOGADO</span>
-    </header>
-    <div class="context card">
-      <div class="context-head"><h2>Contexto de visita</h2><span id="fieldCoverage">174 campos de origen Valme mapeados</span></div>
-      <div class="context-grid">
-        <label>Paciente ficticio
-          <select id="demoPatient">
-            <option value="">Seleccionar paciente sintético…</option>
-            <option value="DEMO-PSO-001">Paciente sintético A</option>
-            <option value="DEMO-PSO-002">Paciente sintético B</option>
-          </select>
-        </label>
-        <label>Patología de esta visita
-          <select id="pathology">
-            <option value="">Seleccionar patología…</option>
-            <option value="pso">Psoriasis</option>
-          </select>
-        </label>
+
+  <main class="main-content">
+    <section id="homeView" class="dashboard-content">
+      <header class="home-hero">
+        <div class="home-hero__content">
+          <div class="home-brand"><span class="logo-circle logo-circle--small">DN</span><span><strong>DermaNEXus</strong><small>PROMueve Nexus · entorno de demostración</small></span></div>
+          <p class="home-hero__eyebrow">Centro de control clínico</p>
+          <p class="home-hero__hospital">Hospital Universitario de Badajoz · contexto ficticio</p>
+          <h2 class="main-title">Hub Clínico de <span class="highlight">Dermatología</span></h2>
+        </div>
+      </header>
+      <div class="home-info-banner" role="note">Propuesta de experiencia común con Reumatología. Localiza un paciente sintético y abre Primera Visita, Seguimiento o su resumen. No hay carga ni escritura de Excel.</div>
+      <div class="home-grid">
+        <article class="home-card">
+          <div><p class="home-card__eyebrow">Espacio de trabajo</p><h3 class="home-card__title">⌕ &nbsp;Búsqueda clínica</h3></div>
+          <div class="demo-database-state"><strong>Base de datos no conectada</strong><p>Se muestran dos identidades sintéticas para probar la navegación.</p></div>
+          <label for="homeSearch">CIP sintético</label>
+          <div class="search-inline"><input id="homeSearch" type="search" placeholder="Ej.: DEMO-PSO-001" autocomplete="off"><button type="button" id="homeSearchButton" class="action-btn action-primary">Buscar paciente</button></div>
+          <p class="help">Disponibles: <strong>DEMO-PSO-001</strong> y <strong>DEMO-PSO-002</strong>. Nunca se buscarán datos clínicos reales.</p>
+        </article>
+        <article class="home-card">
+          <div><p class="home-card__eyebrow">Acceso rápido</p><h3 class="home-card__title">◇ &nbsp;Rutas principales</h3></div>
+          <div class="action-buttons">
+            <button id="btnNuevaVisita" class="action-btn action-primary" type="button">＋ Nueva Visita</button>
+            <button id="btnSeguimientoHome" class="action-btn action-secondary" type="button">▤ Visita de Seguimiento</button>
+            <button class="action-btn" type="button" disabled>▥ Cuadro de Mando Servicio · Próximamente</button>
+          </div>
+        </article>
       </div>
-      <p class="help">La patología se elige en la visita, no desde la barra lateral. Hidradenitis se incorporará después, cuando disponga de su contrato propio.</p>
-    </div>
-    <section id="emptyState" class="empty card">
-      <span class="empty-symbol">◇</span>
-      <h2>Selecciona un paciente ficticio y la patología</h2>
-      <p>El formulario permanece vacío hasta que se seleccione explícitamente Psoriasis. Ningún dato previo se presupone.</p>
     </section>
-    <form id="visitForm" class="hidden" novalidate aria-label="Borrador Psoriasis" onsubmit="return false">
-      <div class="summary card">
-        <div><strong>Formulario de Psoriasis</strong><p>Secciones plegables con campos de Valme adaptados a controles de selección rápida.</p></div>
-        <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
+
+    <section id="visitView" class="hidden">
+      <header class="main-header">
+        <div><div class="eyebrow">DERMATOLOGÍA / BORRADOR CLÍNICO</div><h1 id="visitTitle">Primera Visita</h1><p>Propuesta de captura de Psoriasis basada en las variables de Valme.</p></div>
+        <span class="draft-pill">NO HOMOLOGADO</span>
+      </header>
+      <div class="context card">
+        <div class="context-head"><h2>Contexto de visita</h2><span id="fieldCoverage">174 campos de origen Valme mapeados</span></div>
+        <div class="context-grid">
+          <label>Paciente ficticio
+            <select id="demoPatient">
+              <option value="">Seleccionar paciente sintético…</option>
+              <option value="DEMO-PSO-001">Paciente sintético A</option>
+              <option value="DEMO-PSO-002">Paciente sintético B</option>
+            </select>
+          </label>
+          <label>Patología de esta visita
+            <select id="pathology">
+              <option value="">Seleccionar patología…</option>
+              <option value="pso">Psoriasis</option>
+            </select>
+          </label>
+        </div>
+        <p class="help">La patología se selecciona dentro de la visita. La búsqueda solo selecciona al paciente; no decide su diagnóstico ni su tipo de acto.</p>
       </div>
-      <div id="clinicalSections" class="sections"></div>
-      <footer class="form-footer">No hay botón Guardar: este prototipo solo mantiene el borrador en memoria hasta cerrar o recargar la página. No realiza solicitudes a Farmacia.</footer>
-    </form>
+      <section id="emptyState" class="empty card">
+        <span class="empty-symbol">◇</span>
+        <h2>Selecciona un paciente ficticio y la patología</h2>
+        <p>El formulario permanece vacío hasta la elección explícita de Psoriasis. Ningún dato previo se presupone.</p>
+      </section>
+      <form id="visitForm" class="hidden" novalidate aria-label="Borrador Psoriasis" onsubmit="return false">
+        <div class="summary card">
+          <div><strong>Formulario de Psoriasis</strong><p>Secciones plegables de Valme adaptadas a controles de selección rápida.</p></div>
+          <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
+        </div>
+        <div id="clinicalSections" class="sections"></div>
+        <footer class="form-footer">No hay botón Guardar. Estos datos solo existen en memoria hasta cerrar o recargar la página. No se realizan solicitudes a Farmacia.</footer>
+      </form>
+    </section>
+
+    <section id="patientDashboardView" class="hidden" aria-label="Resumen del paciente">
+      <div class="main-header"><div><p class="eyebrow">REVISIÓN INDIVIDUAL · SINTÉTICA</p><h1>Cuadro de Mando de Paciente</h1><p>Solo se muestran borradores de esta sesión; sin datos de historia clínica.</p></div><span class="draft-pill">SIN HISTORIA PERSISTIDA</span></div>
+      <div class="patient-header-card card">
+        <div><span class="eyebrow">Paciente ficticio</span><h2 id="dashboardPatientId">Sin paciente seleccionado</h2><p>Diagnóstico: no consta en historia · Última visita registrada: no consta</p></div>
+        <button type="button" id="dashboardSeguimiento" class="action-btn action-secondary">Registrar Seguimiento</button>
+      </div>
+      <div class="patient-grid">
+        <div class="dashboard-panel"><h3>Resumen clínico</h3><p>Sin datos clínicos validados ni lectura de historia conectada.</p><p id="dashboardDraftCounts" class="summary-counts"></p></div>
+        <div class="dashboard-panel"><h3>Índices de Psoriasis</h3><div class="metric-grid"><div>PASI <strong>Sin evaluación</strong></div><div>BSA <strong>Sin evaluación</strong></div><div>PGA <strong>Sin evaluación</strong></div><div>DLQI <strong>Sin evaluación</strong></div></div><p class="help">No se calculan ni interpretan puntuaciones no homologadas.</p></div>
+        <div class="dashboard-panel"><h3>Tratamientos e historia</h3><p>Sin tratamiento activo validado o historia farmacológica disponible. Los borradores de visitas no equivalen a una orden clínica.</p></div>
+        <div class="dashboard-panel"><h3>Evolución e historial de visitas</h3><p>No disponible: la demo no guarda actos clínicos ni establece cronología.</p></div>
+      </div>
+    </section>
   </main>
+</div>
+
+<div class="quick-view-overlay hidden" id="quickViewOverlay" role="presentation">
+  <button type="button" class="quick-view-backdrop" id="quickViewBackdrop" aria-label="Cerrar vista rápida"></button>
+  <section class="quick-view-panel" role="dialog" aria-modal="true" aria-labelledby="quickViewTitle" tabindex="-1">
+    <header class="results-header"><div><p class="eyebrow">DERMATOLOGÍA · VISTA RÁPIDA</p><h2 id="quickViewTitle">Quick View</h2></div><button id="closeQuickView" class="quick-view-close-btn" type="button" aria-label="Cerrar vista rápida">×</button></header>
+    <div id="quickViewContent" aria-live="polite"></div>
+  </section>
 </div>
 <script type="module" src="modules/derma/pso_prototype.js"></script>
 </body>

@@ -29,7 +29,12 @@ const priorTherapies=['Tópico','Fototerapia','Sistémico convencional','Biológ
 const origin=['Atención Primaria','Dermatología general','Multidisciplinar Derma–Reuma'];
 const adherences=['Buena','Regular','Mala'];
 const intensity=['No','Leve','Moderada','Intensa'];
-const current={patient:'',pathology:'',visit:'primera'};
+const current={patient:'',pathology:'',visit:'primera',view:'home'};
+const pathologyByVisit=new Map();
+const DEMO_PATIENTS=new Map([
+  ['DEMO-PSO-001','Paciente sintético A'],
+  ['DEMO-PSO-002','Paciente sintético B'],
+]);
 const drafts=new Map();
 const slots=new Map();
 const byKey=new Map(PSO_VALME_FIELDS.map(f=>[f.key,f]));
@@ -177,16 +182,63 @@ function refreshZoneSummary(){
   const zone=document.getElementById('zoneSummary');
   if(zone)zone.innerHTML=zoneSummary();
 }
+function patientVisitKey(patient=current.patient,visit=current.visit){return patient+'|'+visit}
+function selectPatient(id){
+  const normalized=DEMO_PATIENTS.has(id)?id:'';
+  if(current.patient!==normalized){
+    current.patient=normalized;
+    current.pathology=pathologyByVisit.get(patientVisitKey())||'';
+  }
+  $('#demoPatient').value=current.patient;
+  $('#pathology').value=current.pathology;
+  $('#patientNav').disabled=!current.patient;
+  $('#patientNav small').textContent=current.patient?'Resumen sintético':'Selecciona primero un CIP';
+  render();
+}
+function activateView(view){
+  if(view==='patient'&&!current.patient)return;
+  current.view=view;
+  render();
+}
+function selectVisit(visit){
+  if(visit!=='primera'&&visit!=='seguimiento')return;
+  current.visit=visit;
+  current.pathology=pathologyByVisit.get(patientVisitKey())||'';
+  $('#pathology').value=current.pathology;
+  activateView('visit');
+}
+function getDraftCountFor(patient,visit){
+  const scoped=drafts.get(patient+'|'+visit+'|pso');
+  return scoped?Object.values(scoped).filter(v=>v!==null&&v!==undefined&&v!=='').length:0;
+}
+function renderPatientDashboard(){
+  $('#dashboardPatientId').textContent=current.patient||'Sin paciente';
+  const primera=getDraftCountFor(current.patient,'primera');
+  const seguimiento=getDraftCountFor(current.patient,'seguimiento');
+  $('#dashboardDraftCounts').textContent='Borrador Primera Visita: '+primera+' campos · Borrador Seguimiento: '+seguimiento+' campos. Ninguno está guardado como acto clínico.';
+}
 function render(preserveOpen=false){
+  $('#homeView').classList.toggle('hidden',current.view!=='home');
+  $('#visitView').classList.toggle('hidden',current.view!=='visit');
+  $('#patientDashboardView').classList.toggle('hidden',current.view!=='patient');
+  document.querySelectorAll('[data-view]').forEach(btn=>{
+    const on=btn.dataset.view===current.view;
+    btn.classList.toggle('active',on);
+    if(on)btn.setAttribute('aria-current','page');else btn.removeAttribute('aria-current');
+  });
+  document.querySelectorAll('[data-visit]').forEach(btn=>{
+    const on=current.view==='visit'&&btn.dataset.visit===current.visit;
+    btn.classList.toggle('active',on);
+    if(on)btn.setAttribute('aria-current','page');else btn.removeAttribute('aria-current');
+  });
+  $('#patientNav').disabled=!current.patient;
+  $('#patientNav small').textContent=current.patient?'Resumen sintético':'Selecciona primero un CIP';
+  if(current.view==='patient')renderPatientDashboard();
   const form=$('#visitForm'),empty=$('#emptyState');
   const ready=current.patient&&current.pathology==='pso';
   form.classList.toggle('hidden',!ready);empty.classList.toggle('hidden',!!ready);
   $('#visitTitle').textContent=current.visit==='primera'?'Primera Visita':'Seguimiento';
-  document.querySelectorAll('[data-visit]').forEach(btn=>{
-    const on=btn.dataset.visit===current.visit;btn.classList.toggle('active',on);
-    if(on)btn.setAttribute('aria-current','page');else btn.removeAttribute('aria-current');
-  });
-  if(!ready)return;
+  if(current.view!=='visit'||!ready)return;
   const opened=preserveOpen?new Set([...document.querySelectorAll('.section[open]')].map(x=>x.dataset.section)):null;
   const selected=sections.filter(([key])=>!(['10 Tratamiento primera visita','11 Tratamiento seguimiento','12 Seguimiento terapéutico'].includes(key))||
     (current.visit==='primera'&&key==='10 Tratamiento primera visita')||
@@ -195,11 +247,69 @@ function render(preserveOpen=false){
   if(opened)document.querySelectorAll('.section').forEach(el=>el.open=opened.has(el.dataset.section));
   bind();updateStatus();
 }
-$('#demoPatient').addEventListener('change',e=>{current.patient=e.target.value;render()});
-$('#pathology').addEventListener('change',e=>{current.pathology=e.target.value;render()});
-document.querySelectorAll('[data-visit]').forEach(el=>el.addEventListener('click',()=>{
-  if(el.dataset.visit===current.visit)return;
-  current.visit=el.dataset.visit;render();
-}));
+const overlay=$('#quickViewOverlay');
+let lastSearchTrigger=null;
+function closeQuickView(){
+  if(overlay.classList.contains('hidden'))return;
+  overlay.classList.add('hidden');
+  document.body.classList.remove('quick-view-open');
+  lastSearchTrigger?.focus();
+}
+function openQuickView(patientId,trigger){
+  const id=String(patientId||'').trim().toUpperCase();
+  lastSearchTrigger=trigger||null;
+  const known=DEMO_PATIENTS.has(id);
+  $('#quickViewTitle').textContent=known?'Quick View · '+id:'Paciente no encontrado';
+  if(!known){
+    $('#quickViewContent').innerHTML='<div class="quick-view-empty-card"><h3>No existe en los datos sintéticos</h3><p>La búsqueda no crea pacientes ni consulta la base de datos del hospital.</p><p>Utiliza DEMO-PSO-001 o DEMO-PSO-002.</p></div>';
+  }else{
+    selectPatient(id);
+    const totalPrimera=getDraftCountFor(id,'primera'),totalSeguimiento=getDraftCountFor(id,'seguimiento');
+    $('#quickViewContent').innerHTML=
+      '<div class="quick-view-summary-card"><div><span class="eyebrow">Paciente ficticio</span><h3>'+escapeText(DEMO_PATIENTS.get(id))+'</h3><p><strong>CIP demo:</strong> '+escapeText(id)+'</p><p><strong>Patología registrada:</strong> No consta · <strong>Última visita:</strong> No consta</p></div><button type="button" class="action-btn action-primary" data-quick-action="patient">Ver Dashboard Completo</button></div>'+
+      '<div class="quick-view-two-col"><div class="quick-view-panel-card"><h3>Resumen clínico</h3><p>Sin historia conectada ni tratamiento activo verificado.</p><p>Borrador primera visita: '+totalPrimera+' campos</p><p>Borrador seguimiento: '+totalSeguimiento+' campos</p></div>'+
+      '<div class="quick-view-panel-card"><h3>Índices clínicos</h3><div class="metric-grid"><div>PASI<strong>No evaluable</strong></div><div>BSA<strong>No evaluable</strong></div><div>PGA<strong>No evaluable</strong></div><div>DLQI<strong>No evaluable</strong></div></div><p class="help">Puntuaciones pendientes de homologación clínica.</p></div></div>'+
+      '<div class="quick-view-panel-card"><h3>Acciones rápidas</h3><div class="quick-view-actions"><button type="button" class="action-btn action-primary" data-quick-action="primera">Abrir Primera Visita</button><button type="button" class="action-btn action-secondary" data-quick-action="seguimiento">Abrir Seguimiento</button></div><p class="help">Las acciones no crean ni guardan actos clínicos.</p></div>';
+    $('#quickViewContent').querySelectorAll('[data-quick-action]').forEach(btn=>btn.addEventListener('click',()=>{
+      const action=btn.dataset.quickAction;
+      closeQuickView();
+      if(action==='patient')activateView('patient');
+      else selectVisit(action);
+    }));
+  }
+  overlay.classList.remove('hidden');
+  document.body.classList.add('quick-view-open');
+  overlay.querySelector('[role="dialog"]').focus();
+}
+function runSearch(input,trigger){openQuickView(input.value,trigger)}
+for(const [inputId,buttonId] of [['#patientSearch','#sidebarSearchButton'],['#homeSearch','#homeSearchButton']]){
+  const input=$(inputId),button=$(buttonId);
+  button.addEventListener('click',()=>runSearch(input,button));
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runSearch(input,input)}});
+}
+$('#closeQuickView').addEventListener('click',closeQuickView);
+$('#quickViewBackdrop').addEventListener('click',closeQuickView);
+document.addEventListener('keydown',e=>{
+  if(!overlay.classList.contains('hidden')){
+    if(e.key==='Escape'){e.preventDefault();closeQuickView()}
+    else if(e.key==='Tab'){
+      const controls=[...overlay.querySelectorAll('[role="dialog"] button:not([disabled])')].filter(el=>el.getClientRects().length);
+      const first=controls[0],last=controls.at(-1);
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+    }
+  }
+});
+$('#demoPatient').addEventListener('change',e=>selectPatient(e.target.value));
+$('#pathology').addEventListener('change',e=>{
+  current.pathology=e.target.value;
+  if(current.patient)pathologyByVisit.set(patientVisitKey(),current.pathology);
+  render();
+});
+document.querySelectorAll('[data-visit]').forEach(btn=>btn.addEventListener('click',()=>selectVisit(btn.dataset.visit)));
+document.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>activateView(btn.dataset.view)));
+$('#btnNuevaVisita').addEventListener('click',()=>selectVisit('primera'));
+$('#btnSeguimientoHome').addEventListener('click',()=>selectVisit('seguimiento'));
+$('#dashboardSeguimiento').addEventListener('click',()=>selectVisit('seguimiento'));
 $('#fieldCoverage').textContent=PSO_VALME_FIELDS.length+' campos de origen Valme mapeados';
 render();
