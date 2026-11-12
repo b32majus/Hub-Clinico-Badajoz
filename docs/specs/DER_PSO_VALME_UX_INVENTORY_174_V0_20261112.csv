@@ -1,0 +1,175 @@
+valme_campo_origen,bloque_ux_nexus,control_propuesto,naturaleza_dato,precaucion
+nusha,01 Datos de consulta,Identidad acotada sin NUSHA universal,contexto,Nunca inferir identidad/tipo/pauta desde historial
+fecha_visita,01 Datos de consulta,Fecha elegida,contexto,Nunca inferir identidad/tipo/pauta desde historial
+tipo_visita,01 Datos de consulta,Contexto de navegación (no segunda selección),contexto,Nunca inferir identidad/tipo/pauta desde historial
+procedencia,01 Datos de consulta,Desplegable,contexto,Nunca inferir identidad/tipo/pauta desde historial
+tratamiento_previo_consulta,01 Datos de consulta,Solo lectura de historial documentado,contexto,Nunca inferir identidad/tipo/pauta desde historial
+fecha_inicio_psoriasis,02 Historia de PsO,Fecha,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+fecha_diagnostico_psoriasis,02 Historia de PsO,Fecha,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+curso_evolutivo,02 Historia de PsO,Desplegable de vocabulario existente,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+fenotipo,02 Historia de PsO,Desplegable de vocabulario existente,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+antecedentes_familiares_psoriasis,02 Historia de PsO,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+desenc_infeccion,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_estres,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_farmacos,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_traumatismo_friccion,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_retirada_corticoides,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_tabaco,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_alcohol,02 Historia de PsO,Chips multiselección,triestado,No seleccionado ≠ No
+desenc_otros,02 Historia de PsO,Campo texto Otros,texto,No seleccionado ≠ No
+tratamiento_previo,02 Historia de PsO,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+tipo_tratamiento_previo,02 Historia de PsO,Desplegable de vocabulario existente,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+tratamiento_previo_detalle,02 Historia de PsO,Texto explícito,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+motivo_suspension_previo,02 Historia de PsO,Texto explícito,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+respuesta_previa,02 Historia de PsO,Texto explícito,dato-por-visita,Opciones nuevas requieren revisión clínica; sin autocompletar desde historia
+comorb_obesidad,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_sobrepeso,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_hta,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_dislipemia,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_diabetes_prediabetes,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_sindrome_metabolico,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_esteatosis_hepatica,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_alteracion_transaminasas,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_hepatopatia_cronica,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_artritis_psoriasica_conocida,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_sospecha_artritis_psoriasica,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_eii,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_cardiopatia_isquemica,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_ictus_ait,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_insuficiencia_cardiaca,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_enfermedad_vascular_periferica,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_tabaquismo,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_alcohol,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+comorb_ansiedad_depresion,03 Comorbilidades,Chips multiselección con revisión explícita,triestado,No seleccionado ≠ No; permitir ausencia solo con acto explícito
+loc_cuero_cabelludo,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_cara,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_tronco,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_miembros_superiores,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_miembros_inferiores,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_pliegues,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_genitales,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_palmas,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_plantas,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+loc_unas,04 Localizaciones,Chips anatómicos multiselección con revisión explícita,triestado,No seleccionado ≠ No; solo selección del profesional
+zona_esp_cuero_cabelludo,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+zona_esp_unas,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+zona_esp_cara,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+zona_esp_genitales,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+zona_esp_palmas,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+zona_esp_plantas,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+zona_esp_pliegues,04 Localizaciones,Badge de zona especial ligado a selección explícita,derivado-presentacion,Reflejar clic sobre localización; no duplicar pregunta ni crear diagnóstico
+bsa,05 Exploración/PASI,Valor numérico,dato-por-visita,Mantener límites/versiones por confirmar
+pga,05 Exploración/PASI,Selector discreto 0–5,dato-por-visita,Mantener límites/versiones por confirmar
+pasi,05 Exploración/PASI,Total calculado no editable,derivado,Solo si 16 componentes completos; fórmula clínica pendiente de confirmar
+pasi_cabeza_eritema,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_cabeza_induracion,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_cabeza_escamas,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_cabeza_area,05 Exploración/PASI,Selector 0–6,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_tronco_eritema,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_tronco_induracion,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_tronco_escamas,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_tronco_area,05 Exploración/PASI,Selector 0–6,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_brazos_eritema,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_brazos_induracion,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_brazos_escamas,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_brazos_area,05 Exploración/PASI,Selector 0–6,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_piernas_eritema,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_piernas_induracion,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_piernas_escamas,05 Exploración/PASI,Selector 0–4,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+pasi_piernas_area,05 Exploración/PASI,Selector 0–6,dato-por-visita,Valores válidos incluyen cero explícito; vacío ≠ 0
+afectacion_ungueal,05 Exploración/PASI,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+observaciones_clinicas,05 Exploración/PASI,Texto libre,texto,No autocodificar
+eva_prurito,06 Síntomas,Escala discreta visual 1–10 con valor visible,dato-por-visita,"Mantener etiqueta y rango fuente, validar uso"
+eva_dolor,06 Síntomas,Escala discreta visual 1–10 con valor visible,dato-por-visita,"Mantener etiqueta y rango fuente, validar uso"
+escozor,06 Síntomas,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+fisuracion,06 Síntomas,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+sangrado,06 Síntomas,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+alteracion_funcional,06 Síntomas,Chips o desplegable de intensidad,dato-por-visita,No/Leve/Moderada/Intensa; vacío distinto
+alteracion_sueno,06 Síntomas,Chips o desplegable de intensidad,dato-por-visita,No/Leve/Moderada/Intensa; vacío distinto
+dlqi_q1,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q2,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q3,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q4,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q5,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q6,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q7,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q8,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q9,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_q10,07 DLQI,Opciones de respuesta compactas por ítem,cuestionario,Ítem 7 con subpregunta condicional; licencia/versión pendientes
+dlqi_total,07 DLQI,Total calculado solo con respuestas completas,derivado,Sin respuesta ≠ 0
+pure4_q1,08 PURE-4,Chips Sí/No/Sin contestar por pregunta,cuestionario,No generar derivación automática
+pure4_q2,08 PURE-4,Chips Sí/No/Sin contestar por pregunta,cuestionario,No generar derivación automática
+pure4_q3,08 PURE-4,Chips Sí/No/Sin contestar por pregunta,cuestionario,No generar derivación automática
+pure4_q4,08 PURE-4,Chips Sí/No/Sin contestar por pregunta,cuestionario,No generar derivación automática
+pure4_total_positivas,08 PURE-4,Total visible si 4/4 respuestas,derivado,No representa acto asistencial
+derivacion_derma_reuma,09 Derivaciones/plan,Chips Sí / No / Sin consignar,triestado,Hecho explícito; cribado ≠ derivación realizada
+tx_primera_topicos_farmaco_1,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_topicos_posologia_1,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_topicos_farmaco_2,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_topicos_posologia_2,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_topicos_farmaco_3,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_topicos_posologia_3,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_topicos_otros,10 Tratamiento primera visita,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_primera_sinteticos_convencionales_farmaco_1,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_sinteticos_convencionales_posologia_1,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_sinteticos_convencionales_farmaco_2,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_sinteticos_convencionales_posologia_2,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_sinteticos_convencionales_farmaco_3,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_sinteticos_convencionales_posologia_3,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_sinteticos_convencionales_otros,10 Tratamiento primera visita,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_primera_fototerapia_farmaco_1,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_fototerapia_posologia_1,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_fototerapia_farmaco_2,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_fototerapia_posologia_2,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_fototerapia_farmaco_3,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_fototerapia_posologia_3,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_fototerapia_otros,10 Tratamiento primera visita,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_primera_biologicos_farmaco_1,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_biologicos_posologia_1,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_biologicos_farmaco_2,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_biologicos_posologia_2,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_biologicos_farmaco_3,10 Tratamiento primera visita,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_primera_biologicos_posologia_3,10 Tratamiento primera visita,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_primera_biologicos_otros,10 Tratamiento primera visita,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_seguimiento_topicos_farmaco_1,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_topicos_posologia_1,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_topicos_farmaco_2,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_topicos_posologia_2,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_topicos_farmaco_3,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_topicos_posologia_3,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_topicos_otros,11 Tratamiento seguimiento,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_seguimiento_sinteticos_convencionales_farmaco_1,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_sinteticos_convencionales_posologia_1,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_sinteticos_convencionales_farmaco_2,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_sinteticos_convencionales_posologia_2,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_sinteticos_convencionales_farmaco_3,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_sinteticos_convencionales_posologia_3,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_sinteticos_convencionales_otros,11 Tratamiento seguimiento,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_seguimiento_fototerapia_farmaco_1,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_fototerapia_posologia_1,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_fototerapia_farmaco_2,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_fototerapia_posologia_2,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_fototerapia_farmaco_3,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_fototerapia_posologia_3,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_fototerapia_otros,11 Tratamiento seguimiento,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+tx_seguimiento_biologicos_farmaco_1,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_biologicos_posologia_1,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_biologicos_farmaco_2,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_biologicos_posologia_2,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_biologicos_farmaco_3,11 Tratamiento seguimiento,Fila repetible con selector de fármaco,tratamiento-explicito,"Selección del nombre nunca rellena pauta, dosis ni vía"
+tx_seguimiento_biologicos_posologia_3,11 Tratamiento seguimiento,"Campo terapéutico editable, vacío por defecto",tratamiento-explicito,No derivar del fármaco ni del tratamiento previo
+tx_seguimiento_biologicos_otros,11 Tratamiento seguimiento,Fila adicional Otros / comentario explícito,tratamiento-explicito,No sobrescribir; admitir valores no listados
+seguimiento_adherencia_categoria,12 Seguimiento terapéutico,Desplegable,dato-por-visita,Decisión de continuar/cambiar no inferida desde fármacos
+seguimiento_ajuste_terapeutico,12 Seguimiento terapéutico,Texto breve estructurable,dato-por-visita,Decisión de continuar/cambiar no inferida desde fármacos
+seguimiento_adherencia_morisky_q1,12 Seguimiento terapéutico,Chips Sí/No/Sin contestar,cuestionario,Validar versión y sentido de ítems
+seguimiento_adherencia_morisky_q2,12 Seguimiento terapéutico,Chips Sí/No/Sin contestar,cuestionario,Validar versión y sentido de ítems
+seguimiento_adherencia_morisky_q3,12 Seguimiento terapéutico,Chips Sí/No/Sin contestar,cuestionario,Validar versión y sentido de ítems
+seguimiento_adherencia_morisky_q4,12 Seguimiento terapéutico,Chips Sí/No/Sin contestar,cuestionario,Validar versión y sentido de ítems
+seguimiento_morisky_total_no_adherencia,12 Seguimiento terapéutico,Indicador derivado si 4/4 completo,derivado,No asumir adherencia por valor ausente
+seguimiento_motivo_cambio,12 Seguimiento terapéutico,Texto breve estructurable,dato-por-visita,Decisión de continuar/cambiar no inferida desde fármacos
+seguimiento_efectos_adversos,12 Seguimiento terapéutico,Chips Sí / No / Sin consignar,triestado,No predeterminar negativo
+impresion_clinica,13 Plan,Texto/fecha según semántica confirmada,texto,No sustituir contenido explícito por etiquetas sugeridas
+objetivo_terapeutico,13 Plan,Texto/fecha según semántica confirmada,texto,No sustituir contenido explícito por etiquetas sugeridas
+otras_derivaciones,13 Plan,Texto/fecha según semántica confirmada,texto,No sustituir contenido explícito por etiquetas sugeridas
+proxima_revision,13 Plan,Texto/fecha según semántica confirmada,texto,No sustituir contenido explícito por etiquetas sugeridas
+comentarios_finales,13 Plan,Texto/fecha según semántica confirmada,texto,No sustituir contenido explícito por etiquetas sugeridas
