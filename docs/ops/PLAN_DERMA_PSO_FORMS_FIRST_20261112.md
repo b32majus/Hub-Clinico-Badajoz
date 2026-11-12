@@ -4,6 +4,23 @@
 **Base:** `b32majus/Hub-Clinico-Badajoz` rama `promueve/nexus-v4`, prototipo aislado `work/derma-pso-reuma-shell-20261112@444f9d1`. PR #916 DRAFT sigue sin merge. Contratos #697 (Derma base) y #728 (PsO) abiertos sin firma clínica.
 **Instrucción:** sil 12-11: «Primera Visita y Seguimiento deben alimentar lo demás»; «deja primero documentado cómo vamos a proceder y empieza por Primera Visita». Diseño UX de Reuma como referencia; catálogo de variables Valme como **donante**, no como norma médica ni identidad institucional.
 
+## F2.1 · Corrección funcional y UX tras revisión humana — CANDIDATA LOCAL (12-11-2026)
+
+**Origen de la revisión:** Sil validó el CIP nuevo y detectó que el contenido F2 «no está bien», y que se habían perdido chips, botones, estética y UX/UI de Primera Visita. Inspección real de los 11 apartados: la primera pantalla estaba dominada por PASI en desplegables, chips escondidos, PURE-4/Morisky respondibles sin enunciados, tratamiento anterior como campo sin fuente. Las 38 pruebas técnicas previas no fueron aprobación clínica ni de UX.
+
+**Cambio implementado solo en la rama aislada work/derma-pso-f2-functional-ux-20261112**, base F2 bdffcba, sin actualizar demo privada ni GitHub canónico:
+- **Misma UX F1:** chips de síntomas, localizaciones y familia terapéutica visibles desde el inicio; selección solo por color, sin check. Comorbilidades como revisión opcional, nunca «sin cambios» inferido. F1 no se edita. No recuperar tarjeta de guía ni botones «Siguiente apartado».
+- **Orden F2:** contexto → tratamiento declarado → síntomas → localizaciones → PASI/actividad → DLQI candidato → adherencia/tolerabilidad/decisión → comorbilidades opcionales → PURE-4 pendiente → derivación realizada explícita → plan.
+- **Tratamiento:** sin historia conectada. Cuatro familias de chips (un grupo visible por vez); relación por línea opcional y expresamente elegida: actual_referido, anterior_referido, propuesto_no_validado. Contexto muestra únicamente datos del borrador en sesión, nunca tratamiento válido por historia. Un nombre no escribe dosis, vía, pauta, continuidad, inducción, switch o validación. Sugerencias Valme provisionales.
+- **Actividad/PASI:** 4 regiones en tarjetas con 4 componentes cada una, BSA %, PGA, cero distinto de vacío, sin cálculos ni interpretación. DLQI conserva 10 ítems candidatos sin total clínico.
+- **Revisión:** chips de adherencia, efectos adversos y decisión; detalles condicionales, confirmación antes de descartar información previa. Ninguna propuesta equivale a solicitud ni validación FH.
+- **Instrumentos incompletos:** PURE-4 y Morisky-Green no presentan controles de respuestas mientras no se aprueben textos, derechos, versiones y puntuaciones. Sus 8 claves fuente permanecen en el crosswalk, sin aparentar cuestionario completado.
+- **Plan:** fecha orientativa adicional extra_seg_proxima_fecha_prevista independiente de proxima_revision (texto donante); no programa cita ni sobrescribe campo Valme. Los campos extra no están en contrato clínico aprobado ni son exportables a piloto.
+
+**QA técnica:** Chromium F2 original 8/8 adaptado a nueva secuencia + batería UX 9/9 + regresiones F1/PsO/Reuma-shell/CIP, **47/47 PASS**. Capturas completas desktop/móvil y focales PASI, tratamientos y decisiones inspeccionadas. No hay QA clínica humana de este corte, instrumento clínico homologado, persistencia F3 ni consumidores F4. Demo Tailscale sigue con F2 anterior hasta GO independiente de despliegue privado y QA HTTPS.
+
+**Histórico:** el apartado posterior «Estado F2» describe el primer corte técnicamente verde, con errores de diseño identificados después. Este bloque F2.1 prevalece para la revisión F2. INDEX/WORK_ORDER_STATUS canónicos no reflejan estos cambios locales.
+
 ## F1 · Revisión UX solicitada por Sil (12-11-2026) — CANDIDATA LOCAL
 
 - La pantalla empieza como Reuma: **buscar CIP** y, si aún no consta, introducirlo; después **nombre y apellidos, sexo y patología** explícitos. En la demo solo se aceptan identidades ficticias con prefijo `DEMO-`, sin conexión hospitalaria, sin historia persistida ni autorización de uso con pacientes.

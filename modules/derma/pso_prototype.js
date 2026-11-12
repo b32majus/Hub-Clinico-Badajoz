@@ -19,22 +19,23 @@ const sections = [
 ];
 // F2: grupos de la visita actual, sin repetir historia inicial ni autorrellenar desde Primera.
 const followupSections=[
-  '01 Datos de consulta','03 Comorbilidades','04 Localizaciones','05 Exploración/PASI',
-  '06 Síntomas','07 DLQI','08 PURE-4','09 Derivaciones/plan',
-  '11 Tratamiento seguimiento','12 Seguimiento terapéutico','13 Plan',
+  '01 Datos de consulta','11 Tratamiento seguimiento','06 Síntomas',
+  '04 Localizaciones','05 Exploración/PASI','07 DLQI',
+  '12 Seguimiento terapéutico','03 Comorbilidades','08 PURE-4',
+  '09 Derivaciones/plan','13 Plan',
 ];
 const followupTitles={
-  '01 Datos de consulta':'Datos de este seguimiento',
-  '03 Comorbilidades':'Revisión de comorbilidades (opcional)',
-  '04 Localizaciones':'Localizaciones en la visita actual',
-  '05 Exploración/PASI':'Exploración clínica actual · PASI/BSA/PGA',
-  '06 Síntomas':'Síntomas en la visita actual',
+  '01 Datos de consulta':'Contexto de esta visita',
+  '03 Comorbilidades':'Revisión opcional de comorbilidades',
+  '04 Localizaciones':'Localizaciones actuales',
+  '05 Exploración/PASI':'Actividad actual · BSA, PGA y PASI',
+  '06 Síntomas':'Síntomas actuales e impacto',
   '07 DLQI':'DLQI · cuestionario candidato de esta visita',
-  '08 PURE-4':'PURE-4 · cribado opcional',
+  '08 PURE-4':'PURE-4 · pendiente de autorización',
   '09 Derivaciones/plan':'Derivaciones documentadas en esta visita',
-  '11 Tratamiento seguimiento':'Tratamiento documentado en este seguimiento',
-  '12 Seguimiento terapéutico':'Adherencia, revisión y cambios explícitos',
-  '13 Plan':'Plan y próxima revisión',
+  '11 Tratamiento seguimiento':'Tratamiento referido o propuesto en esta visita',
+  '12 Seguimiento terapéutico':'Adherencia, tolerabilidad y decisión expresa',
+  '13 Plan':'Plan y próxima revisión prevista',
 };
 // Sugerencias históricas DONANTE Valme, no categorías del catálogo común.
 const therapyGroups=[
@@ -68,6 +69,7 @@ const DEMO_PATIENTS=new Map([
   ['DEMO-PSO-001',{name:'Paciente sintético A',sex:''}],
   ['DEMO-PSO-002',{name:'Paciente sintético B',sex:''}],
 ]);
+let selectedFollowupFamily=''; // filtro de visualización; no declara tratamiento
 const drafts=new Map();
 const slots=new Map();
 const byKey=new Map(PSO_VALME_FIELDS.map(f=>[f.key,f]));
@@ -253,12 +255,204 @@ function therapyHtml(visit){
     '<label style="margin-top:12px">Otros / comentario explícito<input data-field="'+otherKey+'" type="text" value="'+escapeText(valueFor(otherKey))+'" placeholder="Opcional"></label></div>';
   }).join('');
 }
+
+// Únicamente Seguimiento F2: composición de la consulta real sin lectura clínica.
+// Reusa las mismas claves fuente de Valme; extras de UX no pertenecen al esquema aprobado.
+function followupChoiceHtml(key,options,label){
+  const selected=valueFor(key);
+  const chips=options.map(o=>{
+    const v=typeof o==='string'?o:o.value;
+    const title=typeof o==='string'?o:o.label;
+    const chosen=selected===v;
+    return '<button type="button" class="chip followup-choice" data-choice-field="'+escapeText(key)+
+      '" data-choice-value="'+escapeText(v)+'" aria-pressed="'+String(chosen)+'">'+escapeText(title)+'</button>';
+  }).join('');
+  return '<div class="followup-choice-group" role="group" aria-label="'+escapeText(label)+'">'+
+    '<strong class="followup-choice-label">'+escapeText(label)+'</strong>'+
+    '<p class="help">Sin selección = sin consignar; pulsa para registrar o retirar una declaración.</p>'+
+    '<div class="chips">'+chips+'</div></div>';
+}
+function followupConsultationHtml(fields){
+  const visible=fields.filter(f=>['fecha_visita','procedencia'].includes(f.key));
+  return '<p class="followup-intro">Datos de la visita que se está documentando. No se recuperan episodios previos.</p>'+
+    '<div class="fields">'+visible.map(fieldHtml).join('')+'</div>'+
+    '<div class="followup-source-note"><strong>Tratamiento anterior: fuente no disponible</strong>'+
+    '<p>Sin historia clínica conectada. No se presupone que el paciente no tenga tratamiento. Puedes registrar abajo lo referido o propuesto expresamente en esta visita, sin convertirlo en prescripción ni validación.</p>'+
+    '<p id="followupTherapyPreview" class="followup-preview">Todavía no hay líneas terapéuticas registradas en este borrador.</p></div>';
+}
+function followupTherapyPreviewText(){
+  const rows=[];
+  for(const group of therapyGroups){
+    for(let i=1;i<=3;i++){
+      const drug=valueFor('tx_seguimiento_'+group.key+'_farmaco_'+i);
+      if(!isConsigned(drug))continue;
+      const rel=valueFor('extra_tx_seguimiento_'+group.key+'_relacion_'+i);
+      const state={
+        actual_referido:'actual referido',
+        anterior_referido:'previo referido',
+        propuesto_no_validado:'propuesto, no solicitado/validado',
+      }[rel]||'relación sin consignar';
+      rows.push(drug+' ('+state+')');
+    }
+  }
+  return rows.length?'Solo datos de ESTE borrador, no historia: '+rows.join(' · '):
+    'Todavía no hay líneas terapéuticas registradas en este borrador.';
+}
+function updateFollowupTherapyPreview(){
+  const el=$('#followupTherapyPreview');
+  if(el)el.textContent=followupTherapyPreviewText();
+}
+function followupTherapyHtml(){
+  const active=therapyGroups.find(g=>g.key===selectedFollowupFamily);
+  const familyButtons=therapyGroups.map(g=>'<button type="button" class="chip followup-family-chip" data-followup-family="'+
+    escapeText(g.key)+'" aria-pressed="'+String(selectedFollowupFamily===g.key)+'">'+escapeText(g.name)+'</button>').join('');
+  let rows='';
+  if(active){
+    const count=slots.get(activeScope()+'|'+active.key)||1;
+    rows=Array.from({length:count},(_,index)=>{
+      const i=index+1;
+      const drugKey='tx_seguimiento_'+active.key+'_farmaco_'+i;
+      const doseKey='extra_tx_seguimiento_'+active.key+'_dosis_'+i;
+      const routeKey='extra_tx_seguimiento_'+active.key+'_via_'+i;
+      const pautaKey='tx_seguimiento_'+active.key+'_posologia_'+i;
+      const relationKey='extra_tx_seguimiento_'+active.key+'_relacion_'+i;
+      const options=active.options.map(v=>'<option value="'+escapeText(v)+'"></option>').join('');
+      const listId='f2-'+active.key+'-'+i;
+      return '<div class="followup-therapy-line"><div class="followup-therapy-grid">'+
+        '<label>'+(active.key==='fototerapia'?'Modalidad':'Fármaco')+' '+i+' (referencia Valme)<input type="search" list="'+listId+
+        '" autocomplete="off" data-field="'+drugKey+'" value="'+escapeText(valueFor(drugKey))+'" placeholder="No consignado"></label>'+
+        '<datalist id="'+listId+'">'+options+'</datalist>'+
+        '<label>Dosis (solo si está documentada)<input type="text" data-field="'+doseKey+'" value="'+escapeText(valueFor(doseKey))+'" placeholder="Vacío"></label>'+
+        '<label>Vía (solo si está documentada)<input type="text" data-field="'+routeKey+'" value="'+escapeText(valueFor(routeKey))+'" placeholder="Vacío"></label>'+
+        '<label>Pauta (solo si está documentada)<input type="text" data-field="'+pautaKey+'" value="'+escapeText(valueFor(pautaKey))+'" placeholder="Vacío"></label>'+
+        '</div>'+
+        followupChoiceHtml(relationKey,[
+          {value:'actual_referido',label:'Actual, referido'},
+          {value:'anterior_referido',label:'Previo, referido'},
+          {value:'propuesto_no_validado',label:'Propuesto, no validado'},
+        ],'Relación de la línea con esta visita (declaración explícita)')+
+        '</div>';
+    }).join('');
+    const otherKey='tx_seguimiento_'+active.key+'_otros';
+    rows='<div class="followup-therapy-selected"><h3>'+escapeText(active.name)+'</h3>'+rows+
+      (count<3?'<button class="more-row" type="button" data-more="'+escapeText(active.key)+'">+ Añadir línea de esta familia</button>':'')+
+      '<label class="followup-other-field">Otros / comentario explícito<input type="text" data-field="'+otherKey+'" value="'+escapeText(valueFor(otherKey))+'" placeholder="Opcional"></label></div>';
+  }else{
+    rows='<p class="followup-no-selection">Elige una familia para documentar alguna línea. Ninguna familia está seleccionada por defecto y la selección no crea un tratamiento.</p>';
+  }
+  return '<p class="followup-intro">Solo tratamientos o propuestas que consignes expresamente en ESTA visita; no se importa tratamiento anterior ni se presupone continuidad.</p>'+
+    '<div class="chips followup-family-row" role="group" aria-label="Familia terapéutica para introducir">'+familyButtons+'</div>'+rows+
+    '<p class="warning-inline">Sugerencias de nombres de Valme (NO buscador farmacológico unificado). La selección de un nombre nunca escribe dosis, vía, pauta, continuidad, cambio ni validación de Farmacia.</p>';
+}
+function followupSymptomsHtml(fields){
+  const chips=fields.filter(f=>f.kind==='triestado');
+  const base=fields.filter(f=>['eva_prurito','eva_dolor'].includes(f.key));
+  return '<p class="followup-intro">Síntomas manifestados en esta consulta. Los chips registran presencia; los no marcados permanecen desconocidos.</p>'+
+    triStateHtml(chips)+
+    '<div class="fields followup-symptoms-fields">'+base.map(fieldHtml).join('')+'</div>'+
+    '<div class="followup-intensity-grid">'+
+    followupChoiceHtml('alteracion_funcional',intensity,'Alteración funcional declarada')+
+    followupChoiceHtml('alteracion_sueno',intensity,'Alteración del sueño declarada')+
+    '</div>';
+}
+function followupLocationsHtml(fields){
+  return '<p class="followup-intro">Localizaciones observadas o declaradas EN ESTA visita. No son un cambio respecto de la visita previa sin comparación validada.</p>'+
+    triStateHtml(fields.filter(f=>f.kind==='triestado'))+
+    '<div id="zoneSummary">'+zoneSummary()+'</div>';
+}
+function followupPasiHtml(fields){
+  const regions=[
+    ['cabeza','Cabeza'],['tronco','Tronco'],['brazos','Brazos'],['piernas','Piernas']
+  ];
+  const html=regions.map(([key,title])=>{
+    const metrics=['eritema','induracion','escamas','area'];
+    const controls=metrics.map(metric=>{
+      const f=fields.find(x=>x.key==='pasi_'+key+'_'+metric);
+      if(!f)return '';
+      const label={eritema:'Eritema',induracion:'Induración',escamas:'Descamación',area:'Extensión'}[metric];
+      const choices=Array.from({length:(metric==='area'?7:5)},(_,i)=>String(i));
+      return '<label>'+label+'<select data-field="'+escapeText(f.key)+'">'+
+        optionHtml(choices,valueFor(f.key))+'</select></label>';
+    }).join('');
+    return '<div class="followup-pasi-region"><h4>'+escapeText(title)+'</h4><div class="followup-pasi-region-grid">'+controls+'</div></div>';
+  }).join('');
+  const notes=fields.find(f=>f.key==='observaciones_clinicas');
+  const nails=fields.filter(f=>f.kind==='triestado');
+  return '<p class="followup-intro">Valoración de actividad actual. Consigna solo las medidas examinadas; cero es un valor válido, vacío es pendiente.</p>'+
+    '<div class="followup-activity-top">'+
+    '<label>BSA (%)<input data-field="bsa" type="number" min="0" max="100" step="0.1" value="'+escapeText(valueFor('bsa'))+'" placeholder="Sin consignar"></label>'+
+    '<label>PGA (0–5)<select data-field="pga">'+optionHtml(['0','1','2','3','4','5'],valueFor('pga'))+'</select></label></div>'+
+    '<div class="derived followup-score"><strong>PASI · total</strong><span id="pasiStatus">Sin cálculo clínico · no homologado</span></div>'+
+    '<p class="help">Componentes de PASI agrupados por región corporal; no se aplica fórmula ni se interpreta el resultado.</p>'+
+    '<div class="followup-pasi-regions">'+html+'</div>'+
+    triStateHtml(nails)+
+    '<div class="fields">'+(notes?fieldHtml(notes):'')+'</div>';
+}
+function followupUnavailableInstrument(title){
+  return '<div class="followup-instrument-blocked" role="note"><strong>'+escapeText(title)+' no habilitado</strong>'+
+    '<p>Los ítems disponibles son marcadores de posición sin enunciado válido. No se puede responder ni obtener puntuación mientras no se aprueben texto, versión, derechos de uso y reglas del instrumento.</p>'+
+    '<span class="tag">Pendiente de homologación clínica</span></div>';
+}
+function followupDecisionHtml(){
+  const adverse=valueFor('seguimiento_efectos_adversos');
+  const decision=valueFor('extra_seg_decision_tipo');
+  const adherence=followupChoiceHtml('seguimiento_adherencia_categoria',adherences,'Adherencia descrita en esta visita');
+  const effects=followupChoiceHtml('seguimiento_efectos_adversos',[
+    {value:'1',label:'Sí, referidos'},
+    {value:'0',label:'No referidos, declarado'},
+  ],'Efectos adversos referidos en esta visita');
+  const details=adverse==='1'?'<label class="followup-conditional-field">Descripción de los efectos referidos<textarea data-field="extra_seg_efectos_adversos_detalle" placeholder="Solo lo declarado">'+escapeText(valueFor('extra_seg_efectos_adversos_detalle'))+'</textarea></label>':'';
+  const decisionChips=followupChoiceHtml('extra_seg_decision_tipo',[
+    {value:'continuidad_explicita',label:'Continuidad declarada'},
+    {value:'ajuste_declarado',label:'Ajuste documentado'},
+    {value:'cambio_propuesto',label:'Cambio propuesto'},
+    {value:'suspension_documentada',label:'Suspensión documentada'},
+  ],'Decisión registrada expresamente en la visita');
+  const followupText=decision?'<div class="followup-conditional-fields">'+
+    '<label>Detalle de la decisión o ajuste<textarea data-field="seguimiento_ajuste_terapeutico" placeholder="No deducir pauta ni acción clínica">'+escapeText(valueFor('seguimiento_ajuste_terapeutico'))+'</textarea></label>'+
+    (decision==='cambio_propuesto'||decision==='suspension_documentada'?
+      '<label>Motivo documentado<textarea data-field="seguimiento_motivo_cambio" placeholder="Solo causa expresamente referida">'+escapeText(valueFor('seguimiento_motivo_cambio'))+'</textarea></label>':'')+
+    '</div>':'';
+  return '<p class="followup-intro">Revisión terapéutica exclusivamente a partir de lo expresado o evaluado EN ESTA VISITA. Ningún estado se deduce de medicación o cuestionarios.</p>'+
+    '<div class="followup-review-grid"><div class="followup-review-panel">'+adherence+'</div>'+
+    '<div class="followup-review-panel">'+effects+details+'</div></div>'+
+    '<div class="followup-review-panel followup-decision-panel">'+decisionChips+followupText+'</div>'+
+    '<p class="warning-inline">Una decisión propuesta no es una solicitud a Farmacia ni un tratamiento validado. Morisky no se muestra como cuestionario respondible: sus ítems aún no están homologados.</p>'+
+    followupUnavailableInstrument('Morisky-Green');
+}
+function followupPlanHtml(fields){
+  const other=fields.filter(f=>f.key!=='proxima_revision');
+  const textKey='proxima_revision';
+  return '<p class="followup-intro">Plan consignado explícitamente. Fecha prevista no equivale a cita programada.</p>'+
+    '<div class="followup-plan-date"><label>Fecha prevista de revisión (orientativa, sin cita creada)'+
+    '<input type="date" data-field="extra_seg_proxima_fecha_prevista" value="'+escapeText(valueFor('extra_seg_proxima_fecha_prevista'))+'"></label>'+
+    '<label>Plazo / indicaciones para la próxima revisión'+
+    '<textarea data-field="'+textKey+'" placeholder="Texto libre de origen Valme, sin programación">'+escapeText(valueFor(textKey))+'</textarea></label></div>'+
+    '<div class="fields">'+other.map(fieldHtml).join('')+'</div>';
+}
+function renderFollowupSectionContent(key,fields){
+  if(key==='01 Datos de consulta')return followupConsultationHtml(fields);
+  if(key==='11 Tratamiento seguimiento')return followupTherapyHtml();
+  if(key==='06 Síntomas')return followupSymptomsHtml(fields);
+  if(key==='04 Localizaciones')return followupLocationsHtml(fields);
+  if(key==='05 Exploración/PASI')return followupPasiHtml(fields);
+  if(key==='08 PURE-4')return followupUnavailableInstrument('PURE-4');
+  if(key==='12 Seguimiento terapéutico')return followupDecisionHtml();
+  if(key==='13 Plan')return followupPlanHtml(fields);
+  if(key==='03 Comorbilidades')return '<p class="followup-intro">Revisión opcional de hallazgos. Sin historia conectada, no se declara «sin cambios» respecto de visitas anteriores.</p>'+
+    triStateHtml(fields.filter(f=>f.kind==='triestado'))+habitDetails(key);
+  if(key==='09 Derivaciones/plan')return '<p class="followup-intro">Registra únicamente derivaciones realizadas y confirmadas, no sospechas ni recomendaciones automáticas.</p>'+
+    triStateHtml(fields.filter(f=>f.kind==='triestado'));
+  return '';
+}
+
 function renderSection(section){
   const [key,name]=section;
   const fields=PSO_VALME_FIELDS.filter(f=>f.section===key);
   const isTherapy=key==='10 Tratamiento primera visita'||key==='11 Tratamiento seguimiento';
   let body;
-  if(isTherapy)body=therapyHtml(current.visit);
+  if(current.visit==='seguimiento'&&key!=='07 DLQI')body=renderFollowupSectionContent(key,fields);
+  else if(isTherapy)body=therapyHtml(current.visit);
   else if(key==='07 DLQI')body=dlqiQuestionnaire();
   else{
     const chips=fields.filter(f=>f.kind==='triestado');
@@ -271,13 +465,41 @@ function renderSection(section){
   }
   const shownTitle=current.visit==='seguimiento'?(followupTitles[key]||name):name;
   const defaultOpen=current.visit==='seguimiento'?
-    ['01 Datos de consulta','05 Exploración/PASI'].includes(key):
+    ['01 Datos de consulta','11 Tratamiento seguimiento','06 Síntomas','04 Localizaciones'].includes(key):
     ['01 Datos de consulta','02 Historia de PsO','03 Comorbilidades'].includes(key);
   return '<details class="section" data-section="'+escapeText(key)+'"'+(defaultOpen?' open':'')+'>'+
     '<summary><span>'+escapeText(shownTitle)+'</span><small class="section-meta">'+fields.length+' campos fuente</small></summary>'+
     '<div class="section-body">'+body+'</div></details>';
 }
 function bind(){
+  document.querySelectorAll('[data-followup-family]').forEach(el=>el.addEventListener('click',()=>{
+    selectedFollowupFamily=el.dataset.followupFamily===selectedFollowupFamily?'':el.dataset.followupFamily;
+    render(true);
+    const next=document.querySelector('[data-followup-family="'+selectedFollowupFamily+'"]');
+    if(next)next.focus();
+  }));
+  document.querySelectorAll('[data-choice-field]').forEach(el=>el.addEventListener('click',()=>{
+    const key=el.dataset.choiceField;
+    const old=valueFor(key);
+    const next=old===el.dataset.choiceValue?'':el.dataset.choiceValue;
+    if(key==='seguimiento_efectos_adversos'&&old==='1'&&next!=='1'&&
+      isConsigned(valueFor('extra_seg_efectos_adversos_detalle'))){
+      if(!window.confirm('Este cambio eliminará la descripción de efectos adversos de este borrador. ¿Confirmas?'))return;
+      delete answers()['extra_seg_efectos_adversos_detalle'];
+    }
+    if(key==='extra_seg_decision_tipo'&&old!==next){
+      const extras=['seguimiento_ajuste_terapeutico','seguimiento_motivo_cambio'];
+      if(extras.some(k=>isConsigned(valueFor(k)))){
+        if(!window.confirm('Este cambio eliminará los detalles de la decisión anterior del borrador. ¿Confirmas?'))return;
+        extras.forEach(k=>delete answers()[k]);
+      }
+    }
+    setField(key,next);
+    render(true);
+    const nextEl=Array.from(document.querySelectorAll('[data-choice-field]')).find(x=>
+      x.dataset.choiceField===key&&x.dataset.choiceValue===el.dataset.choiceValue);
+    if(nextEl)nextEl.focus();
+  }));
   document.querySelectorAll('[data-chip]').forEach(el=>el.addEventListener('click',()=>{
     const key=el.dataset.chip,val=valueFor(key);
     if(val==='1'&&!clearHabitIfUnmarked(key))return;
@@ -311,6 +533,8 @@ function bind(){
       return;
     }
     setField(el.dataset.field,el.value);
+    if(current.visit==='seguimiento'&&el.dataset.field.startsWith('tx_seguimiento_'))
+      updateFollowupTherapyPreview();
     if(el.dataset.dlqiSpecial){updateDlqiSpecial();render(true);}
   }));
   document.querySelectorAll('[data-review]').forEach(el=>el.addEventListener('click',()=>{
@@ -335,6 +559,7 @@ function patientVisitKey(patient=current.patient,visit=current.visit){return pat
 function selectPatient(id){
   const normalized=DEMO_PATIENTS.has(id)?id:'';
   if(current.patient!==normalized){
+    selectedFollowupFamily=''; // no trasladar navegación terapéutica entre pacientes
     current.patient=normalized;
     current.pathology=pathologyByVisit.get(patientVisitKey())||'';
   }
@@ -435,6 +660,7 @@ function render(preserveOpen=false){
   const ready=current.patient&&current.pathology==='pso';
   form.classList.toggle('hidden',!ready);empty.classList.toggle('hidden',!!ready);
   const followup=current.visit==='seguimiento';
+  $('#visitView').classList.toggle('visit--followup',followup);
   $('#visitTitle').textContent=followup?'Seguimiento':'Primera Visita';
   $('#visitSubtitle').textContent=followup?
     'Visita actual de Psoriasis. Datos clínicos solo si se registran explícitamente; sin precarga de historia.':
@@ -453,10 +679,12 @@ function render(preserveOpen=false){
   if(current.view!=='visit'||!ready)return;
   if(followup)$('#followupContextStatus').textContent=followupContextText();
   const opened=preserveOpen?new Set([...document.querySelectorAll('.section[open]')].map(x=>x.dataset.section)):null;
-  const selected=followup?sections.filter(([key])=>followupSections.includes(key)):
+  const selected=followup?
+    followupSections.map(key=>sections.find(([sectionKey])=>sectionKey===key)).filter(Boolean):
     sections.filter(([key])=>!['11 Tratamiento seguimiento','12 Seguimiento terapéutico'].includes(key));
   $('#clinicalSections').innerHTML=selected.map(renderSection).join('');
   if(opened)document.querySelectorAll('.section').forEach(el=>el.open=opened.has(el.dataset.section));
+  if(followup)updateFollowupTherapyPreview();
   bind();updateStatus();
 }
 const overlay=$('#quickViewOverlay');

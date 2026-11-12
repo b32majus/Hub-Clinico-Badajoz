@@ -72,24 +72,44 @@ try{
    if(await obes.getAttribute('data-status')!=='absent')throw Error('no se registró ausencia explícita de obesidad');
    if(await page.locator('[data-chip="loc_tronco"]').getAttribute('data-status')!=='unknown')throw Error('revisión contaminó localizaciones');
  });
- check('S4 cobertura fuente explícita',async()=>{
-   if(!String(await page.locator('#fieldCoverage').textContent()).includes('174'))throw Error('cobertura visible no 174');
+ check('S4 cobertura Valme y controles seguros por interacción real',async()=>{
+   if(!String(await page.locator('#fieldCoverage').textContent()).includes('174'))throw Error('cobertura fuente no 174');
    const fieldKeys=await page.evaluate(()=>window.__dermaPrototypeFieldKeys||[]);
    if(JSON.stringify(fieldKeys)!==JSON.stringify(VALME_HEADERS))throw Error('crosswalk no coincide con HEADERS de Valme');
    const observed=new Set();
-   const snapshot=async()=>{for(const k of await page.locator('[data-field]').evaluateAll(els=>els.map(el=>el.dataset.field)))if(!k.startsWith('extra_'))observed.add(k);for(const k of await page.locator('[data-chip]').evaluateAll(els=>els.map(el=>el.dataset.chip)))observed.add(k);if(await page.locator('[data-field=\"extra_dlqi_q7_main\"]').count())observed.add('dlqi_q7')};
-   for(const [visit,section] of [['primera','10 Tratamiento primera visita'],['seguimiento','11 Tratamiento seguimiento']]){
-     if(visit==='seguimiento'){await page.getByRole('button',{name:'Seguimiento'}).click(); await page.locator('#pathology').selectOption('pso')}
-     await page.locator('[data-section="'+section+'"] > summary').click();
-     for(const group of ['topicos','sinteticos_convencionales','fototerapia','biologicos']){
-       for(let slot=1;slot<3;slot++)await page.locator('[data-section="'+section+'"] [data-more="'+group+'"]').click();
-     }
+   const snapshot=async()=>{
+     for(const k of await page.locator('[data-field]').evaluateAll(els=>els.map(el=>el.dataset.field)))
+       if(!k.startsWith('extra_'))observed.add(k);
+     for(const k of await page.locator('[data-chip]').evaluateAll(els=>els.map(el=>el.dataset.chip)))observed.add(k);
+     for(const k of await page.locator('[data-choice-field]').evaluateAll(els=>els.map(el=>el.dataset.choiceField)))
+       if(!k.startsWith('extra_'))observed.add(k);
+     if(await page.locator('[data-field="extra_dlqi_q7_main"]').count())observed.add('dlqi_q7');
+   };
+   // F1 conserva las cuatro familias desplegadas y el instrumento pendiente legible.
+   await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
+   for(const group of ['topicos','sinteticos_convencionales','fototerapia','biologicos'])
+     for(let n=1;n<3;n++)await page.locator('[data-section="10 Tratamiento primera visita"] [data-more="'+group+'"]').click();
+   await snapshot();
+   await page.getByRole('button',{name:'Seguimiento'}).click();
+   await page.locator('#pathology').selectOption('pso');
+   // F2 tiene familias conmutables: recorrerlas una a una con los chips reales.
+   for(const group of ['topicos','sinteticos_convencionales','fototerapia','biologicos']){
+     await page.locator('[data-followup-family="'+group+'"]').click();
+     for(let n=1;n<3;n++)await page.locator('[data-section="11 Tratamiento seguimiento"] [data-more="'+group+'"]').click();
      await snapshot();
    }
-   const absent=VALME_HEADERS.filter(k=>!observed.has(k)&&!NON_EDITABLE_FIELDS.has(k));
+   // Datos condicionales de decisión: sólo aparecen tras acción explícita.
+   await page.locator('[data-section="12 Seguimiento terapéutico"] > summary').click();
+   await page.locator('[data-choice-field="extra_seg_decision_tipo"][data-choice-value="cambio_propuesto"]').click();
+   await snapshot();
+   // PURE-4 y Morisky son cuestionarios mapeados pero NO respondibles con ítems ficticios.
+   const blocked=VALME_HEADERS.filter(k=>/^pure4_q[1-4]$/.test(k)||/^seguimiento_adherencia_morisky_q[1-4]$/.test(k));
+   if(blocked.length!==8)throw Error('inventario bloqueado incorrecto: '+JSON.stringify(blocked));
+   for(const key of blocked)if(await page.locator('[data-field="'+key+'"]').count())throw Error('pregunta sin texto habilitada '+key);
+   const absent=VALME_HEADERS.filter(k=>!observed.has(k)&&!NON_EDITABLE_FIELDS.has(k)&&!blocked.includes(k));
    const unlisted=[...observed].filter(k=>!VALME_HEADERS.includes(k));
-   if(absent.length||unlisted.length)throw Error('campos sin control o ajenos a Valme: '+JSON.stringify({absent,unlisted}));
-   if([...NON_EDITABLE_FIELDS].some(k=>observed.has(k)))throw Error('un derivado/contexto aparece como campo editable');
+   if(absent.length||unlisted.length)throw Error('faltan campos fuente o hay ajenos: '+JSON.stringify({absent,unlisted}));
+   if([...NON_EDITABLE_FIELDS].some(k=>observed.has(k)))throw Error('campo derivado/contexto editable');
    await page.getByRole('button',{name:'Primera Visita'}).click();
  });
  check('S5 dosis sin inferencias',async()=>{
@@ -100,6 +120,7 @@ try{
    if(pos!=='')throw Error('posología inferida: '+pos);
    await page.getByRole('button',{name:'Seguimiento'}).click();
    const follow=page.locator('[data-field="tx_seguimiento_biologicos_farmaco_1"]');
+   if(await page.locator('[data-followup-family="biologicos"]').getAttribute('aria-pressed')!=='true')await page.locator('[data-followup-family="biologicos"]').click();
    if(await follow.inputValue()!==''||await page.locator('[data-field="tx_seguimiento_biologicos_posologia_1"]').inputValue()!=='')throw Error('se trasladó tratamiento primera a seguimiento');
    await page.getByRole('button',{name:'Primera Visita'}).click();
    if(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()!=='Secukinumab')throw Error('se perdió dato del circuito original');
@@ -114,8 +135,9 @@ try{
      if(!/sin cálculo clínico|no homologado/i.test(displayed))throw Error(label+' aparenta estar homologado');
    }
    await page.getByRole('button',{name:'Seguimiento'}).click();
-   const morisky=await page.locator('.derived').filter({hasText:'Total Morisky'}).textContent();
-   if(!/sin cálculo clínico|no homologado/i.test(morisky))throw Error('Morisky aparenta estar homologado');
+   const morisky=await page.locator('.followup-instrument-blocked').filter({hasText:'Morisky'}).textContent();
+   if(!/no habilitado|pendiente/i.test(morisky))throw Error('Morisky aparenta estar homologado');
+   if(await page.locator('[data-field="seguimiento_adherencia_morisky_q1"]').count())throw Error('Morisky ficticio se puede responder');
    await page.getByRole('button',{name:'Primera Visita'}).click();
  });
  check('S7 aislamiento entre circuitos y pacientes',async()=>{

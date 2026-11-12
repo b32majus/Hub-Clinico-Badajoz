@@ -60,13 +60,14 @@ try{
   }],
   ['F2-3 Recorrido diferenciado 11 secciones, sin historia inicial ni fármacos de Primera',async()=>{
    const keys=await page.locator('#clinicalSections .section').evaluateAll(els=>els.map(x=>x.dataset.section));
-   const expected=['01 Datos de consulta','03 Comorbilidades','04 Localizaciones','05 Exploración/PASI','06 Síntomas','07 DLQI','08 PURE-4','09 Derivaciones/plan','11 Tratamiento seguimiento','12 Seguimiento terapéutico','13 Plan'];
+   const expected=['01 Datos de consulta','11 Tratamiento seguimiento','06 Síntomas','04 Localizaciones','05 Exploración/PASI','07 DLQI','12 Seguimiento terapéutico','03 Comorbilidades','08 PURE-4','09 Derivaciones/plan','13 Plan'];
    assert(JSON.stringify(keys)===JSON.stringify(expected),'orden/grupos Seguimiento distintos: '+JSON.stringify(keys));
    assert(!keys.includes('02 Historia de PsO')&&!keys.includes('10 Tratamiento primera visita'),'arrastra capturas iniciales');
    assert((await page.locator('#visitSummaryHeading').textContent()).includes('Seguimiento'),'cabecera no distingue seguimiento');
    assert((await page.locator('[data-section="12 Seguimiento terapéutico"] > summary').textContent()).includes('Adherencia'),'sin valoración terapéutica');
   }],
   ['F2-4 Valor actual BSA/PGA y cuestionarios sin cálculo clínico',async()=>{
+   await page.locator('[data-section="05 Exploración/PASI"] > summary').click();
    await page.locator('[data-field="bsa"]').fill('0');
    await page.locator('[data-field="pga"]').selectOption('0');
    assert(await page.locator('[data-field="bsa"]').inputValue()==='0','BSA cero perdido');
@@ -77,13 +78,14 @@ try{
    await page.locator('[data-field="dlqi_q1"]').selectOption('0');
    assert((await page.locator('.dlqi-candidate .derived').textContent()).includes('Sin cálculo clínico'),'DLQI calculado desde parcial');
    await page.locator('[data-section="08 PURE-4"] > summary').click();
-   assert((await page.locator('[data-section="08 PURE-4"]').textContent()).includes('requieren aprobación'),'PURE-4 parece homologado');
+   assert((await page.locator('[data-section="08 PURE-4"]').textContent()).includes('no habilitado'),'PURE-4 parece homologado');
+   assert(await page.locator('[data-field="pure4_q1"]').count()===0,'PURE-4 ficticio se puede responder');
   }],
   ['F2-5 Tratamiento de Seguimiento independiente y sin dosis/vía/pauta',async()=>{
-   await page.locator('[data-section="11 Tratamiento seguimiento"] > summary').click();
-   for(const name of ['Tópicos','Sistémicos convencionales','Biológicos','Fototerapia']){
-    assert(await page.locator('.therapy-group h3').filter({hasText:name}).count()===1,'falta familia '+name);
-   }
+   const families=page.locator('[data-followup-family]');
+   assert(await families.count()===4,'faltan chips de familias');
+   await page.locator('[data-followup-family="biologicos"]').click();
+   assert(await page.locator('[data-followup-family="biologicos"]').getAttribute('aria-pressed')==='true','familia no seleccionada');
    await page.locator('[data-field="tx_seguimiento_biologicos_farmaco_1"]').fill('Secukinumab');
    for(const key of ['tx_seguimiento_biologicos_posologia_1','extra_tx_seguimiento_biologicos_dosis_1','extra_tx_seguimiento_biologicos_via_1']){
     assert(await page.locator('[data-field="'+key+'"]').inputValue()==='',key+' inferida');
@@ -92,15 +94,20 @@ try{
   }],
   ['F2-6 Adherencia y ajuste solo si los declara el profesional',async()=>{
    await page.locator('[data-section="12 Seguimiento terapéutico"] > summary').click();
-   const a=page.locator('[data-field="seguimiento_adherencia_categoria"]');
-   assert(await a.inputValue()==='','se inventa adherencia');
-   await a.selectOption('Buena');
+   const adherence=page.locator('[data-choice-field="seguimiento_adherencia_categoria"][data-choice-value="Buena"]');
+   assert(await adherence.getAttribute('aria-pressed')==='false','se inventa adherencia');
+   await adherence.click();
+   assert(await page.locator('[data-choice-field="seguimiento_adherencia_categoria"][data-choice-value="Buena"]').getAttribute('aria-pressed')==='true','adherencia no registrada');
+   const proposed=page.locator('[data-choice-field="extra_seg_decision_tipo"][data-choice-value="cambio_propuesto"]');
+   await proposed.click();
    const adjust=page.locator('[data-field="seguimiento_ajuste_terapeutico"]');
    assert(await adjust.inputValue()==='','se inventa ajuste/switch');
    await adjust.fill('Revisión sintética, sin cambios inferidos');
-   assert((await page.locator('[data-section="12 Seguimiento terapéutico"]').textContent()).includes('no constituyen evaluación clínica'),'Morisky sin advertencia');
+   assert((await page.locator('[data-section="12 Seguimiento terapéutico"]').textContent()).includes('no habilitado'),'Morisky respondible');
+   assert(await page.locator('[data-field="seguimiento_adherencia_morisky_q1"]').count()===0,'pregunta Morisky ficticia activada');
    await page.locator('[data-section="13 Plan"] > summary').click();
-   assert(await page.locator('[data-field="proxima_revision"]').inputValue()==='','fecha futura inventada');
+   assert(await page.locator('[data-field="extra_seg_proxima_fecha_prevista"]').inputValue()==='','fecha prevista inventada');
+   assert(await page.locator('[data-field="proxima_revision"]').inputValue()==='','plazo inventado');
   }],
   ['F2-7 Primera Visita solo referencia de borrador, sin copiar dato anterior',async()=>{
    await page.getByRole('button',{name:'Primera Visita'}).click();

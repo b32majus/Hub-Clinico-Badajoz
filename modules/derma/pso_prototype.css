@@ -214,3 +214,63 @@ body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,san
 .followup-context strong{font-size:13px}
 .followup-context p{font-size:12px;margin:8px 0 0}
 @media(max-width:620px){.followup-context{padding:14px}}
+
+
+/* F2 Seg: mismo sistema visual que Primera Visita, composición clínica específica.
+   No modifica los componentes ni estados de F1. */
+.visit--followup .section[open]{border-color:#cae5db;box-shadow:0 5px 21px rgba(11,97,78,.045)}
+.visit--followup .section[open]>summary{background:#f7fbfa;color:#1c5750}
+.visit--followup .section-meta{white-space:nowrap}
+.followup-intro{font-size:12px;color:#647c83;line-height:1.6;margin:0 0 16px}
+.followup-source-note{margin:18px 0 0;background:#f3f8fa;border:1px solid #d8e6eb;border-left:4px solid #74a5b4;border-radius:12px;padding:15px 17px;color:#2c5a69}
+.followup-source-note strong{font-size:12px}
+.followup-source-note p{font-size:12px;line-height:1.6;margin-top:7px}
+.followup-source-note .followup-preview{background:#fff;border-radius:8px;padding:10px 12px;margin-top:12px;overflow-wrap:anywhere}
+.followup-family-row{margin:12px 0 16px}
+.followup-family-chip{border-radius:12px;min-height:44px;padding:12px 16px}
+.followup-no-selection{background:#f6f9fa;border:1px dashed #c7dce1;padding:18px;border-radius:12px;font-size:12px;color:#607b84}
+.followup-therapy-selected{background:#f8fbfa;border:1px solid #d9e9e5;border-radius:14px;padding:17px;margin:15px 0}
+.followup-therapy-selected h3{color:#245e55;font-size:14px;margin:0 0 12px}
+.followup-therapy-line{background:#fff;border:1px solid #dae9e8;border-radius:12px;padding:15px;margin:10px 0}
+.followup-therapy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.followup-therapy-grid label{min-width:0}
+.followup-therapy-line .followup-choice-group{margin-top:13px;border-top:1px solid #e5eeed;padding-top:12px}
+.followup-therapy-line .followup-choice-group .help{margin-top:4px}
+.followup-therapy-selected .more-row{margin:9px 0 3px}
+.followup-other-field{margin-top:12px}
+.followup-choice-group{min-width:0}
+.followup-choice-label{font-size:12px;color:#2d5e61}
+.followup-choice-group .help{margin:6px 0 0}
+.followup-choice-group .chips{margin-top:11px}
+.followup-choice{font-size:12px;cursor:pointer}
+.followup-choice:focus-visible,.followup-family-chip:focus-visible{outline:2px solid #008777;outline-offset:3px}
+.followup-symptoms-fields{margin-top:18px}
+.followup-intensity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:15px}
+.followup-intensity-grid .followup-choice-group{border:1px solid #e0ebec;background:#f9fcfb;border-radius:12px;padding:14px}
+.followup-activity-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:620px;margin:4px 0 15px}
+.followup-score{margin:14px 0}
+.followup-pasi-regions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:16px 0}
+.followup-pasi-region{background:#f8fbfc;border:1px solid #dbe9ed;border-radius:13px;padding:15px;min-width:0}
+.followup-pasi-region h4{font-size:14px;color:#245e61;margin:0 0 13px;padding-bottom:10px;border-bottom:1px solid #e2ebec}
+.followup-pasi-region-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.followup-pasi-region-grid label{font-size:12px}
+.followup-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.followup-review-panel{border:1px solid #dfeae9;background:#f8fbfa;border-radius:12px;padding:16px;min-width:0}
+.followup-decision-panel{margin:14px 0}
+.followup-conditional-field,.followup-conditional-fields{display:grid;gap:13px;margin-top:16px}
+.followup-conditional-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.followup-conditional-field textarea,.followup-conditional-fields textarea{min-height:83px}
+.followup-instrument-blocked{border:1px dashed #b6cbd1;background:#f2f7f9;color:#41636e;border-radius:12px;padding:18px;line-height:1.55}
+.followup-instrument-blocked strong{font-size:14px}
+.followup-instrument-blocked p{font-size:12px;margin:9px 0 13px}
+.followup-plan-date{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:10px 0 18px}
+.followup-plan-date textarea{min-height:45px}
+@media(max-width:860px){
+ .followup-therapy-grid,.followup-pasi-regions,.followup-review-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+ .followup-activity-top,.followup-pasi-region-grid,.followup-intensity-grid,.followup-plan-date,.followup-conditional-fields{grid-template-columns:1fr}
+ .followup-pasi-region,.followup-therapy-selected,.followup-review-panel{padding:13px}
+ .followup-family-row .chip{flex:1 1 40%;min-width:0}
+ .followup-choice-group .chip{flex:1 1 auto}
+}
