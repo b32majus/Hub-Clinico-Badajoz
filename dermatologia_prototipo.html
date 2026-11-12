@@ -91,10 +91,10 @@
         <div class="patient-identity-search">
           <label for="patientCip">CIP de demostración</label>
           <div class="identity-cip-row">
-            <input id="patientCip" type="search" placeholder="Buscar o introducir CIP (DEMO-...)" autocomplete="off" spellcheck="false">
-            <button id="lookupCip" type="button" class="action-btn action-primary">Buscar CIP</button>
+            <input id="patientCip" type="search" placeholder="Buscar o introducir CIP (DEMO-...)" autocomplete="off" spellcheck="false" aria-describedby="cipStatus">
+            <button id="lookupCip" type="button" class="action-btn action-primary">Buscar / crear CIP</button>
           </div>
-          <p id="cipStatus" class="help" role="status">Busca DEMO-PSO-001 o DEMO-PSO-002, o introduce un CIP ficticio que empiece por DEMO-.</p>
+          <p id="cipStatus" class="cip-status" role="status" aria-live="polite" aria-atomic="true" data-state="hint">Busca DEMO-PSO-001 o DEMO-PSO-002, o introduce un CIP ficticio que empiece por DEMO-. Este entorno no admite CIP reales.</p>
         </div>
         <div class="context-grid patient-identity-fields">
           <label>Nombre y apellidos

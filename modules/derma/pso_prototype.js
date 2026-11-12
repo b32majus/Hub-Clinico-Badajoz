@@ -322,31 +322,47 @@ function selectPatient(id){
   $('#patientName').value=record?.name||'';
   $('#patientSex').value=record?.sex||'';
   $('#pathology').value=current.pathology;
-  $('#cipStatus').textContent=record?'CIP de demostración reconocido. El borrador solo vive en esta sesión.':
-    'Introduce un CIP que empiece por DEMO- y pulsa «Buscar CIP». No existe búsqueda hospitalaria.';
+  $('#cipStatus').dataset.state=record?'found':'hint';
+  $('#cipStatus').textContent=record?'CIP ficticio localizado. Selecciona la patología de esta visita para abrir su formulario.':
+    'Introduce un CIP ficticio que empiece por DEMO- y pulsa «Buscar / crear CIP». No existe búsqueda hospitalaria.';
   $('#patientNav').disabled=!current.patient;
   $('#patientNav small').textContent=current.patient?'Resumen sintético':'Selecciona primero un CIP';
   render();
 }
 function lookupCip(){
-  const id=$('#patientCip').value.trim().toUpperCase();
+  const attempted=$('#patientCip').value.trim();
+  const id=attempted.toUpperCase();
   if(!/^DEMO-[A-Z0-9-]{3,24}$/.test(id)){
     selectPatient('');
-    $('#cipStatus').textContent='Formato de demo no válido: usa DEMO- seguido de al menos tres caracteres o números. No introduzcas identificadores reales.';
+    // No borrar el intento: hacer evidente el problema y permitir corregirlo.
+    // El CIP no se guarda ni se envía a ningún servicio.
+    $('#patientCip').value=attempted;
+    $('#patientCip').setAttribute('aria-invalid','true');
+    $('#cipStatus').dataset.state='error';
+    $('#cipStatus').textContent='CIP no aceptado: esta demostración solo permite identificadores ficticios como DEMO-PRUEBA-123. No introduzcas CIP reales. Corrige el valor y vuelve a pulsar Buscar / crear CIP.';
+    $('#patientCip').focus();
     return;
   }
+  $('#patientCip').removeAttribute('aria-invalid');
   if(!DEMO_PATIENTS.has(id)){
     if(current.visit!=='primera'){
       selectPatient('');
-      $('#cipStatus').textContent='CIP sin ficha en esta demostración: crea primero la Primera Visita. No se ha consultado una base hospitalaria.';
+      $('#patientCip').value=id;
+      $('#cipStatus').dataset.state='error';
+      $('#cipStatus').textContent='Este CIP de prueba todavía no tiene ficha: abre Nueva Visita (Primera Visita) para preparar un borrador. No hay conexión hospitalaria.';
+      $('#patientCip').focus();
       return;
     }
     DEMO_PATIENTS.set(id,{name:'',sex:''});
     selectPatient(id);
-    $('#cipStatus').textContent='CIP nuevo en esta demo; introduce nombre y sexo ficticios si procede. No se ha creado una historia clínica.';
+    $('#cipStatus').dataset.state='new';
+    $('#cipStatus').textContent='CIP ficticio nuevo preparado (solo en memoria). Siguiente paso: escribe nombre y apellidos ficticios, indica sexo y selecciona Psoriasis para abrir el formulario. No se ha creado una historia clínica.';
+    $('#patientName').focus();
     return;
   }
   selectPatient(id);
+  $('#cipStatus').dataset.state='found';
+  $('#cipStatus').textContent='CIP de demostración localizado. Revisa los datos y selecciona la patología para abrir el formulario. Ningún acto está guardado.';
 }
 function activateView(view){
   if(view==='patient'&&!current.patient)return;
@@ -414,7 +430,19 @@ function openQuickView(patientId,trigger){
   const known=DEMO_PATIENTS.has(id);
   $('#quickViewTitle').textContent=known?'Quick View · '+id:'Paciente no encontrado';
   if(!known){
-    $('#quickViewContent').innerHTML='<div class="quick-view-empty-card"><h3>No existe en los datos sintéticos</h3><p>La búsqueda no crea pacientes ni consulta la base de datos del hospital.</p><p>Utiliza DEMO-PSO-001 o DEMO-PSO-002.</p></div>';
+    const canStart=/^DEMO-[A-Z0-9-]{3,24}$/.test(id);
+    $('#quickViewContent').innerHTML='<div class="quick-view-empty-card"><h3>No hay ficha en los datos sintéticos</h3>'+
+      (canStart?'<p>El CIP de prueba no tiene ficha. Puedes preparar su <strong>Primera Visita</strong> sin crear una historia clínica real.</p>'+
+      '<button type="button" class="action-btn action-primary" data-quick-action="create">Iniciar Primera Visita (CIP de prueba)</button>'+
+      '<p>El siguiente paso será introducir nombre, apellidos, sexo y seleccionar la patología.</p>':
+      '<p>Este entorno solo admite CIP sintéticos con formato DEMO-..., por ejemplo DEMO-PRUEBA-123. No introduzcas identificadores reales.</p>')+
+      '</div>';
+    if(canStart)$('#quickViewContent').querySelector('[data-quick-action="create"]').addEventListener('click',()=>{
+      closeQuickView();
+      selectVisit('primera');
+      $('#patientCip').value=id;
+      lookupCip();
+    });
   }else{
     selectPatient(id);
     const totalPrimera=getDraftCountFor(id,'primera'),totalSeguimiento=getDraftCountFor(id,'seguimiento');
@@ -456,12 +484,18 @@ document.addEventListener('keydown',e=>{
 $('#lookupCip').addEventListener('click',lookupCip);
 $('#patientCip').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();lookupCip();}});
 $('#patientCip').addEventListener('input',()=>{
+  $('#patientCip').removeAttribute('aria-invalid');
+  if($('#cipStatus').dataset.state==='error'){
+    $('#cipStatus').dataset.state='hint';
+    $('#cipStatus').textContent='Comprueba el prefijo DEMO- y pulsa Buscar / crear CIP. No se conectará a una base de datos.';
+  }
   if($('#patientCip').value.trim().toUpperCase()!==current.patient&&current.patient){
     current.patient=''; current.pathology='';
     $('#patientName').disabled=true;$('#patientName').value='';
     $('#patientSex').disabled=true;$('#patientSex').value='';
     $('#pathology').value='';
-    $('#cipStatus').textContent='CIP modificado: pulsa Buscar CIP para confirmar el paciente.';
+    $('#cipStatus').dataset.state='hint';
+    $('#cipStatus').textContent='CIP modificado. Pulsa Buscar / crear CIP para confirmar el paciente ficticio.';
     render();
   }
 });

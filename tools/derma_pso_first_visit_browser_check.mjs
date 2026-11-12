@@ -35,11 +35,14 @@ try{
     assert(!await page.locator('#visitForm').isVisible(),'formulario sin CIP');
     await page.locator('#patientCip').fill('CIP-REAL-NO-VALIDO');
     await page.locator('#lookupCip').click();
-    assert((await page.locator('#cipStatus').textContent()).includes('Formato de demo no válido'),'formato no restringido');
+    assert((await page.locator('#cipStatus').textContent()).includes('CIP no aceptado'),'formato no restringido');
+    assert(await page.locator('#patientCip').getAttribute('aria-invalid')==='true','error sin estado accesible');
+    assert(await page.locator('#patientCip').inputValue()==='CIP-REAL-NO-VALIDO','entrada borrada, no se puede corregir');
     assert(!await page.locator('#visitForm').isVisible(),'acepta identificadores sin DEMO-');
     await page.locator('#patientCip').fill('DEMO-F1-NUEVO');
     await page.locator('#lookupCip').click();
-    assert((await page.locator('#cipStatus').textContent()).includes('CIP nuevo en esta demo'),'CIP nuevo demo no declarado');
+    assert((await page.locator('#cipStatus').textContent()).includes('CIP ficticio nuevo preparado'),'CIP nuevo demo no declarado');
+    assert(await page.locator('#patientName').evaluate(el=>document.activeElement===el),'foco no conduce al siguiente dato');
     assert(!await page.locator('#visitForm').isVisible(),'patología deducida al crear CIP');
     await page.locator('#patientName').fill('Paciente sintético Nuevo');
     await page.locator('#patientSex').selectOption('Otro');

@@ -38,8 +38,9 @@ try{
    await page.locator('#homeSearch').fill('DEMO-INEXISTENTE');
    await page.locator('#homeSearchButton').click();
    await assert(await page.getByRole('dialog').isVisible(),'Quick View ausente');
-   await assert(await page.getByText('No existe en los datos sintéticos').isVisible(),'no avisa inexistente');
-   await assert(await page.locator('#patientNav').isDisabled(),'búsqueda inventó paciente');
+   await assert(await page.getByRole('dialog').getByText('No hay ficha en los datos sintéticos').isVisible(),'no avisa inexistente');
+   await assert(await page.getByRole('dialog').getByRole('button',{name:/Iniciar Primera Visita/}).isVisible(),'falta acceso a primera visita para CIP demo desconocido');
+   await assert(await page.locator('#patientNav').isDisabled(),'búsqueda inventó paciente antes de confirmación');
    await page.locator('#closeQuickView').click();
    await assert(!await page.getByRole('dialog').isVisible(),'Quick View no se cierra');
   }],

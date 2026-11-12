@@ -183,7 +183,12 @@ body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,san
 .identity-cip-row input{min-width:0;flex:1}
 .identity-cip-row .action-btn{min-width:128px}
 .patient-identity-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
-#cipStatus{margin:8px 0 0}
+#cipStatus{margin:10px 0 0}
+.cip-status{display:block;padding:12px 14px;background:#f0f6f8;border:1px solid #cadde3;border-left:4px solid #819ca7;border-radius:10px;font-size:12px;line-height:1.55;font-weight:570;color:#244957}
+.cip-status[data-state="new"]{background:#e9f8f2;border-color:#91cdb6;border-left-color:#008777;color:#145b47;font-weight:700}
+.cip-status[data-state="found"]{background:#edf6fc;border-color:#b4d6e8;border-left-color:#347b9f;color:#245973}
+.cip-status[data-state="error"]{background:#fff1ed;border-color:#f1b8a7;border-left-color:#c65332;color:#8f3321;font-weight:700}
+#patientCip[aria-invalid="true"]{border-color:#c65332;box-shadow:0 0 0 2px rgba(198,83,50,.12)}
 .chip[aria-pressed=true]{background:#d9f4e9;border-color:#269374;color:#12644c;box-shadow:inset 0 0 0 1px #62b69e}
 @media(max-width:760px){.patient-identity-fields{grid-template-columns:1fr}}
 @media(max-width:560px){.identity-cip-row{display:grid;grid-template-columns:1fr}.identity-cip-row .action-btn{width:100%}}
