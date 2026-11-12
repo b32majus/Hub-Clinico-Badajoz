@@ -2314,3 +2314,9 @@ body {
     background: rgba(16, 185, 129, 0.12);
     color: #059669;
 }
+
+.drug-autocomplete__notice {
+    margin: 4px 0 0;
+    font-size: 0.78rem;
+    color: #92400e;
+}

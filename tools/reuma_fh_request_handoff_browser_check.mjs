@@ -257,6 +257,11 @@ async function openPatientPage(browser, urlPath) {
     // A fresh context per journey isolates session/permission state exactly
     // like the established browser-check pattern (one context per page).
     const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] });
+    // La AEMPS (CIMA en directo) se simula sin respuesta válida: el buscador
+    // usa el catálogo publicado y el check nunca sale a internet.
+    await context.route('https://cima.aemps.es/**', (route) => {
+        route.fulfill({ status: 200, contentType: 'application/json', body: 'sin-json' }).catch(() => {});
+    });
     const page = await context.newPage();
     const consoleErrors = [];
     const pageErrors = [];
