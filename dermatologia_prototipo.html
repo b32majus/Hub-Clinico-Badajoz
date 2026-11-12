@@ -83,7 +83,7 @@
 
     <section id="visitView" class="hidden">
       <header class="main-header">
-        <div><div class="eyebrow">DERMATOLOGÍA / BORRADOR CLÍNICO</div><h1 id="visitTitle">Primera Visita</h1><p>Propuesta de captura de Psoriasis basada en las variables de Valme.</p></div>
+        <div><div class="eyebrow">DERMATOLOGÍA / BORRADOR CLÍNICO</div><h1 id="visitTitle">Primera Visita</h1><p id="visitSubtitle">Propuesta de captura de Psoriasis basada en las variables de Valme.</p></div>
         <span class="draft-pill">NO HOMOLOGADO</span>
       </header>
       <div class="context card">
@@ -119,13 +119,18 @@
       </div>
       <section id="emptyState" class="empty card">
         <span class="empty-symbol">◇</span>
-        <h2>Busca o introduce un CIP de demostración y selecciona Psoriasis</h2>
-        <p>Un CIP nuevo crea únicamente un borrador temporal. No hay consulta hospitalaria ni historia clínica real.</p>
+        <h2 id="emptyStateTitle">Busca o introduce un CIP de demostración y selecciona Psoriasis</h2>
+        <p id="emptyStateHint">Un CIP nuevo crea únicamente un borrador temporal. No hay consulta hospitalaria ni historia clínica real.</p>
       </section>
       <form id="visitForm" class="hidden" novalidate aria-label="Borrador Psoriasis" onsubmit="return false">
         <div class="summary card">
-          <div><strong>Formulario de Psoriasis</strong><p>Secciones plegables de Valme adaptadas a controles de selección rápida.</p></div>
+          <div><strong id="visitSummaryHeading">Formulario de Psoriasis</strong><p id="visitSummaryHint">Secciones plegables de Valme adaptadas a controles de selección rápida.</p></div>
           <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
+        </div>
+        <div id="followupContext" class="followup-context hidden" role="note" aria-label="Límites del borrador de seguimiento">
+          <strong>Seguimiento · visita actual</strong>
+          <p id="followupContextStatus">Sin historia clínica conectada. Se registra un borrador de esta sesión; no se ha precargado ningún dato previo.</p>
+          <p>Los tratamientos, fechas, exploraciones y cuestionarios solo se consignan si se introducen expresamente. Un único borrador temporal de Seguimiento por CIP; no representa un historial de visitas.</p>
         </div>
         <div id="clinicalSections" class="sections"></div>
         <footer class="form-footer">No hay botón Guardar. Estos datos solo existen en memoria hasta cerrar o recargar la página. No se realizan solicitudes a Farmacia.</footer>

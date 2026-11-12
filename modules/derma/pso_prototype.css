@@ -208,3 +208,9 @@ body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,san
 .therapy-line label input{margin-top:3px}
 @media(max-width:1150px){.therapy-line{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.therapy-line{grid-template-columns:1fr}}
+
+/* F2 Seguimiento: advertencia de procedencia, nunca historia o dato clínico guardado. */
+.followup-context{margin:16px 0 20px;padding:17px 20px;background:#f2f8fb;border:1px solid #cce2ed;border-left:4px solid #397b9a;border-radius:12px;color:#24526b;line-height:1.5}
+.followup-context strong{font-size:13px}
+.followup-context p{font-size:12px;margin:8px 0 0}
+@media(max-width:620px){.followup-context{padding:14px}}

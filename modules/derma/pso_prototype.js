@@ -17,6 +17,25 @@ const sections = [
   ['12 Seguimiento terapéutico', 'Seguimiento terapéutico'],
   ['13 Plan', 'Plan y observaciones'],
 ];
+// F2: grupos de la visita actual, sin repetir historia inicial ni autorrellenar desde Primera.
+const followupSections=[
+  '01 Datos de consulta','03 Comorbilidades','04 Localizaciones','05 Exploración/PASI',
+  '06 Síntomas','07 DLQI','08 PURE-4','09 Derivaciones/plan',
+  '11 Tratamiento seguimiento','12 Seguimiento terapéutico','13 Plan',
+];
+const followupTitles={
+  '01 Datos de consulta':'Datos de este seguimiento',
+  '03 Comorbilidades':'Revisión de comorbilidades (opcional)',
+  '04 Localizaciones':'Localizaciones en la visita actual',
+  '05 Exploración/PASI':'Exploración clínica actual · PASI/BSA/PGA',
+  '06 Síntomas':'Síntomas en la visita actual',
+  '07 DLQI':'DLQI · cuestionario candidato de esta visita',
+  '08 PURE-4':'PURE-4 · cribado opcional',
+  '09 Derivaciones/plan':'Derivaciones documentadas en esta visita',
+  '11 Tratamiento seguimiento':'Tratamiento documentado en este seguimiento',
+  '12 Seguimiento terapéutico':'Adherencia, revisión y cambios explícitos',
+  '13 Plan':'Plan y próxima revisión',
+};
 // Sugerencias históricas DONANTE Valme, no categorías del catálogo común.
 const therapyGroups=[
   {key:'topicos',name:'Tópicos',options:['Corticoides Tópicos','Calcipotriol/Betametasona','Tacrolimus Tópico']},
@@ -250,8 +269,12 @@ function renderSection(section){
     if(key==='07 DLQI'||key==='08 PURE-4'||key==='12 Seguimiento terapéutico')body+='<p class="warning-inline">Texto, versión, derechos de uso y puntuación requieren aprobación. Respuestas solo para ilustrar el flujo; no constituyen evaluación clínica.</p>';
     body+='<div class="fields">'+other.map(fieldHtml).join('')+'</div>';
   }
-  return '<details class="section" data-section="'+escapeText(key)+'"'+(['01 Datos de consulta','02 Historia de PsO','03 Comorbilidades'].includes(key)?' open':'')+'>'+
-    '<summary><span>'+escapeText(name)+'</span><small class="section-meta">'+fields.length+' campos fuente</small></summary>'+
+  const shownTitle=current.visit==='seguimiento'?(followupTitles[key]||name):name;
+  const defaultOpen=current.visit==='seguimiento'?
+    ['01 Datos de consulta','05 Exploración/PASI'].includes(key):
+    ['01 Datos de consulta','02 Historia de PsO','03 Comorbilidades'].includes(key);
+  return '<details class="section" data-section="'+escapeText(key)+'"'+(defaultOpen?' open':'')+'>'+
+    '<summary><span>'+escapeText(shownTitle)+'</span><small class="section-meta">'+fields.length+' campos fuente</small></summary>'+
     '<div class="section-body">'+body+'</div></details>';
 }
 function bind(){
@@ -345,18 +368,14 @@ function lookupCip(){
   }
   $('#patientCip').removeAttribute('aria-invalid');
   if(!DEMO_PATIENTS.has(id)){
-    if(current.visit!=='primera'){
-      selectPatient('');
-      $('#patientCip').value=id;
-      $('#cipStatus').dataset.state='error';
-      $('#cipStatus').textContent='Este CIP de prueba todavía no tiene ficha: abre Nueva Visita (Primera Visita) para preparar un borrador. No hay conexión hospitalaria.';
-      $('#patientCip').focus();
-      return;
-    }
+    // La ausencia de Primera Visita en esta DEMO no significa ausencia de historia clínica.
+    // Se permite un borrador sintético de Seguimiento sin deducir tratamiento ni datos previos.
     DEMO_PATIENTS.set(id,{name:'',sex:''});
     selectPatient(id);
     $('#cipStatus').dataset.state='new';
-    $('#cipStatus').textContent='CIP ficticio nuevo preparado (solo en memoria). Siguiente paso: escribe nombre y apellidos ficticios, indica sexo y selecciona Psoriasis para abrir el formulario. No se ha creado una historia clínica.';
+    $('#cipStatus').textContent=current.visit==='seguimiento'?
+      'CIP ficticio nuevo en esta demo: prepara el Seguimiento sin primera visita guardada. Indica nombre/sexo si procede y selecciona Psoriasis. Sin historia conectada ni tratamiento previo inferido.':
+      'CIP ficticio nuevo preparado (solo en memoria). Siguiente paso: escribe nombre y apellidos ficticios, indica sexo y selecciona Psoriasis para abrir el formulario. No se ha creado una historia clínica.';
     $('#patientName').focus();
     return;
   }
@@ -386,6 +405,15 @@ function renderPatientDashboard(){
   const seguimiento=getDraftCountFor(current.patient,'seguimiento');
   $('#dashboardDraftCounts').textContent='Borrador Primera Visita: '+primera+' campos · Borrador Seguimiento: '+seguimiento+' campos. Ninguno está guardado como acto clínico.';
 }
+function followupContextText(){
+  const prior=drafts.get(current.patient+'|primera|pso');
+  const count=prior?Object.values(prior).filter(isConsigned).length:0;
+  if(count){
+    return 'En esta sesión existe un BORRADOR SIN GUARDAR de Primera Visita con '+
+      count+' respuestas consignadas. No es historia clínica ni una visita previa validada. NO se ha copiado ni precargado ningún dato.';
+  }
+  return 'No hay Primera Visita guardada ni historia clínica conectada en esta demo. Esto NO significa que el paciente no tenga antecedentes. Ningún dato se ha precargado.';
+}
 function render(preserveOpen=false){
   $('#homeView').classList.toggle('hidden',current.view!=='home');
   $('#visitView').classList.toggle('hidden',current.view!=='visit');
@@ -406,12 +434,27 @@ function render(preserveOpen=false){
   const form=$('#visitForm'),empty=$('#emptyState');
   const ready=current.patient&&current.pathology==='pso';
   form.classList.toggle('hidden',!ready);empty.classList.toggle('hidden',!!ready);
-  $('#visitTitle').textContent=current.visit==='primera'?'Primera Visita':'Seguimiento';
+  const followup=current.visit==='seguimiento';
+  $('#visitTitle').textContent=followup?'Seguimiento':'Primera Visita';
+  $('#visitSubtitle').textContent=followup?
+    'Visita actual de Psoriasis. Datos clínicos solo si se registran explícitamente; sin precarga de historia.':
+    'Propuesta de captura de Psoriasis basada en las variables de Valme.';
+  $('#emptyStateTitle').textContent=followup?
+    'Busca o introduce un CIP de prueba y selecciona Psoriasis para el seguimiento':
+    'Busca o introduce un CIP de demostración y selecciona Psoriasis';
+  $('#emptyStateHint').textContent=followup?
+    'Puede existir un seguimiento aunque no haya Primera Visita en esta demo. Los datos previos no se inventan ni se recuperan.':
+    'Un CIP nuevo crea únicamente un borrador temporal. No hay consulta hospitalaria ni historia clínica real.';
+  $('#visitSummaryHeading').textContent=followup?'Seguimiento de Psoriasis':'Formulario de Psoriasis';
+  $('#visitSummaryHint').textContent=followup?
+    'Exploración, síntomas, instrumentos candidatos, tratamiento y evolución de esta visita, sin historia precargada.':
+    'Secciones plegables de Valme adaptadas a controles de selección rápida.';
+  $('#followupContext').classList.toggle('hidden',!followup||!ready||current.view!=='visit');
   if(current.view!=='visit'||!ready)return;
+  if(followup)$('#followupContextStatus').textContent=followupContextText();
   const opened=preserveOpen?new Set([...document.querySelectorAll('.section[open]')].map(x=>x.dataset.section)):null;
-  const selected=sections.filter(([key])=>!(['10 Tratamiento primera visita','11 Tratamiento seguimiento','12 Seguimiento terapéutico'].includes(key))||
-    (current.visit==='primera'&&key==='10 Tratamiento primera visita')||
-    (current.visit==='seguimiento'&&key!=='10 Tratamiento primera visita'));
+  const selected=followup?sections.filter(([key])=>followupSections.includes(key)):
+    sections.filter(([key])=>!['11 Tratamiento seguimiento','12 Seguimiento terapéutico'].includes(key));
   $('#clinicalSections').innerHTML=selected.map(renderSection).join('');
   if(opened)document.querySelectorAll('.section').forEach(el=>el.open=opened.has(el.dataset.section));
   bind();updateStatus();

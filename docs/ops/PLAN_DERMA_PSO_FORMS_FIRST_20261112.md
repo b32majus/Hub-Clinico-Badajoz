@@ -24,9 +24,18 @@
 | **F4 — Pantallas consumidoras** | Quick View, dashboard individual, historia, filtros/estadísticas con **una única lectura del mismo contrato**, diferenciando `pendiente`, `incompleto`, `no consta` y resultado disponible | Datos F1/F2 + contrato F3 y reglas de evaluabilidad firmadas | KPIs clínicos, líneas terapéuticas o categorías de control inventadas |
 | **F5 — Pulido visual común** | Homogeneizar tipografía, proporciones, espaciado y accesibilidad de Inicio, sidebar y formularios con Reuma | Flujos revisados y estables | Refactor transversal prematuro de todos los módulos |
 
+## Estado F2 · Seguimiento de Psoriasis, CANDIDATO LOCAL — 12-11-2026
+
+- **GO funcional:** Sil «vamos con seguimiento», tras revisar satisfactoriamente el CIP demo de F1. Implementación solo rama aislada: **sin push, PR ni despliegue privado**.
+- Identificación común CIP DEMO-, nombre, sexo, selección explícita de Psoriasis y fecha vacía; un CIP sintético sin Primera Visita en demo puede iniciar borrador F2, sin inventar historia o tratamiento previo.
+- F2 con 11 secciones de visita actual: datos de consulta, comorbilidades opcionales, localizaciones, exploración PASI/BSA/PGA, síntomas, DLQI candidato, PURE-4 candidato, derivaciones declaradas, tratamientos documentados Seguimiento, adherencia/ajustes explícitos y plan/próxima revisión. No repetir historia inicial ni mostrar tratamiento Primera en el formulario F2.
+- Se pueden consultar **solo metadatos no clínicos** de un borrador de Primera Visita en esta sesión (existencia y número de respuestas): no son hechos guardados ni validados. **Ninguna precarga** de fecha, terapia, score o comorbilidades. F2 es un borrador único por CIP+patología, no múltiples visitas longitudinales.
+- **QA técnico:** Chromium focal F2 8/8 y regresiones F1 8/8, PsO/Valme 8/8, Shell 8/8 y nuevo CIP 6/6; **38/38 PASS**. Capturas desktop/móvil inspeccionadas. No QA clínica humana ni auditoría independiente.
+- **F3/F4 pendientes:** contrato de visitas múltiples y act IDs, provenance, persistencia, historia, elegibilidad de precarga y consumidores. No se han activado cálculos, fármacos inferidos ni actos FH. No apto piloto.
+
 ## Estado de ejecución local de F1 — 12-11-2026
 
-**Implementado exclusivamente en rama local de demo:** mapa de captura con 11 apartados en 4 grupos, botones de salto a sección y «Siguiente apartado», indicador de respuestas consignadas por bloque, reconocimiento de cero legítimo y chips con revisión negativa explícita. La navegación no escribe datos ni decide validación; todos los cálculos y decisiones clínicas siguen bloqueados. No se ha iniciado F2 (Seguimiento), F3 (persistencia) ni se han conectado consumidores longitudinales F4. La versión privada Tailscale y PR #916 no se han actualizado con F1.
+**Estado histórico del primer corte F1 (simplificado después por Sil):** mapa de captura con 11 apartados en 4 grupos, botones de salto a sección y «Siguiente apartado», indicador de respuestas consignadas por bloque, reconocimiento de cero legítimo y chips con revisión negativa explícita. La navegación no escribe datos ni decide validación; todos los cálculos y decisiones clínicas siguen bloqueados. La referencia a F2 pendiente corresponde al primer corte F1; F2 se inició después según el estado anterior. F3 (persistencia) y F4 (consumidores) siguen pendientes. La versión privada Tailscale y PR #916 no se han actualizado con F1.
 
 **Verificación técnica:** tests Chromium F1, PsO anterior y Reuma-shell, 8/8 cada uno; capturas locales 1400/390 px examinadas. No hay revisión humana clínica ni auditoría independiente DIA. El producto no está homologado ni apto para piloto. Hasta publicar por GO, el estado en Nexus canónico permanece sin cambiar.
 
