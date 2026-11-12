@@ -39,5 +39,5 @@ El catálogo farmacológico (Excel en `data/catalogos/farmacia/`) está commitea
 - La hoja `CATALOGO_LOCAL_ESPECIAL` depende de input manual de Farmacia del hospital (no automatizable)
 
 **Tags:** farmacia, cima, github-actions, automatizacion, catalogo
-**Estado:** pending
+**Estado:** HECHO (12-11-2026, buscador tramo 5). Implementado en Node (`tools/update_cima_catalog.mjs`, sin Python ni npm) y `.github/workflows/update-cima-catalog.yml`. Cambios sobre la propuesta (Sil): sin filtro hospitalario, solo comercializados, `codigo_nacional` vacío, commit directo a `promueve/nexus-v4`. Ver `docs/DECISIONES.md` (12-11).
 **WO asignable:** sí

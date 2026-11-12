@@ -116,9 +116,14 @@ record("fragment 'COSENTYX' (mayúsculas) obtiene el mismo conjunto", () => {
     const upper = catalog.search('COSENTYX').map((hit) => hit.id).sort();
     assert.deepEqual(upper, lower);
 });
-record("búsqueda sin acento 'solucion' encuentra nombres con 'SOLUCIÓN'", () => {
+// Independent of catalogue content/order (the monthly CIMA update changes
+// which 15 names come first): accent-free and accented queries give the same
+// non-empty set, and every hit matches once accents are folded.
+record("búsqueda sin acento 'solucion' = con acento 'solución' (ignora tildes)", () => {
+    const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
     const hits = assertOnlyIdentity('solucion');
-    assert.ok(hits.some((hit) => hit.name.includes('SOLUCIÓN')), JSON.stringify(hits.slice(0, 2)));
+    assert.deepEqual(catalog.search('solución').map((hit) => hit.id).sort(), hits.map((hit) => hit.id).sort());
+    assert.ok(hits.every((hit) => fold(hit.name).includes('SOLUCION')), JSON.stringify(hits.slice(0, 2)));
 });
 record("la búsqueda con acento 'ácido' normaliza igual que sin acento", () => {
     const withAccent = catalog.search('ácido').map((hit) => hit.id).sort();
