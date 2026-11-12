@@ -4,6 +4,22 @@
 **Base:** `b32majus/Hub-Clinico-Badajoz` rama `promueve/nexus-v4`, prototipo aislado `work/derma-pso-reuma-shell-20261112@444f9d1`. PR #916 DRAFT sigue sin merge. Contratos #697 (Derma base) y #728 (PsO) abiertos sin firma clínica.
 **Instrucción:** sil 12-11: «Primera Visita y Seguimiento deben alimentar lo demás»; «deja primero documentado cómo vamos a proceder y empieza por Primera Visita». Diseño UX de Reuma como referencia; catálogo de variables Valme como **donante**, no como norma médica ni identidad institucional.
 
+## F3a · Modelo de borradores multi-visita, CANDIDATO LOCAL — 13-11-2026
+
+**Motivo y GO:** Sil ha validado que PASI F2 funciona en la demo privada y pidió «continua». El deploy PASI se confirmó con 57/57 tests HTTPS y su WO externa se cerró. Se avanza hacia F3 pero **sin afirmar que existe historia clínica ni guardado**: el contrato #728 sigue OPEN/question y no está homologado para datos clínicos.
+
+**Implementación F3a aislada:** nuevo módulo puro modules/derma/pso_demo_visit_drafts.js y pruebas, sin importarlo desde la interfaz. Es un REGISTRO EN MEMORIA DE BORRADORES FICTICIOS, no ficha asistencial. Al crear un borrador se exige explícitamente ID sintético de visita (DEMO-VISIT-...), CIP DEMO-..., site DEMO-SITE-..., tipo primera o seguimiento, patología pso, fecha clínica AAAA-MM-DD o null y procedencia synthetic-manual-entry. El sistema no genera fecha, actor real, estado confirmado, pauta, patología ni visita previa por inferencia.
+
+**Propiedades:**
+- Varias visitas ficticias con distintos IDs para el mismo CIP y tipo, sin sobrescribir un único borrador. Datos por visita aislados y revisión optimista para evitar sobrescribir cambios de otro editor.
+- Solo acepta campos de captura explícita del inventario de 174 claves Valme, excluyendo contexto/identidad, derivados y **cuestionarios sin homologación** (DLQI, PURE4, Morisky), así como tratamiento/decisiones del circuito equivocado. No permite escribir PASI derivado, DLQI total, PURE4/Morisky total ni badges derivados como respuestas. Cero explícito se mantiene; borrar es operación explícita, no imputación. No hay copia de datos entre visitas.
+- Los listados y consultas de borradores anteriores exponen **solo metadatos de DEMO**, nunca resultados clínicos. Se validan fechas; no es anterior un borrador sin fecha, futuro, del mismo día, otro site, CIP o patología. Referencia temporal explícita; no hoy por defecto.
+- Sin export, guardado, DB, localStorage, sessionStorage, backend o integración GUI. El módulo no se incluye en el snapshot ni en la demo privada; **todavía no hay múltiples visitas utilizables en pantalla**. No existe historia hospitalaria ni actos validados, no usar para precarga terapéutica.
+
+**QA F3a:** 20 tests unitarios Node del modelo (identidad, aislamiento, duplicados, fechas, ausencia de inferencias, instrumentos y tratamientos de otro circuito rechazados, protección del estado, no persistencia) y 4 pruebas de importación ESM con Chromium. Importar en navegador no demuestra integración UI. Se repite suite actual de 57 Chromium. Documentación local, sin push/PR/deploy.
+
+**Gates siguientes F3b/F3c:** antes de conectar F1 y F2, confirmar identidad institucional de paciente/site/visita, fecha y origen, borrador vs acto, revisión/autoría y política de almacenamiento. Sin aprobación #697/#728, solo sería apta una interfaz experimental de borradores DEMO no persistentes, visiblemente rotulados; nunca historial de paciente o precargas clínicas. F4 Quick View/Dashboard clínicos sigue bloqueado.
+
 ## F2.2 · PASI calculado solo en Seguimiento, CANDIDATO LOCAL — 12-11-2026
 
 **Petición funcional:** Sil validó visualmente F2.1 pero señaló que «el PASI no se autocalcula». Confirmado en el formulario: los 16 campos existían, pero el total de PASI estaba deshabilitado expresamente. **Esta WO habilita únicamente el cálculo derivado demostrativo de F2**, sin tocar Primera Visita ni otros scores; requiere GO separado antes de actualizar la demo privada.
