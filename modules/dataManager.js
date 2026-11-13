@@ -516,7 +516,7 @@ function getPatientHistory(patientId) {
                 try {
                     const dateA = parseVisitDate(a.Fecha_Visita || a.fechaVisita);
                     const dateB = parseVisitDate(b.Fecha_Visita || b.fechaVisita);
-                    return dateB - dateA;
+                    return compareVisitDates(dateA, dateB, 'desc');
                 } catch (e) {
                     console.warn('Error al ordenar fechas:', e);
                     return 0;
@@ -559,32 +559,97 @@ function getPatientHistory(patientId) {
 }
 
 /**
- * Parsea una fecha de mltiples formatos posibles
- * @param {string|Date} dateStr - Fecha en formato DD/MM/YYYY, YYYY-MM-DD, o ya Date
- * @returns {Date} - Objeto Date
+ * Parsea una fecha de múltiples formatos posibles. Formatos aceptados:
+ * - Date válido (se devuelve tal cual; un Date inválido es ilegible).
+ * - Número de serie de Excel (celda con formato fecha): se lee su fecha y la
+ *   hora se ignora; no finito, < 61 (Excel cuenta un 29/02/1900 inexistente,
+ *   antes del 01/03/1900 el serial no es fiable) o fuera de 1900-2100 → ilegible.
+ * - Texto solo con cifras (también con signo o decimales) → ilegible (un número
+ *   escrito como texto no es una fecha).
+ * - Texto DD/MM/YYYY estricto: se acepta solo si la fecha existe; una fecha
+ *   imposible es ilegible y no se corrige sola.
+ * - Texto YYYY-MM-DD (mes y día de 1-2 cifras; detrás puede venir hora, Z u
+ *   offset): se valida que el día exista y se devuelve el Date nativo
+ *   («2024-03-15» sigue siendo medianoche UTC).
+ * - Resto de textos: constructor nativo.
+ * Nunca se inventa una fecha: lo ilegible devuelve una Date inválida (NaN).
+ * @param {string|number|Date} dateStr - Fecha en formato DD/MM/YYYY, YYYY-MM-DD, número de serie de Excel o ya Date
+ * @returns {Date} - Objeto Date (inválido si la fecha es ilegible)
  */
 function parseVisitDate(dateStr) {
-    if (!dateStr) return new Date(NaN);
+    if (!dateStr) return new Date(NaN); // '', null, undefined y el número 0 → ilegible
     if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? new Date(NaN) : dateStr;
+
+    // Número de serie de Excel (época 30-12-1899, hora local). Un serial < 61
+    // es ilegible: Excel cuenta un 29/02/1900 que no existió.
+    if (typeof dateStr === 'number') {
+        if (!isFinite(dateStr) || dateStr < 61) return new Date(NaN);
+        var serieDate = new Date(1899, 11, 30 + Math.floor(dateStr));
+        if (serieDate.getFullYear() < 1900 || serieDate.getFullYear() > 2100) return new Date(NaN);
+        return serieDate;
+    }
 
     var str = String(dateStr).trim();
 
-    // Intentar formato DD/MM/YYYY (exige 3 partes numéricas estrictas)
+    // Un número escrito como texto no es una fecha (ni año 45000 ni «1 de enero»);
+    // tampoco con signo o decimales («-2024», «45000.0»)
+    if (/^[+-]?\d+(?:\.\d+)?$/.test(str)) return new Date(NaN);
+
+    // Intentar formato DD/MM/YYYY (exige 3 partes numéricas estrictas y que la fecha exista)
     if (str.includes('/')) {
         if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
             var parts = str.split('/');
-            var parsed = new Date(parts[2], parts[1] - 1, parts[0]);
-            if (!isNaN(parsed.getTime())) return parsed;
+            var year = parseInt(parts[2], 10);
+            var month = parseInt(parts[1], 10);
+            var day = parseInt(parts[0], 10);
+            var ddmmyyyy = new Date(year, month - 1, day);
+            if (ddmmyyyy.getFullYear() === year && ddmmyyyy.getMonth() === month - 1 && ddmmyyyy.getDate() === day) return ddmmyyyy;
+            return new Date(NaN); // fecha imposible: no se corrige sola ni desborda al mes siguiente
         }
     }
 
-    // Intentar formato YYYY-MM-DD u otros formatos nativos
+    // Intentar formato YYYY-MM-DD (mes y día de 1-2 cifras; detrás puede venir
+    // hora, Z u offset): validar primero que el día exista
+    var isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?=$|[T Zz+\-\s])/);
+    if (isoMatch) {
+        var isoY = parseInt(isoMatch[1], 10);
+        var isoM = parseInt(isoMatch[2], 10);
+        var isoD = parseInt(isoMatch[3], 10);
+        var isoCheck = new Date(isoY, isoM - 1, isoD);
+        if (!(isoCheck.getFullYear() === isoY && isoCheck.getMonth() === isoM - 1 && isoCheck.getDate() === isoD)) {
+            return new Date(NaN); // fecha imposible
+        }
+        var nativeIso = new Date(str);
+        return isNaN(nativeIso.getTime()) ? new Date(NaN) : nativeIso;
+    }
+
+    // Intentar otros formatos nativos
     var fallback = new Date(str);
     if (!isNaN(fallback.getTime())) return fallback;
 
     // Si nada funciona, devolver fecha inválida (no inventar «hoy»)
     console.warn('parseVisitDate: fecha no válida');
     return new Date(NaN);
+}
+
+/**
+ * Compara dos fechas de visita para ordenar. Las fechas ilegibles (Date inválida)
+ * van siempre al final, en los dos sentidos del orden; nunca se inventa una fecha
+ * para poder comparar.
+ * @param {Date} dateA - Primera fecha (ya parseada con parseVisitDate).
+ * @param {Date} dateB - Segunda fecha (ya parseada con parseVisitDate).
+ * @param {string} order - 'asc' (más antigua primero) o 'desc' (más reciente primero).
+ * @returns {number} Comparador estándar: negativo, 0 o positivo.
+ */
+function compareVisitDates(dateA, dateB, order) {
+    // Sin instanceof Date: este comparador puede correr en otro contexto (check en vm)
+    var unreadableA = !dateA || typeof dateA.getTime !== 'function' || isNaN(dateA.getTime());
+    var unreadableB = !dateB || typeof dateB.getTime !== 'function' || isNaN(dateB.getTime());
+    if (unreadableA && unreadableB) return 0;
+    if (unreadableA) return 1;
+    if (unreadableB) return -1;
+    if (order === 'asc') return dateA - dateB;
+    return dateB - dateA;
 }
 
 /**
@@ -642,9 +707,21 @@ function selectLatestVisitPerPatient(records) {
             return;
         }
 
-        var candidateTime = candidateDate.getTime();
-        var existingTime = existing.visitDate.getTime();
-        if (candidateTime > existingTime || (candidateTime === existingTime && index > existing.sourceIndex)) {
+        // Una fecha legible siempre gana a una ilegible. Entre legibles manda la
+        // más reciente (empate → la de índice mayor), como antes; entre ilegibles
+        // no se reemplaza (sin fecha legible no hay nada que ganar). El check de
+        // ilegible replica compareVisitDates porque puede correr en otro contexto.
+        var existingUnreadable = !existing.visitDate || typeof existing.visitDate.getTime !== 'function' || isNaN(existing.visitDate.getTime());
+        var candidateUnreadable = !candidateDate || typeof candidateDate.getTime !== 'function' || isNaN(candidateDate.getTime());
+        var shouldReplace = false;
+        if (existingUnreadable && !candidateUnreadable) {
+            shouldReplace = true;
+        } else if (!existingUnreadable && !candidateUnreadable) {
+            var candidateTime = candidateDate.getTime();
+            var existingTime = existing.visitDate.getTime();
+            shouldReplace = candidateTime > existingTime || (candidateTime === existingTime && index > existing.sourceIndex);
+        }
+        if (shouldReplace) {
             latestByPatient.set(key, {
                 record: record,
                 visitDate: candidateDate,
@@ -655,7 +732,7 @@ function selectLatestVisitPerPatient(records) {
 
     return Array.from(latestByPatient.values())
         .sort(function(a, b) {
-            return b.visitDate.getTime() - a.visitDate.getTime();
+            return compareVisitDates(a.visitDate, b.visitDate, 'desc');
         })
         .map(function(entry) {
             return entry.record;
@@ -839,9 +916,7 @@ function extractKeyEvents(visits, pathology) {
 
     // Ordenar eventos por fecha (ascendente)
     events.sort((a, b) => {
-        const dateA = parseVisitDate(a.date);
-        const dateB = parseVisitDate(b.date);
-        return dateA - dateB;
+        return compareVisitDates(parseVisitDate(a.date), parseVisitDate(b.date), 'asc');
     });
 
     return events;
@@ -923,7 +998,7 @@ function getNumericFieldValue(record, keys) {
 
 function parseFilterDate(value) {
     if (!value) return null;
-    const parsed = parseVisitDate(value.toString());
+    const parsed = parseVisitDate(value);
     if (!(parsed instanceof Date) || Number.isNaN(parsed.getTime())) return null;
     return parsed;
 }
@@ -931,7 +1006,7 @@ function parseFilterDate(value) {
 function getVisitDateValue(record) {
     const dateValue = getFieldValue(record, ['Fecha_Visita', 'fechaVisita']);
     if (!dateValue) return null;
-    const parsed = parseVisitDate(dateValue.toString());
+    const parsed = parseVisitDate(dateValue);
     if (Number.isNaN(parsed.getTime())) return null;
     return parsed;
 }
@@ -964,7 +1039,7 @@ function getAgeValue(record) {
         return typeof age === 'number' && !Number.isNaN(age) ? age : null;
     }
 
-    const parsedBirth = parseVisitDate(birthDate.toString());
+    const parsedBirth = parseVisitDate(birthDate);
     if (Number.isNaN(parsedBirth.getTime())) return null;
 
     const today = new Date();
