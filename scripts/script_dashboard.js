@@ -1805,7 +1805,7 @@ function getVisitMetric(visit, metric) {
 
 function prepareChartData(primaryMetric, secondaryMetric = null) {
     const visits = Array.isArray(window.patientHistory.allVisits) ? [...window.patientHistory.allVisits] : [];
-    visits.sort((a, b) => new Date(getVisitDate(a)) - new Date(getVisitDate(b)));
+    visits.sort((a, b) => compareVisitDates(parseVisitDate(getVisitDate(a)), parseVisitDate(getVisitDate(b)), 'asc'));
 
     const labels = [];
     const primaryValues = [];
@@ -1816,9 +1816,9 @@ function prepareChartData(primaryMetric, secondaryMetric = null) {
         if (primaryValue !== null && primaryValue !== undefined && primaryValue !== '') {
             // Usar formato ISO para que Chart.js pueda parsear correctamente con escala de tiempo
             const visitDate = getVisitDate(visit);
-            const dateObj = new Date(visitDate);
+            const dateObj = parseVisitDate(visitDate);
             // Si la fecha es vlida, usar formato ISO; si no, usar la fecha original
-            const isoDate = !isNaN(dateObj.getTime()) ? dateObj.toISOString().split('T')[0] : visitDate;
+            const isoDate = !isNaN(dateObj.getTime()) ? dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0') : String(visitDate);
             labels.push(isoDate);
             primaryValues.push(Number(primaryValue));
 
@@ -2035,7 +2035,7 @@ function formatBiomarker(value) {
 
 function formatDate(dateStr) {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
+    const date = parseVisitDate(dateStr);
     if (Number.isNaN(date.getTime())) return dateStr;
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
