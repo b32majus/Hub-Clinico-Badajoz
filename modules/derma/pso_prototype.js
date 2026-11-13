@@ -66,23 +66,22 @@ const adherences=['Buena','Regular','Mala'];
 const intensity=['No','Leve','Moderada','Intensa'];
 const current={patient:'',pathology:'',visit:'primera',view:'home',activeVisitId:''};
 const pathologyByVisit=new Map();
-const DEMO_PATIENTS=new Map([
-  ['DEMO-PSO-001',{name:'Paciente sintético A',sex:''}],
-  ['DEMO-PSO-002',{name:'Paciente sintético B',sex:''}],
+const FIXTURE_PATIENTS=Object.freeze([
+  Object.freeze(['DEMO-PSO-001',Object.freeze({name:'Paciente sintético A',sex:''})]),
+  Object.freeze(['DEMO-PSO-002',Object.freeze({name:'Paciente sintético B',sex:''})]),
 ]);
+const DEMO_PATIENTS=new Map(FIXTURE_PATIENTS.map(([id,record])=>[id,{...record}]));
 // Filtro de visualización terapéutica por borrador: no declara tratamiento ni se hereda.
 const followupFamilyByDraft=new Map();
 function followupFamily(){return current.activeVisitId?(followupFamilyByDraft.get(current.activeVisitId)||''):''}
 function setFollowupFamily(value){
   if(current.activeVisitId)followupFamilyByDraft.set(current.activeVisitId,value);
 }
-// F3b: un único registro F3a vive durante esta sesión. Sin almacenamiento ni backend.
+// Seguridad: registro F3a para UNA visita de edición. Se reemplaza al descartarla.
 const DRAFT_SITE_ID='DEMO-SITE-NEXUS';
-const draftRegistry=createPsoDemoVisitDraftRegistry();
-const drafts=new Map(); // visitId -> respuestas de interfaz (incluye extras y cuestionarios candidatos)
+let draftRegistry=createPsoDemoVisitDraftRegistry();
+const drafts=new Map(); // SOLO la visita actualmente abierta; vaciar al abandonarla
 const slots=new Map(); // visitId|familia -> líneas visibles de esa visita
-const usedDraftIds=new Set();
-const selectedDraftByScope=new Map(); // patient|visit -> visitId elegido en esta sesión
 const draftAnswersFallback=Object.freeze(Object.create(null)); // nunca registrar respuestas sin ID
 let draftSequence=0;
 let draftNotice='';
@@ -90,7 +89,57 @@ const byKey=new Map(PSO_VALME_FIELDS.map(f=>[f.key,f]));
 window.__dermaPrototypeFieldKeys=PSO_VALME_FIELDS.map(f=>f.key); // Read-only QA witness, never clinical data.
 const $=q=>document.querySelector(q);
 const escapeText=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// --- F3b · puente explícito con el registro F3a (solo metadatos DEMO en memoria) ---
+// --- Visita única · registro F3a volátil exclusivamente mientras está abierta ---
+function fixturePatientRecord(id){
+  const match=FIXTURE_PATIENTS.find(([key])=>key===id);
+  return match?match[1]:null;
+}
+function hasUnsavedVisitData(){
+  const values=current.activeVisitId?drafts.get(current.activeVisitId):null;
+  if(values&&Object.values(values).some(isConsigned))return true;
+  const record=DEMO_PATIENTS.get(current.patient);
+  const baseline=fixturePatientRecord(current.patient);
+  return Boolean(record&&((record.name||'')!==(baseline?.name||'')||
+    (record.sex||'')!==(baseline?.sex||'')));
+}
+function confirmDiscardVisit(){
+  return !hasUnsavedVisitData()||window.confirm(
+    'Esta visita DEMO NO está guardada. Si continúas, se DESCARTARÁN definitivamente sus datos y no se podrán recuperar. ¿Descartar la visita actual?');
+}
+function discardCurrentVisit({keepPatient=false,keepPathology=false}={}){
+  const patient=keepPatient?current.patient:'';
+  const pathology=keepPatient&&keepPathology?current.pathology:'';
+  // No se conserva registro multivisita ni copias de datos anteriores.
+  drafts.clear();
+  slots.clear();
+  followupFamilyByDraft.clear();
+  pathologyByVisit.clear();
+  draftRegistry=createPsoDemoVisitDraftRegistry();
+  DEMO_PATIENTS.clear();
+  for(const [id,record] of FIXTURE_PATIENTS)DEMO_PATIENTS.set(id,{...record});
+  current.activeVisitId='';
+  current.patient=patient;
+  current.pathology=pathology;
+  if(patient&&!DEMO_PATIENTS.has(patient))DEMO_PATIENTS.set(patient,{name:'',sex:''});
+  draftNotice='';
+  $('#clinicalSections').replaceChildren();
+  $('#patientCip').value=patient;
+  $('#patientName').value=DEMO_PATIENTS.get(patient)?.name||'';
+  $('#patientSex').value=DEMO_PATIENTS.get(patient)?.sex||'';
+  $('#patientName').disabled=!patient;
+  $('#patientSex').disabled=!patient;
+  $('#pathology').value=pathology;
+  $('#homeSearch').value='';
+  $('#patientSearch').value='';
+  $('#quickViewContent').replaceChildren();
+  $('#quickViewTitle').textContent='Quick View';
+  $('#dashboardPatientId').textContent='Sin paciente seleccionado';
+  $('#dashboardDraftCounts').textContent='Sin datos de consulta';
+  $('#draftScope').textContent='Sin visita abierta';
+  $('#draftStatus').textContent='Sin datos de visita';
+  $('#draftVisitStatus').textContent='BORRADOR DEMO · NO GUARDADO';
+}
+
 const F3A_UI_ONLY_KINDS=new Set(['contexto','derivado','derivado-presentacion','cuestionario']);
 function f3aApprovedField(key,visitType){
   // Espeja la frontera del contrato F3a: contexto, derivados, presentación y cuestionarios
@@ -100,21 +149,8 @@ function f3aApprovedField(key,visitType){
   if(visitType==='primera')return !key.startsWith('seguimiento_')&&!key.startsWith('tx_seguimiento_');
   return !key.startsWith('tx_primera_');
 }
-function draftMetadataList(){
-  if(!current.patient)return [];
-  try{
-    return draftRegistry.listDraftMetadata({siteId:DRAFT_SITE_ID,patientCip:current.patient,pathology:'pso'})
-      .filter(meta=>meta.visitType===current.visit);
-  }catch(error){
-    draftNotice='No se pudo listar los borradores DEMO: '+error.message;
-    return [];
-  }
-}
-function nextDraftId(){
-  let id;
-  do{id='DEMO-VISIT-'+String(++draftSequence).padStart(6,'0')}while(usedDraftIds.has(id));
-  return id;
-}
+// NO hay listado ni búsqueda de visitas anteriores: la única visita es la activa.
+function nextDraftId(){return 'DEMO-VISIT-'+String(++draftSequence).padStart(6,'0')}
 function createDraftRecord(){
   if(!current.patient||current.pathology!=='pso')return null;
   const visitId=nextDraftId();
@@ -128,9 +164,7 @@ function createDraftRecord(){
       clinicalDate:null, // sin fecha: nunca «hoy» implícito
       provenance:'synthetic-manual-entry',
     });
-    usedDraftIds.add(visitId);
     draftStore(visitId);
-    selectedDraftByScope.set(scopeKey(),visitId);
     current.activeVisitId=visitId;
     draftNotice='';
     return record;
@@ -140,12 +174,18 @@ function createDraftRecord(){
   }
 }
 function ensureActiveDraft(){
-  const selected=selectedDraftByScope.get(scopeKey());
-  if(selected&&draftMetadataList().some(meta=>meta.visitId===selected)){
-    current.activeVisitId=selected;
-    return true;
+  if(current.activeVisitId){
+    try{
+      const record=draftRegistry.readDraft(current.activeVisitId);
+      if(record.patientCip===current.patient&&record.visitType===current.visit&&
+         record.pathology===current.pathology)return true;
+    }catch(error){
+      draftNotice='No hay visita DEMO válida: '+error.message;
+      return false; // fail closed: nunca crear otro estado sobre uno inconsistente
+    }
+    draftNotice='Identidad de visita DEMO incoherente.';
+    return false;
   }
-  current.activeVisitId='';
   return Boolean(createDraftRecord());
 }
 function syncDraftToRegistry(){
@@ -187,20 +227,7 @@ function updateDraftVisitStatus(){
     (draftNotice?' · '+draftNotice:'');
   if(el.textContent!==message)el.textContent=message; // evitar anuncios repetitivos
 }
-function updateVisitSelector(){
-  const select=$('#draftVisitSelect');
-  if(!select)return;
-  const options=draftMetadataList();
-  select.replaceChildren(...options.map(meta=>{
-    const option=document.createElement('option');
-    option.value=meta.visitId;
-    option.textContent=meta.visitId+' · '+draftDateText(meta.clinicalDate);
-    return option;
-  }));
-  select.disabled=!options.length;
-  select.value=current.activeVisitId;
-}
-function scopeKey(){return current.patient+'|'+current.visit}
+// Sin selector de borradores: ni historial ni reanudación en navegador.
 // Aislamiento por ID de borrador: la visita actual es la única fuente de la pantalla.
 function activeScope(){return current.activeVisitId}
 function draftStore(visitId){
@@ -219,7 +246,6 @@ function setField(key,value){
   }
   answers()[key]=value;
   updateStatus(); // reconcilia con F3a sin homologar extras
-  if(key==='fecha_visita')updateVisitSelector();
   if(current.visit==='seguimiento'&&key.startsWith('pasi_'))updatePasiStatus();
 }
 // PASI estándar (EMA CHMP/EWP/2454/02, apéndice; DermNet PASI): demo exclusivamente.
@@ -763,11 +789,16 @@ function refreshZoneSummary(){
 }
 function patientVisitKey(patient=current.patient,visit=current.visit){return patient+'|'+visit}
 function selectPatient(id){
-  const normalized=DEMO_PATIENTS.has(id)?id:'';
+  const normalized=/^DEMO-[A-Z0-9-]{3,24}$/.test(id)?id:'';
   if(current.patient!==normalized){
+    if(!confirmDiscardVisit()){
+      $('#patientCip').value=current.patient;
+      return false;
+    }
+    discardCurrentVisit();
     current.patient=normalized;
-    current.activeVisitId='';
-    current.pathology=pathologyByVisit.get(patientVisitKey())||'';
+    if(normalized&&!DEMO_PATIENTS.has(normalized))DEMO_PATIENTS.set(normalized,{name:'',sex:''});
+    current.pathology='';
   }
   const record=DEMO_PATIENTS.get(current.patient);
   $('#patientCip').value=current.patient;
@@ -777,17 +808,18 @@ function selectPatient(id){
   $('#patientSex').value=record?.sex||'';
   $('#pathology').value=current.pathology;
   $('#cipStatus').dataset.state=record?'found':'hint';
-  $('#cipStatus').textContent=record?'CIP ficticio localizado. Selecciona la patología de esta visita para abrir su formulario.':
-    'Introduce un CIP ficticio que empiece por DEMO- y pulsa «Buscar / crear CIP». No existe búsqueda hospitalaria.';
+  $('#cipStatus').textContent=record?'CIP ficticio seleccionado. Selecciona Psoriasis expresamente para abrir esta visita sin datos anteriores.':
+    'Introduce un CIP DEMO y pulsa Buscar / crear CIP. No hay historia hospitalaria conectada.';
   $('#patientNav').disabled=!current.patient;
   $('#patientNav small').textContent=current.patient?'Resumen sintético':'Selecciona primero un CIP';
   render();
+  return true;
 }
 function lookupCip(){
   const attempted=$('#patientCip').value.trim();
   const id=attempted.toUpperCase();
   if(!/^DEMO-[A-Z0-9-]{3,24}$/.test(id)){
-    selectPatient('');
+    // Un CIP inválido no destruye la consulta actual ni crea un segundo paciente.
     // No borrar el intento: hacer evidente el problema y permitir corregirlo.
     // El CIP no se guarda ni se envía a ningún servicio.
     $('#patientCip').value=attempted;
@@ -798,11 +830,11 @@ function lookupCip(){
     return;
   }
   $('#patientCip').removeAttribute('aria-invalid');
-  if(!DEMO_PATIENTS.has(id)){
+  const isNew=!DEMO_PATIENTS.has(id);
+  if(!selectPatient(id))return;
+  if(isNew){
     // La ausencia de Primera Visita en esta DEMO no significa ausencia de historia clínica.
     // Se permite un borrador sintético de Seguimiento sin deducir tratamiento ni datos previos.
-    DEMO_PATIENTS.set(id,{name:'',sex:''});
-    selectPatient(id);
     $('#cipStatus').dataset.state='new';
     $('#cipStatus').textContent=current.visit==='seguimiento'?
       'CIP ficticio nuevo en esta demo: prepara el Seguimiento sin primera visita guardada. Indica nombre/sexo si procede y selecciona Psoriasis. Sin historia conectada ni tratamiento previo inferido.':
@@ -810,80 +842,54 @@ function lookupCip(){
     $('#patientName').focus();
     return;
   }
-  selectPatient(id);
   $('#cipStatus').dataset.state='found';
   $('#cipStatus').textContent='CIP de demostración localizado. Revisa los datos y selecciona la patología para abrir el formulario. Ningún acto está guardado.';
 }
 function activateView(view){
-  if(view==='patient'&&!current.patient)return;
+  if(view===current.view)return true;
+  if(view==='patient'&&!current.patient)return false;
+  if(current.activeVisitId||hasUnsavedVisitData()){
+    if(!confirmDiscardVisit())return false;
+    discardCurrentVisit({keepPatient:view==='patient'});
+  }else if(view==='home')discardCurrentVisit();
   current.view=view;
   render();
+  return true;
 }
 function selectVisit(visit){
-  if(visit!=='primera'&&visit!=='seguimiento')return;
+  if(visit!=='primera'&&visit!=='seguimiento')return false;
+  if(current.visit===visit&&current.view==='visit'){
+    if(current.activeVisitId)return createAdditionalDemoVisit();
+    render();return true;
+  }
+  if(current.activeVisitId||hasUnsavedVisitData()){
+    if(!confirmDiscardVisit())return false;
+    discardCurrentVisit({keepPatient:true});
+  }
   current.visit=visit;
-  current.pathology=pathologyByVisit.get(patientVisitKey())||'';
-  current.activeVisitId='';
-  $('#pathology').value=current.pathology;
-  activateView('visit');
-}
-function selectDraft(visitId){
-  if(!visitId||visitId===current.activeVisitId)return;
-  if(!draftMetadataList().some(meta=>meta.visitId===visitId)){
-    draftNotice='Ese borrador DEMO no pertenece a este paciente y circuito.';
-    updateDraftVisitStatus();
-    return;
-  }
-  current.activeVisitId=visitId;
-  selectedDraftByScope.set(scopeKey(),visitId);
+  current.pathology='';
+  $('#pathology').value='';
+  current.view='visit';
   render();
+  return true;
 }
+// Los IDs descartados no pueden volver a seleccionarse.
 function createAdditionalDemoVisit(){
-  if(!current.patient||current.pathology!=='pso')return;
-  if(!createDraftRecord()){
-    updateDraftVisitStatus();
-    return;
-  }
+  if(!current.patient||current.pathology!=='pso')return false;
+  if(!confirmDiscardVisit())return false;
+  discardCurrentVisit({keepPatient:true,keepPathology:true});
+  if(!createDraftRecord()){render();return false;}
   render();
-  const select=$('#draftVisitSelect');
-  if(select)select.focus();
+  $('#newDemoVisit').focus();
+  return true;
 }
-function patientDraftIds(patient,visit){
-  if(!patient)return [];
-  try{
-    return draftRegistry.listDraftMetadata({siteId:DRAFT_SITE_ID,patientCip:patient,pathology:'pso'})
-      .filter(meta=>meta.visitType===visit).map(meta=>meta.visitId);
-  }catch(error){
-    draftNotice='No se pudieron consultar los borradores DEMO: '+error.message;
-    return null; // fallo de consulta != ausencia
-  }
-}
-function countConsignedAnswers(visitId){
-  const store=drafts.get(visitId);
-  return store?Object.values(store).filter(isConsigned).length:0;
-}
-function getDraftCountFor(patient,visit){
-  const ids=patientDraftIds(patient,visit);
-  return ids===null?null:ids.reduce((total,visitId)=>total+countConsignedAnswers(visitId),0);
-}
-function draftCountLabel(count){return count===null?'consulta no disponible':count+' campos'}
+// Ningún registro de visitas anteriores se utiliza para dashboard ni Quick View.
 function renderPatientDashboard(){
   $('#dashboardPatientId').textContent=current.patient||'Sin paciente';
-  const primera=getDraftCountFor(current.patient,'primera');
-  const seguimiento=getDraftCountFor(current.patient,'seguimiento');
-  $('#dashboardDraftCounts').textContent=primera===null||seguimiento===null?
-    'No se pudieron consultar los borradores DEMO. No implica ausencia de visitas ni hay historia conectada.':
-    'Borradores Primera Visita: '+primera+' campos · Borradores Seguimiento: '+seguimiento+' campos. Ninguno está guardado como acto clínico.';
+  $('#dashboardDraftCounts').textContent='Sin visitas guardadas ni historia conectada. Las entradas de la consulta abandonada se descartan y no aparecen aquí.';
 }
 function followupContextText(){
-  const ids=patientDraftIds(current.patient,'primera');
-  if(ids===null)return 'No se pudieron consultar los borradores DEMO de Primera Visita. Existencia desconocida; NO se ha copiado ni precargado ningún dato.';
-  const count=ids.reduce((sum,id)=>sum+countConsignedAnswers(id),0);
-  if(count){
-    return 'En esta sesión hay '+ids.length+' registros de BORRADOR SIN GUARDAR de Primera Visita con '+
-      count+' entradas de DEMO. No son historia clínica ni visitas previas validadas. NO se ha copiado ni precargado ningún dato.';
-  }
-  return 'No hay Primera Visita guardada ni historia clínica conectada en esta demo. Esto NO significa que el paciente no tenga antecedentes. Ningún dato se ha precargado.';
+  return 'No hay Primera Visita guardada ni historia clínica conectada en esta demo. No hay borradores anteriores recuperables; ningún dato clínico, tratamiento ni fecha se ha precargado.';
 }
 function render(preserveOpen=false){
   $('#homeView').classList.toggle('hidden',current.view!=='home');
@@ -928,7 +934,6 @@ function render(preserveOpen=false){
     'Secciones plegables de Valme adaptadas a controles de selección rápida.';
   $('#followupContext').classList.toggle('hidden',!followup||!ready||current.view!=='visit');
   if(current.view!=='visit'||!ready)return;
-  updateVisitSelector();
   if(followup)$('#followupContextStatus').textContent=followupContextText();
   const opened=preserveOpen?new Set([...document.querySelectorAll('.section[open]')].map(x=>x.dataset.section)):null;
   const selected=followup?
@@ -962,16 +967,15 @@ function openQuickView(patientId,trigger){
       '</div>';
     if(canStart)$('#quickViewContent').querySelector('[data-quick-action="create"]').addEventListener('click',()=>{
       closeQuickView();
-      selectVisit('primera');
+      if(!selectVisit('primera'))return;
       $('#patientCip').value=id;
       lookupCip();
     });
   }else{
-    selectPatient(id);
-    const totalPrimera=getDraftCountFor(id,'primera'),totalSeguimiento=getDraftCountFor(id,'seguimiento');
+    if(!selectPatient(id))return;
     $('#quickViewContent').innerHTML=
       '<div class="quick-view-summary-card"><div><span class="eyebrow">Paciente ficticio</span><h3>'+escapeText(DEMO_PATIENTS.get(id).name||'Paciente sin nombre')+'</h3><p><strong>CIP demo:</strong> '+escapeText(id)+'</p><p><strong>Patología registrada:</strong> No consta · <strong>Última visita:</strong> No consta</p></div><button type="button" class="action-btn action-primary" data-quick-action="patient">Ver Dashboard Completo</button></div>'+
-      '<div class="quick-view-two-col"><div class="quick-view-panel-card"><h3>Resumen clínico</h3><p>Sin historia conectada ni tratamiento activo verificado.</p><p>Borrador primera visita: '+draftCountLabel(totalPrimera)+'</p><p>Borrador seguimiento: '+draftCountLabel(totalSeguimiento)+'</p></div>'+
+      '<div class="quick-view-two-col"><div class="quick-view-panel-card"><h3>Resumen clínico</h3><p>Sin historia conectada ni tratamiento activo verificado. No se conservan borradores de visitas abandonadas.</p></div>'+
       '<div class="quick-view-panel-card"><h3>Índices clínicos</h3><div class="metric-grid"><div>PASI<strong>No evaluable</strong></div><div>BSA<strong>No evaluable</strong></div><div>PGA<strong>No evaluable</strong></div><div>DLQI<strong>No evaluable</strong></div></div><p class="help">Puntuaciones pendientes de homologación clínica.</p></div></div>'+
       '<div class="quick-view-panel-card"><h3>Acciones rápidas</h3><div class="quick-view-actions"><button type="button" class="action-btn action-primary" data-quick-action="primera">Abrir Primera Visita</button><button type="button" class="action-btn action-secondary" data-quick-action="seguimiento">Abrir Seguimiento</button></div><p class="help">Las acciones no crean ni guardan actos clínicos.</p></div>';
     $('#quickViewContent').querySelectorAll('[data-quick-action]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -1006,22 +1010,24 @@ document.addEventListener('keydown',e=>{
 });
 $('#lookupCip').addEventListener('click',lookupCip);
 $('#newDemoVisit').addEventListener('click',createAdditionalDemoVisit);
-$('#draftVisitSelect').addEventListener('change',e=>selectDraft(e.target.value));
 $('#patientCip').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();lookupCip();}});
 $('#patientCip').addEventListener('input',()=>{
-  $('#patientCip').removeAttribute('aria-invalid');
-  if($('#cipStatus').dataset.state==='error'){
+  const input=$('#patientCip');
+  input.removeAttribute('aria-invalid');
+  const attempted=input.value.trim().toUpperCase();
+  if(current.patient&&attempted!==current.patient){
+    if(!confirmDiscardVisit()){
+      input.value=current.patient;
+      return;
+    }
+    discardCurrentVisit();
+    input.value=attempted;
     $('#cipStatus').dataset.state='hint';
-    $('#cipStatus').textContent='Comprueba el prefijo DEMO- y pulsa Buscar / crear CIP. No se conectará a una base de datos.';
-  }
-  if($('#patientCip').value.trim().toUpperCase()!==current.patient&&current.patient){
-    current.patient=''; current.pathology=''; current.activeVisitId='';
-    $('#patientName').disabled=true;$('#patientName').value='';
-    $('#patientSex').disabled=true;$('#patientSex').value='';
-    $('#pathology').value='';
-    $('#cipStatus').dataset.state='hint';
-    $('#cipStatus').textContent='CIP modificado. Pulsa Buscar / crear CIP para confirmar el paciente ficticio.';
+    $('#cipStatus').textContent='Consulta anterior descartada. Pulsa Buscar / crear CIP para seleccionar expresamente el nuevo paciente DEMO.';
     render();
+  }else if($('#cipStatus').dataset.state==='error'){
+    $('#cipStatus').dataset.state='hint';
+    $('#cipStatus').textContent='Comprueba el prefijo DEMO- y pulsa Buscar / crear CIP. Sin conexión clínica.';
   }
 });
 $('#patientName').addEventListener('input',e=>{
@@ -1033,11 +1039,20 @@ $('#patientSex').addEventListener('change',e=>{
   if(record)record.sex=e.target.value;
 });
 $('#pathology').addEventListener('change',e=>{
-  current.pathology=e.target.value;
-  if(current.pathology!=='pso')current.activeVisitId='';
+  const desired=e.target.value;
+  if(current.activeVisitId&&desired!==current.pathology){
+    if(!confirmDiscardVisit()){
+      e.target.value=current.pathology;
+      return;
+    }
+    discardCurrentVisit({keepPatient:true});
+  }
+  current.pathology=desired;
   if(current.patient)pathologyByVisit.set(patientVisitKey(),current.pathology);
   render();
 });
+// Pagehide also clears an ephemeral visit in history/BFCache (no storage is used).
+window.addEventListener('pagehide',()=>discardCurrentVisit());
 document.querySelectorAll('[data-visit]').forEach(btn=>btn.addEventListener('click',()=>selectVisit(btn.dataset.visit)));
 document.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>activateView(btn.dataset.view)));
 $('#btnNuevaVisita').addEventListener('click',()=>selectVisit('primera'));

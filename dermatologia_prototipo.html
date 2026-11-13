@@ -129,29 +129,26 @@
         </div>
         <section class="draft-visits card" aria-labelledby="draftVisitsHeading">
           <div>
-            <h2 id="draftVisitsHeading">Borradores DEMO de esta visita</h2>
-            <p class="help">Varias visitas sintéticas del mismo paciente y circuito. Cada una conserva solo sus propias respuestas mientras la pestaña siga abierta; recargar elimina todos los borradores.</p>
+            <h2 id="draftVisitsHeading">Única visita DEMO activa</h2>
+            <p class="help">Solo puede estar abierta una visita de un paciente. Al cambiar de visita o paciente se descarta la anterior, con confirmación si contiene datos. No se conserva ni se puede recuperar ninguna visita abandonada.</p>
           </div>
           <div class="draft-visits__controls">
-            <label for="draftVisitSelect">Borrador DEMO de esta visita (ID y fecha declarada)
-              <select id="draftVisitSelect" aria-describedby="draftVisitStatus"></select>
-            </label>
-            <button id="newDemoVisit" class="action-btn action-secondary" type="button">＋ Nueva visita DEMO</button>
+            <button id="newDemoVisit" class="action-btn action-secondary" type="button">＋ Descartar y abrir nueva visita DEMO</button>
           </div>
           <p id="draftVisitStatus" class="draft-visit-status" role="status" aria-live="polite">BORRADOR DEMO · NO GUARDADO</p>
         </section>
         <div id="followupContext" class="followup-context hidden" role="note" aria-label="Límites del borrador de seguimiento">
           <strong>Seguimiento · visita actual</strong>
           <p id="followupContextStatus">Sin historia clínica conectada. Se registra un borrador de esta sesión; no se ha precargado ningún dato previo.</p>
-          <p>Los tratamientos, fechas, exploraciones y cuestionarios solo se consignan si se introducen expresamente. Cada visita DEMO de Seguimiento es un borrador temporal independiente; el conjunto no representa un historial de visitas.</p>
+          <p>Los tratamientos, fechas, exploraciones y cuestionarios solo se consignan si se introducen expresamente. Solo se edita esta visita; al abandonarla se descartan sus datos, sin historia recuperable.</p>
         </div>
         <div id="clinicalSections" class="sections"></div>
-        <footer class="form-footer">No hay botón Guardar. Estos datos solo existen en memoria hasta cerrar o recargar la página. No se realizan solicitudes a Farmacia.</footer>
+        <footer class="form-footer">No hay botón Guardar. Solo esta visita permanece en edición; al abandonarla sus datos se descartan y no pueden recuperarse. No se realizan solicitudes a Farmacia.</footer>
       </form>
     </section>
 
     <section id="patientDashboardView" class="hidden" aria-label="Resumen del paciente">
-      <div class="main-header"><div><p class="eyebrow">REVISIÓN INDIVIDUAL · SINTÉTICA</p><h1>Cuadro de Mando de Paciente</h1><p>Solo se muestran borradores de esta sesión; sin datos de historia clínica.</p></div><span class="draft-pill">SIN HISTORIA PERSISTIDA</span></div>
+      <div class="main-header"><div><p class="eyebrow">REVISIÓN INDIVIDUAL · SINTÉTICA</p><h1>Cuadro de Mando de Paciente</h1><p>No hay visitas anteriores ni historia clínica conectada.</p></div><span class="draft-pill">SIN HISTORIA PERSISTIDA</span></div>
       <div class="patient-header-card card">
         <div><span class="eyebrow">Paciente ficticio</span><h2 id="dashboardPatientId">Sin paciente seleccionado</h2><p>Diagnóstico: no consta en historia · Última visita registrada: no consta</p></div>
         <button type="button" id="dashboardSeguimiento" class="action-btn action-secondary">Registrar Seguimiento</button>
