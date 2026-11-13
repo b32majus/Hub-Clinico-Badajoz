@@ -338,7 +338,13 @@
                     if (entry && entry.farmaco) {
                         var farmaco = entry.farmaco.toString().trim();
                         if (farmaco && farmaco.toLowerCase() !== 'no') {
-                            items.push({ farmaco: farmaco, dosis: (entry.dosis || '').toString().trim() });
+                            items.push({
+                                farmaco: farmaco,
+                                dosis: (entry.dosis || '').toString().trim(),
+                                // Solo cadenas (valor de un select/input); cualquier otro tipo = no consta.
+                                pauta: typeof entry.pauta === 'string' ? entry.pauta : '',
+                                pautaOtro: typeof entry.pautaOtro === 'string' ? entry.pautaOtro : ''
+                            });
                         }
                     }
                 });
@@ -391,6 +397,29 @@
     }
 
     /**
+     * Etiqueta legible de la pauta solicitada consignada (decisión Sil 13-11).
+     * Sólo traduce el código consignado en la propia entrada; nunca deduce
+     * una pauta del fármaco ni de la dosis. «Otra pauta» muestra el texto
+     * escrito por el médico; sin texto, la etiqueta del catálogo. Sin
+     * catálogo o con código desconocido, el valor guardado tal cual.
+     * Sin pauta consignada devuelve '' (la línea no añade nada).
+     */
+    function formatPautaSolicitada(item) {
+        var codigo = String(item.pauta || '').trim();
+        if (!codigo) return '';
+        if (codigo.toUpperCase() === 'OTRO') {
+            var otro = String(item.pautaOtro || '').trim();
+            if (otro) return otro;
+        }
+        var catalog = window.FarmaciaPautasCatalog;
+        if (catalog && typeof catalog.getPautaByCodigo === 'function') {
+            var pauta = catalog.getPautaByCodigo(codigo);
+            if (pauta && pauta.pauta_label) return pauta.pauta_label;
+        }
+        return codigo;
+    }
+
+    /**
      * Genera el bloque de tratamiento actual.
      * Reproduce verbatim el valor explícito consignado
      * (tratamientoActual/Tratamiento_Actual) como dato de origen, sin
@@ -434,6 +463,8 @@
         items.forEach(function(item) {
             text += '- ' + item.farmaco;
             if (item.dosis) text += ' ' + item.dosis;
+            var pautaLabel = formatPautaSolicitada(item);
+            if (pautaLabel) text += ' · Pauta solicitada: ' + pautaLabel;
             text += '\n';
         });
         return text + '\n';
