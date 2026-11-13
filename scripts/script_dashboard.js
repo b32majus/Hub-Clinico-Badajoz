@@ -906,17 +906,14 @@ function initTableSorting() {
 
 function sortVisitsData(column, direction) {
     visitsTableState.data.sort((a, b) => {
-        let valA = a[column];
-        let valB = b[column];
-
-        // Convertir fechas
+        // Fecha: comparador común (parseVisitDate + compareVisitDates); las
+        // fechas ilegibles van siempre al final en los dos sentidos.
         if (column === 'fecha') {
-            valA = new Date(valA);
-            valB = new Date(valB);
-        } else {
-            valA = parseStrictNumber(valA) ?? 0;
-            valB = parseStrictNumber(valB) ?? 0;
+            return compareVisitDates(parseVisitDate(a[column]), parseVisitDate(b[column]), direction === 'asc' ? 'asc' : 'desc');
         }
+
+        let valA = parseStrictNumber(a[column]) ?? 0;
+        let valB = parseStrictNumber(b[column]) ?? 0;
 
         if (direction === 'asc') {
             return valA > valB ? 1 : -1;

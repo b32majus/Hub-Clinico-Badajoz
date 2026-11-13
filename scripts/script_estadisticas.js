@@ -1244,8 +1244,7 @@ function handleSort(column, header) {
         if (valB == null) return -1;
 
         if (column === 'Fecha_Visita') {
-            valA = new Date(valA).getTime();
-            valB = new Date(valB).getTime();
+            return compareVisitDates(parseVisitDate(valA), parseVisitDate(valB), sortDirection === 'asc' ? 'asc' : 'desc');
         }
 
         // Comparar según tipo
