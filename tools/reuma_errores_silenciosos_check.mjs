@@ -53,6 +53,8 @@ sb.addEventListener = () => {};
 vm.createContext(sb);
 let ev = null;
 try {
+  // En la página, dataManager.js (lector de fechas común) se carga antes que treatmentEventsManager.js (#933).
+  vm.runInContext(grab(dm, 'parseVisitDate') + '\n' + grab(dm, 'compareVisitDates'), sb, { filename: 'lector-dataManager' });
   for (const f of ['modules/hubTools.js', 'modules/treatmentEventsManager.js']) vm.runInContext(rd(f), sb, { filename: f });
   ev = sb.HubTools.events.extractTreatmentEvents;
 } catch (e) { fails.push('B no se carga treatmentEventsManager: ' + e.message); }

@@ -104,28 +104,14 @@
     }
 
     /**
-     * Parseo robusto de fechas del hub (formatos DD/MM/YYYY, YYYY-MM-DD, ISO, etc.).
-     * @param {string} dateStr
-     * @returns {Date|null} Objeto Date o null si no parseable.
+     * Delega en el lector común de la página (parseVisitDate de dataManager.js): acepta DD/MM/YYYY, YYYY-MM-DD, serie de Excel y Date.
+     * @param {string|number|Date} dateStr
+     * @returns {Date|null} Objeto Date válido o null si la fecha es ilegible (o si no existe el lector común).
      */
     function parseDate(dateStr) {
-        if (!dateStr || typeof dateStr !== 'string') return null;
-
-        // Intentar d/m/y español (13/01/2024)
-        var dmyMatch = dateStr.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-        if (dmyMatch) {
-            var d = parseInt(dmyMatch[1], 10);
-            var m = parseInt(dmyMatch[2], 10) - 1;
-            var y = parseInt(dmyMatch[3], 10);
-            var date = new Date(y, m, d);
-            if (!isNaN(date.getTime())) return date;
-        }
-
-        // Intentar ISO (2024-01-13 o 2024-01-13T...)
-        var date = new Date(dateStr);
-        if (!isNaN(date.getTime())) return date;
-
-        return null;
+        if (typeof parseVisitDate !== 'function') return null;
+        var d = parseVisitDate(dateStr);
+        return (d && !isNaN(d.getTime())) ? d : null;
     }
 
     /**
@@ -146,7 +132,7 @@
      */
     function toISODate(value) {
         if (!value) return '';
-        var d = value instanceof Date ? value : parseDate(value);
+        var d = parseDate(value); // también un Date: si es inválido, ilegible
         if (!d) return '';
         var yyyy = d.getFullYear();
         var mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -160,8 +146,16 @@
      * @returns {string} Fecha ISO
      */
     function getVisitDate(visit) {
-        var d = visit.Fecha || visit.Fecha_Visita || visit.fechaVisita || visit.fecha || '';
-        return toISODate(d);
+        return toISODate(getVisitDateRaw(visit));
+    }
+
+    /**
+     * Valor de fecha de la visita tal como viene (mismo orden de columnas que dataManager.js).
+     * @param {Object} visit
+     * @returns {*} Valor crudo o ''
+     */
+    function getVisitDateRaw(visit) {
+        return visit.Fecha_Visita || visit.fechaVisita || visit.Fecha || visit.fecha || '';
     }
 
     /**
@@ -1006,18 +1000,24 @@
             return events;
         }
 
-        var visits = patientHistory.allVisits.slice().sort(function(a, b) {
-            var dateA = new Date(a.Fecha_Visita || a.fechaVisita || a.Fecha || 0);
-            var dateB = new Date(b.Fecha_Visita || b.fechaVisita || b.Fecha || 0);
-            return dateA - dateB;
+        // Decisión de Sil (13-11): una visita con fecha ilegible no se usa para
+        // deducir eventos: no genera eventos ni hace de visita anterior.
+        var visits = patientHistory.allVisits.filter(function(v) {
+            return getVisitDate(v) !== '';
+        }).sort(function(a, b) {
+            // Fecha y hora completas (dos visitas del mismo día conservan su orden real)
+            return parseDate(getVisitDateRaw(a)) - parseDate(getVisitDateRaw(b));
         });
 
         // ── Inferir patología ──────────────────────────────────────
         // Fuente 1: patientHistory.pathology (establecido por el dashboard)
         // Fuente 2: primera visita con Diagnostico_Primario / diagnosticoPrimario
         var pathology = patientHistory.pathology || '';
-        if (!pathology && visits.length > 0) {
-            pathology = visits[0].Diagnostico_Primario || visits[0].diagnosticoPrimario || '';
+        if (!pathology) {
+            var pathologyVisit = visits[0] || patientHistory.allVisits[0];
+            if (pathologyVisit) {
+                pathology = pathologyVisit.Diagnostico_Primario || pathologyVisit.diagnosticoPrimario || '';
+            }
         }
         if (typeof HubTools !== 'undefined' && HubTools.normalizer &&
             typeof HubTools.normalizer.normalizePathology === 'function') {
@@ -1071,8 +1071,9 @@
 
         // 7. Eventos prebiológicos — 9B.4: APTO, EN_CURSO, NO_APTO
         // CIP puede venir de patientHistory o de la primera visita
+        var cipVisit = visits[0] || patientHistory.allVisits[0];
         var cip = patientHistory.cip || patientHistory.ID_Paciente ||
-            (visits.length > 0 ? (visits[0].CIP || visits[0].ID_Paciente || visits[0].cip || '') : '');
+            (cipVisit ? (cipVisit.CIP || cipVisit.ID_Paciente || cipVisit.cip || '') : '');
         var prebioEvt = detectPrebiologicEvent(cip, prebiologicStatus);
         if (prebioEvt) {
             var prebioDate = (prebiologicStatus && prebiologicStatus.fechaValidacion) ?
