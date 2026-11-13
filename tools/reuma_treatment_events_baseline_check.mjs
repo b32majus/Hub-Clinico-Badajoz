@@ -107,6 +107,15 @@ function createEventsSandbox() {
     sandbox.removeEventListener = () => {};
     sandbox.requestAnimationFrame = (fn) => setTimeout(fn, 0);
     vm.createContext(sandbox);
+    // En la página, dataManager.js (lector de fechas común) se carga antes que
+    // treatmentEventsManager.js (#933): se cargan solo sus dos funciones de fecha.
+    const dm = fs.readFileSync(path.join(ROOT, 'modules/dataManager.js'), 'utf8').replace(/\r\n/g, '\n');
+    const lector = ['parseVisitDate', 'compareVisitDates'].map((name) => {
+        const m = dm.match(new RegExp('function ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n\\}\\n'));
+        if (!m) throw new Error('no se encuentra ' + name + ' en dataManager.js');
+        return m[0];
+    }).join('\n');
+    vm.runInContext(lector, sandbox, { filename: 'lector-dataManager' });
     for (const file of EVENTS_SCRIPTS) {
         vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8'), sandbox, { filename: file });
     }
