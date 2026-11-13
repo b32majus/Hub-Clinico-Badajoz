@@ -1294,12 +1294,9 @@ function filterTableBySearch(searchTerm) {
 // === UTILIDADES ===
 function formatDate(dateString) {
     if (!dateString) return '-';
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    } catch {
-        return dateString;
-    }
+    const date = parseVisitDate(dateString);
+    if (Number.isNaN(date.getTime())) return String(dateString);
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function debounce(func, wait) {
