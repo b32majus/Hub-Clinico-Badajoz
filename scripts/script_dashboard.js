@@ -463,7 +463,7 @@ function populateDashboard() {
         treatmentStartDate = activeTreatment.startDate || summary.fechaInicioTratamiento;
     } else {
         const accreditedActual = physicalTreatmentWitness(latest.Tratamiento_Actual);
-        treatmentName = accreditedActual || 'Sin tratamiento asignado';
+        treatmentName = accreditedActual || 'No consta'; // A8 (#936): ausente ≠ «sin tratamiento»
         treatmentStartDate = accreditedActual && !isNegatedTreatmentActual(accreditedActual)
             ? (physicalTreatmentWitness(latest.Fecha_Inicio_Tratamiento) || undefined)
             : undefined;

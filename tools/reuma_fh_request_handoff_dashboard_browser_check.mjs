@@ -921,7 +921,7 @@ async function runProvenanceWitnessJourney(browser, mode) {
             // 'Activo' — neutral placeholders from the existing vocabulary.
             const shown = await readTreatmentPresentation(page);
             record(`${label}: tarjeta no presenta el plan como activo (nombre neutro)`,
-                shown.cardName === 'Sin tratamiento asignado' && !shown.cardName.includes(SYN_PLAN_SAME),
+                shown.cardName === 'No consta' && !shown.cardName.includes(SYN_PLAN_SAME),
                 JSON.stringify(shown));
             record(`${label}: tarjeta sin fecha ni duración inferidas`,
                 shown.cardStart === 'Sin registrar' && shown.cardDuration === '---',
