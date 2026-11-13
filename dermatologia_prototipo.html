@@ -127,10 +127,23 @@
           <div><strong id="visitSummaryHeading">Formulario de Psoriasis</strong><p id="visitSummaryHint">Secciones plegables de Valme adaptadas a controles de selección rápida.</p></div>
           <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
         </div>
+        <section class="draft-visits card" aria-labelledby="draftVisitsHeading">
+          <div>
+            <h2 id="draftVisitsHeading">Borradores DEMO de esta visita</h2>
+            <p class="help">Varias visitas sintéticas del mismo paciente y circuito. Cada una conserva solo sus propias respuestas mientras la pestaña siga abierta; recargar elimina todos los borradores.</p>
+          </div>
+          <div class="draft-visits__controls">
+            <label for="draftVisitSelect">Borrador DEMO de esta visita (ID y fecha declarada)
+              <select id="draftVisitSelect" aria-describedby="draftVisitStatus"></select>
+            </label>
+            <button id="newDemoVisit" class="action-btn action-secondary" type="button">＋ Nueva visita DEMO</button>
+          </div>
+          <p id="draftVisitStatus" class="draft-visit-status" role="status" aria-live="polite">BORRADOR DEMO · NO GUARDADO</p>
+        </section>
         <div id="followupContext" class="followup-context hidden" role="note" aria-label="Límites del borrador de seguimiento">
           <strong>Seguimiento · visita actual</strong>
           <p id="followupContextStatus">Sin historia clínica conectada. Se registra un borrador de esta sesión; no se ha precargado ningún dato previo.</p>
-          <p>Los tratamientos, fechas, exploraciones y cuestionarios solo se consignan si se introducen expresamente. Un único borrador temporal de Seguimiento por CIP; no representa un historial de visitas.</p>
+          <p>Los tratamientos, fechas, exploraciones y cuestionarios solo se consignan si se introducen expresamente. Cada visita DEMO de Seguimiento es un borrador temporal independiente; el conjunto no representa un historial de visitas.</p>
         </div>
         <div id="clinicalSections" class="sections"></div>
         <footer class="form-footer">No hay botón Guardar. Estos datos solo existen en memoria hasta cerrar o recargar la página. No se realizan solicitudes a Farmacia.</footer>

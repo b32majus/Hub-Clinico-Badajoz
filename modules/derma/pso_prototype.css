@@ -277,3 +277,18 @@ body{background:#f6f8f8;color:#1e293b;font-family:Inter,"Segoe UI",system-ui,san
  .followup-family-row .chip{flex:1 1 40%;min-width:0}
  .followup-choice-group .chip{flex:1 1 auto}
 }
+
+/* F3b: selección explícita entre borradores DEMO de la misma visita. Sin persistencia. */
+.draft-visits{padding:18px 21px;border-left:4px solid #c99a3d;background:#fffdf7}
+.draft-visits h2{font-size:15px;color:#7a5a17;margin:0 0 5px}
+.draft-visits .help{margin:7px 0 0}
+.draft-visits__controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:end;margin-top:15px}
+.draft-visits__controls label{min-width:0;font-size:12px}
+.draft-visits__controls select{min-width:0}
+.draft-visits__controls .action-btn{min-height:40px;white-space:nowrap}
+.draft-visit-status{margin:13px 0 0;font-size:12px;font-weight:700;color:#7a5a17;background:#fff3d8;border:1px solid #ead2a7;border-radius:9px;padding:10px 12px;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:700px){
+ .draft-visits{padding:15px 16px}
+ .draft-visits__controls{grid-template-columns:1fr}
+ .draft-visits__controls .action-btn{width:100%}
+}
