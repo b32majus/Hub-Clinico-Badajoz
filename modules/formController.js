@@ -649,11 +649,19 @@ function validarCamposAR(esSeguimiento) {
         errores.push('EVA Médico (AR)');
     }
 
-    const requiredScoreIds = ['das28CrpResult', 'das28EsrResult', 'cdaiResult', 'sdaiResult', 'das28NAD', 'das28NAT'];
-    requiredScoreIds.forEach(id => {
+    // #938: el aviso nombra el índice como lo ve el médico, no el id interno.
+    const requiredScores = [
+        ['das28CrpResult', 'DAS28-PCR (revisa PCR y su unidad)'],
+        ['das28EsrResult', 'DAS28-VSG (revisa VSG)'],
+        ['cdaiResult', 'CDAI'],
+        ['sdaiResult', 'SDAI (revisa PCR y su unidad)'],
+        ['das28NAD', 'NAD (homúnculo)'],
+        ['das28NAT', 'NAT (homúnculo)'],
+    ];
+    requiredScores.forEach(([id, label]) => {
         const value = document.getElementById(id)?.value;
         if (value === undefined || value === null || value === '') {
-            errores.push(`${id} (AR)`);
+            errores.push(`${label} (AR)`);
         }
     });
 
