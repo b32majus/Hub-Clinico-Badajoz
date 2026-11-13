@@ -87,9 +87,16 @@ try{
     await page.locator('#patientName').fill('Nombre ficticio temporal');
     await page.locator('[data-section="05 Exploración/PASI"] > summary').click();
     await page.locator('[data-field="bsa"]').fill('45');
+    await cip.fill('DEMO-');
+    await page.locator('#lookupCip').click();
+    check(await cip.getAttribute('aria-invalid')==='true','el CIP incompleto no se rechaza');
+    check(await active()===earlier,'editar CIP incompleto borró visita antes de validar');
     await cip.fill('DEMO-PSO-002');
+    check(await page.locator('#visitForm').getAttribute('inert')!==null,'formulario editable con CIP sin validar');
+    check(await active()===earlier,'teclear CIP válido descartó antes de confirmar');
+    await page.locator('#lookupCip').click(); // cancel por defecto
     check(await cip.inputValue()==='DEMO-PSO-001','cancelar no restituye identidad');
-    check(await active()===earlier,'cancelar modificó visita activa');
+    check(await page.locator('#visitForm').getAttribute('inert')===null,'cancelar dejó el formulario bloqueado');
     check(await page.locator('[data-field="bsa"]').inputValue()==='45','cancelar perdió datos');
     decision('accept');await cip.fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
     check(await cip.inputValue()==='DEMO-PSO-002','no seleccionó nuevo paciente');
@@ -177,6 +184,8 @@ try{
     await page.locator('[data-field="bsa"]').fill('77');
     await page.goto(url+'/dermatologia_prototipo.html?otra-vista=1',{waitUntil:'domcontentloaded'});
     await page.goBack({waitUntil:'networkidle'});
+    check(!(await page.locator('#visitForm').isVisible()),'BFCache dejó formulario de la visita descartada visible');
+    check(await page.locator('#patientNav').isDisabled(),'BFCache dejó identidad anterior activa');
     await page.getByRole('button',{name:'Seguimiento',exact:true}).click();
     await cip.fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
     await page.locator('#pathology').selectOption('pso');

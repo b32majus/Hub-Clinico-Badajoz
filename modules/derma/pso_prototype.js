@@ -138,6 +138,7 @@ function discardCurrentVisit({keepPatient=false,keepPathology=false}={}){
   $('#draftScope').textContent='Sin visita abierta';
   $('#draftStatus').textContent='Sin datos de visita';
   $('#draftVisitStatus').textContent='BORRADOR DEMO · NO GUARDADO';
+  $('#visitForm').inert=false;
 }
 
 const F3A_UI_ONLY_KINDS=new Set(['contexto','derivado','derivado-presentacion','cuestionario']);
@@ -793,6 +794,7 @@ function selectPatient(id){
   if(current.patient!==normalized){
     if(!confirmDiscardVisit()){
       $('#patientCip').value=current.patient;
+      $('#visitForm').inert=false;
       return false;
     }
     discardCurrentVisit();
@@ -802,6 +804,7 @@ function selectPatient(id){
   }
   const record=DEMO_PATIENTS.get(current.patient);
   $('#patientCip').value=current.patient;
+  $('#visitForm').inert=false;
   $('#patientName').disabled=!record;
   $('#patientSex').disabled=!record;
   $('#patientName').value=record?.name||'';
@@ -912,7 +915,11 @@ function render(preserveOpen=false){
   let ready=Boolean(current.patient)&&current.pathology==='pso';
   // Fail-closed: un formulario sin ID de visita no acepta datos.
   if(ready&&current.view==='visit')ready=ensureActiveDraft();
-  else current.activeVisitId='';
+  else if(current.activeVisitId){
+    // Fallo seguro: jamás abandonar un ID activo sin purgar su contenido y registro.
+    discardCurrentVisit({keepPatient:current.view==='patient'});
+    ready=false;
+  }
   form.classList.toggle('hidden',!ready);empty.classList.toggle('hidden',!!ready);
   const followup=current.visit==='seguimiento';
   $('#visitView').classList.toggle('visit--followup',followup);
@@ -1014,17 +1021,13 @@ $('#patientCip').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDef
 $('#patientCip').addEventListener('input',()=>{
   const input=$('#patientCip');
   input.removeAttribute('aria-invalid');
-  const attempted=input.value.trim().toUpperCase();
-  if(current.patient&&attempted!==current.patient){
-    if(!confirmDiscardVisit()){
-      input.value=current.patient;
-      return;
-    }
-    discardCurrentVisit();
-    input.value=attempted;
+  const changed=Boolean(current.patient)&&input.value.trim().toUpperCase()!==current.patient;
+  // No descartar por letras incompletas del CIP: confirmar solo tras búsqueda válida.
+  // Mientras la identidad no esté validada, la captura clínica queda inerte.
+  $('#visitForm').inert=changed;
+  if(changed){
     $('#cipStatus').dataset.state='hint';
-    $('#cipStatus').textContent='Consulta anterior descartada. Pulsa Buscar / crear CIP para seleccionar expresamente el nuevo paciente DEMO.';
-    render();
+    $('#cipStatus').textContent='CIP en edición. La visita anterior sigue activa; confirma otro CIP de prueba válido con Buscar / crear CIP. No se ha descartado ningún dato.';
   }else if($('#cipStatus').dataset.state==='error'){
     $('#cipStatus').dataset.state='hint';
     $('#cipStatus').textContent='Comprueba el prefijo DEMO- y pulsa Buscar / crear CIP. Sin conexión clínica.';
@@ -1053,6 +1056,9 @@ $('#pathology').addEventListener('change',e=>{
 });
 // Pagehide also clears an ephemeral visit in history/BFCache (no storage is used).
 window.addEventListener('pagehide',()=>discardCurrentVisit());
+window.addEventListener('pageshow',event=>{
+  if(event.persisted)render(); // BFCache: nunca enseñar formularios stale tras descarte
+});
 document.querySelectorAll('[data-visit]').forEach(btn=>btn.addEventListener('click',()=>selectVisit(btn.dataset.visit)));
 document.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>activateView(btn.dataset.view)));
 $('#btnNuevaVisita').addEventListener('click',()=>selectVisit('primera'));
