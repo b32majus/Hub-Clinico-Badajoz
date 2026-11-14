@@ -10,9 +10,9 @@
  * verdicts and READS what the visit collector + legacy row/note producers
  * derive from them:
  *
- *   Primera Visita: ALCANZADO -> mdaCumple true (+ 'MDA: true' in the note),
- *                   NO ALCANZADO -> false (+ 'MDA: false'),
- *                   PENDIENTE    -> false (+ 'MDA: false').
+ *   Primera Visita: ALCANZADO -> mdaCumple true (+ 'MDA: alcanzado …' in the note),
+ *                   NO ALCANZADO -> false (+ 'MDA: no alcanzado …'),
+ *                   PENDIENTE    -> false (no MDA line in the note; Sil 14-11).
  *   Both pages (#942, Sil 14-11): the three verdicts are mapped to legacy
  *                   column 193 ('SI' ALCANZADO, 'NO' NO ALCANZADO, '' PENDIENTE:
  *                   ausente ≠ NO) with the row keeping 534 columns.
@@ -239,8 +239,8 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       const read = await page.evaluate(READ(collectorFor(pagePath), builderFor(pagePath)));
       check(`${pagePath} ALCANZADO -> mdaCumple true`,
         read.final.trim() === 'MDA ALCANZADO ✓' && read.mdaCumple === true, JSON.stringify(read));
-      check(`${pagePath} ALCANZADO -> nota clínica 'MDA: true'`,
-        read.notaMda === 'MDA: true', `nota='${read.notaMda}'`);
+      check(`${pagePath} ALCANZADO -> nota clínica 'MDA: alcanzado'`,
+        /^MDA: alcanzado( \([0-7]\/7 criterios\))?$/.test(read.notaMda), `nota='${read.notaMda}'`);
       if (rowMappingApplies(pagePath)) {
         check(`${pagePath} ALCANZADO -> legacy col 193 'SI' y 534 columnas`,
           read.col193 === 'SI' && read.len === 534, JSON.stringify({ col193: read.col193, len: read.len }));
@@ -270,8 +270,8 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       const read = await page.evaluate(READ(collectorFor(pagePath), builderFor(pagePath)));
       check(`${pagePath} NO ALCANZADO -> mdaCumple false`,
         read.final.trim() === 'MDA NO ALCANZADO' && read.mdaCumple === false, JSON.stringify(read));
-      check(`${pagePath} NO ALCANZADO -> nota clínica sin 'MDA: true'`,
-        read.notaMda === 'MDA: false', `nota='${read.notaMda}'`);
+      check(`${pagePath} NO ALCANZADO -> nota clínica 'MDA: no alcanzado'`,
+        /^MDA: no alcanzado( \([0-7]\/7 criterios\))?$/.test(read.notaMda), `nota='${read.notaMda}'`);
       if (rowMappingApplies(pagePath)) {
         check(`${pagePath} NO ALCANZADO -> legacy col 193 'NO' y 534 columnas`,
           read.col193 === 'NO' && read.len === 534, JSON.stringify({ col193: read.col193, len: read.len }));
@@ -305,8 +305,8 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       const read = await page.evaluate(READ(collectorFor(pagePath), builderFor(pagePath)));
       check(`${pagePath} PENDIENTE -> mdaCumple false`,
         read.final.trim().startsWith('MDA PENDIENTE') && read.mdaCumple === false, JSON.stringify(read));
-      check(`${pagePath} PENDIENTE -> nota clínica sin 'MDA: true'`,
-        read.notaMda === 'MDA: false', `nota='${read.notaMda}'`);
+      check(`${pagePath} PENDIENTE -> nota clínica sin línea del MDA`,
+        read.notaMda === '', `nota='${read.notaMda}'`);
       if (rowMappingApplies(pagePath)) {
         // #942 (Sil, 14-11): ausente ≠ NO; PENDIENTE -> vacío.
         check(`${pagePath} PENDIENTE -> legacy col 193 '' y 534 columnas (#942)`,

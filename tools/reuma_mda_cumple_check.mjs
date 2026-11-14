@@ -408,9 +408,11 @@ for (const page of PAGES) {
     const noteNo = makeNote('MDA NO ALCANZADO');
     const notePending = makeNote('MDA PENDIENTE — fuentes ausentes: HAQ');
     const noteBlank = makeNote('');
-    record(`C ${page} nota clínica: 'MDA: true' sólo con MDA ALCANZADO`,
-      /MDA: true/.test(noteAchieved) &&
-        !/MDA: true/.test(noteNo) && !/MDA: true/.test(notePending) && !/MDA: true/.test(noteBlank),
+    // Nota MDA (Sil, 14-11): «MDA: alcanzado …» sólo con ALCANZADO; pendiente y vacío sin línea.
+    const achievedRe = /^MDA: alcanzado\b/m;
+    record(`C ${page} nota clínica: 'MDA: alcanzado' sólo con MDA ALCANZADO`,
+      achievedRe.test(noteAchieved) &&
+        !achievedRe.test(noteNo) && !/^MDA\b/m.test(notePending) && !/^MDA\b/m.test(noteBlank),
       JSON.stringify({
         alcanzado: (noteAchieved.match(/MDA: .*/) || [])[0],
         noAlcanzado: (noteNo.match(/MDA: .*/) || [])[0],
