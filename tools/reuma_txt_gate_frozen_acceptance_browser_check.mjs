@@ -815,6 +815,9 @@ function auditCheckpoints(journeyLabel) {
     for (let i = 1; i < cps.length; i++) {
         const diffs = diffSnapshots(cps[i - 1], cps[i]);
         for (const diff of diffs) {
+            // #940: la entrada del paciente actual la escribe/borra reumaCurrentPatient.js
+            // (navegación y F5), no la puerta TXT→CSV; no cuenta para W28.
+            if (diff.key === 'HubClinico_PacienteActual') continue;
             if (SENTINEL_KEYS.includes(diff.key) || diff.key === (auditCheckpoints.matchingKeyInPlay || '')) {
                 sentinelViolations.push({ journey: journeyLabel, label: cps[i].label, ...diff });
             } else {

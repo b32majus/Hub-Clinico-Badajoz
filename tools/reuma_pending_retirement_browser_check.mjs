@@ -89,7 +89,7 @@
  *       estadisticas.html, manage_professionals.html,
  *       primera_visita.html, reuma_index.html, seguimiento.html — each loads
  *       without pageerror, without #pendingRowsIndicator/pending-rows
- *       controls, with `script.js?v=20261009-export-safety-18-script-r1`, and
+ *       controls, with `script.js?v=20261114a`, and
  *       with `modules/exportManager.js?v=20261010-txt-gate-21-
  *       csv-noapi-r1` on the seven pages that load it (not
  *       dashboard_search.html).
@@ -122,7 +122,7 @@ const XLSX = require(path.join(ROOT, 'vendor', 'sheetjs', 'xlsx.full.min.js'));
 const PAGE_INDEX = 'reuma_index.html';
 const PAGE_PRIMERA = 'primera_visita.html';
 const PAGE_SEGUIMIENTO = 'seguimiento.html';
-const SCRIPT_TOKEN = 'script.js?v=20261009-export-safety-18-script-r1';
+const SCRIPT_TOKEN = 'script.js?v=20261114a';
 const EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261112b';
 const EXPORT_MANAGER_PAGES = [
     'dashboard_paciente.html', 'estadisticas.html',
@@ -943,7 +943,7 @@ try {
                         pendingIndicator: document.querySelectorAll('#pendingRowsIndicator').length,
                         pendingControls: document.body.innerText.includes('Recuperar \u00faltima')
                             || document.body.innerText.includes('Marcar resuelta'),
-                        scriptToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('script.js?v=20261009-export-safety-18-script-r1')),
+                        scriptToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('script.js?v=20261114a')),
                         exportManagerToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('modules/exportManager.js?v=20261112b')),
                     }));
                     const needsExportManager = EXPORT_MANAGER_PAGES.includes(pageFile);

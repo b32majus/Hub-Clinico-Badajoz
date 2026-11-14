@@ -78,7 +78,7 @@ try {
 }
 
 // Caché de los scripts tocados.
-ok(/scripts\/script_dashboard\.js\?v=20261114a/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar script_dashboard.js?v=20261114a');
+ok(/scripts\/script_dashboard\.js\?v=20261114b/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar script_dashboard.js?v=20261114b');
 ok(/scripts\/script_estadisticas\.js\?v=20261113b/.test(rd('estadisticas.html')), 'caché: estadisticas.html debe cargar script_estadisticas.js?v=20261113b');
 
 if (fails.length) {

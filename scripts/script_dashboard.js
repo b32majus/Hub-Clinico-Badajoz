@@ -171,11 +171,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function attachDashboardActions(patientId) {
-    // Botón de registrar seguimiento
+    // Botón de registrar seguimiento (#940): la dirección nunca lleva el CIP;
+    // el paciente actual viaja en HubTools.currentPatient.
     const btnSeguimiento = document.getElementById('btnSeguimiento');
     if (btnSeguimiento) {
         const pathology = window.currentPathology || 'espa';
-        btnSeguimiento.href = `seguimiento.html?id=${encodeURIComponent(patientId)}&patologia=${encodeURIComponent(pathology)}`;
+        btnSeguimiento.href = 'seguimiento.html';
+        btnSeguimiento.addEventListener('click', (event) => {
+            event.preventDefault();
+            HubTools.currentPatient.goTo('seguimiento.html', patientId, pathology);
+        });
     }
 
     // Botón de exportar visitas
@@ -230,9 +235,17 @@ function attachDashboardActions(patientId) {
     initTableSorting();
 }
 
+// Paciente actual del panel (#940): se resuelve UNA vez por carga y el
+// mismo valor (id o null) se reutiliza en el resto de lecturas.
+let resolvedCurrentPatient = null;
+let currentPatientResolveAttempted = false;
+
 function getPatientIdFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('id');
+    if (!currentPatientResolveAttempted) {
+        currentPatientResolveAttempted = true;
+        resolvedCurrentPatient = HubTools.currentPatient.resolveOnLoad();
+    }
+    return (resolvedCurrentPatient && resolvedCurrentPatient.id) || null;
 }
 
 async function loadPatientBundle(patientId) {
