@@ -634,6 +634,25 @@ function getMdaCriteriosCumplidosExport(datos) {
     return /^[0-7]$/.test(texto) ? texto : '';
 }
 
+// Nota clínica TXT del MDA (decisión de Sil, 14-11; ausente ≠ NO). Solo un
+// veredicto definitivo escribe la línea, con recuento solo si es entero 0-7;
+// pendiente, sin calcular o texto desconocido no escriben línea. Datos
+// antiguos sin veredicto: solo un «sí» explícito (mdaCumple o MDA_Cumple 'SI').
+function getMdaNotaLinea(datos) {
+    const veredicto = datos && datos.mdaVeredicto;
+    if (veredicto === 'alcanzado' || veredicto === 'no_alcanzado') {
+        const texto = veredicto === 'alcanzado' ? 'MDA: alcanzado' : 'MDA: no alcanzado';
+        const recuento = getMdaCriteriosCumplidosExport(datos);
+        return recuento !== '' ? `${texto} (${recuento}/7 criterios)` : texto;
+    }
+    if (veredicto === undefined || veredicto === null) {
+        const legacyBool = datos && datos.mdaCumple === true;
+        const legacyTexto = datos && String(datos.MDA_Cumple ?? '').trim().toUpperCase() === 'SI';
+        return legacyBool || legacyTexto ? 'MDA: alcanzado' : '';
+    }
+    return '';
+}
+
 // Issue #942: columna 534. Como el bloque DAPSA, 'NA' cuando la patología no
 // es APs (el MDA no aplica), no un vacío ambiguo.
 function buildMdaResearchV2Columns(datos, pathology) {
@@ -1962,7 +1981,8 @@ function generarNotaClinica(datos) {
         addLine('LEI', ['leiScore', 'LEI_Score']);
         addLine('HAQ', ['haqTotal', 'HAQ_Total']);
         addLine('RAPID3', ['rapid3Total', 'RAPID3_Score']);
-        addLine('MDA', ['mdaCumple', 'MDA_Cumple']);
+        const mdaLinea = getMdaNotaLinea(src);
+        if (mdaLinea) add(mdaLinea);
         add('');
     }
 

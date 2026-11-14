@@ -95,6 +95,10 @@ N5 non-synthetic id (DNI-shaped id → A4).
    not computed or not APs (AR/LES/Sjögren used to export `NO`). New last
    column 534 `MDA_Criterios_Cumplidos`. `dolorNocturno` and `digestiva`
    stay as checkboxes (form decision, unchanged).
+   **Update 14-11-2026 (clinical TXT note, decision de Sil):** the note no
+   longer prints the boolean (`MDA: true/false`): APs writes `MDA: alcanzado
+   (N/7 criterios)` / `MDA: no alcanzado (N/7 criterios)`; pending or not
+   computed writes no MDA line.
 4. **Raw `datos.X || ''` reads in the EspA/APs generators.** Fields such as
    hlaB27, peso or others read with `|| ''` would collapse numeric `0` and
    `false` to `''`. Verified read-only: on the frozen corpus no sentinel

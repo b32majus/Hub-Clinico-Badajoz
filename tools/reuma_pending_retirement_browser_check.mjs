@@ -123,7 +123,7 @@ const PAGE_INDEX = 'reuma_index.html';
 const PAGE_PRIMERA = 'primera_visita.html';
 const PAGE_SEGUIMIENTO = 'seguimiento.html';
 const SCRIPT_TOKEN = 'script.js?v=20261114a';
-const EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261114b';
+const EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261114c';
 const EXPORT_MANAGER_PAGES = [
     'dashboard_paciente.html', 'estadisticas.html',
     'manage_professionals.html', 'primera_visita.html', 'reuma_index.html',
@@ -944,7 +944,7 @@ try {
                         pendingControls: document.body.innerText.includes('Recuperar \u00faltima')
                             || document.body.innerText.includes('Marcar resuelta'),
                         scriptToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('script.js?v=20261114a')),
-                        exportManagerToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('modules/exportManager.js?v=20261114b')),
+                        exportManagerToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('modules/exportManager.js?v=20261114c')),
                     }));
                     const needsExportManager = EXPORT_MANAGER_PAGES.includes(pageFile);
                     record(`R9 ${pageFile}: loads without pageerror, no pending-rows panel/controls, script.js train token present`,
