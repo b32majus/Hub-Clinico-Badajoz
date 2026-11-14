@@ -96,7 +96,7 @@ for (const group of GROUPS) {
         EXPECTED_PAUTA_HEADERS.push(`${group}_Pauta_${slot}`, `${group}_Pauta_Otro_${slot}`);
     }
 }
-const EXPECTED_COLUMNS = 533;
+const EXPECTED_COLUMNS = 534;
 
 // ---- AEMPS simulada (una presentación sintética por consulta) ------------------
 const AEMPS = {
@@ -372,10 +372,10 @@ try {
         assert.deepEqual(datos.planFamesEntries, []);
     });
 
-    await test('export: 533 columnas y las 36 cabeceras de pauta al final, en orden', async () => {
+    await test('export: 534 columnas y las 36 cabeceras de pauta en 498-533, en orden (#942: la 534 es MDA_Criterios_Cumplidos)', async () => {
         const meta = await page.evaluate(() => ({
             count: HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT,
-            tail: HubTools.export.FINAL_V2_EXPORT_HEADERS.slice(-36),
+            tail: HubTools.export.FINAL_V2_EXPORT_HEADERS.slice(-37, -1),
             total: 220 + HubTools.export.FINAL_V2_EXPORT_HEADERS.length,
         }));
         assert.equal(meta.count, EXPECTED_COLUMNS);
@@ -384,12 +384,12 @@ try {
     });
 
     await test('export: sin columnas nuevas de vía ni de unidad', async () => {
-        const offending = await page.evaluate(() => HubTools.export.FINAL_V2_EXPORT_HEADERS.slice(-36)
+        const offending = await page.evaluate(() => HubTools.export.FINAL_V2_EXPORT_HEADERS.slice(-37, -1)
             .filter((h) => /via|unidad/i.test(h)));
         assert.deepEqual(offending, []);
     });
 
-    await test('export PV: la fila (533) lleva el código de pauta y el texto de «Otra pauta» en su hueco; lo demás vacío', async () => {
+    await test('export PV: la fila (534) lleva el código de pauta y el texto de «Otra pauta» en su hueco; lo demás vacío', async () => {
         const out = await exportRow('espa', 'primera', 'recopilarDatosFormulario');
         assert.equal(out.ok, true, 'frontera: ' + out.code);
         assert.equal(out.fields.length, EXPECTED_COLUMNS);
@@ -434,7 +434,7 @@ try {
         }
     });
 
-    await test('SEG: la recogida y la fila (533) llevan la pauta del cambio en las columnas Cambio_*', async () => {
+    await test('SEG: la recogida y la fila (534) llevan la pauta del cambio en las columnas Cambio_*', async () => {
         await pickDrug('.drug-autocomplete:has(#cambioFameSelect)', 'metotrexato', 'METOTREXATO');
         await page.fill('#cambioFameDose', '20 mg');
         await page.selectOption('#cambioFamePauta', 'SEMANAL');

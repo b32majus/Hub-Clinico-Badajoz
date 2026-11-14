@@ -17,7 +17,7 @@
  *   A  no-persistence-queue        (static + behavioral; RED on baseline)
  *   B  no-residual-ui              (static; B1 RED on baseline, B2 green)
  *   C  preserved-transport-contract (static; must hold on baseline)
- *   D  533-row-integrity           (behavioral via harness corpus; green)
+ *   D  534-row-integrity           (behavioral via harness corpus; green)
  *   E  no-new-clinical-storage     (behavioral; RED on baseline)
  *   F  negative-witness self-tests (mandatory; must PASS on baseline)
  *
@@ -42,7 +42,7 @@
  *     gate in both transports, shared helper entregarFilaProyectadaCSV,
  *     manual-copy modal 'Copia manual de CSV', post-export checklist, no
  *     generic green success toast in the helper), D1-D4 (10 corpus journeys
- *     at 533 fields, deterministic rows, exact projected-row copy, fail-closed
+ *     at 534 fields, deterministic rows, exact projected-row copy, fail-closed
  *     on shape-invalid projections) and F1-F3 (negative-witness self-tests).
  *   Exit code: 0 = every assertion passes; 1 = any assertion failure.
  *   This checker MUST stay RED (exit 1) against the baseline until T2/T3
@@ -279,12 +279,12 @@ function evaluateNoPendingRowsEvent(events) {
   };
 }
 
-/** Row integrity evaluator for a projected/copyable 533-field row. */
+/** Row integrity evaluator for a projected/copyable 534-field row. */
 function evaluateRow497Integrity(row) {
   if (typeof row !== 'string') return { pass: false, reason: 'row is not a string' };
   if (row.includes('\uFEFF')) return { pass: false, reason: 'row contains an unexpected BOM' };
   const fields = row.split('\t');
-  if (fields.length !== 533) return { pass: false, reason: `row has ${fields.length} fields, expected 533` };
+  if (fields.length !== 534) return { pass: false, reason: `row has ${fields.length} fields, expected 534` };
   return { pass: true, reason: '' };
 }
 
@@ -433,7 +433,7 @@ function checkFamilyC() {
 }
 
 // ---------------------------------------------------------------------------
-// Family D — 533 ROW INTEGRITY (behavioral, harness + boundary)
+// Family D — 534 ROW INTEGRITY (behavioral, harness + boundary)
 // ---------------------------------------------------------------------------
 
 async function checkFamilyD() {
@@ -443,7 +443,7 @@ async function checkFamilyD() {
     firstRun = await runReumaExportHarness({ corpusFile: CORPUS });
     secondRun = await runReumaExportHarness({ corpusFile: CORPUS });
   } catch (error) {
-    record('D', 'D1 corpus-10-journeys-533-fields', false, `TOOL PROBLEM (harness): ${error.message}`);
+    record('D', 'D1 corpus-10-journeys-534-fields', false, `TOOL PROBLEM (harness): ${error.message}`);
     record('D', 'D2 corpus-rows-deterministic-byte-identical', false, 'TOOL PROBLEM (harness): not evaluated');
     record('D', 'D3 supported-delivery-copies-exact-projected-row', false, 'TOOL PROBLEM (harness): not evaluated');
     record('D', 'D4 delivery-fail-closed-on-invalid-projection', false, 'TOOL PROBLEM (harness): not evaluated');
@@ -456,9 +456,9 @@ async function checkFamilyD() {
     const verdict = evaluateRow497Integrity(j.row);
     if (!verdict.pass) badCount.push(`${j.pathology}/${j.tipoVisita}: ${verdict.reason}`);
   }
-  record('D', 'D1 corpus-10-journeys-533-fields',
+  record('D', 'D1 corpus-10-journeys-534-fields',
     journeys.length === 10 && badCount.length === 0,
-    badCount.length ? `${badCount.length} of ${journeys.length} journeys malformed: ${badCount.join('; ')}` : `all ${journeys.length} corpus journeys produce 533-field rows`);
+    badCount.length ? `${badCount.length} of ${journeys.length} journeys malformed: ${badCount.join('; ')}` : `all ${journeys.length} corpus journeys produce 534-field rows`);
 
   const mismatch = [];
   for (let i = 0; i < journeys.length; i++) {
@@ -496,7 +496,7 @@ async function checkFamilyD() {
     const copyVerdict = evaluateExactProjectedCopy(row, copied);
     const d3ok = delivered === true && copyVerdict.pass && !row.includes('\uFEFF');
     record('D', 'D3 supported-delivery-copies-exact-projected-row', d3ok,
-      d3ok ? 'exportarAct497 delivered exactly the projected 533-field row (no loss, no truncation/padding, no BOM)'
+      d3ok ? 'exportarAct497 delivered exactly the projected 534-field row (no loss, no truncation/padding, no BOM)'
         : `delivered=${delivered}, clipboardWrites=${result.clipboardWrites.length}, ${copyVerdict.reason || ''}`);
 
     const e1ok = storage.pass;
@@ -509,7 +509,7 @@ async function checkFamilyD() {
   }
 
   // D4 — the transport itself must fail closed on shape-invalid projections:
-  // no copy, no checklist path, no storage side effects. (532/534-field
+  // no copy, no checklist path, no storage side effects. (533/535-field
   // rejection at the compatibility boundary is frozen by the existing oracle
   // tools/reuma_export_boundary_check.mjs C2 and is not duplicated here.)
   try {
@@ -630,7 +630,7 @@ async function checkFamilyF() {
     label('F2 witness-b-replanted-pendingRowsUpdated-emission-detected', false, `TOOL PROBLEM: ${error.message}`);
   }
 
-  // Witness (c): a mutated/tampered 533 row (field dropped / field altered).
+  // Witness (c): a mutated/tampered 534 row (field dropped / field altered).
   try {
     const corpus = JSON.parse(readSource(CORPUS));
     const journey = corpus.journeys.find((j) => j.pathology === 'ar' && j.tipoVisita === 'primera');
@@ -643,11 +643,11 @@ async function checkFamilyF() {
     const dropDetected = evaluateRow497Integrity(dropped).pass === false;
     const alterDetected = evaluateExactProjectedCopy(genuine, altered).pass === false;
     const detected = genuineVerdict.pass === true && dropDetected && alterDetected;
-    label('F3 witness-c-tampered-533-row-detected', detected,
-      detected ? 'field-dropped row fails the 533 evaluator; field-altered row fails the exact-copy evaluator'
+    label('F3 witness-c-tampered-534-row-detected', detected,
+      detected ? 'field-dropped row fails the 534 evaluator; field-altered row fails the exact-copy evaluator'
         : `genuine.pass=${genuineVerdict.pass}, dropDetected=${dropDetected}, alterDetected=${alterDetected}`);
   } catch (error) {
-    label('F3 witness-c-tampered-533-row-detected', false, `TOOL PROBLEM: ${error.message}`);
+    label('F3 witness-c-tampered-534-row-detected', false, `TOOL PROBLEM: ${error.message}`);
   }
 }
 

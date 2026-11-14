@@ -90,6 +90,11 @@ N5 non-synthetic id (DNI-shaped id → A4).
    checkboxes, which have no "not recorded" state, and `mdaCumple` = `NO`
    when MDA is not computed is the published #520 contract. Changing any of
    them is a form/contract decision, not an export fix.
+   **Update 14-11-2026 (#942, decision de Sil):** `mdaCumple` (column 193) is
+   no longer collapsed: `SI` achieved, `NO` not achieved, empty when pending,
+   not computed or not APs (AR/LES/Sjögren used to export `NO`). New last
+   column 534 `MDA_Criterios_Cumplidos`. `dolorNocturno` and `digestiva`
+   stay as checkboxes (form decision, unchanged).
 4. **Raw `datos.X || ''` reads in the EspA/APs generators.** Fields such as
    hlaB27, peso or others read with `|| ''` would collapse numeric `0` and
    `false` to `''`. Verified read-only: on the frozen corpus no sentinel
@@ -97,6 +102,9 @@ N5 non-synthetic id (DNI-shaped id → A4).
    `Hemograma_Fecha_Solicitud` is read via `getExportValue`, which skips only
    `undefined`/`null`/`''` so numeric 0 survives). This remains a latent risk
    for any future corpus that places 0/false in those fields.
+   Re-checked 14-11-2026 (#942, inventory A7): the live collectors read these
+   values from the DOM as strings, so `'0'` survives `|| ''`; only a non-form
+   payload with numeric `0`/`false` could collapse. Still latent, not live.
 5. **Empty string vs missing.** `getExportValue`/`getExportState` treat `''`
    like absent when a non-empty fallback exists; `''` is only preserved where
    the fallback is `''` (e.g. the observation columns asserted in A3).

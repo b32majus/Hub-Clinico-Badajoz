@@ -247,7 +247,7 @@ async function runPage(browser, pagePath) {
 
     const apsRead = await page.evaluate(LEGACY(builderFor('APs'), collector));
     record(`(3) ${pagePath} APs: recopilado asdasEvaGlobal '' y ${apsRead.len} columnas`,
-      apsRead.collected === '' && apsRead.len === 533, JSON.stringify(apsRead));
+      apsRead.collected === '' && apsRead.len === 534, JSON.stringify(apsRead));
     record(`(3) ${pagePath} APs: slot legacy ASDAS (cols 156-160) vacío`,
       apsRead.block.every((v) => v === ''), JSON.stringify(apsRead.block));
 
@@ -280,7 +280,7 @@ async function runPage(browser, pagePath) {
 
     const espaRead = await page.evaluate(LEGACY(builderFor('EspA'), collector));
     record(`(4) ${pagePath} EspA: recopilado asdasEvaGlobal '4' y ${espaRead.len} columnas`,
-      espaRead.collected === '4' && espaRead.len === 533, JSON.stringify(espaRead));
+      espaRead.collected === '4' && espaRead.len === 534, JSON.stringify(espaRead));
     if (isSeg) {
       record(`(4) ${pagePath} EspA: slot legacy ASDAS EVA (col 158) = '4'`,
         espaRead.block[2] === '4', JSON.stringify(espaRead.block));
@@ -301,7 +301,7 @@ async function runPage(browser, pagePath) {
     // froze them as user input that is never cleared by the pathology gate,
     // so they are observed here but deliberately not asserted empty.
     record(`(5) ${pagePath} EspA -> APs: recopilado '' y slot legacy ASDAS EVA (col 158) vacío`,
-      backRead.collected === '' && backRead.block[2] === '' && backRead.len === 533,
+      backRead.collected === '' && backRead.block[2] === '' && backRead.len === 534,
       JSON.stringify(backRead));
     if (isSeg) {
       record(`(5) ${pagePath} EspA -> APs: derivados ASDAS legacy (cols 159/160) vacíos`,

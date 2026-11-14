@@ -174,7 +174,7 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
     check(`${pagePath} fuentes pendientes nombradas en el panel`,
       base.final.toLowerCase().includes('fuentes ausentes') && base.final.includes('EVA Dolor') && base.final.includes('EVA Global'),
       `final='${base.final}'`);
-    // Re-freeze #516 correction: the seven COLLECTED value spans (legacy 533
+    // Re-freeze #516 correction: the seven COLLECTED value spans (legacy 534
     // columns 186-192) never render '—'; absent source -> ''. #haqTotal empty.
     check(`${pagePath} SIN FUENTES: los 7 spans de valor recogidos quedan '' (nunca '—')`,
       base.values.length === 7 && base.values.every((v) => v === ''), JSON.stringify(base.values));

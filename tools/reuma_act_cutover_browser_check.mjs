@@ -29,16 +29,16 @@
  *   W1 static wiring: both pages load the act-contract and adapter modules
  *      after the boundary module and before their page scripts, with ?v=
  *   H1 Primera Visita happy path for the 5 pathologies (espa/aps/ar/les/
- *      sjogren): CSV export succeeds and the copied row is a 533-field TSV
+ *      sjogren): CSV export succeeds and the copied row is a 534-field TSV
  *      carrying the synthetic identity, the 'Primera Visita' marker and the
  *      pathology token; console.error=0 and pageerror=0
  *   H2 Seguimiento happy path for the 5 pathologies: same contract with the
  *      'Seguimiento' marker
  *   F1 planted boundary failure (Primera Visita): no post-export checklist, no
  *      row delivered at all (no clipboard TSV, no modal TSV — fail-closed,
- *      never a partial copy; a 532-field delivery would also fail), visible
+ *      never a partial copy; a 533-field delivery would also fail), visible
  *      'frontera de compatibilidad' fail-closed alert, pageerror=0; partial-
- *      copy negative witness proving a planted 532-field delivery FAILS the
+ *      copy negative witness proving a planted 533-field delivery FAILS the
  *      fail-closed evaluator
  *
  * RETIRED PENDING-ROWS CONTRACT (T4 reconciliation,
@@ -338,7 +338,7 @@ async function readExportedRow(page) {
 function validateRow(rowText, { id, marker, token }) {
     const fields = rowText.split('\t');
     return {
-        fields497: fields.length === 533,
+        fields497: fields.length === 534,
         identity: fields[0] === id,
         visitMarker: fields[4] === marker,
         pathologyToken: fields[6] === token,
@@ -348,7 +348,7 @@ function validateRow(rowText, { id, marker, token }) {
 /**
  * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when the
  * boundary rejects, NO row may be delivered at all — no clipboard TSV and no
- * manual-modal TSV — regardless of field count (a 532-field partial row is a
+ * manual-modal TSV — regardless of field count (a 533-field partial row is a
  * violation, never a pass).
  */
 function evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible }) {
@@ -435,7 +435,7 @@ try {
                 const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
                 const row = await readExportedRow(page);
                 const checks = row.text ? validateRow(row.text, { id, marker: config.marker, token: pathology }) : { fields497: false };
-                record(`H${kind === 'primera' ? '1' : '2'} ${pathology} happy path (${config.page}): copied row is a 533-field TSV with identity, '${config.marker}' marker and '${pathology}' token`,
+                record(`H${kind === 'primera' ? '1' : '2'} ${pathology} happy path (${config.page}): copied row is a 534-field TSV with identity, '${config.marker}' marker and '${pathology}' token`,
                     checklistAppeared && row.source !== 'none' && checks.fields497 && checks.identity && checks.visitMarker && checks.pathologyToken,
                     `checklist=${checklistAppeared} source=${row.source} checks=${JSON.stringify(checks)} fields=${row.text ? row.text.split('\t').length : 0} validationErrors=${JSON.stringify(validationErrors)}`);
 
@@ -467,18 +467,18 @@ try {
             const alerts = await page.locator('[role="alert"]').allTextContents();
             const failClosedVisible = alerts.some((text) => text.includes('frontera de compatibilidad'));
             // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
-            // delivered at all — a 532-field partial row is also a violation.
+            // delivered at all — a 533-field partial row is also a violation.
             const noDeliveryVerdict = evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible });
             record('F1 planted boundary failure: fail-closed visible error, no post-export checklist and NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed, never a partial copy)',
                 noDeliveryVerdict.pass && entry.pageErrors.length === 0,
                 `problems=${JSON.stringify(noDeliveryVerdict.problems)} failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} alerts=${JSON.stringify(alerts)} pageErrors=${JSON.stringify(entry.pageErrors)}`);
-            // Partial-copy negative witness (F4): a planted 532-field partial
+            // Partial-copy negative witness (F4): a planted 533-field partial
             // delivery must FAIL the same fail-closed evaluator used by F1,
             // while a true no-delivery state passes it.
-            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 532 }, (_, i) => `F${i}`).join('\t') };
+            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 533 }, (_, i) => `F${i}`).join('\t') };
             const plantedPartial = evaluateFailClosedDelivery(partialDelivery, { checklistCount: 0, failClosedVisible: true });
             const cleanNone = evaluateFailClosedDelivery({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
-            record('F1 partial-copy witness: a planted 532-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
+            record('F1 partial-copy witness: a planted 533-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
                 plantedPartial.pass === false && cleanNone.pass === true,
                 `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
         } finally {

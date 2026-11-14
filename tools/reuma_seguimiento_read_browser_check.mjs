@@ -32,7 +32,7 @@
  *   A3  explicit baseline payload/export on the `not_found` page: typed name +
  *       treatment + start date reach `HubTools.form.recopilarDatosFormularioSeguimiento()`,
  *       a cleared date collects as '' (blank, never today), and the real in-page
- *       route `createVisitAct` -> `projectVisitAct497` keeps the 533 projection
+ *       route `createVisitAct` -> `projectVisitAct497` keeps the 534 projection
  *       byte-identical except for exactly the two treatment positions.
  *   A4  (T22-02) negatives for the two baseline fields: `ok`, `unavailable`
  *       and `error` keep `#tratamientoActual`/`#fechaInicioTratamiento`
@@ -754,7 +754,7 @@ try {
         // A3 (Train 22) — explicit baseline payload/export on the not_found
         // page: typed name/treatment/date reach the collector, a cleared date
         // collects as '' (blank, never today), and the real in-page route
-        // createVisitAct -> projectVisitAct497 keeps the 533 projection
+        // createVisitAct -> projectVisitAct497 keeps the 534 projection
         // byte-identical except exactly the two treatment positions (no
         // hardcoded column index: legacy generators use non-uniform absolute
         // positions; the diff is the contract). RED on freeze: the fields are
@@ -865,12 +865,12 @@ try {
                 clearedDate === '',
                 observed.actOk === true,
                 observed.projectionOk === true,
-                observed.fieldCount === 533,
+                observed.fieldCount === 534,
                 observed.position4 === 'Seguimiento',
                 observed.diffPositions.length === 2,
                 observed.diffValues.includes(TYPED_TREATMENT) && observed.diffValues.includes(TYPED_DATE),
             ] : [];
-            record('A3 not_found baseline payload/export: collector returns typed values and the 533 projection differs in exactly the two treatment positions',
+            record('A3 not_found baseline payload/export: collector returns typed values and the 534 projection differs in exactly the two treatment positions',
                 checks.length > 0 && checks.every(Boolean),
                 `fillErrors=${JSON.stringify(fillErrors)} observeError=${JSON.stringify(observeError)} ` +
                 `consoleErrors=${JSON.stringify(baselineErrors)} ` +

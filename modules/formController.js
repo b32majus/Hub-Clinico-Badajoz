@@ -1449,6 +1449,16 @@ function esMdaAlcanzado(texto) {
     return veredicto === 'MDA ALCANZADO' || veredicto === 'MDA ALCANZADO ✓';
 }
 
+// Issue #942: clasifica el veredicto visible del MDA para el export de
+// investigación. Solo un veredicto definitivo produce 'alcanzado'/'no_alcanzado';
+// pendiente, vacío, desconocido o parcial quedan 'pendiente' (ausente ≠ NO).
+// No cambia esMdaAlcanzado ni el booleano mdaCumple (#520).
+function derivarMdaVeredicto(texto) {
+    var veredicto = String(texto === undefined || texto === null ? '' : texto).trim();
+    if (esMdaAlcanzado(veredicto)) return 'alcanzado';
+    return veredicto === 'MDA NO ALCANZADO' ? 'no_alcanzado' : 'pendiente';
+}
+
 function recopilarDatosFormulario() {
     // 1. Leer todos los campos simples del formulario
     const idPaciente = document.getElementById('idPaciente').value;
@@ -1734,6 +1744,8 @@ function recopilarDatosFormulario() {
     const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
     const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
     const mdaCumple = esMdaAlcanzado(document.getElementById('mdaResultadoFinal')?.textContent);
+    const mdaVeredicto = derivarMdaVeredicto(document.getElementById('mdaResultadoFinal')?.textContent);
+    const mdaCriteriosCumplidos = String(document.getElementById('mdaCumplidos')?.textContent || '').trim();
 
     const maniobrasSacroiliacas = document.getElementById('maniobrasSacroiliacas')?.value || '';
     const comentariosSacroiliacas = document.getElementById('comentariosSacroiliacas')?.value || '';
@@ -1865,6 +1877,7 @@ function recopilarDatosFormulario() {
         haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
         leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
         mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        mdaVeredicto, mdaCriteriosCumplidos,
         dapsaResult, dapsaCategoria, dapsaNAD68, dapsaNAT66,
         dapsaEvaDolorPaciente, dapsaEvaGlobalPaciente, dapsaPCR,
         planSistemicosEntries, planFamesEntries, planBiologicosEntries,
@@ -2163,6 +2176,8 @@ function recopilarDatosFormularioSeguimiento() {
     const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
     const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
     const mdaCumple = esMdaAlcanzado(document.getElementById('mdaResultadoFinal')?.textContent);
+    const mdaVeredicto = derivarMdaVeredicto(document.getElementById('mdaResultadoFinal')?.textContent);
+    const mdaCriteriosCumplidos = String(document.getElementById('mdaCumplidos')?.textContent || '').trim();
 
     const das28NAD = getValue('das28NAD');
     const das28NAT = getValue('das28NAT');
@@ -2320,6 +2335,7 @@ function recopilarDatosFormularioSeguimiento() {
         haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
         leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
         mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        mdaVeredicto, mdaCriteriosCumplidos,
         dapsaResult, dapsaCategoria, dapsaNAD68, dapsaNAT66,
         dapsaEvaDolorPaciente, dapsaEvaGlobalPaciente, dapsaPCR,
         das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,

@@ -34,8 +34,8 @@ function expandirDactilitis(array) {
 const LEGACY_BASE_COLUMN_COUNT = 220;
 const HISTORICAL_EXPORT_COLUMN_COUNT = 321;
 // Issue #919 (tramo 2 buscador común): 36 columnas de pauta al final
-// (220 base + 277 históricas + 36 de pauta = 533).
-const FINAL_V2_EXPORT_COLUMN_COUNT = 533;
+// Issue #942: + 1 columna MDA_Criterios_Cumplidos al final (220 + 277 + 36 + 1 = 534).
+const FINAL_V2_EXPORT_COLUMN_COUNT = 534;
 
 const LEGACY_EXTENSION_HEADERS_221_321 = [
     'Trat_Sistemico_2', 'Trat_Sistemico_Dosis_2', 'Trat_Sistemico_3', 'Trat_Sistemico_Dosis_3',
@@ -175,6 +175,10 @@ PAUTA_V2_HEADER_GROUPS.forEach(group => {
     });
 });
 
+// Issue #942: recuento exportado (0-7) con veredicto definitivo; 'NA' si la
+// patología no es APs (como el bloque DAPSA).
+const MDA_RESEARCH_V2_HEADERS = ['MDA_Criterios_Cumplidos'];
+
 // Cabeceras añadidas a las 220 columnas construidas inline por los generadores legacy.
 const FINAL_V2_EXPORT_HEADERS = [
     ...LEGACY_EXTENSION_HEADERS_221_321,
@@ -182,7 +186,8 @@ const FINAL_V2_EXPORT_HEADERS = [
     ...LES_V2_HEADERS,
     ...SJOGREN_V2_HEADERS,
     ...APS_DAPSA_V2_HEADERS,
-    ...PAUTA_V2_HEADERS
+    ...PAUTA_V2_HEADERS,
+    ...MDA_RESEARCH_V2_HEADERS
 ];
 
 const EXTRA_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
@@ -605,6 +610,37 @@ function validateV2BlockLengths(commonV2, lesV2, sjogrenV2, apsDapsaV2) {
     }
 }
 
+// Issue #942: columna 193 MDA_Cumple para el export. 'SI' alcanzado, 'NO' no
+// alcanzado, vacío en cualquier otro caso (pendiente, sin calcular, veredicto
+// desconocido): ausente ≠ NO. Datos antiguos sin veredicto conservan el
+// booleano mdaCumple (#520): true -> 'SI', cualquier otro valor vacío (nunca
+// se infiere un NO).
+function getMdaCumpleExport(datos) {
+    const veredicto = datos && datos.mdaVeredicto;
+    if (veredicto === 'alcanzado') return 'SI';
+    if (veredicto === 'no_alcanzado') return 'NO';
+    if (veredicto === undefined || veredicto === null) {
+        return datos && datos.mdaCumple === true ? 'SI' : '';
+    }
+    return '';
+}
+
+// Issue #942: recuento de criterios cumplidos (0-7) solo con veredicto
+// definitivo y valor exactamente entero 0-7; nunca se inventa un recuento.
+function getMdaCriteriosCumplidosExport(datos) {
+    const veredicto = datos && datos.mdaVeredicto;
+    if (veredicto !== 'alcanzado' && veredicto !== 'no_alcanzado') return '';
+    const texto = String(datos.mdaCriteriosCumplidos ?? '').trim();
+    return /^[0-7]$/.test(texto) ? texto : '';
+}
+
+// Issue #942: columna 534. Como el bloque DAPSA, 'NA' cuando la patología no
+// es APs (el MDA no aplica), no un vacío ambiguo.
+function buildMdaResearchV2Columns(datos, pathology) {
+    if (pathology !== 'aps') return ['NA'];
+    return [getMdaCriteriosCumplidosExport(datos)];
+}
+
 function buildExtendedColumns(datos, pathology) {
     const normalizedPathology = normalizePathologyExport(pathology, datos);
     const legacy = buildLegacyExtensionColumns(datos, normalizedPathology);
@@ -623,13 +659,19 @@ function buildExtendedColumns(datos, pathology) {
         console.warn('Export v2 invalido: bloque pauta esperaba ' + PAUTA_V2_HEADERS.length + ' columnas y genero ' + pautaV2.length);
     }
 
+    const mdaResearchV2 = buildMdaResearchV2Columns(datos, normalizedPathology);
+    if (mdaResearchV2.length !== MDA_RESEARCH_V2_HEADERS.length) {
+        console.warn('Export v2 invalido: bloque MDA investigacion esperaba ' + MDA_RESEARCH_V2_HEADERS.length + ' columnas y genero ' + mdaResearchV2.length);
+    }
+
     return [
         ...legacy,
         ...commonV2,
         ...lesV2,
         ...sjogrenV2,
         ...apsDapsaV2,
-        ...pautaV2
+        ...pautaV2,
+        ...mdaResearchV2
     ];
 }
 
@@ -817,7 +859,8 @@ function generarFilaCSV_AR_Base(datos, tipoVisita) {
     setLegacyColumn(row, 190, datos.mdaGlobal || '');
     setLegacyColumn(row, 191, datos.mdaHAQ || '');
     setLegacyColumn(row, 192, datos.mdaEntesitis || '');
-    setLegacyColumn(row, 193, datos.mdaCumple ? 'SI' : 'NO');
+    // #942: MDA solo aplica a APs; vacío (no consta), nunca 'NO'.
+    setLegacyColumn(row, 193, '');
 
     setLegacyColumn(row, 194, datos.rapid3Funcion || '');
     setLegacyColumn(row, 195, datos.rapid3Dolor || '');
@@ -1108,8 +1151,15 @@ function generarFilaCSV_APs_PrimeraVisita(datos) {
         '', '', '', '', '', '', '', '', '',
         // LEI (7 campos vacíos)
         '', '', '', '', '', '', '',
-        // MDA (8 campos vacíos)
-        '', '', '', '', '', '', '', '',
+        // MDA (8 campos, #942: dato basal)
+        datos.mdaNAT || '',
+        datos.mdaNAD || '',
+        datos.mdaPASI || '',
+        datos.mdaDolor || '',
+        datos.mdaGlobal || '',
+        datos.mdaHAQ || '',
+        datos.mdaEntesitis || '',
+        getMdaCumpleExport(datos),
         // RAPID3 (4 campos vacíos)
         '', '', '', '',
         // Tratamiento Actual (3 campos)
@@ -1364,7 +1414,7 @@ function generarFilaCSV_APs_Seguimiento(datos) {
         datos.mdaGlobal || '',
         datos.mdaHAQ || '',
         datos.mdaEntesitis || '',
-        datos.mdaCumple ? 'SI' : 'NO',
+        getMdaCumpleExport(datos),
         // RAPID3 (4 campos)
         datos.rapid3Funcion || '',
         datos.rapid3Dolor || '',
@@ -2495,6 +2545,7 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.SJOGREN_V2_HEADERS = SJOGREN_V2_HEADERS;
     HubTools.export.APS_DAPSA_V2_HEADERS = APS_DAPSA_V2_HEADERS;
     HubTools.export.PAUTA_V2_HEADERS = PAUTA_V2_HEADERS;
+    HubTools.export.MDA_RESEARCH_V2_HEADERS = MDA_RESEARCH_V2_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT = FINAL_V2_EXPORT_COLUMN_COUNT;
     HubTools.export.validateExportRowLength = validateExportRowLength;
