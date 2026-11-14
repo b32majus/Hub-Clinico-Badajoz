@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DermaNEXus · Prototipo Psoriasis</title>
+  <link rel="stylesheet" href="modules/derma/pso_prototype.css">
+</head>
+<body>
+<div class="demo-warning" role="note">
+  <strong>Demostración sintética sin persistencia.</strong>
+  No introduce datos clínicos, no calcula escalas no homologadas y no está conectada a Farmacia.
+</div>
+<div class="app">
+  <aside class="sidebar" aria-label="Navegación Dermatología">
+    <div class="brand"><span class="brand-icon">✳</span><span>Derma<span class="accent">NEX</span>us<small>PROMueve Extremadura</small></span></div>
+    <div class="nav-title">Circuitos asistenciales</div>
+    <nav class="visit-navigation" aria-label="Seleccionar tipo de visita">
+      <button type="button" class="nav-button active" data-visit="primera" aria-current="page">Primera Visita</button>
+      <button type="button" class="nav-button" data-visit="seguimiento">Seguimiento</button>
+    </nav>
+    <div class="nav-future" aria-label="Secciones futuras">
+      <span>Pacientes <small>Próximamente</small></span>
+      <span>Estadísticas <small>Próximamente</small></span>
+    </div>
+    <div class="sidebar-foot">Prototipo local · No apto para piloto</div>
+  </aside>
+  <main class="main">
+    <header class="main-header">
+      <div><div class="eyebrow">DERMATOLOGÍA / BORRADOR CLÍNICO</div><h1 id="visitTitle">Primera Visita</h1><p>Propuesta de captura estructurada adaptada desde Valme.</p></div>
+      <span class="draft-pill">BORRADOR NO HOMOLOGADO</span>
+    </header>
+    <div class="context card">
+      <div class="context-head"><h2>Contexto de visita</h2><span id="fieldCoverage">174 campos de origen Valme mapeados</span></div>
+      <div class="context-grid">
+        <label>Paciente ficticio
+          <select id="demoPatient">
+            <option value="">Seleccionar paciente sintético…</option>
+            <option value="DEMO-PSO-001">Paciente sintético A</option>
+            <option value="DEMO-PSO-002">Paciente sintético B</option>
+          </select>
+        </label>
+        <label>Patología de esta visita
+          <select id="pathology">
+            <option value="">Seleccionar patología…</option>
+            <option value="pso">Psoriasis</option>
+          </select>
+        </label>
+      </div>
+      <p class="help">La patología se elige en la visita, no desde la barra lateral. Hidradenitis se incorporará después, cuando disponga de su contrato propio.</p>
+    </div>
+    <section id="emptyState" class="empty card">
+      <span class="empty-symbol">◇</span>
+      <h2>Selecciona un paciente ficticio y la patología</h2>
+      <p>El formulario permanece vacío hasta que se seleccione explícitamente Psoriasis. Ningún dato previo se presupone.</p>
+    </section>
+    <form id="visitForm" class="hidden" novalidate aria-label="Borrador Psoriasis" onsubmit="return false">
+      <div class="summary card">
+        <div><strong>Formulario de Psoriasis</strong><p>Secciones plegables con campos de Valme adaptados a controles de selección rápida.</p></div>
+        <div class="summary-meta"><span id="draftScope">Sin paciente</span><span id="draftStatus">Borrador temporal en memoria</span></div>
+      </div>
+      <div id="clinicalSections" class="sections"></div>
+      <footer class="form-footer">No hay botón Guardar: este prototipo solo mantiene el borrador en memoria hasta cerrar o recargar la página. No realiza solicitudes a Farmacia.</footer>
+    </form>
+  </main>
+</div>
+<script type="module" src="modules/derma/pso_prototype.js"></script>
+</body>
+</html>
