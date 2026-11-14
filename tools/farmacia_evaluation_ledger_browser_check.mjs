@@ -1,11 +1,31 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync } from 'node:fs';
+import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
+import { createServer } from 'node:http';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
-const BASE_URL = process.env.FH_LEDGER_BASE_URL || 'http://127.0.0.1:48796/';
+// Sin FH_LEDGER_BASE_URL, el check sirve este mismo worktree (antes dependía de un servidor externo en :48796).
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const MIME = new Map([['.html', 'text/html; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'], ['.css', 'text/css; charset=utf-8'], ['.json', 'application/json'], ['.svg', 'image/svg+xml'], ['.xlsx', 'application/octet-stream']]);
+let server = null;
+let BASE_URL = process.env.FH_LEDGER_BASE_URL || '';
+if (!BASE_URL) {
+  server = createServer((request, response) => {
+    const relative = decodeURIComponent(new URL(request.url || '/', 'http://127.0.0.1').pathname).replace(/^\/+/, '') || 'farmacia_index.html';
+    const file = path.resolve(ROOT, relative);
+    if (file !== ROOT && !file.startsWith(ROOT + path.sep)) { response.writeHead(403).end(); return; }
+    try {
+      if (!statSync(file).isFile()) throw new Error('not_file');
+      response.writeHead(200, { 'content-type': MIME.get(path.extname(file).toLowerCase()) || 'application/octet-stream', 'cache-control': 'no-store' });
+      createReadStream(file).pipe(response);
+    } catch { response.writeHead(404).end('Not found'); }
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  BASE_URL = `http://127.0.0.1:${server.address().port}/`;
+}
 const LEGACY_KEY = 'promueve.fh.synthetic-evaluation-ledger.v1';
 const LEGACY_VALUE = JSON.stringify({ schema_version: '1.0.0', events: [{ event_id: 'LEGACY-MUST-NOT-BE-READ' }] });
 
@@ -206,4 +226,5 @@ try {
   console.log('ledger/workbook absent; legacy key opaque; v1/v2 outputs intact; reload and CIP switching do not restore forms; console/pageerror 0.');
 } finally {
   await browser.close();
+  if (server) await new Promise((resolve) => server.close(resolve));
 }

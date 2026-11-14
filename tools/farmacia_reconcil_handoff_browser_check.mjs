@@ -126,8 +126,8 @@ function lastTsvColumn(tsv) {
 
 async function openRequestAndVerify(page, requestLabel, expectedSid) {
   // Supported navigation: click the "Abrir validación" link of THIS request card.
-  const card = page.locator(`[data-enf-solicitud="${expectedSid}"]`);
-  assert(await card.count() === 1, `${requestLabel}: tarjeta visible en el board Enfermería`);
+  const card = page.locator(`[data-enf-cip="${SHARED_CIP}"][data-pendientes-solicitud="${expectedSid}"]`);
+  assert(await card.count() === 1, `${requestLabel}: tarjeta visible en Pendientes`);
   const link = card.locator('[data-enf-action="validar"]');
   assert(await link.count() === 1, `${requestLabel}: ofrece la acción soportada Abrir validación`);
   const href = await link.getAttribute('href');
@@ -165,7 +165,7 @@ async function openRequestAndVerify(page, requestLabel, expectedSid) {
 }
 
 try {
-  console.log('\n=== N4 handoff: Inicio → Validación (navegación soportada real) ===');
+  console.log('\n=== N4 handoff: Inicio (carga) → Pendientes → Validación (navegación soportada real) ===');
   const context = await browser.newContext();
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
   const page = await context.newPage();
@@ -186,27 +186,28 @@ try {
   );
   assert(true, 'Carga soportada de los dos Excel sintéticos en farmacia_index.html');
 
-  await page.waitForFunction(() => {
-    const text = document.getElementById('enfermeriaBoardCards')?.textContent || '';
-    return text.includes('SOL-REU-000901') && text.includes('SOL-REU-000902');
-  }, { timeout: 15000 });
+  /* #550 (06-10): el tablero de enfermería salió de Inicio; las tarjetas viven en Pendientes. */
+  await page.goto(BASE + 'farmacia_actividad_servicio.html', { waitUntil: 'load' });
+  await page.waitForFunction((cip) => {
+    return document.querySelectorAll(`[data-enf-cip="${cip}"][data-pendientes-solicitud]`).length >= 2;
+  }, SHARED_CIP, { timeout: 15000 });
 
   // Same CIP with two distinct requests: two independent cards, both openable.
-  const sharedCards = page.locator(`[data-enf-cip="${SHARED_CIP}"][data-enf-solicitud]`);
+  const sharedCards = page.locator(`[data-enf-cip="${SHARED_CIP}"][data-pendientes-solicitud]`);
   assert(await sharedCards.count() === 2, 'Misma CIP con dos solicitudes → dos tarjetas independientes');
-  const cardA = page.locator(`[data-enf-solicitud="${REQUEST_A}"]`);
-  const cardB = page.locator(`[data-enf-solicitud="${REQUEST_B}"]`);
+  const cardA = page.locator(`[data-enf-cip="${SHARED_CIP}"][data-pendientes-solicitud="${REQUEST_A}"]`);
+  const cardB = page.locator(`[data-enf-cip="${SHARED_CIP}"][data-pendientes-solicitud="${REQUEST_B}"]`);
   assert((await cardA.textContent()).includes('Abrir validación') && (await cardB.textContent()).includes('Abrir validación'),
-    'Ambas solicitudes del mismo CIP siguen pendientes (PENDING_FH) y ofrecen Abrir validación');
+    'Ambas solicitudes del mismo CIP ofrecen Abrir validación');
 
   // 2) Open request A of the shared CIP → resolves ITS OWN id.
   await openRequestAndVerify(page, 'Solicitud A (' + REQUEST_A + ')', REQUEST_A);
 
-  // 3) Negative case: navigate back to Inicio, open the OTHER request → its own id.
-  await page.goto(BASE + 'farmacia_index.html', { waitUntil: 'load' });
-  await page.waitForFunction((sid) => {
-    return !!document.querySelector(`[data-enf-solicitud="${sid}"]`);
-  }, REQUEST_B, { timeout: 15000 });
+  // 3) Negative case: navigate back to Pendientes, open the OTHER request → its own id.
+  await page.goto(BASE + 'farmacia_actividad_servicio.html', { waitUntil: 'load' });
+  await page.waitForFunction(({ cip, sid }) => {
+    return !!document.querySelector(`[data-enf-cip="${cip}"][data-pendientes-solicitud="${sid}"]`);
+  }, { cip: SHARED_CIP, sid: REQUEST_B }, { timeout: 15000 });
   await openRequestAndVerify(page, 'Solicitud B (' + REQUEST_B + ')', REQUEST_B);
 
   // 4) Manual-origin control: validación without supported context resolves
