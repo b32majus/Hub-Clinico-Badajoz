@@ -1,4 +1,4 @@
-# DECISIONES — registro único (27-10-2026)
+# DECISIONES — registro único (14-11-2026)
 
 Una línea por decisión: fecha, qué se decidió, fuente y estado. Esto es un **índice**: la fuente manda. Las decisiones históricas se listan sin valorar si siguen vigentes salvo que la propia fuente lo diga (ver `docs/MAPA.md`).
 
@@ -46,6 +46,7 @@ Estados: **VIGENTE**, **SUSTITUIDA** (con por qué), **HISTÓRICA** (contexto de
 | 14-11 | Reuma: si `Tratamiento_Actual` está vacío, la tarjeta «Tratamiento activo» del panel dice «No consta» (antes «Sin tratamiento asignado»: ausente ≠ sin tratamiento), como Estadísticas; un «No» explícito sigue saliendo «No». K4 (ausente vs vacío en `getCanonicalField`) no aplica a los datos del Excel; se documenta sin cambio de código. Botón Solicitud FH del panel aparcado hasta la decisión del grupo lean (#935) | Sil, 14-11; #936; `docs/engineering/REUMA_READ_CHARACTERIZATION.md` K4 | VIGENTE |
 | 14-11 | Reuma AR: el aviso «Faltan campos obligatorios» nombra los índices como los ve el médico (DAS28-PCR y SDAI «revisa PCR y su unidad», DAS28-VSG «revisa VSG», CDAI, NAD/NAT «homúnculo») en vez del id interno (`das28CrpResult`…). Solo texto: se exigen los mismos campos y no cambia la exportación | Sil, 14-11; #938; inventario Reuma A1 (era el check, #633) | VIGENTE |
 | 14-11 | Reuma, un solo paciente a la vez (como Farmacia): el CIP no va en la dirección (`?id=`) ni en el nombre de ninguna entrada del navegador. El paciente actual vive en una entrada de sesión (`HubClinico_PacienteActual`, `modules/reumaCurrentPatient.js`); al cambiar de paciente se borra lo del anterior; F5 en el panel o en Seguimiento olvida el paciente (el Excel sigue cargado); los enlaces antiguos con `?id=` se aceptan una vez y se limpian; `?id=` vacío = sin paciente; al volver con «Atrás» a una página de otro paciente se reabre con el actual. El prebiológico pasa a una sola entrada (`HubClinico_PrebiologicoActual`), solo del paciente actual; las antiguas `HubClinico_Prebiologic_<CIP>` se borran. El Excel sigue en sessionStorage, como en Farmacia; «no guardar nada» queda en #713/#621 | Sil, 14-11 (F5: opción A); #940; inventario Reuma A5/A10; #714 | VIGENTE |
+| 14-11 | DermaNEXus: **orden de diseño** 1) DermaVisitAct, 2) DermaReadPort, 3) salida/entrega y roundtrip, 4) primer adapter físico tras decisión del destino. Solo una visita activa en edición, compatible con historial de actos guardados; uso actual en escritorio, sin prioridad UX móvil. No aprueba contratos clínicos, Processor/BD, piloto ni PR técnica | [Plan de integración F3c](ops/PLAN_DERMA_F3C_INTEGRACION_NEXUS_20261114.md); acuerdo de Sil (14-11) | VIGENTE (solo secuencia de trabajo) |
 
 ## 2. Arquitectura (publicadas en el repo)
 
