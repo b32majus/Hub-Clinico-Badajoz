@@ -646,7 +646,7 @@ async function runJourney(browser, label, patientId, expectLines) {
                 download.suggestedFilename());
 
             await page.click('#btnSeguimiento');
-            await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+            await page.waitForURL(`**/seguimiento.html`, { timeout: 15000 });
             await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
             const continuation = await page.evaluate(() => {
                 const value = (id) => document.getElementById(id)?.value ?? null;
@@ -809,7 +809,7 @@ async function runBaselinePlanJourney(browser) {
         console.log(`    excerpt prebiológico: ${excerptPrebio(fh.artifact)}`);
 
         await page.click('#btnSeguimiento');
-        await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+        await page.waitForURL(`**/seguimiento.html`, { timeout: 15000 });
         await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
         const continuation = await page.evaluate(() => {
             const value = (id) => document.getElementById(id)?.value ?? null;
@@ -1250,7 +1250,7 @@ async function runMultivisitaTruthJourney(browser) {
             JSON.stringify(history));
 
         await page.click('#btnSeguimiento');
-        await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+        await page.waitForURL(`**/seguimiento.html`, { timeout: 15000 });
         await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
         const continuation = await page.evaluate(() => {
             const value = (id) => document.getElementById(id)?.value ?? null;

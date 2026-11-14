@@ -21,18 +21,41 @@
  *     getPrebiologousStatusFromVisit/resolvePrebiologicStatus cuando exista
  *     una decisión explícita registrada. No hay mapeo heurístico de
  *     combinaciones legacy a OK.
- *   - sessionStorage: fallback temporal y compatibilidad para sesiones
- *     activas (HubClinico_Prebiologic_<CIP>).
+ *   - sessionStorage: entrada ÚNICA por pestaña para el paciente actual
+ *     (HubClinico_PrebiologicoActual, con el CIP dentro del valor; nunca
+ *     en el nombre de la clave). Las claves antiguas por CIP
+ *     (HubClinico_Prebiologic_<CIP>) se purgan al cargar el módulo.
  *
  * Namespace: HubTools.prebiologic
- * Storage key (fallback): HubClinico_Prebiologic_<CIP>
+ * Storage key (única): HubClinico_PrebiologicoActual
  */
 
 (function () {
     'use strict';
 
     // ── Constantes ────────────────────────────────────────────────
-    var STORAGE_PREFIX = 'HubClinico_Prebiologic_';
+    // Clave ÚNICA por pestaña (#940): el CIP vive dentro del valor del
+    // registro, nunca en el nombre de la clave; un solo paciente a la vez.
+    var STORAGE_PREFIX = 'HubClinico_PrebiologicoActual';
+    // Prefijo LEGADO de las entradas antiguas por CIP: sólo sirve para
+    // purgarlas al cargar el módulo.
+    var LEGACY_STORAGE_PREFIX = 'HubClinico_Prebiologic_';
+
+    // Purga legado al cargar (no depende de que reumaCurrentPatient.js
+    // esté cargado): recorre una COPIA de las claves y borra las que
+    // empiecen por el prefijo antiguo por CIP.
+    (function purgeLegacyStorageKeys() {
+        try {
+            var legacyKeys = Object.keys(sessionStorage);
+            for (var i = 0; i < legacyKeys.length; i++) {
+                if (String(legacyKeys[i]).indexOf(LEGACY_STORAGE_PREFIX) === 0) {
+                    sessionStorage.removeItem(legacyKeys[i]);
+                }
+            }
+        } catch (e) {
+            // Sin almacenamiento disponible: nada que purgar.
+        }
+    })();
 
     var VALID_STATUSES = {
         APTO: 'APTO',
@@ -75,8 +98,8 @@
         return Object.prototype.hasOwnProperty.call(VALID_STATUSES, estado);
     }
 
-    function getStorageKey(cip) {
-        return STORAGE_PREFIX + (cip || '').toString().trim();
+    function getStorageKey() {
+        return STORAGE_PREFIX;
     }
 
     function parseFromStorage(raw) {
@@ -177,6 +200,15 @@
             return false;
         }
 
+        // #940: solo se guarda el prebiológico del paciente actual.
+        var currentPatient = window.HubTools && window.HubTools.currentPatient
+            && typeof window.HubTools.currentPatient.get === 'function'
+            ? window.HubTools.currentPatient.get() : null;
+        if (currentPatient && currentPatient.id !== cip.toString().trim()) {
+            console.warn('[prebiologicManager] setStatus: el CIP no es el paciente actual');
+            return false;
+        }
+
         var record = {
             cip: cip.toString().trim(),
             estado: estado,
@@ -186,7 +218,7 @@
         };
 
         try {
-            sessionStorage.setItem(getStorageKey(cip), JSON.stringify(record));
+            sessionStorage.setItem(getStorageKey(), JSON.stringify(record));
             console.log('[prebiologicManager] Estado prebiológico guardado.');
             return true;
         } catch (e) {
@@ -203,7 +235,9 @@
      */
     function getStatus(cip) {
         if (!cip) return null;
-        return parseFromStorage(sessionStorage.getItem(getStorageKey(cip)));
+        var record = parseFromStorage(sessionStorage.getItem(getStorageKey()));
+        if (!record || record.cip !== String(cip).trim()) return null;
+        return record;
     }
 
     /**
@@ -213,8 +247,11 @@
      */
     function clearStatus(cip) {
         if (!cip) return;
-        sessionStorage.removeItem(getStorageKey(cip));
-        console.log('[prebiologicManager] Estado prebiológico eliminado.');
+        var record = parseFromStorage(sessionStorage.getItem(getStorageKey()));
+        if (record && record.cip === String(cip).trim()) {
+            sessionStorage.removeItem(getStorageKey());
+            console.log('[prebiologicManager] Estado prebiológico eliminado.');
+        }
     }
 
     /**
@@ -223,17 +260,8 @@
      * @returns {Array<object>} - Array de registros { cip, estado, fechaValidacion, notasClinico, fechaRegistro }.
      */
     function getAllStatuses() {
-        var results = [];
-        for (var i = 0; i < sessionStorage.length; i++) {
-            var key = sessionStorage.key(i);
-            if (key && key.indexOf(STORAGE_PREFIX) === 0) {
-                var record = parseFromStorage(sessionStorage.getItem(key));
-                if (record) {
-                    results.push(record);
-                }
-            }
-        }
-        return results;
+        var record = parseFromStorage(sessionStorage.getItem(getStorageKey()));
+        return record ? [record] : [];
     }
 
     /**

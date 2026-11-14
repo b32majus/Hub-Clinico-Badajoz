@@ -311,8 +311,9 @@ try {
         summary: !!window.patientSummary,
         history: !!window.patientHistory,
       }));
-      record('C6 supported submit navigates with id param and renders patient + visit history',
-        navUrl.pathname.endsWith(`/${DASHBOARD_PAGE}`) && navId === KNOWN_ID &&
+      // #940: el CIP ya no va en la dirección (viaja en HubTools.currentPatient).
+      record('C6 supported submit navigates without the CIP in the address and renders patient + visit history',
+        navUrl.pathname.endsWith(`/${DASHBOARD_PAGE}`) && navId === null && !page.url().includes(KNOWN_ID) &&
         patientName.includes('Sintetico Espa Uno') && visitRows === KNOWN_EXPECTED_VISITS && globals.summary && globals.history,
         `url=${page.url()} id=${navId} name=${JSON.stringify(patientName)} visits=${visitRows}/${KNOWN_EXPECTED_VISITS} globals=${JSON.stringify(globals)}`);
 

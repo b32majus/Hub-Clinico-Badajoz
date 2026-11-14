@@ -131,11 +131,9 @@
     }
 
     function navigateToDashboard(patient) {
-        const params = new URLSearchParams({ id: patient.id });
-        if (patient.patologia) {
-            params.set('patologia', patient.patologia);
-        }
-        window.location.href = `dashboard_paciente.html?${params.toString()}`;
+        // #940: el CIP nunca va en la dirección; el paciente actual vive en
+        // HubTools.currentPatient y la página se pide por su nombre.
+        HubTools.currentPatient.goTo('dashboard_paciente.html', patient.id, patient.patologia || '');
     }
 
     function focusAndSelect(input) {

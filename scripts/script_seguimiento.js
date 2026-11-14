@@ -313,9 +313,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('✅ Eventos de tratamientos (activación/añadir) inicializados en seguimiento');
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const patientId = urlParams.get('id');
-    const patologiaParam = (urlParams.get('patologia') || '').toLowerCase();
+    // Paciente actual (#940): la dirección nunca lleva el CIP; se resuelve
+    // una vez por carga desde HubTools.currentPatient.
+    const current = HubTools.currentPatient.resolveOnLoad();
+    const patientId = current ? current.id : null;
+    const patologiaParam = (current && current.patologia || '').toLowerCase();
 
     if (patientId) {
 

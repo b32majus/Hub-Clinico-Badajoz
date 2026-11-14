@@ -394,11 +394,11 @@ function renderQuickViewMetric(label, value) {
 }
 
 function renderQuickViewEmptyState(id) {
-    return '<div class="quick-view-empty-card"><i class="fas fa-search quick-view-empty-card__icon" aria-hidden="true"></i><p class="quick-view-empty-card__text">No se encontraron resultados para el ID proporcionado (' + escapeQuickViewHtml(id) + ').</p><p class="quick-view-empty-card__subtext">¿Desea crear una nueva historia clínica para este paciente?</p><a href="primera_visita.html?id=' + encodeURIComponent(id) + '" class="action-btn primary-btn quick-view-link-btn"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Nueva Historia Clínica</a></div>';
+    return '<div class="quick-view-empty-card"><i class="fas fa-search quick-view-empty-card__icon" aria-hidden="true"></i><p class="quick-view-empty-card__text">No se encontraron resultados para el ID proporcionado (' + escapeQuickViewHtml(id) + ').</p><p class="quick-view-empty-card__subtext">¿Desea crear una nueva historia clínica para este paciente?</p><a href="primera_visita.html" class="action-btn primary-btn quick-view-link-btn"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Nueva Historia Clínica</a></div>';
 }
 
 function renderQuickViewNewPatient(id) {
-    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content">                    <div class="quick-view-patient-chip__label">CIP</div><div class="quick-view-patient-chip__value">' + escapeQuickViewHtml(id) + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html?id=' + encodeURIComponent(id) + '" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
+    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content">                    <div class="quick-view-patient-chip__label">CIP</div><div class="quick-view-patient-chip__value">' + escapeQuickViewHtml(id) + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
 }
 
 function createQuickViewOverlay() {
@@ -592,12 +592,20 @@ function mapRecordToPatientSummary(record, history) {
     };
 }
 
+// Navegación sin CIP en la dirección (#940): el paciente actual vive en
+// HubTools.currentPatient y la página se pide por su nombre. Si la página
+// no carga el módulo del paciente actual, se navega sin parámetros en
+// lugar de lanzar un error de página.
+function goToPageWithCurrentPatient(page, patientId, pathology) {
+    if (typeof HubTools !== 'undefined' && HubTools.currentPatient && typeof HubTools.currentPatient.goTo === 'function') {
+        HubTools.currentPatient.goTo(page, patientId, pathology);
+        return;
+    }
+    window.location.href = page;
+}
+
 function navigateToDashboard(patientId, pathology) {
     if (!patientId) return;
-    const params = new URLSearchParams({ id: patientId });
-    if (pathology) {
-        params.set('patologia', pathology);
-    }
 
     if (quickViewMount) {
         try {
@@ -613,7 +621,7 @@ function navigateToDashboard(patientId, pathology) {
         }
     }
 
-    window.location.href = `dashboard_paciente.html?${params.toString()}`;
+    goToPageWithCurrentPatient('dashboard_paciente.html', patientId, pathology || '');
 }
 
 function renderQuickViewLayout(viewModel) {
@@ -661,10 +669,10 @@ function renderQuickViewLayout(viewModel) {
                 <div class="patient-actions-card quick-view-panel-card">
                     <h3 class="quick-view-panel-card__title">Acciones rápidas</h3>
                     <div class="quick-view-actions">
-                        <a href="seguimiento.html?id=${encodeURIComponent(viewModel.id)}&patologia=${encodeURIComponent(viewModel.pathologyCode)}" class="action-btn green-btn quick-view-action-link">
+                        <a href="seguimiento.html" id="quickViewSeguimientoLink" class="action-btn green-btn quick-view-action-link">
                             <i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar Seguimiento
                         </a>
-                        <a href="primera_visita.html?id=${encodeURIComponent(viewModel.id)}" class="action-btn turquoise-btn quick-view-action-link">
+                        <a href="primera_visita.html" class="action-btn turquoise-btn quick-view-action-link">
                             <i class="fas fa-file-alt" aria-hidden="true"></i> Revisar Primera Visita
                         </a>
                     </div>
@@ -857,10 +865,23 @@ function showPatientResults(id) {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Encontrado - Opciones Disponibles';
         if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Mostrando datos de ${patientName} (CIP: ${id})`;
         resultsContent.innerHTML = renderQuickViewLayout(buildQuickViewModel(id, patient, historyData));
+        // #940: el paciente que muestra la vista rápida pasa a ser el actual (un enlace
+        // abierto en otra pestaña no hereda a otro paciente).
+        if (typeof HubTools !== 'undefined' && HubTools.currentPatient && typeof HubTools.currentPatient.set === 'function') {
+            HubTools.currentPatient.set(id, pathologyCode);
+        }
 
         const dashboardBtn = document.getElementById('btnVerDashboardCompleto');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', () => navigateToDashboard(id, pathologyCode));
+        }
+
+        const seguimientoLink = document.getElementById('quickViewSeguimientoLink');
+        if (seguimientoLink) {
+            seguimientoLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                goToPageWithCurrentPatient('seguimiento.html', id, pathologyCode);
+            });
         }
     }
 
