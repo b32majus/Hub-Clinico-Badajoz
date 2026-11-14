@@ -2,7 +2,7 @@
 'use strict';
 /**
  * Browser QA for #457 (F5.3): the Reuma export interactions of Primera Visita
- * and Seguimiento obtain the 533-column TSV row exclusively through the
+ * and Seguimiento obtain the 534-column TSV row exclusively through the
  * compatibility boundary (`modules/reuma_export_boundary.js`), keep working
  * identically on the happy path, and fail closed with no misleading partial
  * copy when the boundary rejects.
@@ -28,21 +28,21 @@
  *   X1  static wiring: primera_visita.html and seguimiento.html load the
  *       boundary after exportManager.js and before their page scripts
  *   X2  Primera Visita happy path (LES): CSV export succeeds, the copied row
- *       is a 533-field TSV carrying the synthetic identity, the 'Primera
+ *       is a 534-field TSV carrying the synthetic identity, the 'Primera
  *       Visita' marker and the 'les' pathology token; console.error=0 and
  *       pageerror=0
  *   X3  Seguimiento happy path (EspA): same contract with the 'Seguimiento'
  *       marker; console.error=0 and pageerror=0
  *   X4  planted boundary failure (Primera Visita): no post-export checklist,
  *       NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed,
- *       never a partial copy; a 532-field delivery would also fail), visible
+ *       never a partial copy; a 533-field delivery would also fail), visible
  *       fail-closed error, no pageerror; console.error only within the
  *       explicitly classified expected classes ('Error en exportarYCopiarCSV'
  *       / 'Error al exportar CSV'); partial-copy negative witness proving a
- *       planted 532-field delivery FAILS the fail-closed evaluator
+ *       planted 533-field delivery FAILS the fail-closed evaluator
  *   X5  T3 #583 Primera Visita notification invariants on normal CSV
  *       delivery after the TXT gate: exactly one checklist, the generic
- *       green success toast ABSENT, the unaltered legacy 533-field row
+ *       green success toast ABSENT, the unaltered legacy 534-field row
  *       delivered, checklist dismiss works; console.error=0 and pageerror=0.
  *       Pending-rows retirement measured functionally after the supported
  *       export: #pendingRowsIndicator absent, the four legacy recovery APIs
@@ -416,7 +416,7 @@ try {
     const validateRow = (rowText, { id, marker, token }) => {
         const fields = rowText.split('\t');
         return {
-            fields497: fields.length === 533,
+            fields497: fields.length === 534,
             identity: fields[0] === id,
             visitMarker: fields[4] === marker,
             pathologyToken: fields[6] === token,
@@ -426,7 +426,7 @@ try {
     /**
      * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when
      * the boundary rejects, NO row may be delivered at all — no clipboard TSV
-     * and no manual-modal TSV — regardless of field count (a 532-field partial
+     * and no manual-modal TSV — regardless of field count (a 533-field partial
      * row is a violation, never a pass).
      */
     const evaluateFailClosedDelivery = (row, { checklistCount, failClosedVisible }) => {
@@ -453,7 +453,7 @@ try {
             const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
             const row = await readExportedRow(page);
             const checks = row.source !== 'none' ? validateRow(row.text, { id: 'SYN-EXP-BROWSER-001', marker: 'Primera Visita', token: 'les' }) : { fields497: false };
-            record('X2 Primera Visita happy path: CSV export succeeds and the copied row is a 533-field TSV with identity, visit marker and pathology token',
+            record('X2 Primera Visita happy path: CSV export succeeds and the copied row is a 534-field TSV with identity, visit marker and pathology token',
                 checklistAppeared && row.source !== 'none' && checks.fields497 && checks.identity && checks.visitMarker && checks.pathologyToken,
                 `checklist=${checklistAppeared} source=${row.source} checks=${JSON.stringify(checks)} fields=${row.text ? row.text.split('\t').length : 0}`);
             const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE);
@@ -479,7 +479,7 @@ try {
             const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
             const row = await readExportedRow(page);
             const checks = row.source !== 'none' ? validateRow(row.text, { id: 'SYN-EXP-BROWSER-002', marker: 'Seguimiento', token: 'espa' }) : { fields497: false };
-            record('X3 Seguimiento happy path: CSV export succeeds and the copied row is a 533-field TSV with identity, visit marker and pathology token',
+            record('X3 Seguimiento happy path: CSV export succeeds and the copied row is a 534-field TSV with identity, visit marker and pathology token',
                 checklistAppeared && row.source !== 'none' && checks.fields497 && checks.identity && checks.visitMarker && checks.pathologyToken,
                 `checklist=${checklistAppeared} source=${row.source} checks=${JSON.stringify(checks)} fields=${row.text ? row.text.split('\t').length : 0}`);
             const pageConsoleErrors = errorsFor(entry, SEGUIMIENTO_PAGE);
@@ -494,7 +494,7 @@ try {
     // =====================================================================
     // X5 — T3 #583 Primera Visita notification invariants on normal delivery.
     // Functional gate: exactly one checklist, generic green success toast
-    // ABSENT, unaltered legacy 533-field row delivered, dismiss works,
+    // ABSENT, unaltered legacy 534-field row delivered, dismiss works,
     // console.error=0 and pageerror=0. Pending-rows retirement is measured
     // functionally after the supported export (T4): indicator absent,
     // recovery APIs undefined, no new storage key, sentinel byte-unchanged,
@@ -521,7 +521,7 @@ try {
             const checksT3 = rowT3.source !== 'none'
                 ? validateRow(rowT3.text, { id: 'SYN-EXP-T3-001', marker: 'Primera Visita', token: 'les' })
                 : { fields497: false, identity: false, visitMarker: false, pathologyToken: false };
-            record('X5 Primera Visita success: exactly one checklist, no generic green success toast, unaltered legacy 533-field row delivered',
+            record('X5 Primera Visita success: exactly one checklist, no generic green success toast, unaltered legacy 534-field row delivered',
                 checklistAppeared && invariants.checklistCount === 1 && invariants.genericToastPresent === false &&
                 rowT3.source !== 'none' && checksT3.fields497 && checksT3.identity && checksT3.visitMarker && checksT3.pathologyToken,
                 `checklist=${invariants.checklistCount} genericToast=${invariants.genericToastPresent} source=${rowT3.source} checks=${JSON.stringify(checksT3)}`);
@@ -573,7 +573,7 @@ try {
             const checksT3 = rowT3.source !== 'none'
                 ? validateRow(rowT3.text, { id: 'SYN-EXP-T3-002', marker: 'Seguimiento', token: 'espa' })
                 : { fields497: false, identity: false, visitMarker: false, pathologyToken: false };
-            record('X6 Seguimiento success: exactly one checklist, no generic green success toast, unaltered legacy 533-field row delivered',
+            record('X6 Seguimiento success: exactly one checklist, no generic green success toast, unaltered legacy 534-field row delivered',
                 checklistAppeared && invariants.checklistCount === 1 && invariants.genericToastPresent === false &&
                 rowT3.source !== 'none' && checksT3.fields497 && checksT3.identity && checksT3.visitMarker && checksT3.pathologyToken,
                 `checklist=${invariants.checklistCount} genericToast=${invariants.genericToastPresent} source=${rowT3.source} checks=${JSON.stringify(checksT3)}`);
@@ -650,19 +650,19 @@ try {
             const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE)
                 .filter((message) => !message.includes('Error en exportarYCopiarCSV') && !message.includes('Error al exportar CSV'));
             // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
-            // delivered at all — a 532-field partial row is also a violation.
+            // delivered at all — a 533-field partial row is also a violation.
             const noDeliveryVerdict = evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible });
             record('X4 planted boundary failure: fail-closed visible error, no post-export checklist and NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed, never a partial copy)',
                 noDeliveryVerdict.pass && entry.pageErrors.length === 0 && pageConsoleErrors.length === 0,
                 `problems=${JSON.stringify(noDeliveryVerdict.problems)} failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} ` +
                 `alerts=${JSON.stringify(alerts)} consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
-            // Partial-copy negative witness (F4): a planted 532-field partial
+            // Partial-copy negative witness (F4): a planted 533-field partial
             // delivery must FAIL the same fail-closed evaluator used by X4,
             // while a true no-delivery state passes it.
-            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 532 }, (_, i) => `F${i}`).join('\t') };
+            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 533 }, (_, i) => `F${i}`).join('\t') };
             const plantedPartial = evaluateFailClosedDelivery(partialDelivery, { checklistCount: 0, failClosedVisible: true });
             const cleanNone = evaluateFailClosedDelivery({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
-            record('X4 partial-copy witness: a planted 532-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
+            record('X4 partial-copy witness: a planted 533-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
                 plantedPartial.pass === false && cleanNone.pass === true,
                 `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
         } finally {

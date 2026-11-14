@@ -20,7 +20,7 @@
  * modules/exportManager.js in the same node:vm sandbox used by
  * tools/reuma_export_boundary_check.mjs (via createLegacySandbox from
  * tools/reuma_export_harness.mjs) and drives the EXPOSED API:
- *   - HubTools.export.generarFilaCSV_AR_PrimeraVisita(datos)  (533-col TSV row)
+ *   - HubTools.export.generarFilaCSV_AR_PrimeraVisita(datos)  (534-col TSV row)
  *   - HubTools.export.generarNotaClinica(datos)               (clinical note)
  * It does NOT restate or copy the mapping logic, and it does not stub the
  * functions under test.
@@ -72,7 +72,7 @@ if (!exp || typeof exp.generarFilaCSV_AR_PrimeraVisita !== 'function' || typeof 
 }
 
 // Authority-derived position of the general 'Fecha_Diagnostico' column. The
-// 533-field row is [legacy base] + FINAL_V2_EXPORT_HEADERS in the same order,
+// 534-field row is [legacy base] + FINAL_V2_EXPORT_HEADERS in the same order,
 // so baseOffset = FINAL_V2_EXPORT_COLUMN_COUNT - FINAL_V2_EXPORT_HEADERS.length
 // and the column index is the exposed header index. No magic index.
 const HEADER = 'Fecha_Diagnostico';

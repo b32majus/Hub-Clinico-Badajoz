@@ -77,8 +77,8 @@ async function main() {
   const sandboxProbe = createLegacySandbox();
   const expectedColumnCount = sandboxProbe.sandbox.HubTools?.export?.FINAL_V2_EXPORT_COLUMN_COUNT;
   record(
-    'unmodified production modules expose the v2 column contract (FINAL_V2_EXPORT_COLUMN_COUNT=533)',
-    expectedColumnCount === 533,
+    'unmodified production modules expose the v2 column contract (FINAL_V2_EXPORT_COLUMN_COUNT=534)',
+    expectedColumnCount === 534,
     `observed: ${expectedColumnCount}`
   );
   const columnCountsMatch = EXPECTED_JOURNEYS.every((e) => {

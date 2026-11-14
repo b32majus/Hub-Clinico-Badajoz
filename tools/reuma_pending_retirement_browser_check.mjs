@@ -4,7 +4,7 @@
  * Browser QA for WO-REUMA-EXPORT-SAFETY-18D (T4, TRAIN-NEXUS-REUMA-EXPORT-
  * SAFETY-18): integrated retirement browser check proving that the Reuma
  * pending-rows affordances are GONE from every supported page/journey while
- * the TXT→CSV 533 transport, its TXT gate, the fail-closed boundary path,
+ * the TXT→CSV 534 transport, its TXT gate, the fail-closed boundary path,
  * the manual-copy modal and the post-export checklist keep working.
  *
  * RETIRED CONTRACT under test (decisions 1–6 of the train handoff): the
@@ -42,9 +42,9 @@
  *
  * Cases:
  *   R1  Primera Visita happy path (les): real fill → TXT export → CSV export;
- *       copied row is a 533-field TSV with identity, 'Primera Visita' marker
+ *       copied row is a 534-field TSV with identity, 'Primera Visita' marker
  *       and 'les' token, and is BYTE-IDENTICAL (full string equality, F3) to
- *       the legacy 533 row recomputed in-page from the same collected payload;
+ *       the legacy 534 row recomputed in-page from the same collected payload;
  *       exactly ONE checklist whose header is
  *       'CSV copiado al portapapeles'; dismiss works; pageerror=0 and
  *       console.error=0 for the page; #pendingRowsIndicator absent and no
@@ -57,12 +57,12 @@
  *       storage write, pageerror=0.
  *   R4  Planted boundary failure (init-script double, #457 pattern):
  *       fail-closed 'frontera de compatibilidad' alert, no checklist, no
- *       533-field row copied; expected console errors explicitly classified
+ *       534-field row copied; expected console errors explicitly classified
  *       ('Error en exportarYCopiarCSV' / 'Error al exportar CSV'); pageerror=0.
  *   R5  Clipboard rejected (planted writeText rejection armed AFTER the TXT
  *       step, right before the CSV click, so the TXT happy path stays
  *       clean): the manual modal 'Copia manual de CSV' is visible with the
- *       FULL 533-field row, the info text 'No se pudo copiar automáticamente'
+ *       FULL 534-field row, the info text 'No se pudo copiar automáticamente'
  *       is present, #postExportChecklist is ABSENT, no visible claim that the
  *       CSV was copied; pageerror=0 and any console.error of the controlled
  *       failure explicitly classified (never reported as a clean-route zero).
@@ -78,7 +78,7 @@
  *       cleared, not rewritten) and no new storage key is added.
  *   R7  Web Storage failure/denial: localStorage.setItem/getItem throw
  *       (armed after page load, so the page itself initializes with its real
- *       storage); the supported export still completes safely (533 copy +
+ *       storage); the supported export still completes safely (534 copy +
  *       checklist); any attempted clinical write would surface through the
  *       throwing storage, so pageerror=0 plus classified console errors
  *       proves no clinical storage was written.
@@ -96,8 +96,8 @@
  *   W1–W5  negative-witness self-tests (mandatory, repo convention): a real
  *       page dispatch of `pendingRowsUpdated` (W1), a real page write of
  *       `hubPendingRows` (W2), a tampered legacy sentinel (W3), a falsified
- *       533 row including a MIDDLE-field corruption caught by the
- *       byte-equality evaluator (W4) and a planted 532-field partial
+ *       534 row including a MIDDLE-field corruption caught by the
+ *       byte-equality evaluator (W4) and a planted 533-field partial
  *       delivery caught by the fail-closed no-row evaluator (W5) must each
  *       be detected as FAIL by the corresponding evaluator, while the clean
  *       state passes.
@@ -123,7 +123,7 @@ const PAGE_INDEX = 'reuma_index.html';
 const PAGE_PRIMERA = 'primera_visita.html';
 const PAGE_SEGUIMIENTO = 'seguimiento.html';
 const SCRIPT_TOKEN = 'script.js?v=20261114a';
-const EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261112b';
+const EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261114b';
 const EXPORT_MANAGER_PAGES = [
     'dashboard_paciente.html', 'estadisticas.html',
     'manage_professionals.html', 'primera_visita.html', 'reuma_index.html',
@@ -310,11 +310,11 @@ async function readExportedRow(page) {
 }
 
 /**
- * F3 byte-equality source: recompute the projected legacy 533 row IN-PAGE for
+ * F3 byte-equality source: recompute the projected legacy 534 row IN-PAGE for
  * the same collected payload via the supported re-collection
  * (`HubTools.form.recopilarDatosFormulario` / `…Seguimiento`) and the real
  * boundary `HubTools.reumaExportBoundary.generateLegacyRow497`, exactly the
- * inputs the supported delivery used (WO:48 'copia/portapapeles de 533
+ * inputs the supported delivery used (WO:48 'copia/portapapeles de 534
  * valores byte-iguales'). Read-only observation after the supported
  * interaction; nothing is injected.
  */
@@ -491,12 +491,12 @@ function evaluateRetirementState(state, options = {}) {
     return { pass: problems.length === 0, problems };
 }
 
-/** 533-row evaluator: field count + identity + visit marker + pathology token. */
+/** 534-row evaluator: field count + identity + visit marker + pathology token. */
 function evaluateRow497(rowText, { id, marker, token }) {
     if (typeof rowText !== 'string' || rowText.length === 0) return { pass: false, problems: ['row is empty'] };
     const fields = rowText.split('\t');
     const problems = [];
-    if (fields.length !== 533) problems.push(`fields=${fields.length}, expected 533`);
+    if (fields.length !== 534) problems.push(`fields=${fields.length}, expected 534`);
     if (fields[0] !== id) problems.push(`identity=${JSON.stringify(fields[0])}, expected ${JSON.stringify(id)}`);
     if (fields[4] !== marker) problems.push(`visitMarker=${JSON.stringify(fields[4])}, expected ${JSON.stringify(marker)}`);
     if (fields[6] !== token) problems.push(`pathologyToken=${JSON.stringify(fields[6])}, expected ${JSON.stringify(token)}`);
@@ -504,7 +504,7 @@ function evaluateRow497(rowText, { id, marker, token }) {
 }
 
 /**
- * F3 byte-equality evaluator (WO:48 '533 valores byte-iguales'): FULL string
+ * F3 byte-equality evaluator (WO:48 '534 valores byte-iguales'): FULL string
  * equality between the delivered text and the row recomputed in-page from the
  * same collected payload. Count/index sampling cannot detect corruption of any
  * other field; this can. A recompute that is not byte-stable fails closed
@@ -530,7 +530,7 @@ function evaluateRowByteEqual(delivered, recomputed) {
 /**
  * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when the
  * boundary rejects, NO row may be delivered at all — no clipboard TSV and no
- * manual-modal TSV — regardless of field count (a 532-field partial row is a
+ * manual-modal TSV — regardless of field count (a 533-field partial row is a
  * violation, never a pass).
  */
 function evaluateNoRowDelivered(row, { checklistCount, failClosedVisible }) {
@@ -562,14 +562,14 @@ async function runHappyPathCase(browser, origin, { label, pageFile, id, patholog
         });
         const row = await readExportedRow(page);
         const rowVerdict = row.text ? evaluateRow497(row.text, { id, marker, token: pathology }) : { pass: false, problems: ['no row captured'] };
-        record(`${label} ${pageFile}: copied row is a 533-field TSV with identity, '${marker}' marker and '${pathology}' token`,
+        record(`${label} ${pageFile}: copied row is a 534-field TSV with identity, '${marker}' marker and '${pathology}' token`,
             row.source !== 'none' && rowVerdict.pass,
             `source=${row.source} problems=${JSON.stringify(rowVerdict.problems)} fields=${row.text ? row.text.split('\t').length : 0}`);
         // F3 byte-equality (WO:48): the delivered text must be byte-identical to
-        // the legacy 533 row recomputed in-page from the same collected payload.
+        // the legacy 534 row recomputed in-page from the same collected payload.
         const recomputed = await recomputeLegacyRow497(page, { kind, pathology });
         const byteVerdict = evaluateRowByteEqual(row.source !== 'none' ? row.text : '', recomputed);
-        record(`${label} ${pageFile}: copied row (source=${row.source}) is BYTE-IDENTICAL (full string equality) to the legacy 533 row recomputed in-page from the same collected payload`,
+        record(`${label} ${pageFile}: copied row (source=${row.source}) is BYTE-IDENTICAL (full string equality) to the legacy 534 row recomputed in-page from the same collected payload`,
             row.source !== 'none' && byteVerdict.pass,
             `source=${row.source} recompute=${recomputed.ok === true ? 'ok' : recomputed.reason} problems=${JSON.stringify(byteVerdict.problems)}`);
         record(`${label} ${pageFile}: exactly one checklist with header '${CHECKLIST_HEADER_TEXT}', dismiss works`,
@@ -676,7 +676,7 @@ try {
             const unclassifiedErrors = pageConsoleErrors
                 .filter((message) => !EXPECTED_BOUNDARY_ERROR_CLASSES.some((cls) => message.includes(cls)));
             // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
-            // delivered at all — a 532-field partial row is also a violation.
+            // delivered at all — a 533-field partial row is also a violation.
             const noDeliveryVerdict = evaluateNoRowDelivered(row, {
                 checklistCount: state.checklistCount,
                 failClosedVisible,
@@ -747,14 +747,14 @@ try {
                 txtAttempts.attempts === 1 && txtAttempts.armed === false &&
                 csvAttempts.attempts === 2 && csvAttempts.armed === true,
                 `txtAttempts=${JSON.stringify(txtAttempts)} csvAttempts=${JSON.stringify(csvAttempts)}`);
-            record(`R5 clipboard rejected: manual modal '${MANUAL_COPY_MODAL_TITLE}' visible with the FULL 533-field row and info text '${MANUAL_COPY_INFO_TEXT}'`,
+            record(`R5 clipboard rejected: manual modal '${MANUAL_COPY_MODAL_TITLE}' visible with the FULL 534-field row and info text '${MANUAL_COPY_INFO_TEXT}'`,
                 modal.title.includes(MANUAL_COPY_MODAL_TITLE) && modal.message.includes(MANUAL_COPY_INFO_TEXT) && rowVerdict.pass,
                 `title=${JSON.stringify(modal.title)} message=${JSON.stringify(modal.message)} rowProblems=${JSON.stringify(rowVerdict.problems)} fields=${modal.row ? modal.row.split('\t').length : 0}`);
             // F3 byte-equality on the manual-modal source (WO:48): the modal must
-            // carry the same byte-identical legacy 533 row.
+            // carry the same byte-identical legacy 534 row.
             const recomputedModal = await recomputeLegacyRow497(page, { kind: 'primera', pathology: 'les' });
             const byteVerdictModal = evaluateRowByteEqual(modal.row, recomputedModal);
-            record(`R5 clipboard rejected: manual-modal row is BYTE-IDENTICAL (full string equality) to the legacy 533 row recomputed in-page from the same collected payload`,
+            record(`R5 clipboard rejected: manual-modal row is BYTE-IDENTICAL (full string equality) to the legacy 534 row recomputed in-page from the same collected payload`,
                 byteVerdictModal.pass,
                 `recompute=${recomputedModal.ok === true ? 'ok' : recomputedModal.reason} problems=${JSON.stringify(byteVerdictModal.problems)} fields=${modal.row ? modal.row.split('\t').length : 0}`);
             record('R5 clipboard rejected: #postExportChecklist ABSENT and no visible claim that the CSV was copied',
@@ -822,7 +822,7 @@ try {
             record('R5b stale-checklist transition (F1): first export shows the real success checklist and the second export opens the manual modal inside the checklist window',
                 firstChecklist && transition.title.includes(MANUAL_COPY_MODAL_TITLE) && transition.message.includes(MANUAL_COPY_INFO_TEXT),
                 `firstChecklist=${firstChecklist} title=${JSON.stringify(transition.title)} message=${JSON.stringify(transition.message)}`);
-            record('R5b stale-checklist transition (F1): the stale success claim is GONE (no checklist, no visible copy claim) while the modal shows the FULL byte-identical 533-field failure row',
+            record('R5b stale-checklist transition (F1): the stale success claim is GONE (no checklist, no visible copy claim) while the modal shows the FULL byte-identical 534-field failure row',
                 transition.checklistCount === 0 && transition.copiedClaimVisible === false && transitionRowVerdict.pass && transitionByteVerdict.pass,
                 `checklist=${transition.checklistCount} copiedClaimVisible=${transition.copiedClaimVisible} rowProblems=${JSON.stringify(transitionRowVerdict.problems)} byteProblems=${JSON.stringify(transitionByteVerdict.problems)} recompute=${recomputedTransition.ok === true ? 'ok' : recomputedTransition.reason}`);
             record('R5b stale-checklist transition (F1): pageerror=0 for the whole transition',
@@ -883,7 +883,7 @@ try {
             const rowVerdict = row.text ? evaluateRow497(row.text, { id: 'SYN-RETIRE-007', marker: 'Primera Visita', token: 'les' }) : { pass: false, problems: ['no row captured'] };
             const retirement = await readRetirementState(page);
             const retirementVerdict = evaluateRetirementState(retirement, { storageReadable: false });
-            record('R7 storage denial: localStorage.setItem/getItem throw and the supported export still completes safely (533 copy + checklist)',
+            record('R7 storage denial: localStorage.setItem/getItem throw and the supported export still completes safely (534 copy + checklist)',
                 denialArmed === true && checklistAppeared && row.source !== 'none' && rowVerdict.pass && retirementVerdict.pass,
                 `denialArmed=${denialArmed} checklist=${checklistAppeared} source=${row.source} rowProblems=${JSON.stringify(rowVerdict.problems)} retirementProblems=${JSON.stringify(retirementVerdict.problems)}`);
             const pageConsoleErrors = errorsFor(entry, PAGE_PRIMERA);
@@ -915,7 +915,7 @@ try {
             const rowVerdict = row.text ? evaluateRow497(row.text, { id: 'SYN-RETIRE-008', marker: 'Seguimiento', token: 'espa' }) : { pass: false, problems: ['no row captured'] };
             const retirement = await readRetirementState(page);
             const retirementVerdict = evaluateRetirementState(retirement);
-            record('R8 empty context: session gate + export work from zero (533 copy + checklist), no residual panel and no clinical storage',
+            record('R8 empty context: session gate + export work from zero (534 copy + checklist), no residual panel and no clinical storage',
                 checklistAppeared && row.source !== 'none' && rowVerdict.pass && residualPanel === 0 && retirementVerdict.pass,
                 `checklist=${checklistAppeared} source=${row.source} rowProblems=${JSON.stringify(rowVerdict.problems)} startingKeys=${JSON.stringify(startingKeys)} retirementProblems=${JSON.stringify(retirementVerdict.problems)}`);
             record('R8 empty context: pageerror=0 and console.error=0 for the page',
@@ -944,7 +944,7 @@ try {
                         pendingControls: document.body.innerText.includes('Recuperar \u00faltima')
                             || document.body.innerText.includes('Marcar resuelta'),
                         scriptToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('script.js?v=20261114a')),
-                        exportManagerToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('modules/exportManager.js?v=20261112b')),
+                        exportManagerToken: Array.from(document.scripts).some((s) => (s.getAttribute('src') || '').includes('modules/exportManager.js?v=20261114b')),
                     }));
                     const needsExportManager = EXPORT_MANAGER_PAGES.includes(pageFile);
                     record(`R9 ${pageFile}: loads without pageerror, no pending-rows panel/controls, script.js train token present`,
@@ -1033,13 +1033,13 @@ try {
             record('W3 witness: a rewritten legacy hubPendingRows sentinel FAILS the byte-unchanged evaluator', false, `crashed: ${error.message}`);
         }
 
-        // W4 — a falsified 533 row (field dropped / field altered / MIDDLE
+        // W4 — a falsified 534 row (field dropped / field altered / MIDDLE
         // field corrupted) FAILS the corresponding evaluator; a well-formed
         // synthetic row passes it. The byte-equality evaluator is the one that
         // catches a MIDDLE-field corruption invisible to count/index sampling.
         try {
-            const cleanRow = Array.from({ length: 533 }, (_, i) => (i === 0 ? 'SYN-RETIRE-W4' : i === 4 ? 'Primera Visita' : i === 6 ? 'les' : `F${i}`)).join('\t');
-            const droppedRow = cleanRow.split('\t').slice(0, 532).join('\t');
+            const cleanRow = Array.from({ length: 534 }, (_, i) => (i === 0 ? 'SYN-RETIRE-W4' : i === 4 ? 'Primera Visita' : i === 6 ? 'les' : `F${i}`)).join('\t');
+            const droppedRow = cleanRow.split('\t').slice(0, 533).join('\t');
             const alteredRow = cleanRow.replace('SYN-RETIRE-W4', 'SYN-TAMPERED-W4');
             const middleFields = cleanRow.split('\t');
             middleFields[250] = 'SYN-TAMPERED-MID-250';
@@ -1050,29 +1050,29 @@ try {
             const alter = evaluateRow497(alteredRow, expected);
             const cleanByte = evaluateRowByteEqual(cleanRow, { ok: true, row: cleanRow });
             const middleByte = evaluateRowByteEqual(middleRow, { ok: true, row: cleanRow });
-            record('W4 witness: a falsified 533 row (field dropped or altered) FAILS the row evaluator',
+            record('W4 witness: a falsified 534 row (field dropped or altered) FAILS the row evaluator',
                 clean.pass === true && drop.pass === false && alter.pass === false,
                 `cleanPass=${clean.pass} dropPass=${drop.pass} alterPass=${alter.pass}`);
             record('W4 witness: a plant corrupting a MIDDLE field (index 250) is DETECTED as FAIL by the full-string byte-equality evaluator while the clean row passes it',
                 cleanByte.pass === true && middleByte.pass === false,
                 `cleanBytePass=${cleanByte.pass} middleBytePass=${middleByte.pass} middleProblems=${JSON.stringify(middleByte.problems)}`);
         } catch (error) {
-            record('W4 witness: a falsified 533 row (field dropped or altered) FAILS the row evaluator', false, `crashed: ${error.message}`);
+            record('W4 witness: a falsified 534 row (field dropped or altered) FAILS the row evaluator', false, `crashed: ${error.message}`);
         }
 
-        // W5 — F4 partial-copy negative witness: a planted 532-field partial
+        // W5 — F4 partial-copy negative witness: a planted 533-field partial
         // delivery FAILS the fail-closed no-row evaluator used by R4 (any
-        // delivered row is a violation even when it is not a 533-field row),
+        // delivered row is a violation even when it is not a 534-field row),
         // while a true no-delivery state passes it.
         try {
-            const partialRow = { source: 'clipboard', text: Array.from({ length: 532 }, (_, i) => `F${i}`).join('\t') };
+            const partialRow = { source: 'clipboard', text: Array.from({ length: 533 }, (_, i) => `F${i}`).join('\t') };
             const plantedPartial = evaluateNoRowDelivered(partialRow, { checklistCount: 0, failClosedVisible: true });
             const cleanNone = evaluateNoRowDelivered({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
-            record('W5 witness: a planted 532-field partial delivery FAILS the fail-closed no-row evaluator (no partial copy) while a true no-delivery state passes it',
+            record('W5 witness: a planted 533-field partial delivery FAILS the fail-closed no-row evaluator (no partial copy) while a true no-delivery state passes it',
                 plantedPartial.pass === false && cleanNone.pass === true,
                 `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
         } catch (error) {
-            record('W5 witness: a planted 532-field partial delivery FAILS the fail-closed no-row evaluator', false, `crashed: ${error.message}`);
+            record('W5 witness: a planted 533-field partial delivery FAILS the fail-closed no-row evaluator', false, `crashed: ${error.message}`);
         }
     }
 

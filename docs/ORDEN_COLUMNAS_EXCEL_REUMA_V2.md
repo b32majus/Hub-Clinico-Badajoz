@@ -18,8 +18,9 @@ El orden final es:
 4. Columnas `439-491`: Sjogren, incluyendo trazabilidad de ESSDAI.
 5. Columnas `492-497`: APs/DAPSA explicito. En hojas no APs exporta `NA`.
 6. Columnas `498-533`: pauta de las lineas de tratamiento del plan actual y del cambio (#919, 12-11-2026). Vacio = no consta, en todas las patologias.
+7. Columna `534`: `MDA_Criterios_Cumplidos`, recuento de criterios MDA cumplidos (#942, 14-11-2026). En hojas no APs exporta `NA`.
 
-Total final vigente: `533` columnas por hoja clinica.
+Total final vigente: `534` columnas por hoja clinica.
 
 ## 2. Columnas 1-321: bloque historico
 
@@ -273,6 +274,17 @@ Una pareja por hueco (1-3) y grupo: `..._Pauta_N` lleva el codigo del catalogo c
 | 532 | `Cambio_Biologico_Pauta_3` |
 | 533 | `Cambio_Biologico_Pauta_Otro_3` |
 
+### 3.6 Recuento de criterios MDA (#942)
+
+| Posicion | Columna |
+|---:|---|
+| 534 | `MDA_Criterios_Cumplidos` |
+
+- APs (primera visita y seguimiento): numero entero `0-7` de criterios MDA cumplidos, el mismo recuento «x / 7» de la pantalla, solo cuando el veredicto es definitivo (alcanzado o no alcanzado). Vacio si el MDA esta pendiente o no se calculo; nunca se inventa un recuento.
+- Otras patologias: `NA`.
+- No se exporta el estado de cada criterio: se reconstruye con los 7 valores de las columnas 186-192 y los umbrales del MDA.
+- Columna 193 `MDA_Cumple` (#942): `SI` alcanzado, `NO` no alcanzado, vacio si pendiente, sin calcular o la patologia no es APs (antes salia `NO` en esos casos). La primera visita de APs exporta tambien 186-193 (dato basal).
+
 ## 4. Aliases de implementacion
 
 Estos aliases no son cabeceras nuevas; sirven para mapear formulario/codigo a cabecera estable:
@@ -353,3 +365,9 @@ La demo v2 no debe generarse hasta que formulario/export/dashboard/FH esten alin
 - Alcance: plan actual (primera visita) y cambio de tratamiento (seguimiento). Previos, psoriasis y Sjogren sin cambios.
 - La demo `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` incorpora las 36 cabeceras.
 - Las funciones `generateLegacyRow497`, `projectVisitAct497` y `exportarAct497` conservan su nombre; la longitud la fija `FINAL_V2_EXPORT_COLUMN_COUNT`.
+
+## #942 — MDA preparado para explotacion de datos (14-11-2026)
+
+- Decision de Sil: el export debe servir para investigacion. El contrato pasa de `533` a `534` columnas por hoja clinica; la nueva `MDA_Criterios_Cumplidos` va al final (seccion 3.6).
+- `MDA_Cumple` (193) deja de exportar `NO` cuando el MDA esta pendiente o no aplica (ausente ≠ NO).
+- La primera visita de APs exporta el bloque MDA (186-193 y 534) como dato basal.

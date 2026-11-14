@@ -6,7 +6,7 @@
  * Deterministic cutover check: the supported Reuma export journeys (Primera
  * Visita / Seguimiento) must materialize the professional intention first as
  * a `Reuma Visit Act v1` (`HubTools.reumaActContract.createVisitAct`, F5.4A
- * #462) and obtain the legacy 533-column row afterwards through the T2
+ * #462) and obtain the legacy 534-column row afterwards through the T2
  * adapter (`HubTools.reumaLegacyExportAdapter.projectVisitAct497`, F5.4B
  * #463) over the F5.3 boundary (`HubTools.reumaExportBoundary`, #457),
  * preserving EXACTLY the visible export/copy behavior.
@@ -87,7 +87,7 @@
  *      the explicit payload identifier, pathology from the selector value,
  *      the X4-compatible fail-closed phrase, console.error discipline, and
  *      NO generarFilaCSV / generateLegacyRow497 / FINAL_V2_EXPORT_COLUMN_COUNT
- *      / reumaExportBoundary / literal 533 anywhere in the coordinator.
+ *      / reumaExportBoundary / literal 534 anywhere in the coordinator.
  *   X  transport static (exportManager): new `exportarAct497` entry exposed
  *      and delegating delivery to a single shared helper also used by
  *      `exportarYCopiarCSV`; the shared delivery exists exactly once (one
@@ -292,10 +292,10 @@ function evaluateCoordinatorW(source, kind) {
         ['generateLegacyRow497', source.includes('generateLegacyRow497')],
         ['FINAL_V2_EXPORT_COLUMN_COUNT', source.includes('FINAL_V2_EXPORT_COLUMN_COUNT')],
         ['reumaExportBoundary', source.includes('reumaExportBoundary')],
-        ['literal 533', /\b497\b/.test(source)],
+        ['literal 534', /\b497\b/.test(source)],
     ];
     cases.push({
-        name: 'W10 coordinator knows no legacy shape: no generarFilaCSV / generateLegacyRow497 / FINAL_V2_EXPORT_COLUMN_COUNT / reumaExportBoundary / literal 533',
+        name: 'W10 coordinator knows no legacy shape: no generarFilaCSV / generateLegacyRow497 / FINAL_V2_EXPORT_COLUMN_COUNT / reumaExportBoundary / literal 534',
         pass: banned.every(([, present]) => !present),
         detail: `present=${JSON.stringify(banned.filter(([, present]) => present).map(([name]) => name))}`,
     });
@@ -702,7 +702,7 @@ async function evaluateBehaviorZ(journeys, directRows) {
             sandbox.HubTools.reumaExportBoundary = Object.freeze({
                 generateLegacyRow497: () => Object.freeze({
                     ok: true, row: tamperedRow, fields: Object.freeze(tamperedRow.split('\t')),
-                    meta: Object.freeze({ pathology: 'ar', tipoVisita: 'primera', sheet: 'AR', generatorName: 'planted', columnCount: 533 }),
+                    meta: Object.freeze({ pathology: 'ar', tipoVisita: 'primera', sheet: 'AR', generatorName: 'planted', columnCount: 534 }),
                 }),
             });
             const datos = structuredClone(journey.datos);
