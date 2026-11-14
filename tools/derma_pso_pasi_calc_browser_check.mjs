@@ -104,22 +104,37 @@ try{
    await page.locator('[data-field="pga"]').selectOption('5');
    assert(await status()===old,'BSA/PGA cambian PASI contra fórmula');
   }],
-  ['P8 Aislamiento paciente y visita, F1 sin autocalc del contrato F2',async()=>{
+  ['P8 Cambio de visita/paciente descarta PASI, Primera no lo calcula',async()=>{
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Primera Visita'}).click();
+   assert(discarded,'no confirmó descarte del PASI de Seguimiento');
+   assert(!await page.locator('#visitForm').isVisible(),'F1 heredó PsO');
    await page.locator('#pathology').selectOption('pso');
-   const first=await status();
-   assert(first.includes('Sin cálculo clínico'),'F1 cambiado fuera de alcance');
+   assert((await status()).includes('Sin cálculo clínico'),'F1 calcula PASI clínico');
    await page.getByRole('button',{name:'Seguimiento',exact:true}).click();
-   assert((await status()).includes('2,4 / 72'),'borrador F2 propio no restaura');
-   await page.locator('#patientCip').fill('DEMO-PASI-TEST-02');
-   await page.locator('#lookupCip').click();
+   assert(!await page.locator('#visitForm').isVisible(),'Seguimiento heredó PsO');
    await page.locator('#pathology').selectOption('pso');
    await open();
-   assert((await status()).includes('0/16'),'PASI paciente anterior transferido');
+   assert((await status()).includes('0/16'),'PASI descartado se recuperó');
+   await page.locator('[data-field="bsa"]').fill('23');
+   await page.locator('#patientCip').fill('DEMO-PASI-TEST-02');
+   assert(await page.locator('#visitForm').getAttribute('inert')!==null,'edición clínica permitida con CIP sin validar');
+   discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
+   await page.locator('#lookupCip').click();
+   assert(discarded,'no confirmó descarte al cambiar paciente con BSA');
+   assert(!await page.locator('#visitForm').isVisible(),'PsO de otro CIP asumida');
+   await page.locator('#pathology').selectOption('pso');
+   await open();
+   assert((await status()).includes('0/16'),'PASI de otro CIP transferido');
+   assert(await page.locator('[data-field="bsa"]').inputValue()==='','BSA de otro paciente transferida');
    await page.locator('#patientCip').fill('DEMO-PASI-TEST-01');
    await page.locator('#lookupCip').click();
+   assert(await page.locator('#pathology').inputValue()==='','se recuperó PsO anterior');
+   await page.locator('#pathology').selectOption('pso');
    await open();
-   assert((await status()).includes('2,4 / 72'),'PASI previo en memoria no restaurado');
+   assert((await status()).includes('0/16'),'se recuperó PASI descartado al regresar');
   }],
   ['P9 Mobile, recarga y privacidad local-first',async()=>{
    await page.setViewportSize({width:390,height:844});

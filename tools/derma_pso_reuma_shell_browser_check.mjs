@@ -75,15 +75,19 @@ try{
    await page.locator('#patientSearch').fill('DEMO-PSO-001');
    await page.locator('#sidebarSearchButton').click();
    await assert(await page.getByRole('dialog').isVisible(),'no abrió Quick View desde sidebar');
-   await assert(await page.getByRole('dialog').getByText('Borrador primera visita:').isVisible(),'falta trazabilidad borrador');
+   await assert((await page.getByRole('dialog').innerText()).includes('No se conservan borradores'),'Quick View propone visita previa guardada');
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Abrir Seguimiento'}).click();
+   await assert(discarded,'no confirmó descartar primera con HTA y tratamiento');
    await assert(await page.locator('#visitView').isVisible(),'no navegó a seguimiento');
    await assert(!await page.locator('#visitForm').isVisible(),'se heredó patología entre actos');
    await page.locator('#pathology').selectOption('pso');
    await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='false','fuga de datos entre visitas');
    await page.getByRole('button',{name:'Primera Visita'}).click();
-   await assert(await page.locator('#pathology').inputValue()==='pso','visita original no restaurada');
-   await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='true','borrador primera no restaurado');
+   await assert(await page.locator('#pathology').inputValue()==='','visita original se restauró');
+   await page.locator('#pathology').selectOption('pso');
+   await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='false','borrador descartado de Primera restaurado');
   }],
   ['S6 Cambio paciente no infiere patología', async()=>{
    await page.locator('#patientCip').fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
@@ -92,8 +96,9 @@ try{
    await page.locator('#pathology').selectOption('pso');
    await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='false','datos heredados');
    await page.locator('#patientCip').fill('DEMO-PSO-001');await page.locator('#lookupCip').click();
-   await assert(await page.locator('#pathology').inputValue()==='pso','no se restaura selección explícita previa');
-   await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='true','se perdió borrador de paciente original');
+   await assert(await page.locator('#pathology').inputValue()==='','se restauró PsO al volver a CIP anterior');
+   await page.locator('#pathology').selectOption('pso');
+   await assert(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')==='false','HTA descartada del CIP original reapareció');
   }],
   ['S7 Cierre teclado de Quick View y vista Inicio', async()=>{
    await page.locator('#patientSearch').fill('DEMO-PSO-002');

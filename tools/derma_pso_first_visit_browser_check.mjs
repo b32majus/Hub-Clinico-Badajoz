@@ -130,22 +130,33 @@ try{
     assert((await page.locator('.warning-inline').first().textContent()).length>0,'falta advertencia');
     if(process.env.DERMA_F1_DESKTOP_SCREENSHOT)await page.screenshot({path:process.env.DERMA_F1_DESKTOP_SCREENSHOT,fullPage:true});
   }],
-  ['F1-7 Pacientes/circuitos independientes; CIP y perfil restaurados',async()=>{
+  ['F1-7 Descarte irreversible entre pacientes y circuitos, sin inferencias clínicas',async()=>{
+    let confirmed=false;
+    page.once('dialog',async dialog=>{confirmed=true;await dialog.accept()});
     await page.locator('#patientCip').fill('DEMO-PSO-001');
+    assert(await page.locator('#visitForm').getAttribute('inert')!==null,'CIP sin validar deja editar clínica');
     await page.locator('#lookupCip').click();
-    assert(await page.locator('#pathology').inputValue()==='','patología transferida desde paciente nuevo');
-    assert(await page.locator('#patientName').inputValue()==='Paciente sintético A','perfil demo existente incorrecto');
+    assert(confirmed,'no confirmó descartar Primera con tratamiento y cuestionarios');
+    assert(await page.locator('#pathology').inputValue()==='','PsO transferida desde paciente nuevo');
+    assert(await page.locator('#patientName').inputValue()==='Paciente sintético A','fixture demo A incorrecta');
     await page.locator('#pathology').selectOption('pso');
     assert(await page.locator('[data-chip="comorb_tabaquismo"]').getAttribute('aria-pressed')==='false','consumos de otro paciente');
+    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()==='','tratamiento del otro CIP filtrado');
     await page.locator('#patientCip').fill('DEMO-F1-NUEVO');
     await page.locator('#lookupCip').click();
-    assert(await page.locator('#patientName').inputValue()==='Paciente sintético Nuevo','no recuperó perfil borrador');
-    assert(await page.locator('#patientSex').inputValue()==='Otro','no recuperó sexo');
-    assert(await page.locator('#pathology').inputValue()==='pso','no recuperó PsO de ese mismo borrador');
-    await page.getByRole('button',{name:'Seguimiento'}).click();
+    assert(await page.locator('#patientName').inputValue()==='','perfil ficticio descartado se recuperó');
+    assert(await page.locator('#patientSex').inputValue()==='','sexo descartado se recuperó');
+    assert(await page.locator('#pathology').inputValue()==='','PsO anterior recuperada');
+    await page.locator('#pathology').selectOption('pso');
+    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()==='','fármaco anterior reabierto');
+    await page.getByRole('button',{name:'Seguimiento',exact:true}).click();
     assert(!await page.locator('#visitForm').isVisible(),'Seguimiento hereda patología');
+    await page.locator('#pathology').selectOption('pso');
+    assert(await page.locator('[data-followup-family="biologicos"]').getAttribute('aria-pressed')==='false','familia preseleccionada');
     await page.getByRole('button',{name:'Primera Visita'}).click();
-    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()==='Secukinumab','perdió el borrador propio');
+    assert(!await page.locator('#visitForm').isVisible(),'Primera reabrió patología anterior');
+    await page.locator('#pathology').selectOption('pso');
+    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()==='','borrador propio descartado se recuperó');
   }],
   ['F1-8 Recarga/móvil/sin almacenamiento ni red externa',async()=>{
     await page.setViewportSize({width:390,height:844});

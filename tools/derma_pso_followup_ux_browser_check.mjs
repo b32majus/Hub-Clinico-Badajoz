@@ -151,8 +151,12 @@ try{
    assert((await section('13 Plan').innerText()).includes('sin cita creada'),'fecha presentada como cita realizada');
    assert(await page.locator('button[type=submit]').count()===0,'simula validación/guardado');
   }],
-  ['UX8 Separación Primera/Seguimiento y pacientes; no contaminación clínica',async()=>{
+  ['UX8 Descarte clínico entre Primera/Seguimiento y pacientes',async()=>{
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Primera Visita'}).click();
+   assert(discarded,'no confirmó descartar F2 con tratamiento y plan');
+   assert(!await page.locator('#visitForm').isVisible(),'F1 heredó PsO');
    await page.locator('#pathology').selectOption('pso');
    assert(await page.locator('.visit--followup').count()===0,'estilos F2 contaminan F1');
    assert(await page.locator('[data-followup-family]').count()===0,'chips de familia F2 contaminan F1');
@@ -160,9 +164,14 @@ try{
    await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
    assert(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').isVisible(),'F1 perdió tratamientos');
    await page.getByRole('button',{name:'Seguimiento',exact:true}).click();
-   assert(await page.locator('#pathology').inputValue()==='pso','patología F2 propia perdida');
-   assert((await page.locator('#followupTherapyPreview').textContent()).includes('Secukinumab'),'borrador F2 perdido al visitar F1');
+   assert(!await page.locator('#visitForm').isVisible(),'seguimiento previo abierto sin PsO explícita');
+   await page.locator('#pathology').selectOption('pso');
+   assert((await page.locator('#followupTherapyPreview').textContent()).includes('Todavía no'),'tratamiento F2 descartado se recuperó');
+   for(const chip of await page.locator('[data-followup-family]').all())
+     assert(await chip.getAttribute('aria-pressed')==='false','familia F2 recuperada de sesión anterior');
+   assert(await page.locator('[data-field="bsa"]').inputValue()==='','BSA F2 recuperada');
    await page.locator('#patientCip').fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
+   assert(await page.locator('#pathology').inputValue()==='','PsO F2 inferida para otro CIP');
    await page.locator('#pathology').selectOption('pso');
    assert(await page.locator('[data-followup-family="biologicos"]').getAttribute('aria-pressed')==='false','familia F2 heredada de otro paciente');
    assert((await page.locator('#followupTherapyPreview').textContent()).includes('Todavía no'),'tratamiento de otro paciente transferido');

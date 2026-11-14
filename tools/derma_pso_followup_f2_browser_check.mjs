@@ -110,31 +110,41 @@ try{
    assert(await page.locator('[data-field="extra_seg_proxima_fecha_prevista"]').inputValue()==='','fecha prevista inventada');
    assert(await page.locator('[data-field="proxima_revision"]').inputValue()==='','plazo inventado');
   }],
-  ['F2-7 Primera Visita solo referencia de borrador, sin copiar dato anterior',async()=>{
+  ['F2-7 Cambio de circuito descarta tratamiento, fecha y BSA, sin copiar historia',async()=>{
+   let confirmed=false;
+   page.once('dialog',async dialog=>{confirmed=true;await dialog.accept()});
    await page.getByRole('button',{name:'Primera Visita'}).click();
-   assert(!await page.locator('#visitForm').isVisible(),'F1 heredó patología de F2');
+   assert(confirmed,'no confirmó descartar F2 con terapia explícita');
+   assert(!await page.locator('#visitForm').isVisible(),'F1 heredó PsO de F2');
    await page.locator('#pathology').selectOption('pso');
    await page.locator('[data-field="fecha_visita"]').fill('2026-11-10');
    await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
    await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').fill('Adalimumab');
+   confirmed=false;
+   page.once('dialog',async dialog=>{confirmed=true;await dialog.accept()});
    await page.getByRole('button',{name:'Seguimiento',exact:true}).click();
-   assert(await page.locator('#pathology').inputValue()==='pso','seguimiento propio perdió PsO');
-   assert((await page.locator('#followupContextStatus').textContent()).includes('BORRADOR SIN GUARDAR'),'se presenta como historia');
-   assert((await page.locator('#followupContextStatus').textContent()).includes('NO se ha copiado'),'no explica ausencia de precarga');
+   assert(confirmed,'no confirmó descartar Primera con fecha y tratamiento');
+   assert(!await page.locator('#visitForm').isVisible(),'Seguimiento recuperó patología propia');
+   await page.locator('#pathology').selectOption('pso');
+   const context=await page.locator('#followupContextStatus').textContent();
+   assert(context.includes('No hay Primera Visita guardada')&&context.includes('ningún dato clínico'),'contexto atribuye historial');
    assert(await page.locator('[data-field="fecha_visita"]').inputValue()==='','fecha Primera copiada a F2');
-   assert(await page.locator('[data-field="tx_seguimiento_biologicos_farmaco_1"]').inputValue()==='Secukinumab','borrador Seguimiento propio perdido');
-   assert(!(await page.locator('#followupContext').textContent()).includes('Adalimumab'),'muestra tratamiento de Primera como vigente');
+   await page.locator('[data-followup-family="biologicos"]').click();
+   assert(await page.locator('[data-field="tx_seguimiento_biologicos_farmaco_1"]').inputValue()==='','F2 recuperó terapia previa');
+   assert(!(await page.locator('#followupContext').textContent()).includes('Adalimumab'),'muestra tratamiento Primera como vigente');
    if(process.env.DERMA_F2_DESKTOP_SCREENSHOT)await page.screenshot({path:process.env.DERMA_F2_DESKTOP_SCREENSHOT,fullPage:true});
    await page.locator('#patientCip').fill('DEMO-PSO-002');
    await page.locator('#lookupCip').click();
-   assert(!await page.locator('#visitForm').isVisible(),'PsO de paciente anterior copiada');
+   assert(!await page.locator('#visitForm').isVisible(),'PsO anterior copiada a otro CIP');
    await page.locator('#pathology').selectOption('pso');
    assert(await page.locator('[data-field="bsa"]').inputValue()==='','BSA de otro paciente');
    assert((await page.locator('#followupContextStatus').textContent()).includes('No hay Primera Visita'),'borrador cruzado');
    await page.locator('#patientCip').fill('DEMO-SEG-NUEVO-01');
    await page.locator('#lookupCip').click();
-   assert(await page.locator('#pathology').inputValue()==='pso','no restauró patología propia');
-   assert(await page.locator('[data-field="bsa"]').inputValue()==='0','no restauró cero propio');
+   assert(await page.locator('#pathology').inputValue()==='','se recuperó PsO anterior');
+   await page.locator('#pathology').selectOption('pso');
+   assert(await page.locator('[data-field="bsa"]').inputValue()==='','BSA del CIP descartado se recuperó');
+   assert(await page.locator('[data-field="fecha_visita"]').inputValue()==='','fecha anterior reapareció');
   }],
   ['F2-8 Móvil y recarga limpios, sin falsa persistencia',async()=>{
    await page.setViewportSize({width:390,height:844});

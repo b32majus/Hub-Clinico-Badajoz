@@ -90,7 +90,11 @@ try{
    for(const group of ['topicos','sinteticos_convencionales','fototerapia','biologicos'])
      for(let n=1;n<3;n++)await page.locator('[data-section="10 Tratamiento primera visita"] [data-more="'+group+'"]').click();
    await snapshot();
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Seguimiento'}).click();
+   if(!discarded)throw Error('no confirmó descartar Primera con HTA explícita');
+   if(await page.locator('#visitForm').isVisible())throw Error('F2 heredó PsO');
    await page.locator('#pathology').selectOption('pso');
    // F2 tiene familias conmutables: recorrerlas una a una con los chips reales.
    for(const group of ['topicos','sinteticos_convencionales','fototerapia','biologicos']){
@@ -110,7 +114,12 @@ try{
    const unlisted=[...observed].filter(k=>!VALME_HEADERS.includes(k));
    if(absent.length||unlisted.length)throw Error('faltan campos fuente o hay ajenos: '+JSON.stringify({absent,unlisted}));
    if([...NON_EDITABLE_FIELDS].some(k=>observed.has(k)))throw Error('campo derivado/contexto editable');
+   discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Primera Visita'}).click();
+   if(!discarded)throw Error('sin confirmación al abandonar decisión explícita F2');
+   if(await page.locator('#visitForm').isVisible())throw Error('Primera heredó patología F2');
+   await page.locator('#pathology').selectOption('pso');
  });
  check('S5 dosis sin inferencias',async()=>{
    await page.locator('[data-section="10 Tratamiento primera visita"] > summary').click();
@@ -118,12 +127,23 @@ try{
    await drug.fill('Secukinumab');
    const pos=await page.locator('[data-field="tx_primera_biologicos_posologia_1"]').inputValue();
    if(pos!=='')throw Error('posología inferida: '+pos);
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Seguimiento'}).click();
+   if(!discarded)throw Error('no confirmó descartar Primera con fármaco');
+   if(await page.locator('#visitForm').isVisible())throw Error('F2 heredó PsO');
+   await page.locator('#pathology').selectOption('pso');
    const follow=page.locator('[data-field="tx_seguimiento_biologicos_farmaco_1"]');
    if(await page.locator('[data-followup-family="biologicos"]').getAttribute('aria-pressed')!=='true')await page.locator('[data-followup-family="biologicos"]').click();
    if(await follow.inputValue()!==''||await page.locator('[data-field="tx_seguimiento_biologicos_posologia_1"]').inputValue()!=='')throw Error('se trasladó tratamiento primera a seguimiento');
+   await follow.fill('Tratamiento F2 de prueba explícita');
+   discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Primera Visita'}).click();
-   if(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()!=='Secukinumab')throw Error('se perdió dato del circuito original');
+   if(!discarded)throw Error('no confirmó descartar tratamiento F2');
+   if(await page.locator('#visitForm').isVisible())throw Error('Primera recuperó PsO');
+   await page.locator('#pathology').selectOption('pso');
+   if(await page.locator('[data-field="tx_primera_biologicos_farmaco_1"]').inputValue()!=='')throw Error('se recuperó fármaco descartado de Primera');
  });
  check('S6 evaluaciones no homologadas',async()=>{
    await page.locator('[data-section="05 Exploración/PASI"] > summary').click();
@@ -134,23 +154,35 @@ try{
      const displayed=await page.locator('.derived').filter({hasText:label}).textContent();
      if(!/sin cálculo clínico|no homologado/i.test(displayed))throw Error(label+' aparenta estar homologado');
    }
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Seguimiento'}).click();
+   if(!discarded)throw Error('sin confirmación al abandonar PASI parcial F1');
+   await page.locator('#pathology').selectOption('pso');
    const morisky=await page.locator('.followup-instrument-blocked').filter({hasText:'Morisky'}).textContent();
    if(!/no habilitado|pendiente/i.test(morisky))throw Error('Morisky aparenta estar homologado');
    if(await page.locator('[data-field="seguimiento_adherencia_morisky_q1"]').count())throw Error('Morisky ficticio se puede responder');
    await page.getByRole('button',{name:'Primera Visita'}).click();
+   if(await page.locator('#visitForm').isVisible())throw Error('F1 recuperó PsO tras salir');
+   await page.locator('#pathology').selectOption('pso');
  });
- check('S7 aislamiento entre circuitos y pacientes',async()=>{
+ check('S7 aislamiento entre circuitos y pacientes, sin recuperar borradores',async()=>{
    await page.getByRole('button',{name:'Seguimiento'}).click();
+   if(await page.locator('#visitForm').isVisible())throw Error('F2 recuperó PsO anterior');
+   await page.locator('#pathology').selectOption('pso');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('carga primera en seguimiento');
    await page.getByRole('button',{name:'Primera Visita'}).click();
-   if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='true')throw Error('se perdió borrador en memoria');
+   if(await page.locator('#visitForm').isVisible())throw Error('F1 se reabrió por memoria');
+   await page.locator('#pathology').selectOption('pso');
+   if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('se restauró HTA descartada');
    await page.locator('#patientCip').fill('DEMO-PSO-002');await page.locator('#lookupCip').click();
    if(await page.locator('#visitForm').isVisible())throw Error('patología inferida tras cambiar paciente');
    await page.locator('#pathology').selectOption('pso');
    if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('contaminación paciente');
    await page.locator('#patientCip').fill('DEMO-PSO-001');await page.locator('#lookupCip').click();
-   if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='true')throw Error('borrador sintético previo no restaurado');
+   if(await page.locator('#pathology').inputValue()!=='')throw Error('PsO anterior restaurada');
+   await page.locator('#pathology').selectOption('pso');
+   if(await page.locator('[data-chip="comorb_hta"]').getAttribute('aria-pressed')!=='false')throw Error('HTA del paciente original restaurada');
  });
  check('S8 sin persistencia ni errores de consola',async()=>{
    if(errors.length)throw Error(errors.join(' | '));

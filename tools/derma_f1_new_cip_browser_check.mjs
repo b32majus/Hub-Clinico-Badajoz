@@ -51,8 +51,11 @@ try{
    await page.locator('#pathology').selectOption('pso');
    assert(await page.locator('#visitForm').isVisible(),'no abre con selección explícita PsO');
   }],
-  ['C3 CIP sintético desconocido en Inicio abre Primera Visita por acción',async()=>{
+  ['C3 Tras confirmar descarte, CIP desconocido en Inicio abre Primera por acción',async()=>{
+   let discarded=false;
+   page.once('dialog',async dialog=>{discarded=true;await dialog.accept()});
    await page.getByRole('button',{name:'Inicio'}).click();
+   assert(discarded,'no confirmó descartar CIP ficticio con datos de primera visita');
    await page.locator('#homeSearch').fill('DEMO-NUEVO-888');
    await page.locator('#homeSearchButton').click();
    const modal=page.getByRole('dialog');
@@ -86,12 +89,22 @@ try{
    await page.keyboard.press('Escape');
    assert(!await dialog.isVisible(),'escape no cierra');
   }],
-  ['C6 Sin datos cruzados, sin storage, sin errores y responsive',async()=>{
+  ['C6 No recupera perfil descartado, sin storage/errores y responsive',async()=>{
    await page.getByRole('button',{name:'Primera Visita'}).click();
    await page.locator('#patientCip').fill('DEMO-CIP-999');await page.locator('#lookupCip').click();
-   assert(await page.locator('#patientName').inputValue()==='Persona ficticia','se perdió perfil temporal propio');
-   await page.locator('#patientCip').fill('DEMO-LATERAL-222');await page.locator('#lookupCip').click();
+   assert(await page.locator('#patientName').inputValue()==='','perfil temporal descartado se recuperó');
+   assert(await page.locator('#patientSex').inputValue()==='','sexo temporal descartado se recuperó');
+   await page.locator('#patientName').fill('Nueva identidad ficticia local');
+   await page.locator('#pathology').selectOption('pso');
+   assert(await page.locator('#visitForm').isVisible(),'no abre primera de CIP nuevo');
+   await page.locator('#patientCip').fill('DEMO-LATERAL-222');
+   assert(await page.locator('#visitForm').getAttribute('inert')!==null,'permite editar con CIP sin validar');
+   let confirmed=false;
+   page.once('dialog',async dialog=>{confirmed=true;await dialog.accept()});
+   await page.locator('#lookupCip').click();
+   assert(confirmed,'no confirmó descarte al cambiar CIP con identidad editada');
    assert(await page.locator('#patientName').inputValue()==='','datos de otro paciente copiados');
+   assert(await page.locator('#pathology').inputValue()==='','patología de otro CIP copiada');
    await page.setViewportSize({width:390,height:844});
    const r=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth,storage:localStorage.length+sessionStorage.length}));
    assert(r.scroll<=r.w+1,'overflow móvil');
