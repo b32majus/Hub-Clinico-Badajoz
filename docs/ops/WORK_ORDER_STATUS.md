@@ -227,7 +227,7 @@
 
 - **Publicación:** parent `384ec686fde9fbf1bea8e919059df05fd9141749`; #584 `26272c0d901c90a16a066c137cbffa9397ca927f` (CIP), #585 `55de2be5ebdc98fb97203606de725cd586159344` (CASPAR), #583 `0671e3e7fcd6bf9491d2fac15b68ddbc37eb5ff2` (toast); checker `2cfd1a5910782b6ddbf5aa4fcf1eaebb8fc70993`; merge `06b9dd03b6edf4e44212b0361f787f126d07877a`. #583/#584/#585/#586 CLOSED/completed.
 - **Evidencia:** `Nexus deterministic gates` PR run `37699176057` SUCCESS, Cora `verify:nexus` PASS; browser T3 24/24 + cuatro `KNOWN_PREEXISTING` (no PASS funcional), cutover 23/23, diff-check limpio; no atribuir CI post-merge sin prueba.
-- **#587 OPEN/DISCOVERY:** recuperación de fila pendiente no operativa y recursión ya documentadas en #464. La retirada deliberada de ledger clínico de Farmacia #230 es precedente de privacidad, NO decisión publicada de Reuma. Decidir retirar/restaurar tras shaping sin persistir datos clínicos automáticamente; no piloto real.
+- **#587 OPEN/DISCOVERY (a 2026-10-08; CLOSED/completed el 2026-10-09 por retirada expresa, WO #618 / PR #619):** recuperación de fila pendiente no operativa y recursión ya documentadas en #464. La retirada deliberada de ledger clínico de Farmacia #230 es precedente de privacidad, NO decisión publicada de Reuma. Decidir retirar/restaurar tras shaping sin persistir datos clínicos automáticamente; no piloto real.
 
 ### Decisiones de producto para demo Farmacia — 2026-10-07
 

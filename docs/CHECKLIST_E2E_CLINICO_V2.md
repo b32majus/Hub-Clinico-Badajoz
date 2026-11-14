@@ -14,6 +14,8 @@
 - Validado por: pendiente tras AUDIT-FIX-1
 - Resultado: **PENDIENTE**
 
+> **Documento histórico (14-11).** Esta cabecera dice PENDIENTE y la firma final marca APTO: son de momentos distintos de mayo de 2026 y no se concilian aquí. No vale como validación vigente; las validaciones actuales constan en los issues y PR de GitHub.
+
 > AUDIT-FIX-1: este checklist debe repetirse tras corregir los hallazgos pre-PR. El contrato vigente no incluye hoja `Prebiologico` separada ni persistencia de `Solicitud_FH_Log`; el prebiológico va embebido por visita y la Solicitud FH es derivada.
 >
 > Nota de vigencia demo: la cohorte actual de demo es 50/200 (10 pacientes por patología, 4 visitas por paciente). Estos conteos son del dataset demo y no limitan producción.
