@@ -20,6 +20,8 @@ Aumentar la robustez y estabilidad de la herramienta, eliminando bugs silencioso
 // ACTUAL (roto  faltan los ?)
 psoriasis: pasi > 0  `PASI: ${pasi.toFixed(1)}` : bsa > 0  `BSA: ${bsa}%` : '-',
 
+> **Estado (14-11): corregido.** `calcularMDA()` ya devuelve `PASI`/`BSA` sin esa sintaxis (`modules/scoreCalculators.js`).
+
 // CORRECTO
 psoriasis: pasi > 0 ? `PASI: ${pasi.toFixed(1)}` : bsa > 0 ? `BSA: ${bsa}%` : '-',
 ```
@@ -30,6 +32,8 @@ Impacto: `calcularMDA()` no funciona en APs. Afecta a todos los pacientes con Ar
 // ACTUAL (roto  punto extra antes del corchete)
 const cutoffs = HubTools.dashboard.activityCutoffs.[scoreType];
 
+> **Estado (14-11): corregido.** Ahora usa `HubTools?.dashboard?.activityCutoffs?.[...]` (`modules/scoreCalculators.js`).
+
 // CORRECTO
 const cutoffs = HubTools?.dashboard?.activityCutoffs?.[scoreType];
 if (!cutoffs) return { categoria: 'unknown', color: '#6c757d', label: 'N/A' };
@@ -38,6 +42,8 @@ if (!cutoffs) return { categoria: 'unknown', color: '#6c757d', label: 'N/A' };
 **3. Doble declaración de variable `acrEularInitialized`  `modules/formController.js`**
 - Declarada como `let` en línea ~70 y redeclarada como `var` en ~188.
 - Causa confusión de scope. Eliminar la segunda declaración.
+
+> **Estado (14-11): corregido.** `acrEularInitialized` se declara una sola vez en `modules/formController.js`.
 
 ---
 
@@ -85,11 +91,15 @@ function validarInput(value, min, max) {
 - Auto-limpiar filas pendientes con más de 24h.
 - Red de seguridad contra pérdida de datos por olvido de pegar en Excel.
 
+> **Estado (14-11): hecho y después retirado a propósito.** La cola de filas pendientes se retiró por seguridad de datos clínicos (WO #618 / PR #619; #587). Ya no existe `hubPendingRows`; no se repone sin decisión.
+
 **11. Normalizador central de campos**
 - Crear módulo `fieldNormalizer.js` con mapa canónico de nombres de columna.
 - Mapear variantes (`DAS28_CRP_Result`, `das28Crp`, `DAS28-CRP`, `DAS28 CRP`) a una clave canónica (`DAS28_CRP`).
 - Usar en `dataManager.js` al leer Excel y en `exportManager.js` al escribir CSV.
 - Elimina la lógica duplicada de normalización repartida entre módulos.
+
+> **Estado (14-11): hecho.** Existe `modules/fieldNormalizer.js` y lo cargan las páginas de Reuma.
 
 ---
 

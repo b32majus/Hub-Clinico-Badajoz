@@ -78,7 +78,7 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 
 ## Qué queda fuera de alcance
 
-- Exportación de estadísticas a CSV (no implementada en esta versión).
+- Exportación de estadísticas a CSV (no implementada en esta versión). *(Hecho después: #538.)*
 - Checklist SLICC ítem por ítem (implementado como entrada estructurada por dominios).
 - Backend persistente: todo sigue siendo local-first, sessionStorage + Excel.
 - Frameworks: sigue siendo HTML/CSS/JS vanilla.

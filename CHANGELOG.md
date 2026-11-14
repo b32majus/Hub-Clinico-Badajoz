@@ -120,7 +120,7 @@
 ---
 
 ### Pendientes no bloqueantes
-- Exportación de estadísticas a CSV: no implementada en esta versión.
+- Exportación de estadísticas a CSV: no implementada en esta versión. *(Hecho después: #538.)*
 - Checklist SLICC completo: la implementación actual es entrada estructurada por dominios, no checklist ítem por ítem.
 
 ### AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs

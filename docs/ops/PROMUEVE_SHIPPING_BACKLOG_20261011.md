@@ -34,7 +34,7 @@ Todos los siguientes están `ISSUE_PREPARADO`, **sin** `status:approved` ni lanz
 | QA-FH-02 | [#665](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/665) | FH Dashboard comorbilidades | PENDIENTE_QA | Verificar fuente, datos explícitos, ausencia, recarga |
 | QA-RE-01 | [#666](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/666) | Reuma ASDAS PCR/VSG | PENDIENTE_QA y caso clínico de referencia aprobado | Comprobar fórmula/ausentes EspA por ruta soportada; HUMAN STOP si falta criterio |
 | QA-RE-02 | [#667](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/667) | Reuma Primera Visita restauración | PENDIENTE_QA | Distinguir capacidad inexistente, PASS y defecto con navegación soportada |
-| WO-RE-01 | [#668](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/668) | PCR UI sin opción «Sin unidad» | READY_TO_SCOPE; defaults site no aprobados | Micro-WO solo UI y neutralidad, sin fijar unidad automática |
+| WO-RE-01 | [#668](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/668) | PCR UI sin opción «Sin unidad» | READY_TO_SCOPE; defaults site no aprobados | Micro-WO solo UI y neutralidad, sin fijar unidad automática. **Hecho (14-11): #668 CLOSED, PR #753 (2026-10-13): la unidad PCR empieza vacía y solo `mg/L`/`mg/dL` explícitos. Los defaults por hospital siguen sin aprobar.** |
 | WO-FH-01 | [#669](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/669) | Tablas Cosentyx 820/1080 px | READY_TO_SCOPE visual P2 | Affordance/reflow y QA real sin cambiar datos ni XLSX |
 | WO-FH-02 | [#670](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/670) | PROM explícito como filtro poblacional | PENDIENTE_SHAPING de instrumentos/valores/vacíos | Congelar semántica; después implementación de cohorte+CSV |
 | SPEC-F45-01 | [#671](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/671) | DeliveryResult y Excel adapter (F4.5) | PENDIENTE_SHAPING, solo spec | Definir evidencia, destino, resultado, errores, idempotencia |
@@ -73,7 +73,7 @@ Las filas con issue #663–#672 del primer paquete remiten a `3; aquí figuran a
 
 | ID | Resultado faltante | Estado / issue | Siguiente gate |
 | --- | --- | --- | --- |
-| RE-01 | PCR: UI sin «Sin unidad» y ayuda; defaults por hospital separados | READY_TO_SCOPE parcial · #668 / PENDIENTE_FUENTE | Implementar solo UI; default site no autorizado |
+| RE-01 | PCR: UI sin «Sin unidad» y ayuda; defaults por hospital separados | READY_TO_SCOPE parcial · #668 / PENDIENTE_FUENTE | Implementar solo UI; default site no autorizado. **Hecho (14-11): #668 CLOSED, PR #753 (2026-10-13): la unidad PCR empieza vacía y solo `mg/L`/`mg/dL` explícitos. Los defaults por hospital siguen sin aprobar.** |
 | RE-02 | BASFI EspA PV+Seguimiento | PENDIENTE_FUENTE_EQUIPO | Ítems y cálculo clínico versionados antes del ticket |
 | RE-03 | ASDAS-PCR/VSG cálculo completo | PENDIENTE_QA · #666 | Casos de referencia aprobados, no cambiar fórmula sin defecto |
 | RE-04 | Tratamientos previos actual/anterior/solicitado | PENDIENTE_QA | QA de fuente y continuidad, sin transformar previo en START |
