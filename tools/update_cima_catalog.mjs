@@ -56,7 +56,7 @@ const CIMA_BASE_URL = 'https://cima.aemps.es/cima/rest/medicamentos';
 const MAX_FETCH_PAGES = 1000;
 
 const boolText = (value) => (value === true ? 'True' : 'False');
-const cellText = (value) => (value == null ? '' : String(value));
+const cellText = (value) => (value == null ? '' : String(value).trim());
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function mapMedicamento(med, fechaExtraccion) {
@@ -73,9 +73,9 @@ export function mapMedicamento(med, fechaExtraccion) {
         nregistro: nregistro,
         nombre_presentacion: cellText(med.nombre),
         nombre_comercial: cellText(med.nombre),
-        principio_activo: vtmNombre.replace(/ \+ /g, ', ').toLocaleUpperCase('es'),
+        principio_activo: vtmNombre.replace(/ \+ /g, ', ').toLocaleUpperCase('es').trim(),
         forma_farmaceutica:
-            med.formaFarmaceutica && med.formaFarmaceutica.nombre ? String(med.formaFarmaceutica.nombre) : '',
+            med.formaFarmaceutica && med.formaFarmaceutica.nombre ? String(med.formaFarmaceutica.nombre).trim() : '',
         dosis_presentacion: cellText(med.dosis),
         via: (Array.isArray(med.viasAdministracion) ? med.viasAdministracion : [])
             .map((via) => cellText(via && via.nombre))
