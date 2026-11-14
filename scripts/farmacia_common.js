@@ -1971,14 +1971,17 @@
         }
 
         function normalizeCIMA(row) {
+            function textTrim(value) {
+                return value == null ? '' : String(value).trim();
+            }
             var cn = row.codigo_nacional != null ? String(row.codigo_nacional) : '';
             var nr = row.nregistro != null ? String(row.nregistro) : '';
-            var nc = row.nombre_comercial || '';
-            var pa = row.principio_activo || '';
-            var np = row.nombre_presentacion || '';
-            var dose = row.dosis_presentacion || '';
-            var via = row.via || '';
-            var forma = row.forma_farmaceutica || '';
+            var nc = textTrim(row.nombre_comercial);
+            var pa = textTrim(row.principio_activo);
+            var np = textTrim(row.nombre_presentacion);
+            var dose = textTrim(row.dosis_presentacion);
+            var via = textTrim(row.via);
+            var forma = textTrim(row.forma_farmaceutica);
             return {
                 nombre_comercial: nc,
                 principio_activo: pa,
