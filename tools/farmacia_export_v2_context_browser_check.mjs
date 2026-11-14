@@ -123,6 +123,8 @@ try {
   await page.goto(new URL('farmacia_primera_visita.html?cip=CIP-DEMO-FH-001', BASE).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita && window.FarmaciaExportV2TechnicalContext);
   await page.locator('#fhPvFecha').fill('2026-08-04');
+  /* PV-001 (#482): Primera visita ya no prehidrata el fármaco; hay que escribirlo para que la línea sea identificable. */
+  await page.locator('#fhPvFarmaco').fill('Fármaco sintético PV');
   const firstVisit = await page.evaluate(() => {
     const first = window.FarmaciaPrimeraVisita.buildFirstVisitV2ProjectionFromCurrentContext();
     const second = window.FarmaciaPrimeraVisita.buildFirstVisitV2ProjectionFromCurrentContext();
@@ -308,8 +310,10 @@ try {
   });
   assert.deepEqual(unavailable, { name: 'FarmaciaSeguimientoV2BridgeError', code: 'V2_CONTEXT_UNAVAILABLE' });
   assert.ok(await page.locator('#fhSegExportTxt').count());
-  assert.ok(await page.locator('#fhSegExportCsv').count());
-  assert.ok(await page.locator('#fhSegExcelExportBtn').count());
+  /* DECISIONES 07-11 (#867, D4): Seguimiento solo tiene dos salidas, «Copiar texto JARA» y «Copiar filas Excel FH»; CSV y Excel WO8 retirados. */
+  assert.ok(await page.locator('#fhSegExportBridgeRawBtn').count());
+  assert.equal(await page.locator('#fhSegExportCsv').count(), 0);
+  assert.equal(await page.locator('#fhSegExcelExportBtn').count(), 0);
   await assertNoPublicV2();
 
   await page.goto(new URL('farmacia_seguimiento.html?cip=CIP-DEMO-FH-004', BASE).href, { waitUntil: 'domcontentloaded' });
@@ -318,19 +322,9 @@ try {
   await page.locator('#fhSegDispensado').selectOption('si');
   await page.waitForFunction(() => window.FarmaciaSeguimiento.getCurrentVisit().dispensed_line_ids.includes('BIO-FH-004-L2'));
   const v1 = await page.evaluate(() => ({
-    jara: window.FarmaciaSeguimiento.buildSegLines().join('\n'),
-    csv: window.FarmaciaSeguimiento.buildFollowupCsv(window.FarmaciaSeguimiento.buildFollowupVisitExportModel())
+    jara: window.FarmaciaSeguimiento.buildSegLines().join('\n')
   }));
   assert.ok(v1.jara.includes('BIO-FH-004-L2'));
-  assert.ok(v1.csv.includes('BIO-FH-004-L2'));
-  await page.evaluate(() => {
-    window.__contextExcelCapture = null;
-    window.FarmaciaExcelRowExport.copyTSVRowsToClipboard = rows => { window.__contextExcelCapture = rows.map(row => [...row]); return Promise.resolve(true); };
-  });
-  await page.locator('#fhSegExcelExportBtn').click();
-  const excelRows = await page.evaluate(() => window.__contextExcelCapture);
-  assert.ok(excelRows?.length);
-  assert.equal(excelRows[0].length, 61);
   await assertNoPublicV2();
 
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join('\n')}`);

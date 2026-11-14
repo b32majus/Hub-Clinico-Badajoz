@@ -1,13 +1,31 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { createServer } from 'node:http';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-const TARGET_URL = process.env.FH_VALIDACION_URL || 'http://127.0.0.1:4174/farmacia_validacion.html';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Sin FH_VALIDACION_URL, el check sirve este mismo worktree (antes usaba lo que hubiera en :4174, que podía ser otro worktree).
+const MIME = new Map([['.html', 'text/html; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'], ['.css', 'text/css; charset=utf-8'], ['.json', 'application/json'], ['.svg', 'image/svg+xml'], ['.xlsx', 'application/octet-stream']]);
+let server = null;
+let TARGET_URL = process.env.FH_VALIDACION_URL || '';
+if (!TARGET_URL) {
+  server = createServer((request, response) => {
+    const relative = decodeURIComponent(new URL(request.url || '/', 'http://127.0.0.1').pathname).replace(/^\/+/, '') || 'farmacia_validacion.html';
+    const file = path.resolve(ROOT, relative);
+    if (file !== ROOT && !file.startsWith(ROOT + path.sep)) { response.writeHead(403).end(); return; }
+    try {
+      if (!statSync(file).isFile()) throw new Error('not_file');
+      response.writeHead(200, { 'content-type': MIME.get(path.extname(file).toLowerCase()) || 'application/octet-stream', 'cache-control': 'no-store' });
+      createReadStream(file).pipe(response);
+    } catch { response.writeHead(404).end('Not found'); }
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  TARGET_URL = `http://127.0.0.1:${server.address().port}/farmacia_validacion.html`;
+}
 const SEARCH_QUERY = 'secu';
 const MANUAL_SELECTION_IDS = ['fhManualFarmaco', 'fhManualPrincipioActivo', 'fhManualDosis', 'fhManualVia'];
 const TRACKED_IDS = [...MANUAL_SELECTION_IDS];
@@ -38,6 +56,8 @@ function availableChromiumExecutable() {
 
 const browser = await chromium.launch({ headless: true, executablePath: availableChromiumExecutable() });
 const context = await browser.newContext();
+// Buscador común (#921): la AEMPS «no responde» → respaldo del catálogo de Farmacia; el check nunca sale a internet.
+await context.route('https://cima.aemps.es/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' }));
 const page = await context.newPage();
 const consoleErrors = [];
 const pageErrors = [];
@@ -772,4 +792,5 @@ try {
   console.log('PASS: manual requested CIMA browser regression.');
 } finally {
   await browser.close();
+  if (server) await new Promise((resolve) => server.close(resolve));
 }
