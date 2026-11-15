@@ -136,12 +136,6 @@ check('Primera visita: fhPvExportCsv sigue usando F.downloadFile', () => {
         'El handler fhPvExportCsv debería seguir usando F.downloadFile');
 });
 
-check('Seguimiento: fhSegExportCsv sigue usando F.downloadFile', () => {
-    const re = /fhSegExportCsv[\s\S]{0,5000}F\.downloadFile/;
-    assert(re.test(segJs),
-        'El handler fhSegExportCsv debería seguir usando F.downloadFile');
-});
-
 console.log('\n[4] Botones TXT renombrados y CSV ocultos en HTML');
 
 function buttonTag(html, id) {
@@ -180,12 +174,6 @@ check('Seguimiento: botón TXT muestra "Copiar texto JARA"', () => {
         'El botón fhSegExportTxt no muestra "Copiar texto JARA"');
 });
 
-check('Seguimiento: botón CSV tiene clase hidden', () => {
-    const tag = buttonTag(segHtml, 'fhSegExportCsv');
-    assert(/\bhidden\b/.test(tag),
-        'El botón fhSegExportCsv no tiene clase hidden');
-});
-
 console.log('\n[5] Botones Excel FH permanecen visibles e intactos');
 
 check('Validación: botón Excel FH muestra "Copiar fila Excel FH"', () => {
@@ -204,32 +192,23 @@ check('Primera visita: botón Excel FH muestra "Copiar fila Excel FH"', () => {
         'El botón fhPvExcelExportBtn no debe tener clase hidden');
 });
 
-check('Seguimiento: botón Excel FH muestra "Copiar fila Excel FH"', () => {
-    const tag = buttonTag(segHtml, 'fhSegExcelExportBtn');
-    assert(tag.includes('Copiar fila Excel FH'),
-        'El botón fhSegExcelExportBtn no muestra "Copiar fila Excel FH"');
-    assert(!/\bhidden\b/.test(tag),
-        'El botón fhSegExcelExportBtn no debe tener clase hidden');
+check('Seguimiento: sin CSV; botón "Copiar filas Excel FH" visible', () => {
+    assert(!/id="fhSegExportCsv"/.test(segHtml), 'Seguimiento ya no tiene botón CSV');
+    const tag = buttonTag(segHtml, 'fhSegExportBridgeRawBtn');
+    assert(tag.includes('Copiar filas Excel FH'),
+        'El botón fhSegExportBridgeRawBtn no muestra "Copiar filas Excel FH"');
+    assert(!/^<button[^>]*class="[^"]*\bhidden\b/i.test(tag),
+        'El botón fhSegExportBridgeRawBtn no debe tener clase hidden');
 });
 
-console.log('\n[6] Notices de exportación actualizados');
+console.log('\n[6] Sin avisos de demo por pantalla (Sil, 15-11)');
 
-const expectedNotice = 'Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables.';
-
-check('Validación: notice de exportación contiene el nuevo texto', () => {
-    assert(valHtml.includes(expectedNotice),
-        'farmacia_validacion.html no contiene el notice actualizado');
-});
-
-check('Primera visita: notice de exportación contiene el nuevo texto', () => {
-    assert(pvHtml.includes(expectedNotice),
-        'farmacia_primera_visita.html no contiene el notice actualizado');
-});
-
-check('Seguimiento: notice de exportación contiene el nuevo texto', () => {
-    assert(segHtml.includes(expectedNotice),
-        'farmacia_seguimiento.html no contiene el notice actualizado');
-});
+for (const [name, html] of [['Validación', valHtml], ['Primera visita', pvHtml], ['Seguimiento', segHtml]]) {
+    check(name + ': sin aviso «Demo con datos sintéticos…» propio', () => {
+        assert(!/Copia manual; no integración automática con JARA/.test(html),
+            name + ' conserva el aviso de demo retirado');
+    });
+}
 
 console.log('\n' + '═'.repeat(60));
 console.log('RESULTADO: ' + passed + ' OK / ' + failed + ' FALLIDO');

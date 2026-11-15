@@ -204,7 +204,7 @@ for (const [htmlName, pageScript, outputIds] of clinicalPages) {
   const html = fs.readFileSync(path.join(ROOT, htmlName), 'utf8');
   assert.match(html, new RegExp(pageScript.replaceAll('.', '\\.')), `${htmlName} retains its normal page runtime`);
   assert.doesNotMatch(html, /farmacia_evaluation_(ledger|workbook)\.js/, `${htmlName} loads neither retired runtime`);
-  assert.match(html, /Demo con datos sintéticos/, `${htmlName} retains the general demo/synthetic warning`);
+  assert.doesNotMatch(html, /Demo con datos sintéticos\. No es un entorno clínico/, `${htmlName} no longer carries the per-page demo notice (Sil, 15-11)`);
   for (const outputId of outputIds) assert.match(html, new RegExp(`id="${outputId}"`), `${outputId} remains available`);
   assert.doesNotMatch(html, /Guardar acto ficticio|Cohorte ficticia local|fhEvaluationLedgerSyntheticConfirm|fhEvaluationLedgerSave/, `${htmlName} has no synthetic save/cohort UI`);
 }

@@ -59,7 +59,7 @@ check(html.includes('No constituye firma electrónica ni controla permisos'), 'R
 
 check(elementById('fhValExportTxt').includes('Copiar texto para JARA'), 'Botón JARA comunica copia manual');
 check(elementById('fhValExcelExportBtn').includes('Copiar fila Excel FH'), 'Botón Excel conserva copia de fila FH');
-check(html.includes('Copia manual; no integración automática'), 'Exportación aclara que no existe integración automática');
+check(!html.includes('Copia manual; no integración automática'), 'Aviso de demo por pantalla retirado (Sil, 15-11); el cartel superior se mantiene');
 check(js.includes('byId("fhValExportTxt").addEventListener("click"'), 'Handler JARA se conserva');
 check(/fhValExcelExportBtn["'][\s\S]{0,120}addEventListener\(["']click["']/.test(js), 'Handler Excel se conserva');
 check(elementById('btnValidateRequestedSame').includes('Validar tratamiento solicitado sin cambios'), 'Copia solicitado→validado usa el texto operativo exacto');
