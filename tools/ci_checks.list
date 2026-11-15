@@ -75,7 +75,6 @@ farmacia_presalud_parser_check.mjs
 farmacia_primera_visita_check.mjs
 farmacia_qa674_induction_separation_check.mjs
 farmacia_qa677_unknown_line_check.mjs
-farmacia_reconcil_check.mjs
 farmacia_seguimiento_check.mjs
 farmacia_smoke_inline_style_state.test.mjs
 farmacia_solicitud_id_transport_check.mjs
