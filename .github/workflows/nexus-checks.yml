@@ -45,5 +45,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Python/openpyxl: lo usan los checks que inspeccionan los Excel de plantilla
+      # (enfermeria_inicio_biologico, farmacia_excel_operativo y farmacia_excel_sintetico).
+      - name: Install openpyxl
+        run: python3 -m pip install openpyxl==3.1.5
+
       - name: Deterministic suite (fast gates + deployment/platform/Reuma checks)
         run: npm run verify:nexus

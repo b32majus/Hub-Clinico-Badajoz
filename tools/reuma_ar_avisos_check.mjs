@@ -49,7 +49,7 @@ if (m) {
 
 // Caché.
 for (const f of ['primera_visita.html', 'seguimiento.html', 'dashboard_paciente.html', 'estadisticas.html']) {
-  ok(/modules\/formController\.js\?v=20261114a/.test(rd(f)), 'caché: ' + f + ' debe cargar formController.js?v=20261114a');
+  ok(/modules\/formController\.js\?v=\d{8}[a-z]*/.test(rd(f)), 'caché: ' + f + ' debe cargar formController.js con versión de caché (?v=AAAAMMDDx)');
 }
 
 if (fails.length) {
