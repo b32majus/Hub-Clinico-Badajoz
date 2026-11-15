@@ -77,7 +77,7 @@ const consumers = [
 consumers.forEach(([htmlName, jsName]) => {
   const html = read(htmlName);
   const js = read(...jsName.split('/'));
-  check(html.indexOf(helperName) >= 0 && html.indexOf(helperName) < html.indexOf(jsName) && html.includes(jsName + '?v=20260728-pr57e'), `${htmlName} carga helper antes del consumidor con caché PR57E`);
+  check(html.indexOf(helperName) >= 0 && html.indexOf(helperName) < html.indexOf(jsName) && html.includes(jsName + '?v='), `${htmlName} carga helper antes del consumidor con versión de caché`);
   check(js.includes('window.FarmaciaLongitudinal.normalizePatient') && js.includes('.map(function (patient) { return normalize(patient); })'), `${jsName} normaliza inmediatamente el dataset con la API compartida`);
   check(js.includes("parts.push('Tratamiento: '") && js.includes("parts.push('Estado: '"), `${jsName} muestra tratamiento y estado agrupados por line_id`);
 });

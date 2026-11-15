@@ -107,7 +107,7 @@ for (const search of ['?id=', '?id=%20%20', '?id=%20%20&patologia=ar']) {
 // U5. La vista rápida fija al paciente que muestra (así un enlace abierto en otra pestaña no hereda otro).
 {
   const src = rd('script.js');
-  const m = src.match(/function showPatientResults\([^)]*\) \{[\s\S]*?\n\}\n/);
+  const m = src.match(/function showPatientResults\([^)]*\) \{[\s\S]*?\r?\n\}\r?\n/);
   ok(!!m && /HubTools\.currentPatient\.set\(\s*id\s*,/.test(m[0]), 'U5 showPatientResults debe fijar HubTools.currentPatient.set(id, …) al mostrar al paciente');
 }
 
