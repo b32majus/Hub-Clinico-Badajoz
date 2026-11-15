@@ -37,6 +37,7 @@ farmacia_eorden_parser_check.mjs
 farmacia_eorden_parser_oracle_check.mjs
 farmacia_eorden_producer_check.mjs
 farmacia_evaluation_ledger_check.mjs
+farmacia_export_clipboard_check.mjs
 farmacia_evaluation_workbook_check.mjs
 farmacia_excel_operativo_template_check.mjs
 farmacia_excel_row_export_check.mjs
