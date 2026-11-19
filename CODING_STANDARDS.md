@@ -22,6 +22,8 @@ A locally explicit design is preferable to a globally "flexible" one that increa
 
 Do not abstract repetition merely because code looks similar. Deduplicate when repeated code represents the same knowledge, rule or reason to change; keep coincidentally similar behavior separate.
 
+Before adding a function, component, style or variable, search the repository for an existing one that does the same job and reuse it. If you still create a new one, state in your report what you searched for and why the existing one did not fit.
+
 Keep behavior that changes for the same reason close enough to understand and modify coherently. Avoid scattering one logical change across unrelated modules without a demonstrated boundary that earns the separation.
 
 ## 3. Follow local consistency and expose intent
