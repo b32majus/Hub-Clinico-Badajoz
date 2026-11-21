@@ -113,5 +113,17 @@ test('P8 el CSS viejo de la barra y del marco ya no existe', () => {
     if (existsSync(path.join(ROOT, 'style_primera_visita.css'))) assert.ok(!read('style_primera_visita.css').includes('.hub-shell'), 'style_primera_visita.css usa .hub-shell');
 });
 
+test('P9 ninguna página con barra carga scripts clásicos en <head> (bloquean el pintado, también de la barra)', () => {
+    // Sil, 21-11: «la barra va mejor en Farmacia». Reuma Inicio y Profesionales cargaban 10-12 scripts
+    // (xlsx ~1 MB) en <head> y pintaban a 1,3-1,5 s frente a 0,45 s de Farmacia.
+    const malas = [];
+    for (const [p] of PAGINAS) {
+        const cabeza = html(p).split('</head>')[0];
+        const clasicos = [...cabeza.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/g)].filter((m) => !/\b(defer|async|type="module")\b/.test(m[0]));
+        if (clasicos.length) malas.push(`${p}: ${clasicos.length} (${clasicos[0][1]}…)`);
+    }
+    vacio(malas);
+});
+
 console.log(`\n${passed} pasan, ${failures.length} fallan`);
 if (failures.length) process.exit(1);

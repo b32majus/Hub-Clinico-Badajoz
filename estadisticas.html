@@ -18,9 +18,6 @@
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
     <link rel="stylesheet" href="style_estadisticas.css?v=20261121-t6">
-    <script src="vendor/sheetjs/xlsx.full.min.js"></script>
-    <script src="vendor/chartjs/chart.umd.min.js?v=4.4.0"></script>
-    <script src="vendor/chartjs/chartjs-plugin-annotation.min.js?v=3.0.1"></script>
 </head>
 
 <body>
@@ -441,6 +438,10 @@
         </main>
     </div>
 
+    <!-- Librerías aquí y no en <head>: allí bloqueaban el pintado (Sil 21-11). -->
+    <script src="vendor/sheetjs/xlsx.full.min.js"></script>
+    <script src="vendor/chartjs/chart.umd.min.js?v=4.4.0"></script>
+    <script src="vendor/chartjs/chartjs-plugin-annotation.min.js?v=3.0.1"></script>
     <script src="modules/hubTools.js?v=20260306l"></script>
     <script src="modules/utils.js?v=20260306l"></script>
     <script src="modules/customSelect.js?v=20260307a"></script>

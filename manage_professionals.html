@@ -17,16 +17,6 @@
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
     <link rel="stylesheet" href="style_manage.css?v=20261121-t6">
-    <script src="vendor/sheetjs/xlsx.full.min.js"></script>
-    <script src="modules/hubTools.js?v=20260306l"></script>
-    <script src="modules/utils.js?v=20260306l"></script>
-    <script src="modules/customSelect.js?v=20260307a"></script>
-    <script src="modules/fieldNormalizer.js?v=20260306l"></script>
-    <script src="modules/mockPatients.js?v=20260306l"></script>
-    <script src="modules/dataManager.js?v=20261113a"></script>
-    <script src="modules/exportManager.js?v=20261114c"></script>
-    <script src="script.js?v=20261114a"></script>
-    <script src="scripts/script_manage_professionals.js?v=20260307a"></script>
 </head>
 <body>
     <div class="nx-marco">
@@ -128,5 +118,16 @@
             </section>
         </main>
     </div>
+    <!-- Scripts al final: en <head> bloqueaban el pintado de toda la página (~1 s más que Farmacia, Sil 21-11). -->
+    <script src="vendor/sheetjs/xlsx.full.min.js"></script>
+    <script src="modules/hubTools.js?v=20260306l"></script>
+    <script src="modules/utils.js?v=20260306l"></script>
+    <script src="modules/customSelect.js?v=20260307a"></script>
+    <script src="modules/fieldNormalizer.js?v=20260306l"></script>
+    <script src="modules/mockPatients.js?v=20260306l"></script>
+    <script src="modules/dataManager.js?v=20261113a"></script>
+    <script src="modules/exportManager.js?v=20261114c"></script>
+    <script src="script.js?v=20261114a"></script>
+    <script src="scripts/script_manage_professionals.js?v=20260307a"></script>
 </body>
 </html>
