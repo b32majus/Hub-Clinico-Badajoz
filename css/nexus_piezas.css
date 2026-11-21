@@ -235,6 +235,7 @@
 
   .nx-buscador > .nx-campo {
     flex: 1 1 auto;
+    min-inline-size: 0;
   }
 
   .nx-formulario {
@@ -635,14 +636,199 @@
     margin: 0;
   }
 
+  /* ---------- Marco de página y barra lateral <nx-shell> (tramo 5) ---------- */
+  .nx-marco {
+    display: grid;
+    grid-template-columns: var(--nx-ancho-lateral) minmax(0, 1fr);
+    min-block-size: var(--nx-alto-pantalla);
+    background: var(--nx-color-fondo);
+  }
+
+  .nx-marco__contenido {
+    min-inline-size: 0;
+    padding: var(--nx-espacio-6);
+  }
+
+  nx-shell {
+    --nx-shell-color: var(--nx-color-principal);
+    position: sticky;
+    inset-block-start: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-espacio-4);
+    block-size: var(--nx-alto-pantalla);
+    overflow-y: auto;
+    padding: var(--nx-espacio-5) var(--nx-espacio-4) var(--nx-espacio-4);
+    background: var(--nx-color-superficie);
+    border-inline-end: var(--nx-borde-fino) solid var(--nx-color-borde);
+    font-size: var(--nx-texto-sm);
+  }
+
+  nx-shell[modulo="farmacia"] {
+    --nx-shell-color: var(--nx-color-farmacia-texto);
+  }
+
+  nx-shell[modulo="reuma"] {
+    --nx-shell-color: var(--nx-color-reuma-texto);
+  }
+
+  nx-shell[modulo="derma"] {
+    --nx-shell-color: var(--nx-color-derma-texto);
+  }
+
+  .nx-shell__marca {
+    display: grid;
+    gap: var(--nx-espacio-1);
+    padding-inline: var(--nx-espacio-3);
+    color: var(--nx-color-texto);
+    text-decoration: none;
+  }
+
+  .nx-shell__producto {
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-xs);
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-shell__modulo {
+    color: var(--nx-shell-color);
+    font-size: var(--nx-texto-lg);
+    font-weight: var(--nx-peso-negrita);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  .nx-shell__marca:hover .nx-shell__modulo {
+    text-decoration: underline;
+  }
+
+  .nx-shell__extra {
+    display: grid;
+    gap: var(--nx-espacio-3);
+  }
+
+  .nx-shell__nav {
+    display: grid;
+    gap: var(--nx-espacio-3);
+  }
+
+  .nx-shell__seccion {
+    display: grid;
+    gap: var(--nx-espacio-1);
+  }
+
+  .nx-shell__titulo {
+    margin: 0;
+    padding-inline: var(--nx-espacio-3);
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-xs);
+    font-weight: var(--nx-peso-semi);
+    line-height: var(--nx-interlineado);
+  }
+
+  .nx-shell__lista {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nx-shell__enlace {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-espacio-3);
+    min-block-size: var(--nx-control-alto-sm);
+    padding-inline: var(--nx-espacio-3);
+    border-radius: var(--nx-radio-md);
+    color: var(--nx-color-texto);
+    font-weight: var(--nx-peso-medio);
+    text-decoration: none;
+    transition: background-color var(--nx-transicion);
+  }
+
+  .nx-shell__enlace:hover {
+    background: var(--nx-color-superficie-suave);
+  }
+
+  .nx-shell__enlace[aria-current="page"] {
+    background: var(--nx-color-principal-suave);
+    color: var(--nx-color-principal);
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-shell__icono {
+    flex: none;
+    inline-size: var(--nx-icono-ancho);
+    color: var(--nx-color-texto-suave);
+    text-align: center;
+  }
+
+  .nx-shell__enlace[aria-current="page"] .nx-shell__icono {
+    color: inherit;
+  }
+
+  .nx-shell__pie {
+    display: grid;
+    gap: var(--nx-espacio-2);
+    margin-block-start: auto;
+    padding-block-start: var(--nx-espacio-4);
+    border-block-start: var(--nx-borde-fino) solid var(--nx-color-borde);
+  }
+
+  .nx-shell__version {
+    display: grid;
+    margin: 0;
+    padding-inline: var(--nx-espacio-3);
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-xs);
+  }
+
+  .nx-shell__terminar {
+    inline-size: 100%;
+  }
+
   /* ---------- Pantallas más estrechas: solo recolocar ---------- */
   @media (max-width: 64em) {
+    .nx-marco {
+      grid-template-columns: var(--nx-ancho-lateral-estrecho) minmax(0, 1fr);
+    }
+
+    .nx-marco__contenido {
+      padding: var(--nx-espacio-5);
+    }
+
     .nx-tarjeta {
       padding: var(--nx-espacio-4);
     }
   }
 
   @media (max-width: 48em) {
+    .nx-marco {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    nx-shell {
+      position: static;
+      block-size: auto;
+      overflow-y: visible;
+      border-inline-end: 0;
+      border-block-end: var(--nx-borde-fino) solid var(--nx-color-borde);
+    }
+
+    .nx-shell__lista {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--nx-espacio-1);
+    }
+
+    .nx-shell__pie {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+    }
+
+    .nx-shell__terminar {
+      inline-size: auto;
+    }
+
     .nx-buscador {
       flex-wrap: wrap;
     }
@@ -657,6 +843,10 @@
   }
 
   @media (max-width: 36em) {
+    .nx-marco__contenido {
+      padding: var(--nx-espacio-4);
+    }
+
     .nx-dialogo__acciones {
       flex-direction: column-reverse;
       align-items: stretch;

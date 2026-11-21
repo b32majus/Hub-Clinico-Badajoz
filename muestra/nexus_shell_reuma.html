@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus · Muestra de la barra lateral (Reuma)</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="../vendor/inter/inter.css">
+    <link rel="stylesheet" href="../css/nexus_tokens.css">
+    <link rel="stylesheet" href="../css/nexus_base.css">
+    <link rel="stylesheet" href="../css/nexus_piezas.css">
+    <link rel="stylesheet" href="muestra.css">
+    <script type="module" src="muestra.js"></script>
+</head>
+<body class="nx-pagina">
+<div class="nx-marco">
+    <nx-shell modulo="reuma" raiz="../" pagina="seguimiento.html">
+        <p class="muestra__profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> Profesional DEMO-01</p>
+        <form class="nx-buscador" role="search" action="#">
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="m-paciente">Buscar paciente</label>
+                <input class="nx-campo__control" id="m-paciente" type="search" placeholder="Identificador">
+            </div>
+        </form>
+        <p><span class="nx-etiqueta nx-etiqueta--ok">Datos de prueba cargados</span></p>
+    </nx-shell>
+    <main class="nx-marco__contenido">
+        <div class="muestra muestra--marco">
+            <header class="muestra__cabecera">
+                <h1>Visita de seguimiento</h1>
+                <p class="muestra__nota">Muestra de <code>&lt;nx-shell&gt;</code> (#956, tramo 5). Datos inventados. Descrita en <code>DESIGN.md</code> §4.</p>
+            </header>
+            <section class="muestra__seccion" aria-labelledby="s-visita">
+                <h2 id="s-visita">Datos de la visita</h2>
+                <div class="nx-rejilla">
+                    <article class="nx-tarjeta nx-tarjeta--reuma">
+                        <div class="nx-tarjeta__cabecera"><h3 class="nx-tarjeta__titulo">Paciente DEMO-004</h3></div>
+                        <div class="nx-tarjeta__cuerpo">
+                            <dl class="nx-datos">
+                                <dt>Última visita</dt><dd>18/11/2026</dd>
+                                <dt>Próxima cita</dt><dd>16/12/2026</dd>
+                            </dl>
+                        </div>
+                    </article>
+                </div>
+                <div class="nx-acciones">
+                    <button type="button" class="nx-boton nx-boton--principal">Guardar visita</button>
+                    <button type="button" class="nx-boton nx-boton--secundario">Exportar Excel</button>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+</body>
+</html>

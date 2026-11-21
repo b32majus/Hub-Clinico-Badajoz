@@ -4,7 +4,9 @@
 // capas, nada de colores ni medidas a mano (solo var(--nx-*)), tres puntos de
 // cambio, las piezas que usa modules/nexus/ tienen estilo, el catálogo está en
 // DESIGN.md y ninguna de las 19 páginas carga todavía el catálogo.
-// La parte de navegador (axe, teclado, anchos) es tools/nexus_piezas_browser_check.mjs.
+// Tramo 5: <nx-shell> (menús que apuntan a páginas que existen, sin perder enlaces de las
+// barras de hoy, iconos que existen, versión igual a la de la Home).
+// La parte de navegador es tools/nexus_piezas_browser_check.mjs y tools/nexus_shell_browser_check.mjs.
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -15,11 +17,13 @@ const LAYERS = '@layer nx.tokens, nx.base, nx.piezas, modulo;';
 const PIEZAS = 'css/nexus_piezas.css';
 const MUESTRA = 'muestra/nexus_piezas.html';
 const MUESTRA_CSS = 'muestra/muestra.css';
-const FILES = [PIEZAS, MUESTRA, MUESTRA_CSS, 'muestra/muestra.js', 'modules/nexus/piezas/nx-pestanas.js'];
+const MUESTRAS = [MUESTRA, 'muestra/nexus_shell_farmacia.html', 'muestra/nexus_shell_reuma.html'];
+const FILES = [PIEZAS, ...MUESTRAS, MUESTRA_CSS, 'muestra/muestra.js', 'modules/nexus/piezas/nx-pestanas.js',
+    'modules/nexus/piezas/nx-shell.js', 'modules/nexus/menus.js', 'modules/nexus/version.js'];
 const PUNTOS = ['64em', '48em', '36em'];
 const BLOQUES = ['nx-pagina', 'nx-solo-lector', 'nx-boton', 'nx-acciones', 'nx-campo', 'nx-casilla', 'nx-buscador',
     'nx-formulario', 'nx-tabla-marco', 'nx-tabla', 'nx-pestanas', 'nx-rejilla', 'nx-tarjeta', 'nx-datos', 'nx-etiqueta',
-    'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio'];
+    'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 const sinComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -81,7 +85,7 @@ await test('S4 toda variable que se usa existe en css/nexus_tokens.css (o la def
             if (m[2]) faltan.push(`${f}: var() con valor de reserva: ${m[0]}`);
             if (!tokens.has(m[1]) && !locales.has(m[1])) faltan.push(`${f}: ${m[1]}`);
         }
-        for (const v of locales) if (!v.startsWith('--nx-aviso-')) faltan.push(`${f}: define ${v} fuera de los tokens`);
+        for (const v of locales) if (!/^--nx-(aviso|shell)-/.test(v)) faltan.push(`${f}: define ${v} fuera de los tokens`);
     }
     assert.deepEqual([...new Set(faltan)], []);
 });
@@ -100,13 +104,14 @@ await test('S5 solo los tres puntos de cambio (64em, 48em, 36em) y de escritorio
 
 await test('S6 las clases que crea modules/nexus/ tienen estilo en el catálogo', async () => {
     const css = sinComentarios(read(PIEZAS));
-    const js = ['modules/nexus/avisos.js', 'modules/nexus/piezas/nx-aviso.js'].map(read).join('\n');
+    const js = ['modules/nexus/avisos.js', 'modules/nexus/piezas/nx-aviso.js', 'modules/nexus/piezas/nx-shell.js'].map(read).join('\n');
     const clases = new Set();
     for (const m of js.matchAll(/className\s*=\s*([^;]+);/g)) for (const c of m[1].match(/nx-[\w-]+/g) || []) clases.add(c);
     assert.ok(clases.size >= 8, `pocas clases encontradas: ${[...clases]}`);
     const sinEstilo = [...clases].filter((c) => !new RegExp(`\\.${c}(?![\\w-])`).test(css));
     assert.deepEqual(sinEstilo, []);
-    for (const sel of ['nx-aviso {', 'nx-aviso[tipo="error"]', 'nx-aviso[tipo="aviso"]', 'nx-aviso[tipo="ok"]', '.nx-dialogo::backdrop', '.nx-pestanas__pestana[aria-selected="true"]']) {
+    for (const sel of ['nx-aviso {', 'nx-aviso[tipo="error"]', 'nx-aviso[tipo="aviso"]', 'nx-aviso[tipo="ok"]', '.nx-dialogo::backdrop', '.nx-pestanas__pestana[aria-selected="true"]',
+        'nx-shell {', 'nx-shell[modulo="farmacia"]', 'nx-shell[modulo="reuma"]', '.nx-shell__enlace[aria-current="page"]', '.nx-shell__icono']) {
         assert.ok(css.includes(sel), `falta ${sel}`);
     }
 });
@@ -123,8 +128,9 @@ await test('S7 cada bloque del catálogo está en DESIGN.md §4 y no hay bloques
     for (const p of PUNTOS) assert.ok(design.includes(p), `DESIGN.md no menciona el punto de cambio ${p}`);
 });
 
-await test('S8 página de muestra: CSP sin unsafe-inline, rutas relativas, sin estilos ni scripts en línea', async () => {
-    const html = read(MUESTRA);
+await test('S8 páginas de muestra: CSP sin unsafe-inline, rutas relativas, sin estilos ni scripts en línea', async () => {
+  for (const muestra of MUESTRAS) {
+    const html = read(muestra);
     const csp = (html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/) || [])[1] || '';
     assert.ok(csp.includes("default-src 'self'") && !csp.includes('unsafe-inline'), `CSP: ${csp}`);
     assert.ok(/<meta charset="UTF-8">\s*<meta http-equiv="Content-Security-Policy"/.test(html), 'la CSP va justo después de charset');
@@ -137,7 +143,8 @@ await test('S8 página de muestra: CSP sin unsafe-inline, rutas relativas, sin e
     for (const css of ['../css/nexus_tokens.css', '../css/nexus_base.css', '../css/nexus_piezas.css', 'muestra.css']) {
         assert.ok(html.includes(`href="${css}"`), `no carga ${css}`);
     }
-    assert.ok(/\bCIP\b|\bNHC\b/.test(html) === false, 'identificadores clínicos en la muestra');
+    assert.ok(/\bCIP\b|\bNHC\b/.test(html) === false, `identificadores clínicos en ${muestra}`);
+  }
 });
 
 await test('S9 ninguna de las 19 páginas carga todavía el catálogo (su aspecto no cambia)', async () => {
@@ -150,6 +157,38 @@ await test('S10 axe-core fijado a una versión exacta solo para checks (devDepen
     const pkg = JSON.parse(read('package.json'));
     assert.match(String((pkg.devDependencies || {})['axe-core']), /^\d+\.\d+\.\d+$/);
     assert.equal((pkg.dependencies || {})['axe-core'], undefined);
+});
+
+await test('S11 <nx-shell>: los menús apuntan a páginas que existen, con iconos que existen, y no se pierde ningún enlace de las barras de hoy', async () => {
+    const { MENUS } = await import(path.join(ROOT, 'modules/nexus/menus.js'));
+    const fa = read('vendor/fontawesome/css/all.min.css');
+    const paginas = readdirSync(ROOT).filter((f) => f.endsWith('.html'));
+    const enMenus = new Set();
+    for (const [clave, m] of Object.entries(MENUS)) {
+        assert.ok(fa.includes(`.${m.icono}:before`), `${clave}: icono ${m.icono}`);
+        for (const s of m.secciones) for (const e of s.enlaces) {
+            assert.ok(paginas.includes(e.href), `${clave}: ${e.href} no existe`);
+            assert.ok(fa.includes(`.${e.icono}:before`), `${clave}: icono ${e.icono}`);
+            assert.ok(!enMenus.has(e.href), `${e.href} repetido`);
+            enMenus.add(e.href);
+        }
+    }
+    const manifiesto = JSON.parse(read('data/platform/home/deployment-manifest.json'));
+    const entradas = new Set(manifiesto.modules.map((m) => m.entryPath));
+    for (const m of manifiesto.modules) assert.ok(MENUS[m.moduleId], `módulo ${m.moduleId} del perfil sin menú`);
+    const hoy = new Set();
+    for (const p of paginas) {
+        const barra = (read(p).match(/<aside class="sidebar">[\s\S]*?<\/aside>/) || [''])[0];
+        for (const m of barra.matchAll(/<a [^>]*href="([^"#?]+)"/g)) hoy.add(m[1]);
+    }
+    assert.ok(hoy.size >= 14, `pocos enlaces en las barras de hoy: ${hoy.size}`);
+    assert.deepEqual([...hoy].filter((h) => !enMenus.has(h) && !entradas.has(h)).sort(), [], 'enlaces de las barras de hoy que la nueva no tiene');
+});
+
+await test('S12 la versión que enseña <nx-shell> es la misma que la de la Home (module-readiness.json)', async () => {
+    const { VERSION_SITIO } = await import(path.join(ROOT, 'modules/nexus/version.js'));
+    const releases = new Set(JSON.parse(read('data/platform/home/module-readiness.json')).modules.map((m) => m.release));
+    assert.deepEqual([...releases], [VERSION_SITIO]);
 });
 
 console.log(`\n${passed} PASS, ${failures.length} FAIL`);
