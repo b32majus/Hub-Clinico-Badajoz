@@ -1,6 +1,6 @@
 # DESIGN.md — Sistema de diseño de PROMueve Nexus
 
-**Estado:** esqueleto (tramo 0 de #956, 2026-11-21). Se completa por tramos.
+**Estado:** tramo 1 de #956 (2026-11-21): variables y base cargadas en las 19 páginas, sin uso todavía. Se completa por tramos.
 **Decisiones de fondo:** `docs/architecture/adr/ADR-009` (entorno) y `ADR-010` (sistema de diseño y arquitectura de interfaz).
 
 Quien implemente una pantalla no inventa colores, medidas ni piezas: usa lo que hay aquí. Si falta algo, **para y avisa**. La pieza nueva la diseña el modelo fuerte, Sil la aprueba y entra en este catálogo (ADR-010 §4).
@@ -19,7 +19,16 @@ Sale de los colores del logo. El contraste está calculado con texto blanco enci
 | Estados | verde, ámbar, rojo y azul fijos | — | Solo para OK, aviso, error e información |
 | Neutros | fondo `#f6f7f9`, texto `#1f2430` | — | — |
 
-Los valores exactos de los estados y de la escala de grises se fijan en el tramo 1, en `css/nexus_tokens.css`.
+Los valores exactos están en `css/nexus_tokens.css` (tramo 1, 21-11). Estados, con su contraste sobre blanco:
+
+| Estado | Texto e icono | Fondo |
+|---|---|---|
+| Correcto | `--nx-color-ok` `#1b7a3e` (5,4) | `--nx-color-ok-fondo` `#e8f5ec` |
+| Aviso | `--nx-color-aviso` `#8a5300` (6,3) | `--nx-color-aviso-fondo` `#fdf3e1` |
+| Error | `--nx-color-error` `#a4262c` (7,3) | `--nx-color-error-fondo` `#fbeaea` |
+| Información | `--nx-color-info` `#1d5fa8` (6,5) | `--nx-color-info-fondo` `#e8f0fb` |
+
+Grises: `--nx-color-texto-suave` `#5a6272` (6,1) para texto secundario; `--nx-color-tenue` `#8a93a5` (3,1) solo para iconos y bordes, nunca para texto; `--nx-color-borde` `#d6dae2`; `--nx-color-superficie-suave` `#eef0f4`. Son los mismos valores que ya usaba la Home, cuyas variables `--nexus-home-*` apuntan ahora a estas.
 
 ## 2. Capas CSS
 

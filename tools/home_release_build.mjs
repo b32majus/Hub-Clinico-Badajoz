@@ -66,6 +66,8 @@ const SCHEMA_DIR = path.join(ROOT, 'schemas', 'deployment');
 // emitted sorted; fail closed if any file is missing under codeRoot.
 const CODE_FILES = [
   'assets/branding/nexus-home-lockup.png',
+  'css/nexus_base.css',
+  'css/nexus_tokens.css',
   'favicon.svg',
   'modules/home/home-bootstrap.js',
   'modules/home/home-page.js',

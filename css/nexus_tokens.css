@@ -1,0 +1,88 @@
+/*
+ * PROMueve Nexus — variables comunes de diseño (capa nx.tokens).
+ * ADR-010 §2 y DESIGN.md §1. Tramo 1 de #956: solo se declaran; ninguna
+ * pantalla las usa todavía, así que cargar este fichero no cambia el aspecto.
+ * Contrastes calculados (WCAG 2.1) sobre blanco salvo que se indique.
+ * Regla: fuera de este fichero no se escriben colores ni medidas a mano.
+ */
+
+@layer nx.tokens, nx.base, nx.piezas, modulo;
+
+@layer nx.tokens {
+  :root {
+    /* Marca y acción principal */
+    --nx-color-principal: #3c107c;          /* 13,5: botón principal, enlaces, foco */
+    --nx-color-sobre-principal: #ffffff;
+    --nx-color-marca-verde: #429a37;        /* 3,6: solo marca, nunca en botones */
+
+    /* Acentos de módulo: cabecera, icono y borde; no en botones principales */
+    --nx-color-farmacia: #008777;           /* 4,4 */
+    --nx-color-farmacia-texto: #006b5e;     /* 6,3 */
+    --nx-color-reuma: #dc0182;              /* 4,8 */
+    --nx-color-reuma-texto: #b0016a;        /* 6,9 */
+    --nx-color-derma: #f04e37;              /* 3,6 (aprox.) */
+    --nx-color-derma-texto: #c2361f;        /* 5,5 */
+
+    /* Neutros */
+    --nx-color-fondo: #f6f7f9;
+    --nx-color-superficie: #ffffff;
+    --nx-color-superficie-suave: #eef0f4;
+    --nx-color-texto: #1f2430;              /* 14,5 sobre el fondo */
+    --nx-color-texto-suave: #5a6272;        /* 6,1; 5,7 sobre el fondo */
+    --nx-color-tenue: #8a93a5;              /* 3,1: iconos y bordes; no para texto */
+    --nx-color-borde: #d6dae2;
+
+    /* Estados: solo para correcto, aviso, error e información; nunca solo color */
+    --nx-color-ok: #1b7a3e;                 /* 5,4; 4,8 sobre su fondo */
+    --nx-color-ok-fondo: #e8f5ec;
+    --nx-color-aviso: #8a5300;              /* 6,3; 5,8 sobre su fondo */
+    --nx-color-aviso-fondo: #fdf3e1;
+    --nx-color-error: #a4262c;              /* 7,3; 6,2 sobre su fondo */
+    --nx-color-error-fondo: #fbeaea;
+    --nx-color-info: #1d5fa8;               /* 6,5; 5,6 sobre su fondo */
+    --nx-color-info-fondo: #e8f0fb;
+
+    /* Foco visible (R8) */
+    --nx-foco-color: var(--nx-color-principal);
+    --nx-foco-ancho: 3px;
+    --nx-foco-separacion: 2px;
+
+    /* Tipografía. Inter se guarda dentro de la app en el tramo 2; hasta
+       entonces el navegador usa la letra del sistema de la lista. */
+    --nx-fuente: "Inter", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --nx-fuente-mono: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+    --nx-texto-xs: 0.75rem;
+    --nx-texto-sm: 0.875rem;
+    --nx-texto-base: 1rem;
+    --nx-texto-lg: 1.125rem;
+    --nx-texto-xl: 1.25rem;
+    --nx-texto-2xl: 1.5rem;
+    --nx-texto-3xl: 2rem;
+    --nx-peso-normal: 400;
+    --nx-peso-medio: 500;
+    --nx-peso-semi: 600;
+    --nx-peso-negrita: 700;
+    --nx-interlineado: 1.5;
+    --nx-interlineado-titulo: 1.25;
+
+    /* Redondeo */
+    --nx-radio-sm: 4px;
+    --nx-radio-md: 8px;
+    --nx-radio-lg: 12px;
+    --nx-radio-pildora: 999px;
+
+    /* Espaciado */
+    --nx-espacio-1: 0.25rem;
+    --nx-espacio-2: 0.5rem;
+    --nx-espacio-3: 0.75rem;
+    --nx-espacio-4: 1rem;
+    --nx-espacio-5: 1.5rem;
+    --nx-espacio-6: 2rem;
+    --nx-espacio-7: 3rem;
+
+    /* Sombra */
+    --nx-sombra-sm: 0 1px 2px rgba(31, 36, 48, 0.08);
+    --nx-sombra-md: 0 4px 12px rgba(31, 36, 48, 0.10);
+    --nx-sombra-lg: 0 12px 32px rgba(31, 36, 48, 0.14);
+  }
+}

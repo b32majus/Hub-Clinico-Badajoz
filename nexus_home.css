@@ -10,14 +10,14 @@
 
 :root {
   color-scheme: light;
-  --nexus-home-surface: #f6f7f9;
-  --nexus-home-ink: #1f2430;
-  --nexus-home-muted: #5a6272;
-  --nexus-home-faint: #8a93a5;
-  --nexus-home-border: #d6dae2;
-  --nexus-home-card: #ffffff;
-  --nexus-home-card-muted: #eef0f4;
-  --nexus-home-danger: #a4262c;
+  --nexus-home-surface: var(--nx-color-fondo);
+  --nexus-home-ink: var(--nx-color-texto);
+  --nexus-home-muted: var(--nx-color-texto-suave);
+  --nexus-home-faint: var(--nx-color-tenue);
+  --nexus-home-border: var(--nx-color-borde);
+  --nexus-home-card: var(--nx-color-superficie);
+  --nexus-home-card-muted: var(--nx-color-superficie-suave);
+  --nexus-home-danger: var(--nx-color-error);
   --nexus-home-accent-magenta: #b83280;
   --nexus-home-accent-purple: #6d4fc2;
   --nexus-home-accent-cyan: #0e8fa8;

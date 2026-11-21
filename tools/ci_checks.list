@@ -101,6 +101,7 @@ farmacia_validacion_ui_cleanup_check.mjs
 farmacia_validation_export_truth_check.mjs
 nexus_home_root_equivalence_check.mjs
 nexus_home_ux01_presentation_check.mjs
+nexus_tokens_base_check.mjs
 reuma_ar_avisos_check.mjs
 reuma_cdn_sri_check.mjs
 reuma_current_patient_check.mjs
