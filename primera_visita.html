@@ -10,76 +10,34 @@
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t1">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261121-t1">
+    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t5">
+    <script type="module" src="modules/nexus/piezas/nx-shell.js"></script>
     <link rel="stylesheet" href="style.css?v=20260307w">
     <link rel="stylesheet" href="style_primera_visita.css?v=20260928b">
 </head>
 
 <body>
 
-    <div class="hub-shell">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-circle"><span class="logo-text">HC</span></div>
-                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
-            </div>
-
-            <div class="user-block">
-                <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-                <span class="user-name" id="currentProfessional"></span>
-                <button type="button" class="logout-btn" id="logoutBtn" aria-label="Cerrar sesión">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-
-            <div class="search-container">
-                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
-                <i class="fas fa-search search-icon" aria-hidden="true"></i>
-                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
-                    <i class="fas fa-times-circle"></i>
-                </button>
-            </div>
-
-            <div class="sidebar-nav-area">
-            <div class="nav-section">
-                <h3 class="nav-title">Consulta</h3>
-                <ul class="nav-list">
-                    <li><a href="reuma_index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
-                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i
-                                class="fas fa-plus-circle"></i>Nueva Visita</a></li>
-                    <li><a href="seguimiento.html" class="nav-link" data-nav-link><i
-                                class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
-                </ul>
-            </div>
-
-            <div class="nav-section">
-                <h3 class="nav-title">Gestión</h3>
-                <ul class="nav-list">
-                    <li><a href="estadisticas.html" class="nav-link" data-nav-link><i
-                                class="fas fa-chart-bar"></i>Estadísticas</a></li>
-                    <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i
-                                class="fas fa-users"></i>Profesionales</a></li>
-                </ul>
-            </div>
-
-            <div class="nav-section">
-                <h3 class="nav-title">Farmacia</h3>
-                <ul class="nav-list">
-                    <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-prescription-bottle-alt"></i>Farmacia Hospitalaria</a></li>
-                </ul>
-            </div>
-
-            </div>
-            <div class="db-status-indicator db-status-indicator--empty" id="dbStatusIndicator" role="status" title="Clic para cargar/recargar BD">
+    <div class="nx-marco">
+<nx-shell modulo="reuma" raiz="" pagina="primera_visita.html">
+<p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional"></span></p>
+<div class="nx-buscador" role="search">
+<div class="nx-campo">
+<label class="nx-campo__etiqueta" for="patientSearch">Buscar paciente</label>
+<input class="nx-campo__control" type="text" id="patientSearch" placeholder="Buscar paciente por CIP..." autocomplete="off">
+</div>
+<button type="button" class="nx-boton nx-boton--secundario nx-boton--icono hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda"><i class="fas fa-times-circle" aria-hidden="true"></i></button>
+</div>
+<div class="db-status-indicator db-status-indicator--empty" id="dbStatusIndicator" role="status" title="Clic para cargar/recargar BD">
                 <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
                 <div class="db-status-indicator__text">
                     <span class="db-status-indicator__label" id="dbStatusLabel">BD no cargada</span>
                     <span class="db-status-indicator__time" id="dbStatusTime"></span>
                 </div>
             </div>
-            <div class="sidebar-footer">v. 1.0.0</div>
-        </aside>
+</nx-shell>
 
-        <main class="main-content">
+        <main class="main-content nx-marco__contenido">
             <div class="form-container">
                 <header class="form-header">
                     <h1>HUB CLÍNICO - PRIMERA VISITA <span class="highlight" id="patologiaHighlight">Reumatología</span>

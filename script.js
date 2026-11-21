@@ -206,13 +206,6 @@ function updateDbStatus() {
 // === Sidebar unificado ===
 
 function initSidebar() {
-    // Detectar p\u00e1gina actual y marcar nav-link activo
-    var currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    document.querySelectorAll('.nav-link').forEach(function(link) {
-        var href = (link.getAttribute('href') || '').toLowerCase();
-        link.classList.toggle('active', href === currentPage);
-    });
-
     // Cargar profesional desde localStorage
     var stored = localStorage.getItem('hubSelectedProfessional');
     var label = document.getElementById('currentProfessional');
@@ -315,17 +308,6 @@ function initSessionGate() {
             gate.classList.add('hidden');
         });
     }
-}
-
-// === Cierre de sesi\u00f3n ===
-
-function initLogoutBtn() {
-    var btn = document.getElementById('logoutBtn');
-    if (!btn) return;
-    btn.addEventListener('click', function() {
-        localStorage.removeItem('hubSelectedProfessional');
-        window.location.href = 'reuma_index.html';
-    });
 }
 
 function initDbStatusIndicator() {
@@ -1053,7 +1035,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initSidebar();
 
     // Inicializar logout
-    initLogoutBtn();
 
     // Session gate (solo en la portada Reuma: reuma_index.html)
     initSessionGate();

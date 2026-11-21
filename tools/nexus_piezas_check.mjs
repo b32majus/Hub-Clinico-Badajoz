@@ -23,7 +23,7 @@ const FILES = [PIEZAS, ...MUESTRAS, MUESTRA_CSS, 'muestra/muestra.js', 'modules/
 const PUNTOS = ['64em', '48em', '36em'];
 const BLOQUES = ['nx-pagina', 'nx-solo-lector', 'nx-boton', 'nx-acciones', 'nx-campo', 'nx-casilla', 'nx-buscador',
     'nx-formulario', 'nx-tabla-marco', 'nx-tabla', 'nx-pestanas', 'nx-rejilla', 'nx-tarjeta', 'nx-datos', 'nx-etiqueta',
-    'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell'];
+    'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell', 'nx-profesional'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 const sinComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -147,10 +147,12 @@ await test('S8 páginas de muestra: CSP sin unsafe-inline, rutas relativas, sin 
   }
 });
 
-await test('S9 ninguna de las 19 páginas carga todavía el catálogo (su aspecto no cambia)', async () => {
+await test('S9 el catálogo lo cargan las 17 páginas con barra; la Home (index.html y nexus_home.html) no', async () => {
     const paginas = readdirSync(ROOT).filter((f) => f.endsWith('.html'));
     assert.equal(paginas.length, 19);
-    assert.deepEqual(paginas.filter((p) => read(p).includes('nexus_piezas.css')), []);
+    const conCatalogo = paginas.filter((p) => read(p).includes('nexus_piezas.css'));
+    assert.equal(conCatalogo.length, 17);
+    assert.deepEqual(paginas.filter((p) => !conCatalogo.includes(p)).sort(), ['index.html', 'nexus_home.html']);
 });
 
 await test('S10 axe-core fijado a una versión exacta solo para checks (devDependencies)', async () => {
@@ -176,13 +178,12 @@ await test('S11 <nx-shell>: los menús apuntan a páginas que existen, con icono
     const manifiesto = JSON.parse(read('data/platform/home/deployment-manifest.json'));
     const entradas = new Set(manifiesto.modules.map((m) => m.entryPath));
     for (const m of manifiesto.modules) assert.ok(MENUS[m.moduleId], `módulo ${m.moduleId} del perfil sin menú`);
-    const hoy = new Set();
-    for (const p of paginas) {
-        const barra = (read(p).match(/<aside class="sidebar">[\s\S]*?<\/aside>/) || [''])[0];
-        for (const m of barra.matchAll(/<a [^>]*href="([^"#?]+)"/g)) hoy.add(m[1]);
-    }
-    assert.ok(hoy.size >= 14, `pocos enlaces en las barras de hoy: ${hoy.size}`);
-    assert.deepEqual([...hoy].filter((h) => !enMenus.has(h) && !entradas.has(h)).sort(), [], 'enlaces de las barras de hoy que la nueva no tiene');
+    // Enlaces que tenían las barras viejas (inventario del 21-11, antes de colocar <nx-shell>): ninguno puede perderse.
+    const hoy = ['reuma_index.html', 'primera_visita.html', 'seguimiento.html', 'estadisticas.html', 'manage_professionals.html',
+        'farmacia_index.html', 'farmacia_validacion.html', 'farmacia_primera_visita.html', 'farmacia_seguimiento.html',
+        'farmacia_dashboard_paciente.html', 'farmacia_actividad_servicio.html', 'farmacia_estadisticas.html',
+        'farmacia_farmacos.html', 'farmacia_profesionales.html'];
+    assert.deepEqual(hoy.filter((h) => !enMenus.has(h) && !entradas.has(h)).sort(), [], 'enlaces de las barras viejas que la nueva no tiene');
 });
 
 await test('S12 la versión que enseña <nx-shell> es la misma que la de la Home (module-readiness.json)', async () => {

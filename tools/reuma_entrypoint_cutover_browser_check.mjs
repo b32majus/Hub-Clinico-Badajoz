@@ -226,7 +226,7 @@ async function main() {
                 const scripts = Array.from(document.querySelectorAll('script[src]')).map((s) => s.getAttribute('src'));
                 const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map((l) => l.getAttribute('href'));
                 const ids = ['sessionGate', 'gateExcelInput', 'gateProfessionalSelect', 'gateConfirmBtn',
-                    'dashboardContent', 'patientSearch', 'currentProfessional', 'logoutBtn', 'dbStatusIndicator'];
+                    'dashboardContent', 'patientSearch', 'currentProfessional', 'dbStatusIndicator'];
                 return {
                     scripts, styles,
                     missingIds: ids.filter((id) => !document.getElementById(id)),
@@ -240,9 +240,9 @@ async function main() {
             record('B4 reuma_index.html preserves script asset order and DOM ids',
                 scriptsOk && parity.missingIds.length === 0,
                 `scripts=${JSON.stringify(parity.scripts)} missingIds=${JSON.stringify(parity.missingIds)}`);
-            const inicioHref = await page.getAttribute('aside.sidebar a.nav-link[href="reuma_index.html"]', 'href').catch(() => null);
+            const inicioHref = await page.getAttribute('nx-shell a.nx-shell__enlace[href="reuma_index.html"]', 'href').catch(() => null);
             const farmaciaHref = await page.evaluate(() => {
-                const links = Array.from(document.querySelectorAll('aside.sidebar a.nav-link'));
+                const links = Array.from(document.querySelectorAll('nx-shell a.nx-shell__enlace'));
                 const hit = links.find((a) => /farmacia hospitalaria/i.test(a.textContent || ''));
                 return hit ? hit.getAttribute('href') : null;
             });
@@ -260,14 +260,14 @@ async function main() {
             await passSupportedGate(page);
             await Promise.all([
                 page.waitForURL('**/primera_visita.html', { timeout: 15000 }),
-                page.click('aside.sidebar a.nav-link[href="primera_visita.html"]'),
+                page.click('nx-shell a.nx-shell__enlace[href="primera_visita.html"]'),
             ]);
             const formPresent = await page.evaluate(() => !!document.querySelector('form, #visitForm, main'));
             record('C1 supported visit route works from reuma_index.html',
                 /primera_visita\.html$/.test(page.url()) && formPresent, `url=${page.url()} form=${formPresent}`);
             await Promise.all([
                 page.waitForURL('**/reuma_index.html', { timeout: 15000 }),
-                page.click('aside.sidebar a.nav-link[href="reuma_index.html"]'),
+                page.click('nx-shell a.nx-shell__enlace[href="reuma_index.html"]'),
             ]);
             const gateAfter = await gateState(page);
             record('C2 return-to-Reuma anchor lands back on reuma_index.html with session kept',
@@ -283,7 +283,7 @@ async function main() {
             await page.goto(`${origin}/farmacia_index.html`, { waitUntil: 'load', timeout: 45000 });
             await page.waitForTimeout(1000);
             const anchorHref = await page.evaluate(() => {
-                const links = Array.from(document.querySelectorAll('a.nav-link'));
+                const links = Array.from(document.querySelectorAll('a.nx-shell__enlace'));
                 const hit = links.find((a) => /reumatolog/i.test(a.textContent || ''));
                 return hit ? hit.getAttribute('href') : null;
             });
@@ -293,7 +293,7 @@ async function main() {
                 await Promise.all([
                     page.waitForURL('**/reuma_index.html', { timeout: 15000 }),
                     page.evaluate(() => {
-                        const links = Array.from(document.querySelectorAll('a.nav-link'));
+                        const links = Array.from(document.querySelectorAll('a.nx-shell__enlace'));
                         const hit = links.find((a) => /reumatolog/i.test(a.textContent || ''));
                         if (hit) hit.click();
                     }),

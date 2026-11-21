@@ -171,10 +171,13 @@ check('preserve-exactly: Excel import stays accessible',
   && indexHtml.indexOf('id="inputExcelEnfermeria"') !== -1
   && indexHtml.indexOf('id="btnCargarExcelFarmacia"') !== -1
   && indexHtml.indexOf('id="inputExcelFarmacia"') !== -1);
+// Desde #956 tramo 5 los enlaces de la barra los genera <nx-shell> desde modules/nexus/menus.js.
+const menusJs = fs.readFileSync(path.join(ROOT, 'modules/nexus/menus.js'), 'utf8');
 check('preserve-exactly: sidebar Dashboard Paciente + Pendientes href intact',
-  indexHtml.indexOf('Dashboard Paciente') !== -1
-  && indexHtml.indexOf('href="farmacia_actividad_servicio.html"') !== -1
-  && indexHtml.indexOf('>Pendientes</a>') !== -1);
+  indexHtml.indexOf('<nx-shell modulo="farmacia"') !== -1
+  && menusJs.indexOf("'Dashboard Paciente'") !== -1
+  && menusJs.indexOf("'farmacia_actividad_servicio.html'") !== -1
+  && menusJs.indexOf("'Pendientes'") !== -1);
 check('farmacia_common still loads before the page script',
   indexHtml.indexOf('scripts/farmacia_common.js?v=') !== -1
   && indexHtml.indexOf('scripts/farmacia_common.js?v=') < indexHtml.indexOf('scripts/farmacia_index.js?v='));

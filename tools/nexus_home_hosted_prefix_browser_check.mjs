@@ -309,9 +309,9 @@ try {
     await page.goto(`${BASE}farmacia_index.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.waitForTimeout(800);
     const farmaciaMarker = await page.evaluate(() => ({
-      statsLink: !!document.querySelector('a.nav-link[href="farmacia_estadisticas.html"]'),
+      statsLink: !!document.querySelector('a.nx-shell__enlace[href="farmacia_estadisticas.html"]'),
       reumaBack: (() => {
-        const links = Array.from(document.querySelectorAll('a.nav-link'));
+        const links = Array.from(document.querySelectorAll('a.nx-shell__enlace'));
         const hit = links.find((a) => /reumatolog/i.test(a.textContent || ''));
         return hit ? hit.getAttribute('href') : null;
       })(),
@@ -323,7 +323,7 @@ try {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.waitForTimeout(800);
     const farmaciaReload = await page.evaluate(() =>
-      !!document.querySelector('a.nav-link[href="farmacia_estadisticas.html"]'));
+      !!document.querySelector('a.nx-shell__enlace[href="farmacia_estadisticas.html"]'));
     record('H2f farmacia_index.html survives refresh', page.url() === `${BASE}farmacia_index.html` && farmaciaReload,
       `url=${page.url()} statsLink=${farmaciaReload}`);
     await context.close();
@@ -417,7 +417,7 @@ try {
     await Promise.all([
       page.waitForURL((url) => url.pathname === `${PROJECT}/farmacia_estadisticas.html`,
         { waitUntil: 'domcontentloaded', timeout: 30000 }),
-      page.locator('a.nav-link[href="farmacia_estadisticas.html"]').click(),
+      page.locator('a.nx-shell__enlace[href="farmacia_estadisticas.html"]').click(),
     ]);
     await page.waitForFunction(() => {
       const state = window.FarmaciaStatisticsDashboard?.getState();

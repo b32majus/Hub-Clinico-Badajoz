@@ -71,12 +71,4 @@
     padding: 0;
   }
 
-  .muestra__profesional {
-    display: flex;
-    align-items: center;
-    gap: var(--nx-espacio-2);
-    margin: 0;
-    padding-inline: var(--nx-espacio-3);
-    font-weight: var(--nx-peso-medio);
-  }
 }

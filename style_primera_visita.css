@@ -25,7 +25,7 @@ body {
 }
 
 /* Layout con sidebar */
-body:has(.hub-shell) {
+body:has(.nx-marco) {
     display: block;
     padding: 0;
 }
