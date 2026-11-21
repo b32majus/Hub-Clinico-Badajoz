@@ -64,7 +64,10 @@ await test('M3 solo las 17 páginas con barra cargan modules/nexus, y solo pieza
         .filter((f) => /\.js$/.test(f) && read(f).includes('modules/nexus'));
     assert.deepEqual(scripts, [], 'ningún script de producto usa modules/nexus todavía');
     const mal = readdirSync(ROOT).filter((f) => f.endsWith('.html'))
-        .filter((f) => read(f).replace(/modules\/nexus\/piezas\/nx-shell\.js/g, '').includes('modules/nexus'));
+        .filter((f) => read(f)
+            // Las dependencias de nx-shell solo se adelantan con <link rel="modulepreload"> (carga de la barra, 21-11).
+            .replace(/<link rel="modulepreload" href="modules\/nexus\/(menus|version|avisos|piezas\/nx-aviso)\.js">/g, '')
+            .replace(/modules\/nexus\/piezas\/nx-shell\.js/g, '').includes('modules/nexus'));
     assert.deepEqual(mal, [], 'las páginas solo cargan piezas/nx-shell.js');
 });
 
