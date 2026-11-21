@@ -10,18 +10,6 @@
     min-height: 100vh;
 }
 
-.profile-badge {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--nx-color-modulo-suave);
-    color: var(--nx-color-modulo-texto);
-    font-size: 0.68rem;
-    font-weight: 600;
-}
-
 .demo-banner {
     display: flex;
     align-items: flex-start;

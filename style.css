@@ -1,9 +1,6 @@
 @import url('vendor/inter/inter.css');
 
 :root {
-    --sidebar-bg: var(--nx-color-superficie);
-    --sidebar-bg-gradient: var(--nx-color-superficie);
-    --sidebar-width: 280px;
     --primary-blue: var(--nx-color-modulo);
     --text-muted: var(--nx-color-texto-suave);
     --main-bg: var(--nx-color-fondo);
