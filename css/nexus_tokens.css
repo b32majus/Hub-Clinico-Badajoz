@@ -119,6 +119,15 @@
     --nx-color-reuma-suave: #fce7f3;
     --nx-color-derma-suave: #fdebe8;
 
+    /* Tramo 7: series de gráficos (categorías sin significado clínico; ni verde, ni ámbar, ni rojo) */
+    --nx-color-serie-1: #1d5fa8;            /* 6,5 sobre blanco */
+    --nx-color-serie-2: #7c4dbd;            /* 5,8 */
+    --nx-color-serie-3: #008777;            /* 4,4 */
+    --nx-color-serie-4: #c2185b;            /* 5,9 */
+    --nx-color-serie-5: #475569;            /* 7,6 */
+    --nx-color-serie-6: #8d6e63;            /* 4,6 */
+    --nx-color-serie-sin-dato: var(--nx-color-tenue); /* «No registrado»: siempre gris */
+
     /* Acento del módulo de la página: sale del <nx-shell modulo> que lleve. Sin módulo, el principal. */
     --nx-color-modulo: var(--nx-color-principal);
     --nx-color-modulo-texto: var(--nx-color-principal);

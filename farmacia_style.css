@@ -4172,19 +4172,9 @@
     background: var(--nx-color-superficie);
     border: 1px solid var(--nx-color-borde);
     box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-texto) 4%, transparent);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.stats-kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
-}
 
-.stats-kpi-card--green { border-top: 3px solid var(--nx-color-ok); }
-.stats-kpi-card--orange { border-top: 3px solid var(--nx-color-aviso); }
-.stats-kpi-card--red { border-top: 3px solid var(--nx-color-error); }
-.stats-kpi-card--yellow { border-top: 3px solid var(--nx-color-aviso); }
-.stats-kpi-card--purple { border-top: 3px solid var(--nx-color-principal); }
 
 .stats-kpi-icon {
     width: 36px;
@@ -4195,12 +4185,9 @@
     justify-content: center;
     font-size: 0.95rem;
 }
+.stats-kpi-card--neutro .stats-kpi-icon { background: var(--nx-color-modulo-suave); color: var(--nx-color-modulo-texto); }
+.stats-kpi-card--aviso .stats-kpi-icon { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); }
 
-.stats-kpi-card--green .stats-kpi-icon { background: var(--nx-color-ok-fondo); color: var(--nx-color-ok); }
-.stats-kpi-card--orange .stats-kpi-icon { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); }
-.stats-kpi-card--red .stats-kpi-icon { background: var(--nx-color-error-fondo); color: var(--nx-color-error); }
-.stats-kpi-card--yellow .stats-kpi-icon { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); }
-.stats-kpi-card--purple .stats-kpi-icon { background: var(--nx-color-principal-suave); color: var(--nx-color-principal); }
 
 .stats-kpi-label {
     font-size: 0.78rem;
@@ -4481,15 +4468,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.stats-chart-block-title::before {
-    content: '';
-    width: 4px;
-    height: 18px;
-    border-radius: 2px;
-    background: var(--nx-color-modulo-texto);
-    display: inline-block;
 }
 
 .stats-chart-block-subtitle {

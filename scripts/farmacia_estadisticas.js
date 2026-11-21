@@ -358,12 +358,12 @@
             if (item.profile.validationResult === 'pending') values.pending += 1;
         });
         var cards = [
-            ['stats-kpi-card--green', 'fa-users', 'Pacientes incluidos', filteredPatients.length],
-            ['stats-kpi-card--green', 'fa-syringe', 'Tratamiento activo explícito', values.active],
-            ['stats-kpi-card--orange', 'fa-clipboard-check', 'PROM registrado', values.prom],
-            ['stats-kpi-card--purple', 'fa-list-check', 'Adherencia registrada', values.adherence],
-            ['stats-kpi-card--yellow', 'fa-exclamation-circle', 'Pacientes con EA registrado', eaSummaryOf(filteredPatients).patientsWithEpisodes],
-            ['stats-kpi-card--red', 'fa-clock', 'Validación pendiente explícita', values.pending]
+            ['stats-kpi-card--neutro', 'fa-users', 'Pacientes incluidos', filteredPatients.length],
+            ['stats-kpi-card--neutro', 'fa-syringe', 'Tratamiento activo explícito', values.active],
+            ['stats-kpi-card--neutro', 'fa-clipboard-check', 'PROM registrado', values.prom],
+            ['stats-kpi-card--neutro', 'fa-list-check', 'Adherencia registrada', values.adherence],
+            ['stats-kpi-card--aviso', 'fa-exclamation-circle', 'Pacientes con EA registrado', eaSummaryOf(filteredPatients).patientsWithEpisodes],
+            ['stats-kpi-card--aviso', 'fa-clock', 'Validación pendiente explícita', values.pending]
         ];
         cards.forEach(function (data) {
             var card = el('div', 'stats-kpi-card ' + data[0]);
@@ -466,13 +466,17 @@
             return;
         }
         var total = values.reduce(function (sum, item) { return sum + item.value; }, 0);
-        var colors = ['#22C55E', '#F97316', '#EF4444', '#EAB308', '#A855F7', '#3B82F6', '#64748B'];
+        // Series sin significado clínico (DESIGN.md §1); «No registrado» siempre en gris.
+        var colors = [1, 2, 3, 4, 5, 6].map(function (n) { return 'var(--nx-color-serie-' + n + ')'; });
+        var colorOf = function (item, index) {
+            return item.label === 'No registrado' ? 'var(--nx-color-serie-sin-dato)' : colors[index % colors.length];
+        };
         var wrapper = el('div', 'stats-donut-wrap');
         var ring = el('div', 'stats-donut-ring');
         var current = 0;
         var gradient = values.map(function (item, index) {
             var percentage = total ? (item.value / total) * 100 : 0;
-            var segment = colors[index % colors.length] + ' ' + current + '% ' + (current + percentage) + '%';
+            var segment = colorOf(item, index) + ' ' + current + '% ' + (current + percentage) + '%';
             current += percentage;
             return segment;
         });
@@ -486,7 +490,7 @@
         values.forEach(function (item, index) {
             var legendItem = el('div', 'stats-donut-legend-item');
             var dot = el('span', 'stats-donut-legend-dot');
-            dot.style.backgroundColor = colors[index % colors.length];
+            dot.style.backgroundColor = colorOf(item, index);
             legendItem.appendChild(dot);
             legendItem.appendChild(document.createTextNode(item.label + ' '));
             legendItem.appendChild(el('span', 'stats-donut-legend-count', item.value + ' (' + (total ? Math.round((item.value / total) * 100) : 0) + '%)'));
