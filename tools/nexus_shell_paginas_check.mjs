@@ -70,7 +70,12 @@ test('P4 cada página carga nexus_piezas.css y el módulo nx-shell', () => {
     for (const [p] of PAGINAS) {
         const src = html(p);
         if (!/href="css\/nexus_piezas\.css/.test(src)) malas.push(`${p}: sin nexus_piezas.css`);
-        if (!/<script type="module" src="modules\/nexus\/piezas\/nx-shell\.js/.test(src)) malas.push(`${p}: sin módulo nx-shell`);
+        // La barra no espera al resto de scripts (Sil, 21-11: «tenía retraso al cargar»):
+        // descarga adelantada en <head> y módulo async justo tras </nx-shell>.
+        const cabeza = src.split('</head>')[0];
+        if (!cabeza.includes('<link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">')) malas.push(`${p}: sin modulepreload en <head>`);
+        if (!/<\/nx-shell>\s*<script type="module" async src="modules\/nexus\/piezas\/nx-shell\.js"><\/script>/.test(src)) malas.push(`${p}: el módulo nx-shell no va async tras </nx-shell>`);
+        if ((src.match(/<script[^>]*nx-shell\.js/g) || []).length !== 1) malas.push(`${p}: nx-shell.js cargado más de una vez`);
     }
     vacio(malas);
 });
