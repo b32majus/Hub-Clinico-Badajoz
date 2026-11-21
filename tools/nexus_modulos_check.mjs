@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = 'modules/nexus';
-const FILES = ['index.js', 'texto.js', 'fechas.js', 'avisos.js', 'piezas/nx-aviso.js', 'piezas/nx-pestanas.js'];
+const FILES = ['index.js', 'texto.js', 'fechas.js', 'avisos.js', 'piezas/nx-aviso.js', 'piezas/nx-pestanas.js', 'piezas/nx-shell.js', 'menus.js', 'version.js'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
 const load = (rel) => import(pathToFileURL(path.join(ROOT, DIR, rel)).href);
 function walk(dir) {
@@ -50,7 +50,11 @@ await test('M2 módulos ES: imports solo relativos y con .js; nada de innerHTML,
         if (/\b(alert|confirm|prompt)\s*\(/.test(src)) problems.push(`${f}: alert/confirm/prompt`);
         if (/#[0-9a-fA-F]{3,8}\b|rgba?\(|style\s*=|\.style\./.test(src)) problems.push(`${f}: color o estilo escrito a mano (va en CSS, tramo 4)`);
         if (/window\.[A-Za-z]+\s*=|globalThis\.[A-Za-z]+\s*=/.test(src)) problems.push(`${f}: crea un global`);
-        if (/localStorage|sessionStorage|indexedDB|fetch\s*\(|XMLHttpRequest/.test(src)) problems.push(`${f}: almacenamiento o red`);
+        // Única excepción (tramo 5, ADR-009 R5 y ADR-010 §3): <nx-shell> lee el perfil del hospital y «Terminar» olvida el profesional.
+        const sinExcepciones = f === 'piezas/nx-shell.js'
+            ? src.replace('fetch(raiz + RUTA_MANIFIESTO', '').replace('localStorage.removeItem(CLAVE_PROFESIONAL)', '')
+            : src;
+        if (/localStorage|sessionStorage|indexedDB|fetch\s*\(|XMLHttpRequest/.test(sinExcepciones)) problems.push(`${f}: almacenamiento o red`);
     }
     assert.deepEqual(problems, []);
 });
@@ -65,7 +69,7 @@ await test('M4 index.js reexporta la API pública', async () => {
     const m = await load('texto.js');
     const f = await load('fechas.js');
     const idx = read(`${DIR}/index.js`);
-    for (const name of ['escaparHtml', 'normalizarTexto', 'claveBusqueda', 'leerFecha', 'fechaIso', 'fechaCorta', 'fechaLarga', 'avisar', 'confirmar', 'NxPestanas']) {
+    for (const name of ['escaparHtml', 'normalizarTexto', 'claveBusqueda', 'leerFecha', 'fechaIso', 'fechaCorta', 'fechaLarga', 'avisar', 'confirmar', 'NxPestanas', 'NxShell', 'MENUS', 'VERSION_SITIO']) {
         assert.ok(new RegExp(`\\b${name}\\b`).test(idx), `index.js no reexporta ${name}`);
     }
     assert.equal(typeof m.escaparHtml, 'function');

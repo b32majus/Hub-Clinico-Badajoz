@@ -65,4 +65,18 @@
       padding: var(--nx-espacio-4) var(--nx-espacio-4) var(--nx-espacio-6);
     }
   }
+
+  .muestra--marco {
+    margin: 0;
+    padding: 0;
+  }
+
+  .muestra__profesional {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-espacio-2);
+    margin: 0;
+    padding-inline: var(--nx-espacio-3);
+    font-weight: var(--nx-peso-medio);
+  }
 }

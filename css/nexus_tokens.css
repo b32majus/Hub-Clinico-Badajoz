@@ -105,5 +105,9 @@
     --nx-capa-avisos: 100;
     --nx-transicion: 120ms ease-out;
     --nx-giro: 0.8s;                        /* una vuelta del aro de «cargando» */
+    --nx-ancho-lateral: 16rem;              /* barra lateral <nx-shell> en escritorio */
+    --nx-ancho-lateral-estrecho: 14.5rem;   /* barra lateral por debajo de 64em */
+    --nx-alto-pantalla: 100vh;              /* barra lateral fija a la altura de la ventana */
+    --nx-icono-ancho: 1.25rem;              /* hueco fijo del icono en los enlaces del menú */
   }
 }

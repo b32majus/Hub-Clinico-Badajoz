@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus · Muestra de la barra lateral (Farmacia)</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="../vendor/inter/inter.css">
+    <link rel="stylesheet" href="../css/nexus_tokens.css">
+    <link rel="stylesheet" href="../css/nexus_base.css">
+    <link rel="stylesheet" href="../css/nexus_piezas.css">
+    <link rel="stylesheet" href="muestra.css">
+    <script type="module" src="muestra.js"></script>
+</head>
+<body class="nx-pagina">
+<div class="nx-marco">
+    <nx-shell modulo="farmacia" raiz="../" pagina="farmacia_actividad_servicio.html">
+        <p class="muestra__profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> Profesional DEMO-01</p>
+        <form class="nx-buscador" role="search" action="#">
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="m-paciente">Buscar paciente</label>
+                <input class="nx-campo__control" id="m-paciente" type="search" placeholder="Identificador">
+            </div>
+        </form>
+        <p><span class="nx-etiqueta nx-etiqueta--ok">Datos de prueba cargados</span></p>
+    </nx-shell>
+    <main class="nx-marco__contenido">
+        <div class="muestra muestra--marco">
+            <header class="muestra__cabecera">
+                <h1>Pendientes</h1>
+                <p class="muestra__nota">Muestra de <code>&lt;nx-shell&gt;</code> (#956, tramo 5). Datos inventados. Descrita en <code>DESIGN.md</code> §4.</p>
+            </header>
+            <section class="muestra__seccion" aria-labelledby="s-pendientes">
+                <h2 id="s-pendientes">Solicitudes por revisar</h2>
+                <div class="nx-tabla-marco" role="region" aria-labelledby="t-caption" tabindex="0">
+                    <table class="nx-tabla">
+                        <caption id="t-caption">Solicitudes de ejemplo</caption>
+                        <thead>
+                            <tr><th scope="col">Identificador</th><th scope="col">Servicio</th><th scope="col">Fecha</th><th scope="col">Estado</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>DEMO-001</td><td>Reumatología</td><td>03/11/2026</td><td><span class="nx-etiqueta nx-etiqueta--ok">Validada</span></td></tr>
+                            <tr><td>DEMO-002</td><td>Dermatología</td><td>07/11/2026</td><td><span class="nx-etiqueta nx-etiqueta--aviso">Pendiente</span></td></tr>
+                            <tr><td>DEMO-003</td><td>Reumatología</td><td>12/11/2026</td><td><span class="nx-etiqueta nx-etiqueta--info">En revisión</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+</body>
+</html>
