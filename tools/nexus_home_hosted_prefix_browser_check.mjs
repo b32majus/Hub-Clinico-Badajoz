@@ -338,6 +338,8 @@ try {
       'data/platform/home/deployment-profile.json',
       'data/platform/home/deployment-manifest.json',
       'data/platform/home/module-readiness.json',
+      'css/nexus_tokens.css',
+      'css/nexus_base.css',
       'nexus_home.css',
       'modules/platform/configuration-repository.js',
       'modules/platform/platform-context.js',
@@ -348,7 +350,7 @@ try {
     ];
     const missing = [];
     for (const file of wanted) {
-      const hit = responses.find((r) => r.url === `${BASE}${file}`);
+      const hit = responses.find((r) => r.url.split('?')[0] === `${BASE}${file}`);
       if (!hit) missing.push(`${file}: not requested`);
       else if (hit.status !== 200) missing.push(`${file}: HTTP ${hit.status}`);
     }

@@ -50,6 +50,8 @@ const SCHEMA_FILES = {
 // Must stay in sync with tools/home_release_build.mjs.
 const CODE_FILES = [
   'assets/branding/nexus-home-lockup.png',
+  'css/nexus_base.css',
+  'css/nexus_tokens.css',
   'favicon.svg',
   'modules/home/home-bootstrap.js',
   'modules/home/home-page.js',

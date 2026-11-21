@@ -1,0 +1,42 @@
+/*
+ * PROMueve Nexus — base común (capa nx.base). ADR-010 §2, ADR-009 R8 y R9.
+ * Tramo 1 de #956: solo reglas que no cambian la pantalla en reposo.
+ * Al estar en una capa, cualquier regla sin capa de los CSS actuales gana;
+ * el reset y la tipografía comunes llegan cuando cada pantalla se migre.
+ */
+
+@layer nx.tokens, nx.base, nx.piezas, modulo;
+
+@layer nx.base {
+  /* Foco visible al navegar con teclado (R8) */
+  :focus-visible {
+    outline: var(--nx-foco-ancho) solid var(--nx-foco-color);
+    outline-offset: var(--nx-foco-separacion);
+  }
+
+  /* Quien pide menos movimiento en el sistema no ve animaciones */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Impresión (R9): fondo blanco y sin navegación común */
+  @media print {
+    html,
+    body {
+      background: var(--nx-color-superficie) !important;
+      color: var(--nx-color-texto) !important;
+    }
+
+    nx-shell,
+    [data-nx-imprimir="no"] {
+      display: none !important;
+    }
+  }
+}
