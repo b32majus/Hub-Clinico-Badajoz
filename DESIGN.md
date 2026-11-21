@@ -66,6 +66,7 @@ Fuera de este tramo (tramo 7): los colores que pone el JS (gráficos de Chart.js
 - Solo lo que Edge y Chrome actualizados traen de serie, sin compilar (ADR-009 R3).
 - Accesibilidad WCAG 2.1 AA: foco visible, teclado, contraste y nunca solo color (R8).
 - Nada se carga desde fuera: letra, iconos y gráficos van en `vendor/` (R2).
+- Ningún script clásico en `<head>`: van al final del `<body>`, en su orden (en `<head>` bloquean el pintado de toda la página, barra incluida; Reuma Inicio tardaba 1,5 s frente a 0,45 s de Farmacia, Sil 21-11). Lo comprueba `nexus_shell_paginas_check` P9.
 
 ## 4. Catálogo de piezas
 
