@@ -30,6 +30,8 @@ Los valores exactos están en `css/nexus_tokens.css` (tramo 1, 21-11). Estados, 
 
 Grises: `--nx-color-texto-suave` `#5a6272` (6,1) para texto secundario; `--nx-color-tenue` `#8a93a5` (3,1) solo para iconos y bordes, nunca para texto; `--nx-color-borde` `#d6dae2`; `--nx-color-superficie-suave` `#eef0f4`. Son los mismos valores que ya usaba la Home, cuyas variables `--nexus-home-*` apuntan ahora a estas.
 
+**Colores de gráficos (tramo 7, 21-11).** Estado (`ok`, `aviso`, `error`, `info`) solo cuando el dato significa eso. Categorías sin significado clínico: `--nx-color-serie-1` a `-6` (azul, morado, verde azulado, rosa, pizarra, marrón; todos ≥ 3:1 sobre blanco), por orden. «No registrado» siempre `--nx-color-serie-sin-dato` (gris): ausente no es «bien». Desde JS se escriben como `var(--nx-color-serie-N)`, sin hex.
+
 ### Aplicar la paleta a las pantallas antiguas (tramo 6, aprobado por Sil con capturas, 21-11)
 
 Las 7 hojas antiguas (`style.css`, `farmacia_style.css`, `style_primera_visita.css`, `style_seguimiento.css`, `style_dashboard.css`, `style_estadisticas.css`, `style_manage.css`) y los `<style>` de `farmacia_primera_visita.html` y `farmacia_seguimiento.html` ya no escriben colores: cada uno pasó a la variable de su papel (unos 2.200 cambios, con la herramienta `bin/paleta_mapear.py` de la carpeta de trabajo). Reglas:

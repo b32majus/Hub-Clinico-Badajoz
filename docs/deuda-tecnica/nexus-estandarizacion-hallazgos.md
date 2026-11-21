@@ -35,3 +35,7 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 **H-21 (tanda 2b, 21-11).** Inicio de Reuma mezcla dos pantallas: la de acceso (`session-gate`: carga del Excel y elección de profesional, con `h1` propio, estilos en línea y el sello FarmaNEXus) y el Inicio. Antes de migrarlo hay que diseñar la pieza de acceso (¿diálogo o pantalla propia?) y decidir si el sello se queda (Sil). El nombre del producto sigue siendo «FarmaNEXus» en esa pantalla y «NEXus» en la barra: unificar.
 
 **H-21, cierre (tanda 3a, 21-11).** Acceso migrado; marca por módulo decidida (FarmaNEXus/ReumaNEXus/DermaNEXus en barra y títulos). El Inicio de Reuma conserva sus clases `home-*` por decisión de Sil (más aire que las tarjetas del catálogo); si se quiere unificar, rediseñar la pieza antes, no sustituir.
+
+**H-15, avance (tanda 3b, 21-11).** Estadísticas de Farmacia sin hex en el JS (anillos con series, «No registrado» en gris). Quedan Chart.js de Reuma, `scoreCalculators.js`, `formController.js` y los chips de EA de `farmacia_seguimiento.js`.
+
+**H-22 (tanda 3b, 21-11).** Estadísticas de Farmacia muestra claves en bruto en las leyendas («cambio_farmaco», «optimizacion_intervalo», «tratamiento_anadido»). Falta traducirlas a texto; no se hace aquí porque cambia el texto que leen los checks.
