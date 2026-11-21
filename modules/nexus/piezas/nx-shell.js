@@ -56,7 +56,7 @@ export class NxShell extends HTMLElement {
 
         const marca = crear('a', 'nx-shell__marca');
         marca.href = raiz + INICIO;
-        marca.append(crear('span', 'nx-shell__producto', 'NEXus'), crear('span', 'nx-shell__modulo', menu ? menu.titulo : 'Inicio'));
+        marca.append(crear('span', 'nx-shell__producto', menu ? menu.producto : 'NEXus'), crear('span', 'nx-shell__modulo', menu ? menu.titulo : 'Inicio'));
 
         const nav = crear('nav', 'nx-shell__nav');
         nav.setAttribute('aria-label', menu ? `Menú de ${menu.titulo}` : 'Módulos');

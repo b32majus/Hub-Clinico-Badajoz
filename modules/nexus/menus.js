@@ -5,6 +5,7 @@
 
 export const MENUS = Object.freeze({
     farmacia: {
+        producto: 'FarmaNEXus',
         titulo: 'Farmacia Hospitalaria',
         icono: 'fa-prescription-bottle-alt',
         secciones: [
@@ -30,6 +31,7 @@ export const MENUS = Object.freeze({
         ],
     },
     reuma: {
+        producto: 'ReumaNEXus',
         titulo: 'Reumatología',
         icono: 'fa-stethoscope',
         secciones: [

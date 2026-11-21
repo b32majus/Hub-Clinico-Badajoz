@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cima.aemps.es; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FarmaNEXus · Reumatología</title>
+    <title>ReumaNEXus · Reumatología</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t6">
@@ -15,7 +15,7 @@
     <link rel="modulepreload" href="modules/nexus/version.js">
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
-    <link rel="stylesheet" href="style.css?v=20261121-t6">
+    <link rel="stylesheet" href="style.css?v=20261121-t7f">
     <!-- Cargar SheetJS para manejo de Excel -->
 
     <!-- MÓDULOS HUBTOOLS - ORDEN CRÍTICO: hubTools.js PRIMERO -->
@@ -24,40 +24,37 @@
 </head>
 <body>
 
-    <!-- Session Gate: selección de profesional al inicio de sesión -->
+    <!-- Pantalla de acceso (H-21, Sil 21-11): carga de la base y elección de profesional; sin barra. -->
     <div class="session-gate hidden" id="sessionGate">
-        <div class="session-gate__card">
-            <div class="session-gate__brand">
-                <div class="logo-circle logo-circle--large"><span class="logo-text">HC</span></div>
-                <div aria-label="Entorno PROMueve Nexus" style="display:flex;align-items:center;justify-content:center;gap:.45rem;margin:.45rem 0 .2rem;color:#4b147d;font-size:.78rem;font-weight:700;letter-spacing:.02em;">
-                    <img src="assets/branding/farmanexus-app-icon-64.png" alt="" width="28" height="28" style="display:block;border-radius:7px;">
-                    <span>FarmaNEXus · PROMueve Nexus</span>
+        <section class="nx-tarjeta session-gate__card" aria-labelledby="gateTitulo">
+            <header class="nx-cabecera">
+                <p class="nx-cabecera__ruta">ReumaNEXus · Hospital Universitario de Badajoz</p>
+                <h2 class="nx-cabecera__titulo" id="gateTitulo">Hub Clínico de Reumatología</h2>
+            </header>
+
+            <div class="nx-tarjeta__cuerpo">
+                <div class="session-gate__step" id="gateStepLoad">
+                    <p class="nx-campo__ayuda">Cargue la base de datos para comenzar.</p>
+                    <input type="file" id="gateExcelInput" accept=".xlsx" hidden>
+                    <button type="button" class="nx-boton nx-boton--principal" id="gateLoadBtn">
+                        <i class="fas fa-database" aria-hidden="true"></i>
+                        Cargar Base de Datos (.xlsx)
+                    </button>
+                    <p id="gateLoadError" class="nx-campo__error hidden" role="alert"></p>
                 </div>
-                <h1 class="session-gate__title">Hub Clínico<br>Reumatología</h1>
-                <p class="session-gate__hospital">Hospital Universitario de Badajoz</p>
-            </div>
 
-            <div class="session-gate__step" id="gateStepLoad">
-                <p class="session-gate__instruction">Cargue la base de datos para comenzar</p>
-                <input type="file" id="gateExcelInput" accept=".xlsx" hidden>
-                <button type="button" class="session-gate__btn session-gate__btn--primary" id="gateLoadBtn">
-                    <i class="fas fa-database" aria-hidden="true"></i>
-                    Cargar Base de Datos (.xlsx)
-                </button>
-                <div id="gateLoadError" class="session-gate__error hidden"></div>
+                <div class="session-gate__step nx-campo hidden" id="gateStepSelect">
+                    <label class="nx-campo__etiqueta" for="gateProfessionalSelect">Seleccione su perfil profesional</label>
+                    <select id="gateProfessionalSelect" class="nx-campo__control">
+                        <option value="" disabled selected>Seleccionar profesional...</option>
+                    </select>
+                    <button type="button" class="nx-boton nx-boton--principal" id="gateConfirmBtn" disabled>
+                        <i class="fas fa-check" aria-hidden="true"></i>
+                        Acceder al Hub
+                    </button>
+                </div>
             </div>
-
-            <div class="session-gate__step hidden" id="gateStepSelect">
-                <label class="session-gate__label" for="gateProfessionalSelect">Seleccione su perfil profesional</label>
-                <select id="gateProfessionalSelect" class="session-gate__select">
-                    <option value="" disabled selected>Seleccionar profesional...</option>
-                </select>
-                <button type="button" class="session-gate__btn session-gate__btn--confirm" id="gateConfirmBtn" disabled>
-                    <i class="fas fa-check" aria-hidden="true"></i>
-                    Acceder al Hub
-                </button>
-            </div>
-        </div>
+        </section>
     </div>
 
     <div class="nx-marco">
@@ -84,13 +81,6 @@
             <section id="dashboardContent" class="dashboard-content">
                 <header class="home-hero">
                     <div class="home-hero__content">
-                        <div role="note" aria-label="Entorno PROMueve Nexus" style="display:inline-flex;align-items:center;gap:.65rem;margin-bottom:.9rem;padding:.45rem .65rem .45rem .5rem;border:1px solid rgba(75,20,125,.16);border-radius:12px;background:rgba(255,255,255,.78);box-shadow:0 4px 16px rgba(23,51,91,.08);">
-                            <img src="assets/branding/farmanexus-app-icon-64.png" alt="" width="40" height="40" style="display:block;border-radius:10px;">
-                            <span style="display:block;line-height:1.15;">
-                                <strong style="display:block;color:#4b147d;font-size:.95rem;letter-spacing:.01em;">FarmaNEXus</strong>
-                                <span style="display:block;color:#68778d;font-size:.76rem;margin-top:.16rem;">PROMueve Nexus · entorno de evaluación</span>
-                            </span>
-                        </div>
                         <p class="home-hero__eyebrow">Centro de control clínico</p>
                         <p class="home-hero__hospital">Hospital Universitario de Badajoz</p>
                         <h2 class="main-title">HUB Clínico de <span class="highlight">Reumatología</span></h2>

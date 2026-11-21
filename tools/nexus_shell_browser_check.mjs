@@ -162,7 +162,7 @@ try {
             };
         });
         assert.deepEqual(r, {
-            primero: true, marca: '../index.html', textoMarca: 'NEXusFarmacia Hospitalaria', nav: 'Menú de Farmacia Hospitalaria', navs: 1,
+            primero: true, marca: '../index.html', textoMarca: 'FarmaNEXusFarmacia Hospitalaria', nav: 'Menú de Farmacia Hospitalaria', navs: 1,
             actuales: 1, datosNav: true, propio: true, titulosConLista: true,
         });
         assert.deepEqual(await menu(), [

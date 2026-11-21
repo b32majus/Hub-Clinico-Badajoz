@@ -142,19 +142,11 @@ body {
 }
 
 .home-hero__content {
-    padding: 30px 34px;
+    padding: 20px 28px;
     position: relative;
     overflow: hidden;
-}
-
-.home-hero__content::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(circle at top left, color-mix(in srgb, var(--nx-color-modulo) 12%, transparent), transparent 38%),
-        linear-gradient(135deg, color-mix(in srgb, var(--nx-color-superficie) 42%, transparent), color-mix(in srgb, var(--nx-color-superficie) 0%, transparent));
-    pointer-events: none;
+    border-radius: 20px;
+    box-shadow: none;
 }
 
 .home-hero__eyebrow,
@@ -168,10 +160,10 @@ body {
 }
 
 .home-hero__hospital {
-    margin: 0 0 12px;
-    font-size: 1.28rem;
-    font-weight: 700;
-    color: var(--nx-color-texto);
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--nx-color-texto-suave);
     letter-spacing: 0.01em;
 }
 
@@ -257,8 +249,8 @@ body {
     margin: 0;
     position: relative;
     z-index: 1;
-    font-size: clamp(2rem, 3vw, 3rem);
-    font-weight: 800;
+    font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+    font-weight: 700;
     line-height: 1.08;
     color: var(--nx-color-texto);
 }
@@ -1517,6 +1509,7 @@ body {
     to { transform: translateX(100%); opacity: 0; }
 }
 /* === Session Gate Overlay === */
+/* Pantalla de acceso (H-21): solo la capa a pantalla completa; el contenido son piezas del catálogo. */
 .session-gate {
     position: fixed;
     inset: 0;
@@ -1524,87 +1517,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--nx-color-modulo-texto) 0%, var(--nx-color-modulo-texto) 100%);
+    padding: 16px;
+    background: var(--nx-color-fondo);
+    overflow-y: auto;
 }
 
 .session-gate.hidden { display: none !important; }
 
-.session-gate__card {
-    width: min(460px, 90vw);
-    background: var(--nx-color-superficie);
-    border-radius: 24px;
-    padding: 48px 40px;
-    box-shadow: 0 32px 64px color-mix(in srgb, var(--nx-color-texto) 30%, transparent);
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    align-items: center;
-    text-align: center;
-}
+.session-gate__card { width: min(460px, 100%); }
 
-.session-gate__brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
-.logo-circle--large {
-    width: 80px;
-    height: 80px;
-    font-size: 1.8rem;
-    border-radius: 22px;
-}
-
-.session-gate__title {
-    margin: 0;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--nx-color-texto);
-    line-height: 1.3;
-}
-
-.session-gate__hospital {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--nx-color-texto-suave);
-}
-
-.session-gate__step {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
-}
+.session-gate__step { display: flex; flex-direction: column; gap: 12px; }
 
 .session-gate__step.hidden { display: none !important; }
-
-.session-gate__instruction {
-    margin: 0;
-    color: var(--nx-color-texto-suave);
-    font-size: 0.95rem;
-}
-
-.session-gate__label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: var(--nx-color-texto-suave);
-    text-transform: uppercase;
-    align-self: flex-start;
-}
-
-.session-gate__select {
-    width: 100%;
-    padding: 12px 16px;
-    border-radius: 14px;
-    border: 1px solid var(--nx-color-borde);
-    font-size: 0.95rem;
-    color: var(--nx-color-texto);
-    background: var(--nx-color-fondo);
-    font-family: inherit;
-}
 
 .select-modern {
     width: 100%;
@@ -1830,50 +1754,6 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
-
-.session-gate__btn {
-    width: 100%;
-    border: none;
-    border-radius: 16px;
-    padding: 14px 24px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    font-family: inherit;
-}
-
-.session-gate__btn:hover { transform: translateY(-1px); }
-
-.session-gate__btn--primary {
-    background: var(--nx-color-principal);
-    color: var(--nx-color-sobre-principal);
-    box-shadow: 0 12px 24px color-mix(in srgb, var(--nx-color-principal) 25%, transparent);
-}
-
-.session-gate__btn--confirm {
-    background: var(--nx-color-principal);
-    color: var(--nx-color-sobre-principal);
-    box-shadow: 0 12px 24px color-mix(in srgb, var(--nx-color-principal) 25%, transparent);
-}
-
-.session-gate__btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.session-gate__error {
-    color: var(--nx-color-error);
-    font-size: 0.88rem;
-    font-weight: 500;
-}
-
-.session-gate__error.hidden { display: none; }
 
 /* === Patient Autocomplete === */
 .patient-autocomplete {
