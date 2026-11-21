@@ -30,8 +30,8 @@ El Hub Clínico de Badajoz es una app local-first. Debe seguir funcionando como 
 
 - No migrar a React, Vue, Svelte ni ningún framework.
 - No introducir backend.
-- No añadir dependencias externas por CDN.
-- No romper ejecución local con `file://`.
+- No añadir dependencias externas por CDN. *(21-11: sustituida por ADR-009 R2, cero dependencias externas.)*
+- No romper ejecución local con `file://`. *(21-11: SUSTITUIDA; `file://` abandonado, ADR-009.)*
 - No eliminar columnas históricas del contrato actual.
 - No hacer un rename global ciego de `ID_Paciente` a `CIP`.
 - No reescribir todo `dataManager`, `formController` o `exportManager` si basta con extenderlos.
