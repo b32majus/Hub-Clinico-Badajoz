@@ -63,10 +63,20 @@ Lista prevista:
 - pestañas
 - tarjeta
 - `<nx-aviso>`: aviso y notificación
-- `<nx-dialogo>`: ventana emergente y confirmación
+- ventana emergente y confirmación: `<dialog class="nx-dialogo">` nativo, sin componente propio (el navegador ya da el modo modal, el foco, Esc y la vuelta del foco)
 - etiqueta
 
-## 5. Cómo se trabaja
+## 5. Biblioteca común (`modules/nexus/`, tramo 3)
+
+Módulos ES con rutas relativas (funcionan bajo subruta, R1). Se importan desde `modules/nexus/index.js`. Ninguna pantalla los usa todavía; cada una los adopta al migrarse (tramo 7) y entonces se borran sus funciones repetidas.
+
+- **Texto** (`texto.js`): `escaparHtml(valor)` (los cinco caracteres; `null` → vacío), `normalizarTexto(valor)` (sin tildes, minúsculas, espacios colapsados) y `claveBusqueda(valor)` (solo `a-z0-9`, para comparar identificadores y nombres).
+- **Fechas** (`fechas.js`): `leerFecha(valor)` acepta `AAAA-MM-DD` (con o sin hora; vale el día escrito), `DD/MM/AAAA`, `Date` y número de serie de Excel; devuelve el día local o `null`, nunca una fecha desbordada (`31/02` no es marzo). `fechaIso`, `fechaCorta` (`05/01/2024`) y `fechaLarga` (`5 de enero de 2024`) devuelven vacío si no hay fecha.
+- **Avisos** (`avisos.js`, R6): `avisar(texto, { tipo, titulo })` con `tipo` = `error`, `aviso`, `ok` o `info`. Pone un `<nx-aviso>` en una zona única «Avisos» de la página. El aviso lleva su etiqueta en texto («Error», «Atención», «Hecho», «Información»: nunca solo color), se anuncia al lector de pantalla y no se cierra solo; «Cerrar» pasa el foco al siguiente aviso.
+- **Confirmación** (`avisos.js`): `await confirmar({ titulo, texto, aceptar, cancelar, peligro })` → `true`/`false`. Abre un `<dialog>` modal; con `peligro` el foco empieza en «Cancelar». Sustituye a `confirm()`.
+- Nada de `alert()`, `confirm()`, `innerHTML`, estilos ni colores dentro de la biblioteca: el aspecto llega con el catálogo (tramo 4). Lo comprueban `tools/nexus_modulos_check.mjs` (CI) y `tools/nexus_modulos_browser_check.mjs`.
+
+## 6. Cómo se trabaja
 
 Norma de trabajo visual (Sil, 21-11):
 
