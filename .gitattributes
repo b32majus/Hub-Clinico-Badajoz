@@ -16,6 +16,8 @@
 *.jpg binary
 *.jpeg binary
 *.gif binary
+*.woff2 binary
+*.ttf binary
 
 # Nexus Home generated/packaged artifacts: canonical LF so fresh checkouts are
 # byte-identical to deterministic rebuilds (NEXUS-DEBT-011, #407/#410).
