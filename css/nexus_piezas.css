@@ -28,6 +28,14 @@
     box-sizing: border-box;
   }
 
+  /* La barra y sus piezas llevan su propio box-sizing: las pantallas antiguas no usan .nx-pagina (cambiaría todo su contenido). */
+  nx-shell,
+  nx-shell *,
+  nx-shell *::before,
+  nx-shell *::after {
+    box-sizing: border-box;
+  }
+
   .nx-solo-lector {
     position: absolute;
     inline-size: var(--nx-borde-fino);
@@ -701,6 +709,15 @@
     text-decoration: underline;
   }
 
+  .nx-profesional {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-espacio-2);
+    margin: 0;
+    padding-inline: var(--nx-espacio-3);
+    font-weight: var(--nx-peso-medio);
+  }
+
   .nx-shell__extra {
     display: grid;
     gap: var(--nx-espacio-3);
@@ -769,8 +786,11 @@
   .nx-shell__pie {
     display: grid;
     gap: var(--nx-espacio-2);
-    margin-block-start: auto;
-    padding-block-start: var(--nx-espacio-4);
+    margin-block: auto calc(-1 * var(--nx-espacio-4));
+    padding-block: var(--nx-espacio-4);
+    position: sticky;
+    inset-block-end: 0;
+    background: var(--nx-color-superficie);
     border-block-start: var(--nx-borde-fino) solid var(--nx-color-borde);
   }
 

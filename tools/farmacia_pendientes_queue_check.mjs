@@ -105,9 +105,11 @@ check('actividad hero copy describes the new surface (no removed-indicator copy)
   && actividadHtml.indexOf('pendientes, realizadas, seguimiento, fármacos frecuentes') === -1);
 check('actividad page keeps the demo banner explicitly synthetic',
   /Demo Farmacia|datos demo/i.test(actividadHtml));
+// Desde #956 tramo 5 la barra la genera <nx-shell> desde modules/nexus/menus.js (los enlaces ya no están en el HTML).
+const menusJs = fs.readFileSync(path.join(ROOT, 'modules/nexus/menus.js'), 'utf8');
 check('actividad sidebar keeps the Dashboard Paciente entry unchanged',
-  actividadHtml.indexOf('Dashboard Paciente') !== -1
-  && actividadHtml.indexOf('href="farmacia_dashboard_paciente.html"') !== -1);
+  actividadHtml.indexOf('<nx-shell modulo="farmacia"') !== -1
+  && menusJs.indexOf("texto: 'Dashboard Paciente', href: 'farmacia_dashboard_paciente.html'") !== -1);
 
 check('actividad coordinator has no per-card indicator action',
   actividadSrc.indexOf('Dashboard') === -1);
@@ -128,8 +130,8 @@ const rootFarmaciaHtml = fs.readdirSync(ROOT)
   .filter((name) => /^farmacia_.*\.html$/.test(name) && !name.includes('/'));
 for (const name of rootFarmaciaHtml) {
   const html = readFile(name);
-  const sidebarOk = html.indexOf('href="farmacia_actividad_servicio.html"') !== -1
-    && html.indexOf('>Pendientes</a>') !== -1;
+  const sidebarOk = html.indexOf('<nx-shell modulo="farmacia"') !== -1
+    && menusJs.indexOf("texto: 'Pendientes', href: 'farmacia_actividad_servicio.html'") !== -1;
   check(`sidebar label Pendientes with unchanged href: ${name}`, sidebarOk);
   check(`sidebar no longer says Actividad del servicio: ${name}`,
     html.indexOf('</i>Actividad del servicio</a>') === -1);

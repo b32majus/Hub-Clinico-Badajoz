@@ -526,7 +526,7 @@
             source_event_id: sourceId,
             source_page: location.pathname.split("/").pop(),
             record_status: recordStatus(config, domain),
-            app_context: document.querySelector(".sidebar-footer") ? document.querySelector(".sidebar-footer").textContent : "",
+            app_context: document.querySelector(".nx-shell__version") ? document.querySelector(".nx-shell__version").textContent : "",
             payload: { form_state: captureFormState(main), domain: domain }
         };
     }

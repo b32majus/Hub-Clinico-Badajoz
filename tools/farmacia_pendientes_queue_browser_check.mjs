@@ -209,7 +209,7 @@ async function queueCards(page) {
       assert.ok(!bodyText.includes(removed), `removed indicator content absent: ${removed}`);
     }
     const sidebarHref = await page.evaluate(() =>
-      [...document.querySelectorAll('.sidebar a')].find((a) => a.textContent.trim() === 'Pendientes')?.getAttribute('href'));
+      [...document.querySelectorAll('nx-shell a')].find((a) => a.textContent.trim() === 'Pendientes')?.getAttribute('href'));
     assert.equal(sidebarHref, 'farmacia_actividad_servicio.html', 'sidebar Pendientes keeps its href');
     assertNoPageFailure(pageErrors, consoleErrors);
     ok('demo-only queue renders a consistent summary with no indicator actions');
@@ -227,7 +227,7 @@ async function queueCards(page) {
   try {
     await page.goto(base + 'farmacia_index.html', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => !!window.FarmaciaDemo, null, { timeout: 15000 });
-    const link = page.locator('.sidebar a[href="farmacia_actividad_servicio.html"]');
+    const link = page.locator('nx-shell a[href="farmacia_actividad_servicio.html"]');
     assert.equal((await link.innerText()).trim(), 'Pendientes', 'sidebar entry renamed to Pendientes');
     await Promise.all([page.waitForLoadState('domcontentloaded'), link.click()]);
     assert.ok(page.url().endsWith('farmacia_actividad_servicio.html'), `landed on Pendientes: ${page.url()}`);
@@ -260,7 +260,7 @@ async function queueCards(page) {
     });
     await page.waitForFunction(
       () => (window.FarmaciaDataImports?.getState('enfermeria')?.rows?.length || 0) > 0, null, { timeout: 30000 });
-    const link = page.locator('.sidebar a[href="farmacia_actividad_servicio.html"]');
+    const link = page.locator('nx-shell a[href="farmacia_actividad_servicio.html"]');
     await Promise.all([page.waitForLoadState('domcontentloaded'), link.click()]);
     assert.ok(page.url().endsWith('farmacia_actividad_servicio.html'), `landed on Pendientes: ${page.url()}`);
     await page.waitForFunction(

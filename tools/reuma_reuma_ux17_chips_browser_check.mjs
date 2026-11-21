@@ -581,7 +581,7 @@ async function journey(browser, code) {
         picked.selectValue === 'mecanico' && JSON.stringify(picked.pressedValues) === JSON.stringify(['mecanico']),
         JSON.stringify(picked));
 
-      await page.locator('a.nav-link[href="reuma_index.html"]').first().click();
+      await page.locator('a.nx-shell__enlace[href="reuma_index.html"]').first().click();
       await page.goBack({ waitUntil: 'load', timeout: 45000 });
       await page.waitForTimeout(900); // pageshow + rAF re-sync window
       const after = await page.evaluate(() => {

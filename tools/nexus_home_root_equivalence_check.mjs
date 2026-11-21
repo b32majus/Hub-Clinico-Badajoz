@@ -132,8 +132,8 @@ record('R1 index.html is byte-identical to nexus_home.html (no divergence)',
   const reumaFallbacks = (script.match(/window\.location\.href\s*=\s*['"]reuma_index\.html['"]/g) || []).length;
   const exemptionCoversReuma = /currentPage\s*===\s*['"]reuma_index\.html['"]/.test(script);
   const exemptionIgnoresRoot = !/currentPage\s*===\s*['"]index\.html['"]/.test(script);
-  const ok = noRootFallback && reumaFallbacks >= 2 && exemptionCoversReuma && exemptionIgnoresRoot;
-  record('R6 script.js: session/logout land on reuma_index.html, Home root is not a Reuma entry', ok,
+  const ok = noRootFallback && reumaFallbacks >= 1 && exemptionCoversReuma && exemptionIgnoresRoot;
+  record('R6 script.js: session fallback lands on reuma_index.html (el cierre ahora es «Terminar» de nx-shell, hacia la Home), Home root is not a Reuma entry', ok,
     `noRootFallback=${noRootFallback} reumaFallbacks=${reumaFallbacks} exemptionCoversReuma=${exemptionCoversReuma} exemptionIgnoresRoot=${exemptionIgnoresRoot}`);
   const seguimiento = readText('seguimiento.html');
   const seguimientoOk = !/window\.location\.href\s*=\s*['"]index\.html['"]/.test(seguimiento) &&

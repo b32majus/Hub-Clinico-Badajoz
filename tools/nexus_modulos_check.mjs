@@ -59,10 +59,13 @@ await test('M2 módulos ES: imports solo relativos y con .js; nada de innerHTML,
     assert.deepEqual(problems, []);
 });
 
-await test('M3 todavía ninguna página ni script usa modules/nexus', async () => {
-    const users = [...readdirSync(ROOT).filter((f) => f.endsWith('.html')), ...walk('scripts'), ...walk('modules').filter((f) => !f.startsWith(DIR + '/'))]
-        .filter((f) => /\.(html|js)$/.test(f) && read(f).includes('modules/nexus'));
-    assert.deepEqual(users, []);
+await test('M3 solo las 17 páginas con barra cargan modules/nexus, y solo piezas/nx-shell.js; ningún script lo usa', async () => {
+    const scripts = [...walk('scripts'), ...walk('modules').filter((f) => !f.startsWith(DIR + '/'))]
+        .filter((f) => /\.js$/.test(f) && read(f).includes('modules/nexus'));
+    assert.deepEqual(scripts, [], 'ningún script de producto usa modules/nexus todavía');
+    const mal = readdirSync(ROOT).filter((f) => f.endsWith('.html'))
+        .filter((f) => read(f).replace(/modules\/nexus\/piezas\/nx-shell\.js/g, '').includes('modules/nexus'));
+    assert.deepEqual(mal, [], 'las páginas solo cargan piezas/nx-shell.js');
 });
 
 await test('M4 index.js reexporta la API pública', async () => {

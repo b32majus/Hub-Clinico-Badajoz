@@ -5749,7 +5749,7 @@
             var navDash = document.getElementById("navToDashboardPaciente");
             if (navDash) navDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
 
-            var sidebarDash = document.querySelector('.sidebar-nav-area .nav-link[href*="farmacia_dashboard_paciente.html"]');
+            var sidebarDash = document.querySelector('a.nx-shell__enlace[href*="farmacia_dashboard_paciente.html"]');
             if (sidebarDash) sidebarDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
         }
 
