@@ -127,6 +127,8 @@
     --nx-color-serie-5: #475569;            /* 7,6 */
     --nx-color-serie-6: #8d6e63;            /* 4,6 */
     --nx-color-serie-sin-dato: var(--nx-color-tenue); /* «No registrado»: siempre gris */
+    --nx-ancho-cifra-min: 10rem;            /* ancho mínimo de una nx-cifra en su fila */
+    --nx-ancho-dato-min: 16rem;             /* ancho mínimo de una columna de datos en nx-solicitud */
 
     /* Acento del módulo de la página: sale del <nx-shell modulo> que lleve. Sin módulo, el principal. */
     --nx-color-modulo: var(--nx-color-principal);

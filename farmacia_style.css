@@ -5158,12 +5158,6 @@
 }
 
 /* WO8.1c.7/8 — Enfermería grid y headers (cards reusan pending-validation-card) */
-.enfermeria-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-    gap: 14px;
-    margin-top: 10px;
-}
 
 /* Status badge variants for Enfermería cards */
 .status-badge--ok {
@@ -5263,11 +5257,7 @@
     transform: rotate(180deg);
 }
 .actividad-panel {
-    margin-top: 14px;
-    padding: 18px 20px;
-    border-radius: 16px;
-    background: var(--nx-color-fondo);
-    border: 1px solid var(--nx-color-borde);
+    margin: 0;
 }
 .actividad-panel:focus {
     outline: none;
@@ -5386,110 +5376,6 @@
     .actividad-panel__actions .btn {
         width: 100%;
     }
-}
-
-/* pending-validation-card (WO3 reutilizado) */
-.pending-validation-card {
-    border: 1px solid var(--nx-color-borde);
-    border-radius: 12px;
-    background: var(--nx-color-fondo);
-    padding: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.pending-validation-card__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.pending-validation-card__title {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--nx-color-texto);
-}
-
-.pending-validation-card__subtitle {
-    margin: 4px 0 0;
-    color: var(--nx-color-texto-suave);
-    font-size: 0.84rem;
-}
-
-.pending-validation-card__body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.pending-validation-card__meta {
-    color: var(--nx-color-texto);
-    font-size: 0.86rem;
-    line-height: 1.45;
-}
-
-.pending-validation-card__meta i {
-    color: var(--nx-color-modulo-texto);
-}
-
-.pending-validation-card__actions {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.pending-validation-card__prebio {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.84rem;
-    line-height: 1.4;
-}
-
-.pending-validation-card__prebio-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 700;
-}
-
-.pending-validation-card__prebio-label i {
-    width: 16px;
-    text-align: center;
-}
-
-.pending-validation-card__prebio--ok {
-    background: var(--nx-color-ok-fondo);
-    color: var(--nx-color-ok);
-    border: 1px solid var(--nx-color-ok-borde);
-}
-
-.pending-validation-card__prebio--pending {
-    background: var(--nx-color-aviso-fondo);
-    color: var(--nx-color-aviso);
-    border: 1px solid var(--nx-color-aviso-borde);
-}
-
-.pending-validation-card__prebio--alerta {
-    background: var(--nx-color-error-fondo);
-    color: var(--nx-color-error);
-    border: 1px solid var(--nx-color-error-borde);
-}
-
-.pending-validation-card__prebio-missing {
-    color: var(--nx-color-texto-suave);
-    font-size: 0.82rem;
-    margin-left: 24px;
-}
-
-.pending-validation-card__prebio-alert-items {
-    color: var(--nx-color-error);
-    font-size: 0.82rem;
-    margin-left: 24px;
-    font-weight: 600;
 }
 
 .stats-note--source {
@@ -5855,12 +5741,8 @@
 .status-alert { color: var(--nx-color-error); background: var(--nx-color-error-fondo); border: 1px solid var(--nx-color-error-borde); }
 .status-not_applicable { color: var(--nx-color-texto-suave); background: var(--nx-color-fondo); border: 1px solid var(--nx-color-borde); }
 
-.prebio-complete { background: var(--nx-color-ok-fondo); color: var(--nx-color-ok); border: 1px solid var(--nx-color-ok-borde); }
-.prebio-blocked { background: var(--nx-color-error-fondo); color: var(--nx-color-error); border: 1px solid var(--nx-color-error-borde); }
-.prebio-incomplete { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); border: 1px solid var(--nx-color-aviso-borde); }
 
 /* Color-coded prebio chips — variants for status-* classes used by getEnfermeriaBadges */
-.prebio-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; margin: 2px; }
 .status-completo { background: var(--nx-color-ok-fondo); color: var(--nx-color-ok); border: 1px solid var(--nx-color-ok-borde); }
 .status-pendiente { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); border: 1px solid var(--nx-color-aviso-borde); }
 .status-bloqueo { background: var(--nx-color-error-fondo); color: var(--nx-color-error); border: 1px solid var(--nx-color-error-borde); }
@@ -5869,7 +5751,6 @@
 .status-no_informado { background: var(--nx-color-superficie-suave); color: var(--nx-color-texto-suave); border: 1px solid var(--nx-color-borde); }
 .prebio-chip--more { background: var(--nx-color-superficie-suave); color: var(--nx-color-texto-suave); border: 1px solid var(--nx-color-borde); }
 
-.pending-validation-card__prebio-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; margin-left: 24px; }
 
 /* WO8.1c.10 — Enfermería prebiológico detail panel (expand/colapsar) */
 .enfermeria-detail-panel {
