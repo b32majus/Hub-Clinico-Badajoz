@@ -33,3 +33,5 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 **H-20 (tanda 2a, 21-11).** Actividad del servicio e Inicio de Farmacia pintan sus tarjetas desde JS con clases viejas (`pending-validation-card`, `dashboard-card`, `prebio-chip`, `status-badge`), compartidas y con 7 checks atados. Marco migrado; las tarjetas piden una pieza «solicitud pendiente» y migrar JS y checks a la vez (tanda 3).
 
 **H-21 (tanda 2b, 21-11).** Inicio de Reuma mezcla dos pantallas: la de acceso (`session-gate`: carga del Excel y elección de profesional, con `h1` propio, estilos en línea y el sello FarmaNEXus) y el Inicio. Antes de migrarlo hay que diseñar la pieza de acceso (¿diálogo o pantalla propia?) y decidir si el sello se queda (Sil). El nombre del producto sigue siendo «FarmaNEXus» en esa pantalla y «NEXus» en la barra: unificar.
+
+**H-21, cierre (tanda 3a, 21-11).** Acceso migrado; marca por módulo decidida (FarmaNEXus/ReumaNEXus/DermaNEXus en barra y títulos). El Inicio de Reuma conserva sus clases `home-*` por decisión de Sil (más aire que las tarjetas del catálogo); si se quiere unificar, rediseñar la pieza antes, no sustituir.
