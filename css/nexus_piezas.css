@@ -399,18 +399,6 @@
     overflow-wrap: break-word;
   }
 
-  .nx-tarjeta--farmacia {
-    border-block-start: var(--nx-borde-acento) solid var(--nx-color-farmacia);
-  }
-
-  .nx-tarjeta--reuma {
-    border-block-start: var(--nx-borde-acento) solid var(--nx-color-reuma);
-  }
-
-  .nx-tarjeta--derma {
-    border-block-start: var(--nx-borde-acento) solid var(--nx-color-derma);
-  }
-
   .nx-tarjeta__cabecera {
     display: flex;
     flex-wrap: wrap;

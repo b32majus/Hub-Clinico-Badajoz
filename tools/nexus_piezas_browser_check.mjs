@@ -140,7 +140,7 @@ try {
         assert.equal(await estilo('nx-aviso[tipo="error"]', 'background-color'), 'rgb(251, 234, 234)');
         assert.equal(await estilo('nx-aviso[tipo="ok"] .nx-aviso__etiqueta', 'color'), 'rgb(27, 122, 62)');
         assert.equal(await estilo('.nx-etiqueta--aviso', 'color'), 'rgb(138, 83, 0)');
-        assert.equal(await estilo('.nx-tarjeta--farmacia', 'border-top-color'), 'rgb(0, 135, 119)');
+        assert.equal(await estilo('.nx-tarjeta', 'border-top-width'), '1px', 'tarjeta sin franja de color (Sil, 21-11)');
         assert.equal(await estilo('.nx-tabla thead th', 'position'), 'sticky');
         assert.equal(await estilo('.nx-pestanas__pestana[aria-selected="true"]', 'border-bottom-width', '::after'), '3px');
         const alto = await page.evaluate(() => document.querySelector('.nx-boton--principal').getBoundingClientRect().height);
