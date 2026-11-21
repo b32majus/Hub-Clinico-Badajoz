@@ -12,22 +12,22 @@
 
 /* Destacar inputs readonly con datos históricos del paciente */
 .patient-info-section input[readonly] {
-    background-color: #E6F4F1;
-    border-color: #B2DFDB;
+    background-color: var(--nx-color-modulo-suave);
+    border-color: var(--nx-color-modulo-borde);
     font-weight: 500;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
 }
 
 /* Apartados dentro de Pruebas Complementarias */
 .pruebas-apartado {
-    background-color: #f8f9fa;
+    background-color: var(--nx-color-fondo);
     padding: 16px 20px;
     margin-bottom: 15px;
     border-radius: 10px;
 }
 
 .pruebas-apartado h5 {
-    color: #1E293B;
+    color: var(--nx-color-texto);
     font-size: 1em;
     margin-top: 0;
     margin-bottom: 10px;
@@ -38,19 +38,19 @@
 }
 
 .pruebas-apartado h5 i {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 /* Apartados de Índices */
 .indices-apartado {
-    background-color: #f8f9fa;
+    background-color: var(--nx-color-fondo);
     padding: 16px 20px;
     margin-bottom: 15px;
     border-radius: 10px;
 }
 
 .indices-apartado h5 {
-    color: #1E293B;
+    color: var(--nx-color-texto);
     font-size: 1em;
     margin-top: 0;
     margin-bottom: 10px;
@@ -61,25 +61,25 @@
 }
 
 .indices-apartado h5 i {
-    color: #006B5E;
+    color: var(--nx-color-modulo-texto);
 }
 
 /* Nota informativa */
 .info-note {
-    background-color: #E6F4F1;
-    border: 1px solid #B2DFDB;
+    background-color: var(--nx-color-modulo-suave);
+    border: 1px solid var(--nx-color-modulo-borde);
     border-radius: 6px;
     padding: 8px 12px;
     margin-bottom: 15px;
     font-size: 0.85em;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .info-note i {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .info-note--sm {
@@ -99,7 +99,7 @@
 }
 
 .haq-section-title {
-    color: #1E293B;
+    color: var(--nx-color-texto);
     font-weight: 600;
     margin: 8px 0 4px;
     font-size: 0.95em;
@@ -108,7 +108,7 @@
 .scale-hint {
     margin-top: 6px;
     padding: 6px 10px;
-    background: #E6F4F1;
+    background: var(--nx-color-modulo-suave);
     border-radius: 6px;
     font-size: 0.9em;
 }
@@ -119,21 +119,21 @@
 
 /* Campos readonly de ASDAS (auto-calculados desde homúnculo y analítica) */
 .asdas-readonly-input {
-    background-color: #fff3cd !important;
-    border-color: #ffc107 !important;
+    background-color: var(--nx-color-aviso-fondo) !important;
+    border-color: var(--nx-color-aviso) !important;
     font-weight: 600;
-    color: #856404 !important;
+    color: var(--nx-color-aviso) !important;
     cursor: not-allowed;
     text-align: center;
 }
 
 /* Resultados de índices destacados */
 .indice-resultado {
-    background-color: #d4edda !important;
-    border: 2px solid #28a745 !important;
+    background-color: var(--nx-color-ok-fondo) !important;
+    border: 2px solid var(--nx-color-ok) !important;
     font-size: 1em !important;
     font-weight: bold !important;
-    color: #155724 !important;
+    color: var(--nx-color-ok) !important;
     text-align: center;
     padding: 8px !important;
     border-radius: 8px;
@@ -145,9 +145,9 @@
    rule above still styles every other index field. Neutral surface, neutral
    border, legible dark text at blank/Incompleto and at every computed category. */
 #dapsaResult.indice-resultado {
-    background-color: #f1f3f5 !important;
-    border: 2px solid #adb5bd !important;
-    color: #212529 !important;
+    background-color: var(--nx-color-superficie-suave) !important;
+    border: 2px solid var(--nx-color-tenue) !important;
+    color: var(--nx-color-texto) !important;
 }
 
 /* Campos condicionales ocultos por defecto */
@@ -210,13 +210,13 @@
 }
 
 .collapsible-header:focus {
-    outline: 2px solid #008777;
+    outline: 2px solid var(--nx-color-principal);
     outline-offset: 2px;
 }
 
 /* Ajuste específico para el icono del usuario en datos del paciente */
 .patient-info-section .section-title i.fa-user-check {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 /* Contenedor para Manifestaciones y Comorbilidades lado a lado */
@@ -244,9 +244,9 @@
 
 .switch-btn {
     flex: 1;
-    background-color: #e9ecef;
-    color: #495057;
-    border: 2px solid #ced4da;
+    background-color: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    border: 2px solid var(--nx-color-borde);
     padding: 12px 18px;
     border-radius: 10px;
     cursor: pointer;
@@ -260,17 +260,17 @@
 }
 
 .switch-btn:hover {
-    background-color: #dee2e6;
-    border-color: #adb5bd;
+    background-color: var(--nx-color-superficie-suave);
+    border-color: var(--nx-color-tenue);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px color-mix(in srgb, var(--nx-color-texto) 10%, transparent);
 }
 
 .switch-btn.active {
-    background-color: #28a745;
-    color: white;
-    border-color: #28a745;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    background-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
+    border-color: var(--nx-color-ok);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-ok) 30%, transparent);
 }
 
 .switch-btn i {
@@ -294,8 +294,8 @@
 }
 
 .mda-criterio {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 10px 12px;
     display: grid;
@@ -307,44 +307,44 @@
 }
 
 .mda-criterio:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
     transform: translateY(-2px);
 }
 
 .mda-criterio-cumplido {
-    background: #d4edda !important;
-    border-color: #28a745 !important;
+    background: var(--nx-color-ok-fondo) !important;
+    border-color: var(--nx-color-ok) !important;
 }
 
 .mda-criterio-icon {
     font-size: 1.2em;
-    color: #6c757d;
+    color: var(--nx-color-texto-suave);
 }
 
 .mda-criterio-cumplido .mda-criterio-icon {
-    color: #28a745;
+    color: var(--nx-color-ok);
 }
 
 .mda-criterio-text {
     font-weight: 600;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-size: 0.9em;
 }
 
 .mda-criterio-valor {
-    background: #f8f9fa;
+    background: var(--nx-color-fondo);
     padding: 4px 10px;
     border-radius: 6px;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     font-size: 0.95em;
     min-width: 45px;
     text-align: center;
 }
 
 .mda-criterio-cumplido .mda-criterio-valor {
-    background: #28a745;
-    color: white;
+    background: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 .mda-criterio-status {
@@ -353,8 +353,8 @@
 }
 
 .mda-resultado-box {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 3px solid #e9ecef;
+    background: linear-gradient(135deg, var(--nx-color-fondo) 0%, var(--nx-color-superficie) 100%);
+    border: 3px solid var(--nx-color-borde);
     border-radius: 12px;
     padding: 14px;
     margin-top: 15px;
@@ -370,13 +370,13 @@
 .mda-resultado-label {
     font-size: 1em;
     font-weight: 600;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
 }
 
 .mda-resultado-score {
     font-size: 1.5em;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
 }
 
 .mda-resultado-status {
@@ -385,9 +385,9 @@
     text-align: center;
     font-size: 1.1em;
     font-weight: 700;
-    color: white;
-    background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%);
-    box-shadow: 0 4px 15px rgba(251, 140, 0, 0.3);
+    color: var(--nx-color-sobre-principal);
+    background: linear-gradient(135deg, var(--nx-color-aviso) 0%, var(--nx-color-aviso) 100%);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-aviso) 30%, transparent);
     transition: all 0.3s ease;
 }
 
@@ -407,8 +407,8 @@
 }
 
 .rapid3-component {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 14px;
     text-align: center;
@@ -416,15 +416,15 @@
 }
 
 .rapid3-component:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
     transform: translateY(-2px);
-    border-color: #6f42c1;
+    border-color: var(--nx-color-principal);
 }
 
 .rapid3-component-label {
     display: block;
     font-size: 0.85em;
-    color: #6c757d;
+    color: var(--nx-color-texto-suave);
     margin-bottom: 10px;
     font-weight: 600;
 }
@@ -432,13 +432,13 @@
 .rapid3-component-valor {
     font-size: 1.6em;
     font-weight: 700;
-    color: #6f42c1;
+    color: var(--nx-color-principal);
     display: block;
 }
 
 .rapid3-resultado-box {
-    background: linear-gradient(135deg, #f3e5f5 0%, #f8f5ff 100%);
-    border: 3px solid #6f42c1;
+    background: linear-gradient(135deg, var(--nx-color-principal-suave) 0%, var(--nx-color-principal-suave) 100%);
+    border: 3px solid var(--nx-color-principal);
     border-radius: 12px;
     padding: 14px;
     margin-top: 20px;
@@ -454,13 +454,13 @@
 .rapid3-resultado-label {
     font-size: 1em;
     font-weight: 600;
-    color: #4a148c;
+    color: var(--nx-color-principal);
 }
 
 .rapid3-resultado-score {
     font-size: 1.8em;
     font-weight: 700;
-    color: #6f42c1;
+    color: var(--nx-color-principal);
 }
 
 .rapid3-resultado-categoria {
@@ -469,9 +469,9 @@
     text-align: center;
     font-size: 0.95em;
     font-weight: 700;
-    background: linear-gradient(135deg, #d1c4e9 0%, #ede7f6 100%);
-    color: #4a148c;
-    box-shadow: 0 3px 10px rgba(111, 66, 193, 0.2);
+    background: linear-gradient(135deg, var(--nx-color-principal) 0%, var(--nx-color-principal-suave) 100%);
+    color: var(--nx-color-principal);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--nx-color-principal) 20%, transparent);
 }
 
 /* ========================================
@@ -486,22 +486,22 @@
 }
 
 .haq-category {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 14px;
     transition: all 0.3s ease;
 }
 
 .haq-category:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: #008777;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
+    border-color: var(--nx-color-modulo-texto);
 }
 
 .haq-category-title {
     display: block;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     margin-bottom: 10px;
     font-size: 0.95em;
 }
@@ -509,24 +509,24 @@
 .haq-score {
     width: 100%;
     padding: 8px 10px;
-    border: 2px solid #ced4da;
+    border: 2px solid var(--nx-color-borde);
     border-radius: 8px;
     font-size: 0.9em;
     font-weight: 600;
-    color: #495057;
-    background: white;
+    color: var(--nx-color-texto-suave);
+    background: var(--nx-color-superficie);
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .haq-score:hover {
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+    border-color: var(--nx-color-modulo-texto);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-info) 10%, transparent);
 }
 
 .haq-score:focus {
-    border-color: #008777;
-    box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--nx-color-info) 15%, transparent);
     outline: none;
 }
 
@@ -536,7 +536,7 @@
     gap: 8px;
     margin-top: 8px;
     font-size: 0.85em;
-    color: #6c757d;
+    color: var(--nx-color-texto-suave);
     font-weight: 600;
     cursor: pointer;
     user-select: none;
@@ -549,8 +549,8 @@
 }
 
 .haq-resultado-box {
-    background: linear-gradient(135deg, #d1ecf1 0%, #e8f7fa 100%);
-    border: 3px solid #008777;
+    background: linear-gradient(135deg, var(--nx-color-info-fondo) 0%, var(--nx-color-info-fondo) 100%);
+    border: 3px solid var(--nx-color-modulo-texto);
     border-radius: 12px;
     padding: 14px;
     display: flex;
@@ -562,18 +562,18 @@
 .haq-resultado-label {
     font-size: 1.05em;
     font-weight: 600;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
 }
 
 .haq-resultado-score {
     font-size: 2em;
     font-weight: 700;
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .haq-resultado-interpretacion {
     font-size: 0.85em;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
     margin-left: 20px;
     font-weight: 600;
 }
@@ -583,8 +583,8 @@
    ======================================== */
 
 .lei-section {
-    background: #f8fbff;
-    border: 2px solid #d6e9f8;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-info-borde);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 20px;
@@ -602,14 +602,14 @@
     align-items: center;
     gap: 12px;
     padding: 8px;
-    background: white;
+    background: var(--nx-color-superficie);
     border-radius: 8px;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .lei-point-item:hover {
-    background: #e3f2fd;
+    background: var(--nx-color-info-fondo);
     transform: translateX(5px);
 }
 
@@ -621,15 +621,15 @@
 
 .lei-point-label {
     font-size: 0.9em;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-weight: 500;
     cursor: pointer;
     user-select: none;
 }
 
 .lei-resultado-box {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    border: 3px solid #ff9800;
+    background: linear-gradient(135deg, var(--nx-color-aviso-fondo) 0%, var(--nx-color-aviso-fondo) 100%);
+    border: 3px solid var(--nx-color-aviso);
     border-radius: 12px;
     padding: 14px;
     display: flex;
@@ -640,13 +640,13 @@
 .lei-resultado-label {
     font-size: 1em;
     font-weight: 600;
-    color: #e65100;
+    color: var(--nx-color-aviso);
 }
 
 .lei-resultado-score {
     font-size: 1.8em;
     font-weight: 700;
-    color: #ff9800;
+    color: var(--nx-color-aviso);
 }
 
 /* ========================================
@@ -654,15 +654,15 @@
    ======================================== */
 
 .psoriasis-assessment-section {
-    background: #fff9e6;
-    border: 2px solid #ffe8a1;
+    background: var(--nx-color-aviso-fondo);
+    border: 2px solid var(--nx-color-aviso-borde);
     border-radius: 10px;
     padding: 14px;
     margin-top: 20px;
 }
 
 .psoriasis-assessment-section h6 {
-    color: #8a6d3b;
+    color: var(--nx-color-aviso);
     font-size: 0.95em;
     margin: 0 0 15px 0;
     font-weight: 700;
@@ -672,7 +672,7 @@
 }
 
 .psoriasis-assessment-section h6 i {
-    color: #f0ad4e;
+    color: var(--nx-color-aviso);
 }
 
 .psoriasis-grid {
@@ -682,17 +682,17 @@
 }
 
 .psoriasis-grid .form-group label {
-    color: #8a6d3b;
+    color: var(--nx-color-aviso);
     font-weight: 600;
 }
 
 .psoriasis-grid input {
-    border-color: #ffe8a1;
+    border-color: var(--nx-color-aviso-borde);
 }
 
 .psoriasis-grid input:focus {
-    border-color: #f0ad4e;
-    box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.1);
+    border-color: var(--nx-color-aviso);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-aviso) 10%, transparent);
 }
 
 /* ========================================
@@ -914,15 +914,15 @@
    ======================================== */
 
 .entesitis-title {
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     font-size: 1.15em;
     margin: 35px 0 15px 0;
     font-weight: 600;
 }
 
 .entesitis-section {
-    background: #f8fbff;
-    border: 2px solid #d6e9f8;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-info-borde);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 25px;
@@ -949,8 +949,8 @@
    ======================================== */
 
 .dolor-periferico-description {
-    background: #fff9e6;
-    border: 2px solid #ffe8a1;
+    background: var(--nx-color-aviso-fondo);
+    border: 2px solid var(--nx-color-aviso-borde);
     border-radius: 10px;
     padding: 14px;
     margin: 15px 0;
@@ -958,18 +958,18 @@
 
 .dolor-periferico-description label {
     font-weight: 700;
-    color: #8a6d3b;
+    color: var(--nx-color-aviso);
     margin-bottom: 10px;
 }
 
 .dolor-periferico-description textarea {
-    border-color: #ffe8a1;
-    background: white;
+    border-color: var(--nx-color-aviso-borde);
+    background: var(--nx-color-superficie);
 }
 
 .dolor-periferico-description textarea:focus {
-    border-color: #f0ad4e;
-    box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.1);
+    border-color: var(--nx-color-aviso);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-aviso) 10%, transparent);
 }
 
 /* ========================================
@@ -977,11 +977,11 @@
    ======================================== */
 
 .metrologia-subtitle {
-    color: #5a6268;
+    color: var(--nx-color-texto-suave);
     font-size: 1em;
     margin: 18px 0 12px 0;
     font-weight: 600;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--nx-color-borde);
     padding-bottom: 6px;
 }
 
@@ -1048,8 +1048,8 @@
 
 .patient-info-section input[readonly],
 .readonly-input {
-    background-color: #f8fafb;
-    border-color: #d1e0ea;
+    background-color: var(--nx-color-fondo);
+    border-color: var(--nx-color-tenue);
 }
 
 /* ========================================
@@ -1057,11 +1057,11 @@
    ======================================== */
 
 .homunculus-scores {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--nx-color-fondo) 0%, var(--nx-color-superficie) 100%);
     padding: 12px 18px;
     border-radius: 10px;
-    border: 2px solid #e9ecef;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 2px solid var(--nx-color-borde);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .score-label {
@@ -1069,27 +1069,27 @@
 }
 
 .homunculus-double-mark-box {
-    background: linear-gradient(135deg, #fff3e6 0%, #ffe8cc 100%);
-    border: 2px solid #f0ad4e;
+    background: linear-gradient(135deg, var(--nx-color-aviso-fondo) 0%, var(--nx-color-aviso-fondo) 100%);
+    border: 2px solid var(--nx-color-aviso);
     padding: 12px 18px;
     border-radius: 12px;
     margin-bottom: 15px;
     font-weight: 600;
-    color: #8a6d3b;
-    box-shadow: 0 3px 10px rgba(240, 173, 78, 0.2);
+    color: var(--nx-color-aviso);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--nx-color-aviso) 20%, transparent);
     display: flex;
     align-items: center;
 }
 
 .clear-btn {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    background: linear-gradient(135deg, var(--nx-color-tenue) 0%, var(--nx-color-tenue) 100%);
     transition: all 0.3s ease;
 }
 
 .clear-btn:hover {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, var(--nx-color-error) 0%, var(--nx-color-error) 100%);
     transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-error) 30%, transparent);
 }
 
 .entesitis-column {
@@ -1136,20 +1136,20 @@
     margin-right: 6px;
     font-size: 0.95em;
     font-weight: 600;
-    color: #343a40;
+    color: var(--nx-color-texto);
 }
 
 #dapsaCategoria.dapsa-categoria {
     margin-top: 0;
-    color: #212529;
-    background-color: #eef1f4;
-    border: 2px solid #6c757d;
+    color: var(--nx-color-texto);
+    background-color: var(--nx-color-superficie-suave);
+    border: 2px solid var(--nx-color-tenue);
 }
 
 #dapsaCategoria.dapsa-categoria[data-dapsa-estado="incompleto"] {
-    color: #495057;
-    background-color: #ffffff;
-    border-color: #adb5bd;
+    color: var(--nx-color-texto-suave);
+    background-color: var(--nx-color-superficie);
+    border-color: var(--nx-color-tenue);
     border-style: dashed;
 }
 
@@ -1160,7 +1160,7 @@
 .acr-criterio-group {
     margin-bottom: 12px;
     padding: 10px 12px;
-    background: #f8fafc;
+    background: var(--nx-color-fondo);
     border-radius: 8px;
 }
 
@@ -1168,12 +1168,12 @@
     display: block;
     font-size: 1.05em;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     margin-bottom: 8px;
 }
 
 .acr-criterio-label i {
-    color: #2c9faf;
+    color: var(--nx-color-info);
     margin-right: 6px;
     font-size: 1.1em;
 }
@@ -1182,17 +1182,17 @@
     width: 100%;
     padding: 8px 12px;
     border-radius: 8px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--nx-color-borde);
     font-size: 0.95em;
-    background: white;
+    background: var(--nx-color-superficie);
     cursor: pointer;
     transition: border-color 0.2s;
 }
 
 .criterio-acr-select:focus {
-    border-color: #2c5aa0;
+    border-color: var(--nx-color-info);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.15);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-color-info) 15%, transparent);
 }
 
 /* ========================================
@@ -1202,7 +1202,7 @@
 .mdhaq-questions {
     display: flex;
     flex-direction: column;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--nx-color-borde);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -1212,9 +1212,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 5px 10px;
-    background: #fff;
+    background: var(--nx-color-superficie);
     gap: 10px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--nx-color-borde);
 }
 
 .mdhaq-item:last-child {
@@ -1222,14 +1222,14 @@
 }
 
 .mdhaq-item:nth-child(even) {
-    background: #f8fafc;
+    background: var(--nx-color-fondo);
 }
 
 .mdhaq-item label {
     flex: 1 1 auto;
     min-width: 0;
     font-size: 0.85em;
-    color: #444;
+    color: var(--nx-color-texto);
     line-height: 1.25;
     margin: 0;
 }
@@ -1247,20 +1247,20 @@
     width: 48px;
     min-width: 48px;
     padding: 3px 4px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--nx-color-borde);
     border-radius: 4px;
     font-size: 0.9em;
     font-weight: 600;
     text-align: center;
-    background: white;
+    background: var(--nx-color-superficie);
     cursor: pointer;
     transition: border-color 0.2s;
 }
 
 .mdhaq-select:focus {
-    border-color: #2c5aa0;
+    border-color: var(--nx-color-info);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.12);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-color-info) 12%, transparent);
 }
 
 /* ============================================
@@ -1277,23 +1277,23 @@
 }
 
 .badge-apto {
-    background-color: #28a745;
-    color: #fff;
+    background-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 .badge-en-curso {
-    background-color: #ffc107;
-    color: #212529;
+    background-color: var(--nx-color-aviso);
+    color: var(--nx-color-texto);
 }
 
 .badge-no-apto {
-    background-color: #dc3545;
-    color: #fff;
+    background-color: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
 }
 
 .badge-no-evaluado {
-    background-color: #6c757d;
-    color: #fff;
+    background-color: var(--nx-color-tenue);
+    color: var(--nx-color-sobre-principal);
 }
 
 .patient-prebiologic-badge {
@@ -1307,15 +1307,15 @@
 
 .pcr-unit-mirror {
     font-weight: 600;
-    color: #856404;
+    color: var(--nx-color-aviso);
 }
 
 .pcr-conversion-note {
     display: block;
     margin-top: 4px;
     font-size: 0.85em;
-    color: #0b5ed7;
-    background-color: #e7f1ff;
+    color: var(--nx-color-info);
+    background-color: var(--nx-color-info-fondo);
     border-radius: 6px;
     padding: 4px 8px;
 }
@@ -1343,27 +1343,27 @@
     width: 100%;
     padding: 8px 12px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
 }
 
 .treatment-controls-improved .drug-autocomplete__input {
     padding: 10px 14px;
     border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .drug-autocomplete__input:focus {
     outline: none;
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 15%, transparent);
 }
 
 .drug-autocomplete__input:disabled {
-    background: #f1f5f9;
-    color: #64748b;
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
     cursor: not-allowed;
 }
 
@@ -1375,10 +1375,10 @@
     right: 0;
     max-height: 240px;
     overflow-y: auto;
-    background: #fff;
-    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: var(--nx-color-superficie);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 45%, transparent);
     border-radius: 10px;
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 12px 26px color-mix(in srgb, var(--nx-color-texto) 18%, transparent);
 }
 
 .drug-autocomplete__list[hidden] {
@@ -1393,16 +1393,16 @@
     background: transparent;
     text-align: left;
     font-size: 0.88rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
     cursor: pointer;
 }
 
 .drug-autocomplete__item:hover,
 .drug-autocomplete__item.is-active {
-    background: #eef2ff;
+    background: var(--nx-color-info-fondo);
 }
 
 .drug-autocomplete__item--clear {
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
     font-style: italic;
 }

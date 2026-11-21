@@ -4,12 +4,12 @@
    ======================================== */
 
 :root {
-    --primary-blue: #008777;
-    --success-green: #2ecc71;
-    --warning-yellow: #f1c40f;
-    --danger-red: #dc3545;
-    --text-muted: #7f8c8d;
-    --text-dark: #2c3e50;
+    --primary-blue: var(--nx-color-modulo);
+    --success-green: var(--nx-color-ok);
+    --warning-yellow: var(--nx-color-aviso);
+    --danger-red: var(--nx-color-error);
+    --text-muted: var(--nx-color-texto-suave);
+    --text-dark: var(--nx-color-texto);
 }
 
 * {
@@ -18,8 +18,8 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f0f2f5;
-    color: #333;
+    background-color: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto);
     margin: 0;
     padding: 0;
 }
@@ -33,9 +33,9 @@ body:has(.nx-marco) {
 .form-container {
     width: 100%;
     max-width: 1400px;
-    background-color: #ffffff;
+    background-color: var(--nx-color-superficie);
     border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 40px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
     padding: 30px 45px;
     margin: 0 auto;
 }
@@ -59,18 +59,18 @@ body:has(.nx-marco) {
 
 .form-header h1 {
     font-size: 2.2em;
-    color: #2c3e50;
+    color: var(--nx-color-texto);
     margin: 0;
     font-weight: 700;
 }
 
 .form-header h1 .highlight {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .form-header .subtitle {
     font-size: 1.05em;
-    color: #7f8c8d;
+    color: var(--nx-color-texto-suave);
     margin-top: 8px;
 }
 
@@ -79,8 +79,8 @@ body:has(.nx-marco) {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: linear-gradient(135deg, #008777 0%, #006B5E 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--nx-color-principal) 0%, var(--nx-color-principal) 100%);
+    color: var(--nx-color-sobre-principal);
     border: none;
     padding: 8px 16px;
     border-radius: 25px;
@@ -88,7 +88,7 @@ body:has(.nx-marco) {
     font-size: 0.85em;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-info) 30%, transparent);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -97,14 +97,14 @@ body:has(.nx-marco) {
 
 .back-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    background: linear-gradient(135deg, #006B5E 0%, #008777 100%);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--nx-color-info) 40%, transparent);
+    background: linear-gradient(135deg, var(--nx-color-principal-hover) 0%, var(--nx-color-principal-hover) 100%);
 }
 
 /* Sección de Datos del Paciente */
 .patient-info-section {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 1px solid #dee2e6;
+    background: linear-gradient(135deg, var(--nx-color-fondo) 0%, var(--nx-color-superficie) 100%);
+    border: 1px solid var(--nx-color-borde);
     border-radius: 12px;
     padding: 18px 24px;
     margin-bottom: 20px;
@@ -112,7 +112,7 @@ body:has(.nx-marco) {
 
 .section-title {
     font-size: 1.3em;
-    color: #1E293B;
+    color: var(--nx-color-texto);
     margin: 0 0 12px 0;
     display: flex;
     align-items: center;
@@ -129,12 +129,12 @@ body:has(.nx-marco) {
 .diagnostic-section {
     margin-top: 25px;
     padding-top: 20px;
-    border-top: 2px solid #e8f4f8;
+    border-top: 2px solid var(--nx-color-info-borde);
 }
 
 .diagnostic-title {
     font-size: 1.15em;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     margin: 0 0 15px 0;
     display: flex;
     align-items: center;
@@ -143,7 +143,7 @@ body:has(.nx-marco) {
 }
 
 .diagnostic-title i {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
     font-size: 1.1em;
 }
 
@@ -157,12 +157,12 @@ body:has(.nx-marco) {
 .biomarkers-section {
     margin-top: 20px;
     padding-top: 15px;
-    border-top: 1px solid #e8f4f8;
+    border-top: 1px solid var(--nx-color-info-borde);
 }
 
 .biomarkers-label {
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     font-size: 1.05em;
     display: block;
     margin-bottom: 16px;
@@ -181,22 +181,22 @@ body:has(.nx-marco) {
     align-items: flex-start;
     gap: 12px;
     padding: 16px 18px;
-    background: #ffffff;
-    border: 2px solid #d9e7f5;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-info-borde);
     border-radius: 14px;
-    box-shadow: 0 6px 18px rgba(44, 90, 160, 0.08);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--nx-color-info) 8%, transparent);
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .biomarker-card:hover {
-    border-color: #2c5aa0;
-    box-shadow: 0 10px 26px rgba(44, 90, 160, 0.15);
+    border-color: var(--nx-color-info);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--nx-color-info) 15%, transparent);
     transform: translateY(-3px);
 }
 
 .biomarker-name {
     font-weight: 600;
-    color: #1f3d63;
+    color: var(--nx-color-texto);
     font-size: 0.95em;
     letter-spacing: 0.02em;
 }
@@ -210,9 +210,9 @@ body:has(.nx-marco) {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    border: 2px solid #d4e1f3;
-    background: #f4f8ff;
-    color: #51617a;
+    border: 2px solid var(--nx-color-info-borde);
+    background: var(--nx-color-info-fondo);
+    color: var(--nx-color-texto-suave);
     cursor: pointer;
     transition: all 0.25s ease;
     display: flex;
@@ -224,43 +224,43 @@ body:has(.nx-marco) {
 
 .biomarker-badge:hover:not(.active) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--nx-color-texto) 12%, transparent);
 }
 
 .biomarker-badge.active {
     border-width: 3px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--nx-color-texto) 18%, transparent);
 }
 
 .badge-positive.active {
-    background: #dc3545;
-    border-color: #dc3545;
-    color: #ffffff;
+    background: var(--nx-color-error);
+    border-color: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
 }
 
 .badge-negative.active {
-    background: #28a745;
-    border-color: #28a745;
-    color: #ffffff;
+    background: var(--nx-color-ok);
+    border-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 .badge-unknown.active {
-    background: #fd7e14;
-    border-color: #fd7e14;
-    color: #ffffff;
+    background: var(--nx-color-aviso);
+    border-color: var(--nx-color-aviso);
+    color: var(--nx-color-sobre-principal);
 }
 
 /* Secciones Colapsables */
 .collapsible-section {
     margin-bottom: 15px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--nx-color-borde);
     border-radius: 12px;
     overflow: hidden;
 }
 
 .collapsible-header {
-    background-color: #f7f7f7;
-    color: #1E293B;
+    background-color: var(--nx-color-fondo);
+    color: var(--nx-color-texto);
     padding: 10px 18px;
     width: 100%;
     border: none;
@@ -276,7 +276,7 @@ body:has(.nx-marco) {
 }
 
 .collapsible-header:hover {
-    background-color: #e9e9e9;
+    background-color: var(--nx-color-superficie-suave);
 }
 
 .collapsible-header .arrow {
@@ -295,11 +295,11 @@ body:has(.nx-marco) {
 
 .collapsible-content {
     padding: 0 25px;
-    background-color: #ffffff;
+    background-color: var(--nx-color-superficie);
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s ease-out, padding 0.4s ease-out;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--nx-color-borde);
 }
 
 .collapsible-header.active+.collapsible-content {
@@ -308,10 +308,10 @@ body:has(.nx-marco) {
 
 .collapsible-content h3 {
     font-size: 1.15em;
-    color: #1E293B;
+    color: var(--nx-color-texto);
     margin: 20px 0 10px 0;
     padding-bottom: 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--nx-color-borde);
 }
 
 /* Grupos de Formulario y Campos */
@@ -323,7 +323,7 @@ body:has(.nx-marco) {
     display: block;
     font-weight: 500;
     margin-bottom: 5px;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-size: 0.9em;
 }
 
@@ -334,14 +334,14 @@ body:has(.nx-marco) {
 .form-group select {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--nx-color-tenue);
     border-radius: 8px;
     font-size: 0.9em;
     font-family: 'Inter', sans-serif;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: #fff;
+    background-color: var(--nx-color-superficie);
 }
 
 /* T1 #610: campos fecha compactos y contenidos (Primera Visita / Seguimiento).
@@ -356,8 +356,8 @@ body:has(.nx-marco) {
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-info) 20%, transparent);
     outline: none;
 }
 
@@ -373,7 +373,7 @@ body:has(.nx-marco) {
 }
 
 .readonly-input {
-    background-color: #f8fafb;
+    background-color: var(--nx-color-fondo);
     cursor: not-allowed;
 }
 
@@ -418,13 +418,13 @@ body:has(.nx-marco) {
 .form-group-checkbox input[type="checkbox"] {
     -webkit-appearance: none;
     appearance: none;
-    background-color: #fff;
+    background-color: var(--nx-color-superficie);
     margin: 0;
     font: inherit;
     color: currentColor;
     width: 1.4em;
     height: 1.4em;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--nx-color-tenue);
     border-radius: 6px;
     transform: translateY(-0.075em);
     display: grid;
@@ -434,7 +434,7 @@ body:has(.nx-marco) {
 }
 
 .form-group-checkbox input[type="checkbox"]:hover {
-    border-color: #008777;
+    border-color: var(--nx-color-modulo-texto);
 }
 
 .form-group-checkbox input[type="checkbox"]::before {
@@ -444,14 +444,14 @@ body:has(.nx-marco) {
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
     transform: scale(0);
     transition: 120ms transform ease-in-out;
-    box-shadow: inset 1em 1em #008777;
-    background-color: #008777;
+    box-shadow: inset 1em 1em var(--nx-color-principal);
+    background-color: var(--nx-color-modulo-texto);
     border-radius: 1px;
 }
 
 .form-group-checkbox input[type="checkbox"]:checked {
-    border-color: #008777;
-    background-color: #e9f5f9;
+    border-color: var(--nx-color-principal);
+    background-color: var(--nx-color-info-fondo);
 }
 
 .form-group-checkbox input[type="checkbox"]:checked::before {
@@ -467,7 +467,7 @@ body:has(.nx-marco) {
     display: block;
     margin-bottom: 15px;
     font-weight: 500;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-size: 1.05em;
 }
 
@@ -478,9 +478,9 @@ body:has(.nx-marco) {
 }
 
 .toggle-btn {
-    background-color: #e9ecef;
-    color: #495057;
-    border: 1px solid #ced4da;
+    background-color: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    border: 1px solid var(--nx-color-borde);
     padding: 7px 12px;
     border-radius: 20px;
     cursor: pointer;
@@ -491,15 +491,15 @@ body:has(.nx-marco) {
 }
 
 .toggle-btn:hover {
-    background-color: #e2e6ea;
-    border-color: #a7b7c5;
+    background-color: var(--nx-color-superficie-suave);
+    border-color: var(--nx-color-tenue);
 }
 
 .toggle-btn.active {
-    background-color: #008777;
-    color: white;
-    border-color: #008777;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    background-color: var(--nx-color-principal);
+    color: var(--nx-color-sobre-principal);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-info) 30%, transparent);
 }
 
 /* T2 #611 (Atenea C-087, volume): accessible chips for four discrete PV selects
@@ -522,9 +522,9 @@ body:has(.nx-marco) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: #e9ecef;
-    color: #495057;
-    border: 1px solid #ced4da;
+    background-color: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    border: 1px solid var(--nx-color-borde);
     padding: 7px 12px;
     border-radius: 20px;
     cursor: pointer;
@@ -535,22 +535,22 @@ body:has(.nx-marco) {
 }
 
 .pv-chip:hover:not(:disabled) {
-    background-color: #e2e6ea;
-    border-color: #a7b7c5;
+    background-color: var(--nx-color-superficie-suave);
+    border-color: var(--nx-color-tenue);
 }
 
 .pv-chip:focus-visible {
-    outline: 2px solid #008777;
+    outline: 2px solid var(--nx-color-principal);
     outline-offset: 2px;
-    box-shadow: 0 2px 8px rgba(0, 135, 119, 0.3);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-principal) 30%, transparent);
 }
 
 .pv-chip[aria-pressed="true"] {
-    background-color: #008777;
-    color: #ffffff;
-    border-color: #008777;
+    background-color: var(--nx-color-principal);
+    color: var(--nx-color-sobre-principal);
+    border-color: var(--nx-color-principal);
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-info) 30%, transparent);
 }
 
 .pv-chip__mark {
@@ -577,9 +577,9 @@ body:has(.nx-marco) {
    green/success surface, no white "active" text and no checkmark. Nonblank
    selected chips keep the active surface/mark above. */
 .pv-chip[data-value=""][aria-pressed="true"] {
-    background-color: #e9ecef;
-    color: #495057;
-    border-color: #ced4da;
+    background-color: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    border-color: var(--nx-color-borde);
     font-weight: 500;
     box-shadow: none;
 }
@@ -603,7 +603,7 @@ body:has(.nx-marco) {
     align-items: center;
     gap: 15px;
     padding: 10px 0;
-    border-bottom: 1px solid #f8f9fa;
+    border-bottom: 1px solid var(--nx-color-borde);
 }
 
 .toxic-item:last-child {
@@ -619,17 +619,17 @@ body:has(.nx-marco) {
 .toxic-description input[type="text"] {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--nx-color-tenue);
     border-radius: 8px;
     font-size: 0.9em;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: #fff;
+    background-color: var(--nx-color-superficie);
 }
 
 .toxic-description input[type="text"]:focus {
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-info) 20%, transparent);
     outline: none;
 }
 
@@ -653,13 +653,13 @@ body:has(.nx-marco) {
 
 .treatment-item input {
     margin-bottom: 0;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-family: 'Inter', sans-serif;
 }
 
 .treatment-item .remove-btn {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
     border: none;
     border-radius: 50%;
     width: 34px;
@@ -674,13 +674,13 @@ body:has(.nx-marco) {
 }
 
 .treatment-item .remove-btn:hover {
-    background-color: #c82333;
+    background-color: var(--nx-color-error);
     transform: scale(1.05);
 }
 
 .add-btn {
-    background-color: #28a745;
-    color: white;
+    background-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
     border: none;
     padding: 7px 12px;
     border-radius: 8px;
@@ -695,7 +695,7 @@ body:has(.nx-marco) {
 }
 
 .add-btn:hover {
-    background-color: #218838;
+    background-color: var(--nx-color-ok);
 }
 
 /* Constantes Vitales - Grid */
@@ -712,8 +712,8 @@ body:has(.nx-marco) {
 
 /* Anamnesis Group Container - Para campos agrupados */
 .anamnesis-group-container {
-    background: rgba(247, 249, 252, 0.5);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: color-mix(in srgb, var(--nx-color-fondo) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 20%, transparent);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 25px;
@@ -747,14 +747,14 @@ body:has(.nx-marco) {
 .form-group-full-width select {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--nx-color-tenue);
     border-radius: 8px;
     font-size: 0.9em;
     font-family: 'Inter', sans-serif;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: #fff;
+    background-color: var(--nx-color-superficie);
 }
 
 /* Exploración Física */
@@ -766,8 +766,8 @@ body:has(.nx-marco) {
 
 .homunculus-container {
     flex: 2 1 500px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: var(--nx-color-fondo);
+    border: 1px solid var(--nx-color-borde);
     border-radius: 12px;
     padding: 14px;
 }
@@ -775,7 +775,7 @@ body:has(.nx-marco) {
 .homunculus-container h4 {
     margin-top: 0;
     font-size: 1.2em;
-    color: #1E293B;
+    color: var(--nx-color-texto);
     margin-bottom: 15px;
 }
 
@@ -785,18 +785,18 @@ body:has(.nx-marco) {
     gap: 10px;
     margin-bottom: 15px;
     font-size: 0.85em;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--nx-color-fondo) 0%, var(--nx-color-superficie) 100%);
     padding: 10px 14px;
     border-radius: 10px;
-    border: 2px solid #e9ecef;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 2px solid var(--nx-color-borde);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .score-label {
     font-weight: bold;
     padding: 5px 10px;
     border-radius: 25px;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -804,18 +804,18 @@ body:has(.nx-marco) {
 }
 
 .score-label.score-nad {
-    color: #d68000;
-    background-color: #fff3cd;
+    color: var(--nx-color-aviso);
+    background-color: var(--nx-color-aviso-fondo);
 }
 
 .score-label.score-nat {
-    color: #c82333;
-    background-color: #f8d7da;
+    color: var(--nx-color-error);
+    background-color: var(--nx-color-error-fondo);
 }
 
 .score-label.score-dactilitis {
-    color: #1e7e34;
-    background-color: #d4edda;
+    color: var(--nx-color-ok);
+    background-color: var(--nx-color-ok-fondo);
 }
 
 .homunculus-controls {
@@ -827,9 +827,9 @@ body:has(.nx-marco) {
 }
 
 .homunculus-mode-btn {
-    background-color: #e9ecef;
-    color: #495057;
-    border: 1px solid #ced4da;
+    background-color: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    border: 1px solid var(--nx-color-borde);
     padding: 7px 12px;
     border-radius: 20px;
     cursor: pointer;
@@ -839,30 +839,30 @@ body:has(.nx-marco) {
 }
 
 .homunculus-mode-btn.active {
-    color: white;
+    color: var(--nx-color-sobre-principal);
     border-color: transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-texto) 20%, transparent);
 }
 
 .homunculus-mode-btn.mode-nad.active,
 .homunculus-mode-btn.mode-nad:hover {
-    background-color: #ffc107;
-    color: #333;
-    border-color: #ffc107;
+    background-color: var(--nx-color-aviso);
+    color: var(--nx-color-texto);
+    border-color: var(--nx-color-aviso);
 }
 
 .homunculus-mode-btn.mode-nat.active,
 .homunculus-mode-btn.mode-nat:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
+    background-color: var(--nx-color-error);
+    border-color: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
 }
 
 .homunculus-mode-btn.mode-dactilitis.active,
 .homunculus-mode-btn.mode-dactilitis:hover {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
+    background-color: var(--nx-color-ok);
+    border-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 /* SVG Homúnculo */
@@ -873,9 +873,9 @@ body:has(.nx-marco) {
     height: 0;
     overflow: visible;
     margin-bottom: 25px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--nx-color-borde);
     border-radius: 10px;
-    background-color: #ffffff;
+    background-color: var(--nx-color-superficie);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -890,8 +890,8 @@ body:has(.nx-marco) {
 }
 
 .body-region {
-    fill: rgba(108, 117, 125, 0.15);
-    stroke: #6c757d;
+    fill: color-mix(in srgb, var(--nx-color-tenue) 15%, transparent);
+    stroke: var(--nx-color-texto-suave);
     stroke-width: 1.5;
     cursor: pointer;
     transition: fill 0.25s ease, stroke 0.25s ease, opacity 0.25s ease;
@@ -899,63 +899,63 @@ body:has(.nx-marco) {
 }
 
 .body-region:hover {
-    fill: rgba(52, 152, 219, 0.4);
-    stroke: #008777;
+    fill: color-mix(in srgb, var(--nx-color-info) 40%, transparent);
+    stroke: var(--nx-color-modulo-texto);
     stroke-width: 2;
 }
 
 .body-region.marked-nad {
-    fill: #ffc107;
-    stroke: #e0a800;
+    fill: var(--nx-color-aviso);
+    stroke: var(--nx-color-aviso);
     stroke-width: 2.5;
 }
 
 .body-region.marked-nat {
-    fill: #dc3545;
-    stroke: #bd2130;
+    fill: var(--nx-color-error);
+    stroke: var(--nx-color-error);
     stroke-width: 2.5;
 }
 
 .body-region.marked-dactilitis {
-    fill: #28a745;
-    stroke: #1e7e34;
+    fill: var(--nx-color-ok);
+    stroke: var(--nx-color-ok);
     stroke-width: 2.5;
 }
 
 .body-region.double-marked-nad-nat {
     fill: url(#doubleMarkPattern) !important;
-    stroke: #b8860b;
+    stroke: var(--nx-color-aviso);
     stroke-width: 3;
-    filter: drop-shadow(0 0 3px rgba(220, 53, 69, 0.5));
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--nx-color-error) 50%, transparent));
 }
 
 .clear-btn {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    background: linear-gradient(135deg, var(--nx-color-tenue) 0%, var(--nx-color-tenue) 100%);
     margin-left: auto;
     margin-right: auto;
     display: block;
 }
 
 .clear-btn:hover {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, var(--nx-color-error) 0%, var(--nx-color-error) 100%);
     transform: scale(1.02);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-error) 30%, transparent);
 }
 
 /* Leyenda de numeración de dedos */
 .digit-numbering-legend {
-    background-color: #e8f4f8;
-    border: 2px solid #008777;
+    background-color: var(--nx-color-info-fondo);
+    border: 2px solid var(--nx-color-modulo-texto);
     border-radius: 10px;
     padding: 10px 14px;
     margin-top: 12px;
-    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.15);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-info) 15%, transparent);
 }
 
 .digit-numbering-legend .legend-title {
     font-size: 0.9em;
     font-weight: 700;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
     margin-bottom: 6px;
     display: flex;
     align-items: center;
@@ -964,7 +964,7 @@ body:has(.nx-marco) {
 
 .digit-numbering-legend .legend-item {
     font-size: 0.8em;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -974,8 +974,8 @@ body:has(.nx-marco) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: #d9534f;
-    color: white;
+    background-color: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
     font-weight: bold;
     min-width: 24px;
     height: 24px;
@@ -986,8 +986,8 @@ body:has(.nx-marco) {
 /* Metrología */
 .metrologia-container {
     flex: 1 1 350px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: var(--nx-color-fondo);
+    border: 1px solid var(--nx-color-borde);
     border-radius: 12px;
     padding: 14px;
 }
@@ -999,11 +999,11 @@ body:has(.nx-marco) {
 }
 
 .metrologia-subtitle {
-    color: #5a6268;
+    color: var(--nx-color-texto-suave);
     font-size: 0.95em;
     margin: 14px 0 10px 0;
     font-weight: 600;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--nx-color-borde);
     padding-bottom: 6px;
 }
 
@@ -1021,8 +1021,8 @@ body:has(.nx-marco) {
 
 /* CRITERIOS DIAGNÓSTICOS - ASAS (EspA) */
 .asas-criterios-box {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: var(--nx-color-fondo);
+    border: 1px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 16px;
     margin-bottom: 20px;
@@ -1056,16 +1056,16 @@ body:has(.nx-marco) {
 }
 
 .asas-result-box {
-    background-color: #eaf7f2;
-    border: 1px solid #2ecc71;
+    background-color: var(--nx-color-ok-fondo);
+    border: 1px solid var(--nx-color-ok);
     border-radius: 10px;
     padding: 12px 16px;
     text-align: center;
     font-size: 1em;
     font-weight: 600;
-    color: #27ae60;
+    color: var(--nx-color-ok);
     margin-bottom: 25px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .result-text {
@@ -1073,11 +1073,11 @@ body:has(.nx-marco) {
 }
 
 .result-text.high {
-    color: #27ae60;
+    color: var(--nx-color-ok);
 }
 
 .result-text.low {
-    color: #e67e22;
+    color: var(--nx-color-aviso);
 }
 
 /* T2 #585: CASPAR neutral classification — CASPAR-scoped only. Do NOT extend
@@ -1088,7 +1088,7 @@ body:has(.nx-marco) {
 
 /* CRITERIOS CASPAR (APs) */
 .caspar-info-box {
-    background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%);
+    background: linear-gradient(135deg, var(--nx-color-info-fondo) 0%, var(--nx-color-info-fondo) 100%);
     padding: 15px 20px;
     margin-bottom: 20px;
     border-radius: 10px;
@@ -1097,49 +1097,49 @@ body:has(.nx-marco) {
 .caspar-info-box p {
     margin: 8px 0;
     font-size: 0.95em;
-    color: #1565c0;
+    color: var(--nx-color-info);
 }
 
 .caspar-criterios-box {
-    background: #fafafa;
+    background: var(--nx-color-fondo);
     padding: 16px;
     border-radius: 10px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--nx-color-borde);
 }
 
 .caspar-criterio-item {
     margin: 12px 0;
     padding: 10px;
-    background: white;
+    background: var(--nx-color-superficie);
     border-radius: 6px;
     transition: all 0.2s ease;
 }
 
 .caspar-criterio-item:hover {
-    background: #e3f2fd;
+    background: var(--nx-color-info-fondo);
     transform: translateX(5px);
 }
 
 .caspar-result-box {
     margin-top: 20px;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    background: linear-gradient(135deg, var(--nx-color-aviso-fondo) 0%, var(--nx-color-aviso-fondo) 100%);
     border-radius: 10px;
-    border: 2px solid #ff9800;
+    border: 2px solid var(--nx-color-aviso);
     font-weight: 700;
     font-size: 1em;
-    color: #e65100;
+    color: var(--nx-color-aviso);
     text-align: center;
 }
 
 /* Tratamientos estructurados */
 .treatment-panel {
-    background: rgba(247, 249, 252, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: color-mix(in srgb, var(--nx-color-fondo) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 25%, transparent);
     border-radius: 14px;
     padding: 14px 16px;
     margin-top: 16px;
-    box-shadow: 0 10px 25px rgba(148, 163, 184, 0.15);
+    box-shadow: 0 10px 25px color-mix(in srgb, var(--nx-color-texto) 15%, transparent);
 }
 
 .treatment-grid {
@@ -1158,7 +1158,7 @@ body:has(.nx-marco) {
     flex: 0 0 190px;
     font-weight: 600;
     font-size: 0.88rem;
-    color: #334155;
+    color: var(--nx-color-texto);
 }
 
 .treatment-controls {
@@ -1181,27 +1181,27 @@ body:has(.nx-marco) {
 }
 
 .add-treatment-line-btn {
-    color: #059669;
+    color: var(--nx-color-ok);
 }
 
 .add-treatment-line-btn:hover {
-    color: #047857;
+    color: var(--nx-color-ok);
     transform: scale(1.1);
 }
 
 .remove-treatment-line-btn {
-    color: #dc2626;
+    color: var(--nx-color-error);
 }
 
 .remove-treatment-line-btn:hover {
-    color: #b91c1c;
+    color: var(--nx-color-error);
     transform: scale(1.1);
 }
 
 .treatment-extra {
     margin-left: 0;
     padding-left: 0;
-    background: rgba(255, 255, 255, 0.5);
+    background: color-mix(in srgb, var(--nx-color-superficie) 50%, transparent);
     border-radius: 8px;
     padding: 8px 12px;
     margin-top: 8px;
@@ -1212,10 +1212,10 @@ body:has(.nx-marco) {
     min-width: 180px;
     padding: 8px 12px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
 }
 
 .treatment-dose-input {
@@ -1223,15 +1223,15 @@ body:has(.nx-marco) {
     min-width: 150px;
     padding: 8px 10px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
 }
 
 .treatment-dose-input:disabled {
-    background: #f1f5f9;
-    color: #94a3b8;
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
 }
 
 /* Pauta de tratamiento (issue #919): mismo alto/borde que .treatment-dose-input. */
@@ -1240,15 +1240,15 @@ body:has(.nx-marco) {
     min-width: 130px;
     padding: 8px 10px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
 }
 
 .treatment-pauta-select:disabled {
-    background: #f1f5f9;
-    color: #94a3b8;
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
 }
 
 .treatment-pauta-otro {
@@ -1256,10 +1256,10 @@ body:has(.nx-marco) {
     min-width: 150px;
     padding: 8px 10px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
 }
 
 .treatment-pauta-otro[hidden] {
@@ -1269,20 +1269,20 @@ body:has(.nx-marco) {
 /* Plan de revisión */
 .plan-next-review-card {
     margin-top: 18px;
-    background: rgba(247, 249, 252, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: color-mix(in srgb, var(--nx-color-fondo) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 25%, transparent);
     border-radius: 14px;
     padding: 16px 18px;
     display: flex;
     flex-direction: column;
     gap: 8px;
     max-width: 320px;
-    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.12);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--nx-color-texto) 12%, transparent);
 }
 
 .plan-next-review-card label {
     font-weight: 600;
-    color: #334155;
+    color: var(--nx-color-texto);
     font-size: 0.92rem;
 }
 
@@ -1290,18 +1290,18 @@ body:has(.nx-marco) {
     width: 100%;
     padding: 10px 12px;
     border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.95rem;
-    color: #0f172a;
+    color: var(--nx-color-texto);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     box-sizing: border-box;
 }
 
 .plan-date-input:focus {
     outline: none;
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 15%, transparent);
 }
 
 /* Comentarios adicionales */
@@ -1314,7 +1314,7 @@ body:has(.nx-marco) {
 .form-actions {
     margin-top: 35px;
     padding-top: 25px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--nx-color-borde);
     text-align: center;
     display: flex;
     flex-wrap: wrap;
@@ -1345,30 +1345,30 @@ body:has(.nx-marco) {
 }
 
 .primary-btn {
-    background-color: #008777;
-    color: white;
+    background-color: var(--nx-color-principal);
+    color: var(--nx-color-sobre-principal);
 }
 
 .primary-btn:hover {
-    background-color: #2980b9;
+    background-color: var(--nx-color-info);
 }
 
 .success-btn {
-    background-color: #2ecc71;
-    color: white;
+    background-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 .success-btn:hover {
-    background-color: #27ad60;
+    background-color: var(--nx-color-ok);
 }
 
 .warning-btn {
-    background-color: #f1c40f;
-    color: #333;
+    background-color: var(--nx-color-aviso);
+    color: var(--nx-color-texto);
 }
 
 .warning-btn:hover {
-    background-color: #e6b90e;
+    background-color: var(--nx-color-aviso);
 }
 
 /* Responsive */
@@ -1475,12 +1475,12 @@ body:has(.nx-marco) {
 
 /* Plan Terapéutico Mejorado */
 .treatment-panel-improved {
-    background: rgba(247, 249, 252, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: color-mix(in srgb, var(--nx-color-fondo) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 25%, transparent);
     border-radius: 16px;
     padding: 20px 24px;
     margin-top: 20px;
-    box-shadow: 0 10px 25px rgba(148, 163, 184, 0.15);
+    box-shadow: 0 10px 25px color-mix(in srgb, var(--nx-color-texto) 15%, transparent);
 }
 
 .treatment-grid-improved {
@@ -1494,7 +1494,7 @@ body:has(.nx-marco) {
     align-items: center;
     gap: 16px;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    border-bottom: 1px solid color-mix(in srgb, var(--nx-color-tenue) 10%, transparent);
 }
 
 .treatment-line-improved:last-child {
@@ -1502,18 +1502,18 @@ body:has(.nx-marco) {
 }
 
 .treatment-line-improved.treatment-extra {
-    background: rgba(255, 255, 255, 0.5);
+    background: color-mix(in srgb, var(--nx-color-superficie) 50%, transparent);
     border-radius: 8px;
     padding: 12px;
     margin-top: 8px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    border-bottom: 1px solid color-mix(in srgb, var(--nx-color-tenue) 15%, transparent);
 }
 
 .treatment-label-improved {
     flex: 0 0 180px;
     font-weight: 600;
     font-size: 0.95rem;
-    color: #374151;
+    color: var(--nx-color-texto);
     text-align: left;
 }
 
@@ -1530,18 +1530,18 @@ body:has(.nx-marco) {
     min-width: 160px;
     padding: 10px 14px;
     border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: var(--nx-color-texto);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .treatment-select-improved:focus {
     outline: none;
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 15%, transparent);
 }
 
 .treatment-dose-input-improved {
@@ -1549,48 +1549,48 @@ body:has(.nx-marco) {
     min-width: 160px;
     padding: 10px 14px;
     border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #f8fafc;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-fondo);
     font-size: 0.9rem;
-    color: #64748b;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: var(--nx-color-texto-suave);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .treatment-dose-input-improved:not(:disabled):hover {
-    border-color: rgba(148, 163, 184, 0.5);
+    border-color: color-mix(in srgb, var(--nx-color-tenue) 50%, transparent);
 }
 
 .treatment-dose-input-improved:not(:disabled):focus {
     outline: none;
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
-    background: #fff;
-    color: #1e293b;
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 15%, transparent);
+    background: var(--nx-color-superficie);
+    color: var(--nx-color-texto);
 }
 
 .treatment-dose-input-improved:enabled {
-    background: #fff;
-    color: #1e293b;
+    background: var(--nx-color-superficie);
+    color: var(--nx-color-texto);
     cursor: text;
 }
 
 .plan-next-review-card-improved {
-    background: rgba(247, 249, 252, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: color-mix(in srgb, var(--nx-color-fondo) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 25%, transparent);
     border-radius: 16px;
     padding: 20px 24px;
     display: flex;
     flex-direction: column;
     gap: 10px;
     max-width: 350px;
-    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.12);
+    box-shadow: 0 10px 22px color-mix(in srgb, var(--nx-color-texto) 12%, transparent);
     margin-top: 20px;
 }
 
 .plan-next-review-card-improved label {
     font-weight: 600;
-    color: #374151;
+    color: var(--nx-color-texto);
     font-size: 0.95rem;
     margin-bottom: 8px;
 }
@@ -1599,19 +1599,19 @@ body:has(.nx-marco) {
     width: 100%;
     padding: 12px 16px;
     border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.95rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     box-sizing: border-box;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .plan-date-input-improved:focus {
     outline: none;
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 15%, transparent);
 }
 
 /* Responsive para el nuevo diseño */
@@ -1700,14 +1700,14 @@ body:has(.nx-marco) {
 
 /* Apartados dentro de Pruebas Complementarias */
 .pruebas-apartado {
-    background-color: #f8f9fa;
+    background-color: var(--nx-color-fondo);
     padding: 16px 20px;
     margin-bottom: 15px;
     border-radius: 10px;
 }
 
 .pruebas-apartado h5 {
-    color: #1E293B;
+    color: var(--nx-color-texto);
     font-size: 1em;
     margin-top: 0;
     margin-bottom: 10px;
@@ -1718,19 +1718,19 @@ body:has(.nx-marco) {
 }
 
 .pruebas-apartado h5 i {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 /* Apartados de Índices */
 .indices-apartado {
-    background-color: #f8f9fa;
+    background-color: var(--nx-color-fondo);
     padding: 16px 20px;
     margin-bottom: 15px;
     border-radius: 10px;
 }
 
 .indices-apartado h5 {
-    color: #1E293B;
+    color: var(--nx-color-texto);
     font-size: 1em;
     margin-top: 0;
     margin-bottom: 10px;
@@ -1741,25 +1741,25 @@ body:has(.nx-marco) {
 }
 
 .indices-apartado h5 i {
-    color: #006B5E;
+    color: var(--nx-color-modulo-texto);
 }
 
 /* Nota informativa */
 .info-note {
-    background-color: #E6F4F1;
-    border: 1px solid #B2DFDB;
+    background-color: var(--nx-color-modulo-suave);
+    border: 1px solid var(--nx-color-modulo-borde);
     border-radius: 6px;
     padding: 8px 12px;
     margin-bottom: 15px;
     font-size: 0.85em;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .info-note i {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .info-note--sm {
@@ -1779,7 +1779,7 @@ body:has(.nx-marco) {
 }
 
 .haq-section-title {
-    color: #1E293B;
+    color: var(--nx-color-texto);
     font-weight: 600;
     margin: 8px 0 4px;
     font-size: 0.95em;
@@ -1788,28 +1788,28 @@ body:has(.nx-marco) {
 .scale-hint {
     margin-top: 6px;
     padding: 6px 10px;
-    background: #E6F4F1;
+    background: var(--nx-color-modulo-suave);
     border-radius: 6px;
     font-size: 0.9em;
 }
 
 /* Campos readonly de ASDAS */
 .asdas-readonly-input {
-    background-color: #fff3cd !important;
-    border-color: #ffc107 !important;
+    background-color: var(--nx-color-aviso-fondo) !important;
+    border-color: var(--nx-color-aviso) !important;
     font-weight: 600;
-    color: #856404 !important;
+    color: var(--nx-color-aviso) !important;
     cursor: not-allowed;
     text-align: center;
 }
 
 /* Resultados de índices destacados */
 .indice-resultado {
-    background-color: #d4edda !important;
-    border: 2px solid #28a745 !important;
+    background-color: var(--nx-color-ok-fondo) !important;
+    border: 2px solid var(--nx-color-ok) !important;
     font-size: 1em !important;
     font-weight: bold !important;
-    color: #155724 !important;
+    color: var(--nx-color-ok) !important;
     text-align: center;
     padding: 8px !important;
     border-radius: 8px;
@@ -1821,9 +1821,9 @@ body:has(.nx-marco) {
    rule above still styles every other index field. Neutral surface, neutral
    border, legible dark text at blank/Incompleto and at every computed category. */
 #dapsaResult.indice-resultado {
-    background-color: #f1f3f5 !important;
-    border: 2px solid #adb5bd !important;
-    color: #212529 !important;
+    background-color: var(--nx-color-superficie-suave) !important;
+    border: 2px solid var(--nx-color-tenue) !important;
+    color: var(--nx-color-texto) !important;
 }
 
 /* Clases de visibilidad condicional por patología */
@@ -1886,20 +1886,20 @@ body:has(.nx-marco) {
     margin-right: 6px;
     font-size: 0.95em;
     font-weight: 600;
-    color: #343a40;
+    color: var(--nx-color-texto);
 }
 
 #dapsaCategoria.dapsa-categoria {
     margin-top: 0;
-    color: #212529;
-    background-color: #eef1f4;
-    border: 2px solid #6c757d;
+    color: var(--nx-color-texto);
+    background-color: var(--nx-color-superficie-suave);
+    border: 2px solid var(--nx-color-tenue);
 }
 
 #dapsaCategoria.dapsa-categoria[data-dapsa-estado="incompleto"] {
-    color: #495057;
-    background-color: #ffffff;
-    border-color: #adb5bd;
+    color: var(--nx-color-texto-suave);
+    background-color: var(--nx-color-superficie);
+    border-color: var(--nx-color-tenue);
     border-style: dashed;
 }
 
@@ -1910,7 +1910,7 @@ body:has(.nx-marco) {
 .acr-criterio-group {
     margin-bottom: 12px;
     padding: 10px 12px;
-    background: #f8fafc;
+    background: var(--nx-color-fondo);
     border-radius: 8px;
 }
 
@@ -1918,12 +1918,12 @@ body:has(.nx-marco) {
     display: block;
     font-size: 1.05em;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     margin-bottom: 8px;
 }
 
 .acr-criterio-label i {
-    color: #2c9faf;
+    color: var(--nx-color-info);
     margin-right: 6px;
     font-size: 1.1em;
 }
@@ -1932,17 +1932,17 @@ body:has(.nx-marco) {
     width: 100%;
     padding: 8px 12px;
     border-radius: 8px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--nx-color-borde);
     font-size: 0.95em;
-    background: white;
+    background: var(--nx-color-superficie);
     cursor: pointer;
     transition: border-color 0.2s;
 }
 
 .criterio-acr-select:focus {
-    border-color: #2c5aa0;
+    border-color: var(--nx-color-info);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.15);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-color-info) 15%, transparent);
 }
 
 /* ========================================
@@ -1952,7 +1952,7 @@ body:has(.nx-marco) {
 .mdhaq-questions {
     display: flex;
     flex-direction: column;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--nx-color-borde);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -1968,8 +1968,8 @@ body:has(.nx-marco) {
     align-items: center;
     width: 100%;
     padding: 10px 12px;
-    background: #fff;
-    border-bottom: 1px solid #f0f0f0;
+    background: var(--nx-color-superficie);
+    border-bottom: 1px solid var(--nx-color-borde);
 }
 
 .mdhaq-item:last-child {
@@ -1977,13 +1977,13 @@ body:has(.nx-marco) {
 }
 
 .mdhaq-item:nth-child(even) {
-    background: #f8fafc;
+    background: var(--nx-color-fondo);
 }
 
 .mdhaq-item label {
     min-width: 0;
     font-size: 0.85em;
-    color: #444;
+    color: var(--nx-color-texto);
     line-height: 1.35;
     margin: 0;
     white-space: normal;
@@ -1997,20 +1997,20 @@ body:has(.nx-marco) {
     max-width: 120px;
     justify-self: end;
     padding: 3px 4px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--nx-color-borde);
     border-radius: 4px;
     font-size: 0.9em;
     font-weight: 600;
     text-align: center;
-    background: white;
+    background: var(--nx-color-superficie);
     cursor: pointer;
     transition: border-color 0.2s;
 }
 
 .mdhaq-select:focus {
-    border-color: #2c5aa0;
+    border-color: var(--nx-color-info);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.12);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-color-info) 12%, transparent);
 }
 
 /* ========================================
@@ -2025,8 +2025,8 @@ body:has(.nx-marco) {
 }
 
 .mda-criterio {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 10px 12px;
     display: grid;
@@ -2038,44 +2038,44 @@ body:has(.nx-marco) {
 }
 
 .mda-criterio:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
     transform: translateY(-2px);
 }
 
 .mda-criterio-cumplido {
-    background: #d4edda !important;
-    border-color: #28a745 !important;
+    background: var(--nx-color-ok-fondo) !important;
+    border-color: var(--nx-color-ok) !important;
 }
 
 .mda-criterio-icon {
     font-size: 1.2em;
-    color: #6c757d;
+    color: var(--nx-color-texto-suave);
 }
 
 .mda-criterio-cumplido .mda-criterio-icon {
-    color: #28a745;
+    color: var(--nx-color-ok);
 }
 
 .mda-criterio-text {
     font-weight: 600;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-size: 0.9em;
 }
 
 .mda-criterio-valor {
-    background: #f8f9fa;
+    background: var(--nx-color-fondo);
     padding: 4px 10px;
     border-radius: 6px;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     font-size: 0.95em;
     min-width: 45px;
     text-align: center;
 }
 
 .mda-criterio-cumplido .mda-criterio-valor {
-    background: #28a745;
-    color: white;
+    background: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 .mda-criterio-status {
@@ -2084,8 +2084,8 @@ body:has(.nx-marco) {
 }
 
 .mda-resultado-box {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 3px solid #e9ecef;
+    background: linear-gradient(135deg, var(--nx-color-fondo) 0%, var(--nx-color-superficie) 100%);
+    border: 3px solid var(--nx-color-borde);
     border-radius: 12px;
     padding: 14px;
     margin-top: 15px;
@@ -2101,13 +2101,13 @@ body:has(.nx-marco) {
 .mda-resultado-label {
     font-size: 1em;
     font-weight: 600;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
 }
 
 .mda-resultado-score {
     font-size: 1.5em;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
 }
 
 .mda-resultado-status {
@@ -2116,9 +2116,9 @@ body:has(.nx-marco) {
     text-align: center;
     font-size: 1.1em;
     font-weight: 700;
-    color: white;
-    background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%);
-    box-shadow: 0 4px 15px rgba(251, 140, 0, 0.3);
+    color: var(--nx-color-sobre-principal);
+    background: linear-gradient(135deg, var(--nx-color-aviso) 0%, var(--nx-color-aviso) 100%);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-aviso) 30%, transparent);
     transition: all 0.3s ease;
 }
 
@@ -2138,8 +2138,8 @@ body:has(.nx-marco) {
 }
 
 .rapid3-component {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 14px;
     text-align: center;
@@ -2147,15 +2147,15 @@ body:has(.nx-marco) {
 }
 
 .rapid3-component:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
     transform: translateY(-2px);
-    border-color: #6f42c1;
+    border-color: var(--nx-color-principal);
 }
 
 .rapid3-component-label {
     display: block;
     font-size: 0.85em;
-    color: #6c757d;
+    color: var(--nx-color-texto-suave);
     margin-bottom: 10px;
     font-weight: 600;
 }
@@ -2163,13 +2163,13 @@ body:has(.nx-marco) {
 .rapid3-component-valor {
     font-size: 1.6em;
     font-weight: 700;
-    color: #6f42c1;
+    color: var(--nx-color-principal);
     display: block;
 }
 
 .rapid3-resultado-box {
-    background: linear-gradient(135deg, #f3e5f5 0%, #f8f5ff 100%);
-    border: 3px solid #6f42c1;
+    background: linear-gradient(135deg, var(--nx-color-principal-suave) 0%, var(--nx-color-principal-suave) 100%);
+    border: 3px solid var(--nx-color-principal);
     border-radius: 12px;
     padding: 14px;
     margin-top: 20px;
@@ -2185,13 +2185,13 @@ body:has(.nx-marco) {
 .rapid3-resultado-label {
     font-size: 1em;
     font-weight: 600;
-    color: #4a148c;
+    color: var(--nx-color-principal);
 }
 
 .rapid3-resultado-score {
     font-size: 1.8em;
     font-weight: 700;
-    color: #6f42c1;
+    color: var(--nx-color-principal);
 }
 
 .rapid3-resultado-categoria {
@@ -2200,9 +2200,9 @@ body:has(.nx-marco) {
     text-align: center;
     font-size: 0.95em;
     font-weight: 700;
-    background: linear-gradient(135deg, #d1c4e9 0%, #ede7f6 100%);
-    color: #4a148c;
-    box-shadow: 0 3px 10px rgba(111, 66, 193, 0.2);
+    background: linear-gradient(135deg, var(--nx-color-principal) 0%, var(--nx-color-principal-suave) 100%);
+    color: var(--nx-color-principal);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--nx-color-principal) 20%, transparent);
 }
 
 /* ========================================
@@ -2217,22 +2217,22 @@ body:has(.nx-marco) {
 }
 
 .haq-category {
-    background: white;
-    border: 2px solid #e9ecef;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-borde);
     border-radius: 10px;
     padding: 14px;
     transition: all 0.3s ease;
 }
 
 .haq-category:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: #008777;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
+    border-color: var(--nx-color-modulo-texto);
 }
 
 .haq-category-title {
     display: block;
     font-weight: 700;
-    color: #2c5aa0;
+    color: var(--nx-color-info);
     margin-bottom: 10px;
     font-size: 0.95em;
 }
@@ -2240,24 +2240,24 @@ body:has(.nx-marco) {
 .haq-score {
     width: 100%;
     padding: 8px 10px;
-    border: 2px solid #ced4da;
+    border: 2px solid var(--nx-color-borde);
     border-radius: 8px;
     font-size: 0.9em;
     font-weight: 600;
-    color: #495057;
-    background: white;
+    color: var(--nx-color-texto-suave);
+    background: var(--nx-color-superficie);
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .haq-score:hover {
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+    border-color: var(--nx-color-modulo-texto);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-info) 10%, transparent);
 }
 
 .haq-score:focus {
-    border-color: #008777;
-    box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--nx-color-info) 15%, transparent);
     outline: none;
 }
 
@@ -2267,7 +2267,7 @@ body:has(.nx-marco) {
     gap: 8px;
     margin-top: 8px;
     font-size: 0.85em;
-    color: #6c757d;
+    color: var(--nx-color-texto-suave);
     font-weight: 600;
     cursor: pointer;
     user-select: none;
@@ -2280,8 +2280,8 @@ body:has(.nx-marco) {
 }
 
 .haq-resultado-box {
-    background: linear-gradient(135deg, #d1ecf1 0%, #e8f7fa 100%);
-    border: 3px solid #008777;
+    background: linear-gradient(135deg, var(--nx-color-info-fondo) 0%, var(--nx-color-info-fondo) 100%);
+    border: 3px solid var(--nx-color-modulo-texto);
     border-radius: 12px;
     padding: 14px;
     display: flex;
@@ -2293,18 +2293,18 @@ body:has(.nx-marco) {
 .haq-resultado-label {
     font-size: 1.05em;
     font-weight: 600;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
 }
 
 .haq-resultado-score {
     font-size: 2em;
     font-weight: 700;
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .haq-resultado-interpretacion {
     font-size: 0.85em;
-    color: #004D44;
+    color: var(--nx-color-modulo-texto);
     margin-left: 20px;
     font-weight: 600;
 }
@@ -2314,8 +2314,8 @@ body:has(.nx-marco) {
    ======================================== */
 
 .lei-section {
-    background: #f8fbff;
-    border: 2px solid #d6e9f8;
+    background: var(--nx-color-superficie);
+    border: 2px solid var(--nx-color-info-borde);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 20px;
@@ -2333,14 +2333,14 @@ body:has(.nx-marco) {
     align-items: center;
     gap: 12px;
     padding: 8px;
-    background: white;
+    background: var(--nx-color-superficie);
     border-radius: 8px;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .lei-point-item:hover {
-    background: #e3f2fd;
+    background: var(--nx-color-info-fondo);
     transform: translateX(5px);
 }
 
@@ -2352,15 +2352,15 @@ body:has(.nx-marco) {
 
 .lei-point-label {
     font-size: 0.9em;
-    color: #495057;
+    color: var(--nx-color-texto-suave);
     font-weight: 500;
     cursor: pointer;
     user-select: none;
 }
 
 .lei-resultado-box {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    border: 3px solid #ff9800;
+    background: linear-gradient(135deg, var(--nx-color-aviso-fondo) 0%, var(--nx-color-aviso-fondo) 100%);
+    border: 3px solid var(--nx-color-aviso);
     border-radius: 12px;
     padding: 14px;
     display: flex;
@@ -2371,13 +2371,13 @@ body:has(.nx-marco) {
 .lei-resultado-label {
     font-size: 1em;
     font-weight: 600;
-    color: #e65100;
+    color: var(--nx-color-aviso);
 }
 
 .lei-resultado-score {
     font-size: 1.8em;
     font-weight: 700;
-    color: #ff9800;
+    color: var(--nx-color-aviso);
 }
 
 /* ========================================
@@ -2385,15 +2385,15 @@ body:has(.nx-marco) {
    ======================================== */
 
 .psoriasis-assessment-section {
-    background: #fff9e6;
-    border: 2px solid #ffe8a1;
+    background: var(--nx-color-aviso-fondo);
+    border: 2px solid var(--nx-color-aviso-borde);
     border-radius: 10px;
     padding: 14px;
     margin-top: 20px;
 }
 
 .psoriasis-assessment-section h6 {
-    color: #8a6d3b;
+    color: var(--nx-color-aviso);
     font-size: 0.95em;
     margin: 0 0 15px 0;
     font-weight: 700;
@@ -2403,7 +2403,7 @@ body:has(.nx-marco) {
 }
 
 .psoriasis-assessment-section h6 i {
-    color: #f0ad4e;
+    color: var(--nx-color-aviso);
 }
 
 .psoriasis-grid {
@@ -2413,17 +2413,17 @@ body:has(.nx-marco) {
 }
 
 .psoriasis-grid .form-group label {
-    color: #8a6d3b;
+    color: var(--nx-color-aviso);
     font-weight: 600;
 }
 
 .psoriasis-grid input {
-    border-color: #ffe8a1;
+    border-color: var(--nx-color-aviso-borde);
 }
 
 .psoriasis-grid input:focus {
-    border-color: #f0ad4e;
-    box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.1);
+    border-color: var(--nx-color-aviso);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-aviso) 10%, transparent);
 }
 
 /* ========================================
@@ -2551,15 +2551,15 @@ body:has(.nx-marco) {
 
 .pcr-unit-mirror {
     font-weight: 600;
-    color: #856404;
+    color: var(--nx-color-aviso);
 }
 
 .pcr-conversion-note {
     display: block;
     margin-top: 4px;
     font-size: 0.85em;
-    color: #0b5ed7;
-    background-color: #e7f1ff;
+    color: var(--nx-color-info);
+    background-color: var(--nx-color-info-fondo);
     border-radius: 6px;
     padding: 4px 8px;
 }
@@ -2587,27 +2587,27 @@ body:has(.nx-marco) {
     width: 100%;
     padding: 8px 12px;
     border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 35%, transparent);
+    background: var(--nx-color-superficie);
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
 }
 
 .treatment-controls-improved .drug-autocomplete__input {
     padding: 10px 14px;
     border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .drug-autocomplete__input:focus {
     outline: none;
-    border-color: #008777;
-    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
+    border-color: var(--nx-color-principal);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 15%, transparent);
 }
 
 .drug-autocomplete__input:disabled {
-    background: #f1f5f9;
-    color: #64748b;
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
     cursor: not-allowed;
 }
 
@@ -2619,10 +2619,10 @@ body:has(.nx-marco) {
     right: 0;
     max-height: 240px;
     overflow-y: auto;
-    background: #fff;
-    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: var(--nx-color-superficie);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 45%, transparent);
     border-radius: 10px;
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 12px 26px color-mix(in srgb, var(--nx-color-texto) 18%, transparent);
 }
 
 .drug-autocomplete__list[hidden] {
@@ -2637,16 +2637,16 @@ body:has(.nx-marco) {
     background: transparent;
     text-align: left;
     font-size: 0.88rem;
-    color: #1e293b;
+    color: var(--nx-color-texto);
     cursor: pointer;
 }
 
 .drug-autocomplete__item:hover,
 .drug-autocomplete__item.is-active {
-    background: #eef2ff;
+    background: var(--nx-color-info-fondo);
 }
 
 .drug-autocomplete__item--clear {
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
     font-style: italic;
 }

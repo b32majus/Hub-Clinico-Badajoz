@@ -8,21 +8,21 @@
     <title>Hub Clínico — Seguimiento Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
-    <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t1">
-    <link rel="stylesheet" href="css/nexus_base.css?v=20261121-t1">
+    <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t6">
+    <link rel="stylesheet" href="css/nexus_base.css?v=20261121-t6">
     <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t5">
     <script type="module" src="modules/nexus/piezas/nx-shell.js"></script>
-    <link rel="stylesheet" href="style.css?v=20260612-data-import-a">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260612-data-import-a">
+    <link rel="stylesheet" href="style.css?v=20261121-t6">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261121-t6">
     <style>
     /* T01 #795 (C-088 VIS-01): tratamiento de insignias del segmento EA según
        el máster G0 v0.4 aprobado (píldora encajonada). Solo alcanza a la
        insignia de recuento EA y a la insignia de la sección EA. */
     #fhSegEaCountBadge,
     #modSeguimientoEa > .section-title > .status-badge {
-        border: 1px solid #c9dbe5;
-        background: #eff5f8;
-        color: #3f6279;
+        border: 1px solid var(--nx-color-borde);
+        background: var(--nx-color-superficie-suave);
+        color: var(--nx-color-texto-suave);
         border-radius: 6px;
         padding: 4px 7px;
         font-size: 10px;
@@ -36,9 +36,9 @@
        G0 v0.4 (ámbar/naranja, casi cuadrada, más pequeña). Solo alcanza a la
        insignia de estado dentro de las tarjetas EA; no toca otras insignias. */
     #fhSegEaList .ea-t01-card .status-badge--ea-card {
-        background: #FEF3C7;
-        color: #92400E;
-        border: 1px solid #FDE68A;
+        background: var(--nx-color-aviso-fondo);
+        color: var(--nx-color-aviso);
+        border: 1px solid var(--nx-color-aviso-borde);
         border-radius: 4px;
         padding: 3px 8px;
         font-size: 10px;
@@ -88,7 +88,7 @@
     }
     #modSeguimientoEa .ea-t01-summary-copy {
         font-weight: 800;
-        color: #1f344b;
+        color: var(--nx-color-texto);
     }
     /* VIS-04: solo los dos campos de la tarjeta EA expandida, como G0. */
     #fhSegEaList .ea-t01-clinical-grid {
@@ -121,13 +121,13 @@
         cursor: not-allowed;
     }
     #modSeguimientoCausalidad .causality-chip--active:disabled {
-        background: #94A3B8;
-        border-color: #94A3B8;
-        color: #FFFFFF;
+        background: var(--nx-color-tenue);
+        border-color: var(--nx-color-tenue);
+        color: var(--nx-color-sobre-principal);
     }
     #modSeguimientoCausalidad select:disabled {
-        background: #F1F5F9;
-        color: #94A3B8;
+        background: var(--nx-color-superficie-suave);
+        color: var(--nx-color-texto-suave);
         cursor: not-allowed;
     }
     </style>

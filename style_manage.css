@@ -4,8 +4,8 @@
     flex-direction: column;
     gap: 24px;
     background:
-        radial-gradient(circle at top right, rgba(0, 135, 119, 0.08), transparent 22rem),
-        linear-gradient(180deg, #f8fbfd 0%, #f1f5f9 100%);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--nx-color-modulo-texto) 8%, transparent), transparent 22rem),
+        linear-gradient(180deg, var(--nx-color-info-fondo) 0%, var(--nx-color-superficie-suave) 100%);
     min-height: 100vh;
 }
 
@@ -16,9 +16,9 @@
     gap: 24px;
     padding: 28px 32px;
     border-radius: 28px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92));
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--nx-color-superficie) 96%, transparent), color-mix(in srgb, var(--nx-color-fondo) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 18%, transparent);
+    box-shadow: 0 18px 42px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
 }
 
 .management-hero__eyebrow {
@@ -27,20 +27,20 @@
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .management-hero__title {
     margin: 0;
     font-size: clamp(1.9rem, 3vw, 2.5rem);
     line-height: 1.05;
-    color: #17335b;
+    color: var(--nx-color-texto);
 }
 
 .management-hero__description {
     margin: 12px 0 0;
     max-width: 60ch;
-    color: #475569;
+    color: var(--nx-color-texto-suave);
     font-size: 1rem;
     line-height: 1.6;
 }
@@ -52,9 +52,9 @@
     padding: 12px 16px;
     min-width: 180px;
     border-radius: 18px;
-    background: rgba(23, 51, 91, 0.04);
-    border: 1px solid rgba(23, 51, 91, 0.1);
-    color: #17335b;
+    background: color-mix(in srgb, var(--nx-color-texto) 4%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-texto) 10%, transparent);
+    color: var(--nx-color-texto);
 }
 
 .management-hero__badge-icon {
@@ -64,9 +64,9 @@
     align-items: center;
     justify-content: center;
     border-radius: 14px;
-    background: linear-gradient(135deg, #17335b, #008777);
-    color: #fff;
-    box-shadow: 0 12px 22px rgba(23, 51, 91, 0.2);
+    background: linear-gradient(135deg, var(--nx-color-texto), var(--nx-color-modulo-texto));
+    color: var(--nx-color-sobre-principal);
+    box-shadow: 0 12px 22px color-mix(in srgb, var(--nx-color-info) 20%, transparent);
 }
 
 .management-hero__badge-label {
@@ -74,7 +74,7 @@
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
 }
 
 .management-hero__badge-value {
@@ -82,7 +82,7 @@
     margin-top: 2px;
     font-size: 1.4rem;
     font-weight: 700;
-    color: #17335b;
+    color: var(--nx-color-texto);
 }
 
 .management-grid {
@@ -93,10 +93,10 @@
 }
 
 .management-card {
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: color-mix(in srgb, var(--nx-color-superficie) 96%, transparent);
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 18%, transparent);
     border-radius: 24px;
-    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 38px color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
     overflow: visible;
 }
 
@@ -114,16 +114,16 @@
     align-items: center;
     gap: 12px;
     font-size: 1.1rem;
-    color: #17335b;
+    color: var(--nx-color-texto);
 }
 
 .management-card__title i {
-    color: #008777;
+    color: var(--nx-color-modulo-texto);
 }
 
 .management-card__subtitle {
     margin: 8px 0 0;
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
     font-size: 0.92rem;
     line-height: 1.5;
 }
@@ -135,8 +135,8 @@
     min-width: 44px;
     padding: 8px 12px;
     border-radius: 999px;
-    background: rgba(0, 135, 119, 0.12);
-    color: #008777;
+    background: color-mix(in srgb, var(--nx-color-modulo-texto) 12%, transparent);
+    color: var(--nx-color-modulo-texto);
     font-weight: 700;
     font-size: 0.9rem;
 }
@@ -158,13 +158,13 @@
 .management-form__label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--nx-color-texto);
 }
 
 .management-form__help {
     margin: -2px 0 0;
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
 }
 
 .management-form__actions {
@@ -195,29 +195,29 @@
 }
 
 .management-btn--primary {
-    background: linear-gradient(135deg, #008777 0%, #0f766e 100%);
-    color: #fff;
-    box-shadow: 0 14px 24px rgba(0, 135, 119, 0.22);
+    background: linear-gradient(135deg, var(--nx-color-principal) 0%, var(--nx-color-principal) 100%);
+    color: var(--nx-color-sobre-principal);
+    box-shadow: 0 14px 24px color-mix(in srgb, var(--nx-color-principal) 22%, transparent);
 }
 
 .management-btn--secondary {
-    background: rgba(23, 51, 91, 0.06);
-    color: #17335b;
-    border: 1px solid rgba(23, 51, 91, 0.08);
+    background: color-mix(in srgb, var(--nx-color-texto) 6%, transparent);
+    color: var(--nx-color-texto);
+    border: 1px solid color-mix(in srgb, var(--nx-color-texto) 8%, transparent);
 }
 
 .management-btn--danger {
     min-height: 38px;
     padding: 0 14px;
     border-radius: 12px;
-    background: rgba(239, 68, 68, 0.08);
-    color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.16);
+    background: color-mix(in srgb, var(--nx-color-error) 8%, transparent);
+    color: var(--nx-color-error);
+    border: 1px solid color-mix(in srgb, var(--nx-color-error) 16%, transparent);
     box-shadow: none;
 }
 
 .management-btn--danger:hover {
-    background: rgba(239, 68, 68, 0.14);
+    background: color-mix(in srgb, var(--nx-color-error) 14%, transparent);
 }
 
 .management-btn--full {
@@ -239,15 +239,15 @@
 }
 
 .management-table-meta {
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
     font-size: 0.9rem;
 }
 
 .management-table-wrap {
     overflow: auto;
     border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 1));
+    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 18%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--nx-color-fondo) 90%, transparent), var(--nx-color-superficie));
 }
 
 .management-table {
@@ -261,25 +261,25 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    background: rgba(241, 245, 249, 0.95);
-    color: #334155;
+    background: color-mix(in srgb, var(--nx-color-superficie-suave) 95%, transparent);
+    color: var(--nx-color-texto);
     text-align: left;
     font-size: 0.8rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 14px 18px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    border-bottom: 1px solid color-mix(in srgb, var(--nx-color-tenue) 18%, transparent);
 }
 
 .management-table tbody td {
     padding: 16px 18px;
-    color: #0f172a;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+    color: var(--nx-color-texto);
+    border-bottom: 1px solid color-mix(in srgb, var(--nx-color-borde) 85%, transparent);
     vertical-align: middle;
 }
 
 .management-table tbody tr:hover td {
-    background: rgba(248, 250, 252, 0.95);
+    background: color-mix(in srgb, var(--nx-color-fondo) 95%, transparent);
 }
 
 .management-table tbody tr:last-child td {
@@ -291,8 +291,8 @@
     align-items: center;
     padding: 7px 12px;
     border-radius: 999px;
-    background: rgba(0, 135, 119, 0.08);
-    color: #0f766e;
+    background: color-mix(in srgb, var(--nx-color-modulo-texto) 8%, transparent);
+    color: var(--nx-color-modulo-texto);
     font-size: 0.82rem;
     font-weight: 700;
 }
@@ -300,7 +300,7 @@
 .management-empty {
     padding: 28px 18px;
     text-align: center;
-    color: #64748b;
+    color: var(--nx-color-texto-suave);
     font-size: 0.95rem;
 }
 

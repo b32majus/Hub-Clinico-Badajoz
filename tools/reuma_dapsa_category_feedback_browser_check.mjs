@@ -256,7 +256,8 @@ function contrastRatio(a, b) {
 // A numeric-result surface is neutral when neither its background nor its border
 // is a green/success colour of the shared palette.
 function isNeutralSurface(bg, border) {
-  const greens = ['rgb(40, 167, 69)', 'rgb(212, 237, 218)'];
+  // Tramo 6 de #956: el verde de éxito del CSS es --nx-color-ok / --nx-color-ok-fondo (el JS sigue con los suyos).
+  const greens = ['rgb(40, 167, 69)', 'rgb(212, 237, 218)', 'rgb(27, 122, 62)', 'rgb(232, 245, 236)'];
   return !isGreenish(bg) && !isGreenish(border) && !greens.includes(bg) && !greens.includes(border);
 }
 
@@ -421,7 +422,7 @@ async function journey(browser, { file, collectFn, label }) {
         return { id, bg: cs.backgroundColor, border: cs.borderTopColor };
       });
     });
-    const styleLeaks = otherResultStyles.filter((o) => o.missing || o.bg !== 'rgb(212, 237, 218)' || o.border !== 'rgb(40, 167, 69)');
+    const styleLeaks = otherResultStyles.filter((o) => o.missing || o.bg !== 'rgb(232, 245, 236)' || o.border !== 'rgb(27, 122, 62)');
     check(`${label} other .indice-resultado fields keep the shared style (DAPSA override scoped)`,
       styleLeaks.length === 0, JSON.stringify(styleLeaks.length ? styleLeaks : otherResultStyles));
 

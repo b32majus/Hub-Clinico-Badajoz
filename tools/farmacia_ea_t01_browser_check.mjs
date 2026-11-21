@@ -209,8 +209,8 @@ function captureTwoEa(page) {
             return { cls: node.className, background: style.backgroundColor, color: style.color, radius: style.borderRadius };
         });
         assert.ok(eaBadgeTreatment.cls.includes('status-badge--ea-card'), 'EA card status badge carries the master treatment class (VIS-03)');
-        assert.equal(eaBadgeTreatment.background, 'rgb(254, 243, 199)', 'EA card status badge uses the master amber background');
-        assert.equal(eaBadgeTreatment.color, 'rgb(146, 64, 14)', 'EA card status badge uses the master orange text');
+        assert.equal(eaBadgeTreatment.background, 'rgb(253, 243, 225)', 'EA card status badge uses --nx-color-aviso-fondo (tramo 6)');
+        assert.equal(eaBadgeTreatment.color, 'rgb(138, 83, 0)', 'EA card status badge uses --nx-color-aviso (tramo 6)');
         assert.ok(parseFloat(eaBadgeTreatment.radius) < 8, 'EA card status badge is near-square, not a pill');
         const countBadgeTreatment = await page.locator('#fhSegEaCountBadge').evaluate((node) => getComputedStyle(node).borderRadius);
         assert.ok(countBadgeTreatment !== eaBadgeTreatment.radius || countBadgeTreatment === '6px', 'count badge keeps its own VIS-01 treatment');

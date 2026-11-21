@@ -98,7 +98,8 @@ const CHIP_FIELDS = {
   maniobrasSacroiliacas: { values: ['', 'positivas', 'negativas', 'dudosas'], labels: ['Seleccionar', 'Positivas', 'Negativas', 'Dudosas'] }
 };
 const FIELD_IDS = Object.keys(CHIP_FIELDS);
-const ACTIVE_GREEN = 'rgb(0, 135, 119)'; // .pv-chip[aria-pressed="true"] surface
+// Tramo 6 de #956: la superficie del chip elegido pasa del verde de módulo al principal (--nx-color-principal).
+const ACTIVE_GREEN = 'rgb(60, 16, 124)'; // .pv-chip[aria-pressed="true"] surface
 function parseRgb(str) {
   const m = /(\d+),\s*(\d+),\s*(\d+)/.exec(str || '');
   return m ? { r: +m[1], g: +m[2], b: +m[3] } : null;

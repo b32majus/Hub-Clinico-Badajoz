@@ -109,5 +109,38 @@
     --nx-ancho-lateral-estrecho: 14.5rem;   /* barra lateral por debajo de 64em */
     --nx-alto-pantalla: 100vh;              /* barra lateral fija a la altura de la ventana */
     --nx-icono-ancho: 1.25rem;              /* hueco fijo del icono en los enlaces del menú */
+
+    /* Tramo 6: aplicar la paleta a las pantallas antiguas */
+    --nx-color-ok-borde: #b4dcc1;           /* borde de caja de estado (decorativo, sin contraste exigido) */
+    --nx-color-aviso-borde: #f0d49e;
+    --nx-color-error-borde: #eebcbe;
+    --nx-color-info-borde: #b8cff0;
+    --nx-color-farmacia-suave: #e6f4f1;     /* fondo claro del acento */
+    --nx-color-reuma-suave: #fce7f3;
+    --nx-color-derma-suave: #fdebe8;
+
+    /* Acento del módulo de la página: sale del <nx-shell modulo> que lleve. Sin módulo, el principal. */
+    --nx-color-modulo: var(--nx-color-principal);
+    --nx-color-modulo-texto: var(--nx-color-principal);
+    --nx-color-modulo-suave: var(--nx-color-principal-suave);
+    --nx-color-modulo-borde: color-mix(in srgb, var(--nx-color-modulo) 35%, var(--nx-color-superficie));
+  }
+
+  :root:has(nx-shell[modulo="farmacia"]) {
+    --nx-color-modulo: var(--nx-color-farmacia);
+    --nx-color-modulo-texto: var(--nx-color-farmacia-texto);
+    --nx-color-modulo-suave: var(--nx-color-farmacia-suave);
+  }
+
+  :root:has(nx-shell[modulo="reuma"]) {
+    --nx-color-modulo: var(--nx-color-reuma);
+    --nx-color-modulo-texto: var(--nx-color-reuma-texto);
+    --nx-color-modulo-suave: var(--nx-color-reuma-suave);
+  }
+
+  :root:has(nx-shell[modulo="derma"]) {
+    --nx-color-modulo: var(--nx-color-derma);
+    --nx-color-modulo-texto: var(--nx-color-derma-texto);
+    --nx-color-modulo-suave: var(--nx-color-derma-suave);
   }
 }
