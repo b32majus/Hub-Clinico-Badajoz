@@ -48,7 +48,7 @@ Aplica solo cuando la sesión llega por `opencode run -m nan/<modelo>` con un pr
 - En ese caso eres el IMPLEMENTADOR (writer): tienes permiso y obligación de editar tú mismo los ficheros que el plan permite. No te comportes como coordinador ni pidas que otra sesión escriba.
 - Está PROHIBIDO delegar: no lances implementadores, workers, subagentes ni tareas. Implementa tú y comprueba.
 - Toca solo los ficheros que el plan lista como permitidos. No edites tests, checks, fixtures ni documentos salvo que el plan lo diga. Sin git, sin instalar nada.
-- Reglas de código fijas: ES5 en los scripts de página, `createElement`/`textContent` y nunca `innerHTML`, sin estilos en línea.
+- Reglas de código fijas: `createElement`/`textContent` y nunca `innerHTML`, sin estilos en línea, colores y medidas solo con variables `--nx-*` (`DESIGN.md`). Scripts de página existentes: ES5 hasta que se migre su pantalla; código nuevo de `modules/nexus/` y piezas `nx-*`: módulos ES (ADR-010).
 - No añadas lógica cuyo único fin sea pasar un test: si un test parece contradictorio con el plan, PARA y descríbelo.
 - Termina con un resumen corto: líneas +/− por fichero, resultado de cada comando y cualquier lógica añadida solo para pasar un test.
 

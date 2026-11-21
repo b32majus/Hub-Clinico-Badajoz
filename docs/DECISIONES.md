@@ -62,6 +62,8 @@ Estados: **VIGENTE**, **SUSTITUIDA** (con por qué), **HISTÓRICA** (contexto de
 | 24-09 | ADR-006 Persistence adapters y Excel como modo soportado | `ADR-006-…` | ACCEPTED_ENGINEERING |
 | 24-09 | ADR-007 Tooling, CI, release y calidad | `ADR-007-…` | ACCEPTED_ENGINEERING |
 | 24-09 | ADR-008 Límites de seguridad clínica y confianza | `ADR-008-…` | ACCEPTED_ENGINEERING |
+| 21-11 | ADR-009 Entorno de ejecución y despliegue: hoy GitHub Pages hasta el servidor real del hospital (autoalojado, no autorizado aún); **`file://` abandonado**; nada instalado en el puesto; Edge/Chrome actualizados y pantallas modernas; requisitos R1-R10 (mismo artefacto en Pages y servidor, cero dependencias externas, «Terminar» en PCs compartidos, fallos visibles, privacidad, WCAG AA, impresión, versión visible) | `ADR-009-…`; Sil, 21-11; #956 | VIGENTE |
+| 21-11 | ADR-010 Sistema de diseño y arquitectura de interfaz: modernización nativa sin compilar (módulos ES, componentes web `nx-*`, capas CSS), un solo sistema de estilos para las 19 páginas (Home incluida), shell y piezas comunes, una versión del sitio + perfil por hospital; orden por tramos en #956 | `ADR-010-…`; `DESIGN.md`; Sil, 21-11 | VIGENTE |
 | 03-10 | Reconciliación Farmacia + Dermatología: aprender la variación real antes de generalizar; «no diseñar el JSON universal» | `docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md` | VIGENTE |
 | 12-10 | Salida agnóstica: un acto, varios destinos que conviven (Excel manual, Bridge, Power Automate, API/BD), no una secuencia obligatoria | `docs/architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md`; ADR-006 | VIGENTE |
 | 25-10 | Bridge raw manual primero, procesamiento relacional después (C1–C5). C1, C2a y C2b publicados; C3–C5 pendientes | `docs/architecture/FH_BRIDGE_RAW_MANUAL_FIRST_DECISION_20261025.md` | VIGENTE |
@@ -70,6 +72,7 @@ Estados: **VIGENTE**, **SUSTITUIDA** (con por qué), **HISTÓRICA** (contexto de
 
 | Fecha | Decisión | Fuente | Estado |
 |---|---|---|---|
+| 06-06 | Plan Reuma v2: «no añadir CDN» y «no romper `file://`»; scripts ES5 con patrón global `HubTools` | `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | SUSTITUIDA por ADR-009 (sin `file://`; cero dependencias externas, R2) y ADR-010 (módulos ES) el 21-11 |
 | 04-06 | DEC-001…DEC-019 (Reuma v2 como base, no eliminar `main` sin trazabilidad, MVP local-first, app común modular, SharePoint Lists no como backend, FHIR/HL7 como horizonte, congelación Farmacia v0.1, etc.) | `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md` | HISTÓRICA; el Freeze del 24-09 prevalece donde se solapan |
 | 10-07 | No integrar Farmacia en `main` ni en Reuma v2 post-SES; revisable tras discovery con equipos de Badajoz/Mérida | `docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md` | Principio vigente, topología histórica parcialmente sustituida (reconciliación 24-09) |
 | 13-07 | Control Plane federado V4.6 | `docs/legacy/ramas/FH_V4_6_control_plane_federado_20260713.md` | DIFERIDA por el Freeze |

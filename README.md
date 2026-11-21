@@ -22,8 +22,8 @@ El estado vivo, los HEADs publicados y las fronteras entre recovery, snapshot C�
 
 ## Stack actual
 
-- HTML, CSS y JavaScript vanilla.
-- Sin `package.json`, bundler ni framework obligatorio.
+- HTML, CSS y JavaScript vanilla, publicado hoy en GitHub Pages hasta el servidor del hospital; sin instalación en el puesto y sin `file://` (ADR-009).
+- Sin bundler ni framework; `package.json` y Node 20 solo para dev/CI (ADR-007). Interfaz: módulos ES y componentes web nativos, sistema de diseño en [`DESIGN.md`](DESIGN.md) (ADR-010).
 - Arquitectura local-first y backend-ready; Excel sigue siendo parte de varios flujos operativos/provisionales.
 - Verificación mediante checkers deterministas `tools/*`, smoke checks y pruebas browser/Playwright específicas.
 - Datos reales de pacientes, identificadores, exports clínicos reales y secretos están fuera del repositorio.
