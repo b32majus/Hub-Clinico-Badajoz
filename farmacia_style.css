@@ -6204,26 +6204,14 @@
    and .section-title semantics are reused, never redefined here.
    ============================================================================ */
 
+/* Sin caja propia: cada tarjeta lleva la suya (tramo 7, sin franja de color) */
 .inicio-resumen {
-    position: relative;
-    overflow: hidden;
-    padding: 22px;
-    border-radius: 22px;
-    background: var(--nx-color-superficie);
-    border: 1px solid var(--nx-color-borde);
-    box-shadow: 0 10px 26px color-mix(in srgb, var(--nx-color-texto) 7%, transparent);
-}
-
-.inicio-resumen::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 4px;
-    background: var(--nx-color-modulo-texto);
+    display: grid;
+    gap: 16px;
 }
 
 .inicio-resumen__header {
-    margin: 0 0 16px;
+    margin: 0;
 }
 
 .inicio-resumen__title {
@@ -6250,12 +6238,8 @@
 .inicio-resumen-card {
     display: flex;
     flex-direction: column;
+    gap: 12px;
     min-height: 235px;
-    padding: 18px;
-    border-radius: 18px;
-    background: var(--nx-color-superficie);
-    border: 1px solid var(--nx-color-borde);
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
 }
 
 .inicio-resumen-card .section-title {

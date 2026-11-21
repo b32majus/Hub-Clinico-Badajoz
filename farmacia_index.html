@@ -16,9 +16,9 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261121-t7c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261121-t7d">
 </head>
-        <body>
+        <body class="nx-pagina">
             <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_index.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -48,79 +48,83 @@
     </div>
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
-                <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--index">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card module-hero">
-    <div class="patient-header-main">
-        <div class="patient-info">
-            <h1 class="patient-name">Inicio Farmacia</h1>
-            <p class="hero-description">Entrada única por CIP para abrir Quick View o alta guiada.</p>
-        </div>
-    </div>
-</section><section class="search-card" id="fhLegacySearchPanel">
-    <span class="search-card__label"><i class="fas fa-search" aria-hidden="true"></i> Búsqueda por CIP</span>
-    <div class="search-card__row">
-        <input type="text" id="fhCipInput" class="search-card__input" placeholder="Ej. CIP-DEMO-FH-001" maxlength="24" autocomplete="off" spellcheck="false">
-        <button type="button" class="btn btn-primary" id="fhSearchBtn"><i class="fas fa-search" aria-hidden="true"></i> Buscar paciente</button>
-    </div>
-    <p class="search-card__hint" id="fhSearchStatus" role="status" aria-live="polite"></p>
-    <p class="search-card__hint">Demo: <strong>CIP-DEMO-FH-001</strong> (HS en seguimiento) · <strong>CIP-DEMO-FH-002</strong> (HS pendiente validación) · <strong>CIP-DEMO-FH-003</strong> (Reuma validado) · <strong>CIP-DEMO-FH-004</strong> (Multibiológico LES/Sjögren). Un CIP nuevo abre alta guiada.</p>
-</section>
-
-<section class="dashboard-card demo-case-card" id="demoCaseFh004">
-    <h2 class="section-title"><i class="fas fa-star" aria-hidden="true"></i> Caso demo destacado: Paciente FH-004</h2>
-    <p class="hero-description">Paciente sintético con <strong>3 biológicos</strong> (Belimumab + Rituximab), seguimiento multibiológico activo, evaluación de causalidad por efecto adverso y dashboard longitudinal completo.</p>
-    <div class="demo-case-card__actions">
-        <a href="farmacia_dashboard_paciente.html?cip=CIP-DEMO-FH-004&entrada=dashboard" class="btn btn-primary"><i class="fas fa-user-circle" aria-hidden="true"></i> Ver dashboard FH-004</a>
-        <a href="farmacia_seguimiento.html?cip=CIP-DEMO-FH-004&entrada=seguimiento" class="btn btn-outline"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Ir a seguimiento</a>
-    </div>
-</section>
-
-<section class="guided-intake-card hidden" id="guidedIntakePanel">
-    <h2 class="section-title"><i class="fas fa-user-plus" aria-hidden="true"></i> Paciente no encontrado — Alta guiada</h2>
-    <p class="hero-description">CIP introducido: <strong id="guidedCip">—</strong>. Complete los datos mínimos para abrir la pantalla correspondiente con contexto por URL.</p>
-    <div class="form-grid">
-        <div class="form-group">
-            <label for="fhAltaServicio">Servicio origen</label>
-            <select class="form-select" id="fhAltaServicio">
-                <option value="">Seleccionar...</option>
-                <option value="dermatologia">Dermatología</option>
-                <option value="reumatologia">Reumatología</option>
-                <option value="digestivo">Digestivo</option>
-                <option value="oncologia">Oncología</option>
-                <option value="otro">Otro</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="fhAltaPatologia">Patología / indicación</label>
-            <select class="form-select" id="fhAltaPatologia" disabled><option value="">Seleccionar servicio primero...</option></select>
-        </div>
-        <div class="form-group">
-            <label for="fhAltaPuntoEntrada">Circuito de entrada</label>
-            <select class="form-select" id="fhAltaPuntoEntrada">
-                <option value="">Seleccionar...</option>
-                <option value="validacion">Validación farmacoterapéutica</option>
-                <option value="primera_visita">Primera visita Farmacia</option>
-                <option value="seguimiento">Visita de seguimiento</option>
-            </select>
-        </div>
-    </div>
-    <div class="form-actions">
-        <a href="#" class="btn btn-primary" id="fhAltaAcceder"><i class="fas fa-arrow-right" aria-hidden="true"></i> Iniciar episodio</a>
-        <button type="button" class="btn btn-outline" id="fhAltaCancelar">Cancelar</button>
-    </div>
-</section>
-
-<section class="inicio-resumen" id="inicioResumen" aria-labelledby="inicioResumenTitle">
+                <main class="main-content nx-marco__contenido">
+        <nx-aviso tipo="aviso" role="note" titulo="Demo de Farmacia con datos sintéticos.">Prototipo sin datos reales, sin conexión con JARA, SES ni Farmatool y sin la seguridad de un sistema en producción.</nx-aviso>
+        <header class="nx-cabecera">
+            <div>
+                <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Inicio</p>
+                <h1 class="nx-cabecera__titulo">Inicio de Farmacia</h1>
+                <p class="nx-cabecera__texto">Entrada única por CIP para abrir Quick View o alta guiada.</p>
+            </div>
+        </header>
+        <section class="nx-tarjeta" id="fhLegacySearchPanel" aria-labelledby="fhBuscarTitulo">
+            <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo" id="fhBuscarTitulo">Búsqueda por CIP</h2></header>
+            <div class="nx-tarjeta__cuerpo">
+                <div class="nx-buscador">
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="fhCipInput">CIP del paciente</label>
+                        <input type="text" id="fhCipInput" class="nx-campo__control" placeholder="Ej. CIP-DEMO-FH-001" maxlength="24" autocomplete="off" spellcheck="false" aria-describedby="fhSearchStatus">
+                    </div>
+                    <button type="button" class="nx-boton nx-boton--principal" id="fhSearchBtn"><i class="fas fa-search" aria-hidden="true"></i> Buscar paciente</button>
+                </div>
+                <p class="nx-campo__ayuda" id="fhSearchStatus" role="status" aria-live="polite"></p>
+                <p class="nx-campo__ayuda">Demo: <strong>CIP-DEMO-FH-001</strong> (HS en seguimiento) · <strong>CIP-DEMO-FH-002</strong> (HS pendiente validación) · <strong>CIP-DEMO-FH-003</strong> (Reuma validado) · <strong>CIP-DEMO-FH-004</strong> (Multibiológico LES/Sjögren). Un CIP nuevo abre alta guiada.</p>
+            </div>
+        </section>
+        <section class="nx-tarjeta" id="demoCaseFh004" aria-labelledby="demoCaseTitulo">
+            <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo" id="demoCaseTitulo">Caso demo destacado: paciente FH-004</h2></header>
+            <div class="nx-tarjeta__cuerpo"><p>Paciente sintético con <strong>3 biológicos</strong> (Belimumab + Rituximab), seguimiento multibiológico activo, evaluación de causalidad por efecto adverso y dashboard longitudinal completo.</p></div>
+            <footer class="nx-tarjeta__pie demo-case-card__actions">
+                <a href="farmacia_dashboard_paciente.html?cip=CIP-DEMO-FH-004&entrada=dashboard" class="nx-boton nx-boton--principal"><i class="fas fa-user-circle" aria-hidden="true"></i> Ver dashboard FH-004</a>
+                <a href="farmacia_seguimiento.html?cip=CIP-DEMO-FH-004&entrada=seguimiento" class="nx-boton nx-boton--secundario"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Ir a seguimiento</a>
+            </footer>
+        </section>
+        <section class="nx-tarjeta hidden" id="guidedIntakePanel" aria-labelledby="altaGuiadaTitulo">
+            <header class="nx-tarjeta__cabecera">
+                <h2 class="nx-tarjeta__titulo" id="altaGuiadaTitulo">Paciente no encontrado: alta guiada</h2>
+                <p class="nx-tarjeta__subtitulo">CIP introducido: <strong id="guidedCip">—</strong>. Complete los datos mínimos para abrir la pantalla correspondiente con contexto por URL.</p>
+            </header>
+            <div class="nx-tarjeta__cuerpo">
+                <div class="nx-formulario">
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="fhAltaServicio">Servicio origen</label>
+                        <select class="nx-campo__control" id="fhAltaServicio">
+                            <option value="">Seleccionar...</option>
+                            <option value="dermatologia">Dermatología</option>
+                            <option value="reumatologia">Reumatología</option>
+                            <option value="digestivo">Digestivo</option>
+                            <option value="oncologia">Oncología</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="fhAltaPatologia">Patología / indicación</label>
+                        <select class="nx-campo__control" id="fhAltaPatologia" disabled><option value="">Seleccionar servicio primero...</option></select>
+                    </div>
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="fhAltaPuntoEntrada">Circuito de entrada</label>
+                        <select class="nx-campo__control" id="fhAltaPuntoEntrada">
+                            <option value="">Seleccionar...</option>
+                            <option value="validacion">Validación farmacoterapéutica</option>
+                            <option value="primera_visita">Primera visita Farmacia</option>
+                            <option value="seguimiento">Visita de seguimiento</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <footer class="nx-tarjeta__pie">
+                <a href="#" class="nx-boton nx-boton--principal" id="fhAltaAcceder"><i class="fas fa-arrow-right" aria-hidden="true"></i> Iniciar episodio</a>
+                <button type="button" class="nx-boton nx-boton--secundario" id="fhAltaCancelar">Cancelar</button>
+            </footer>
+        </section>
+        <section class="inicio-resumen" id="inicioResumen" aria-labelledby="inicioResumenTitle">
     <header class="inicio-resumen__header">
-        <h2 class="section-title inicio-resumen__title" id="inicioResumenTitle"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Requiere atención</h2>
+        <h2 class="inicio-resumen__title" id="inicioResumenTitle">Requiere atención</h2>
         <p class="inicio-resumen__copy">Resumen mínimo de las colas operativas. El trabajo detallado vive fuera de Inicio.</p>
     </header>
     <div class="inicio-resumen__grid">
-        <article class="inicio-resumen-card" id="inicioSolicitudesCard" aria-labelledby="inicioSolicitudesTitle">
-            <h2 class="section-title" id="inicioSolicitudesTitle"><i class="fas fa-tasks" aria-hidden="true"></i> Solicitudes pendientes</h2>
+        <article class="nx-tarjeta inicio-resumen-card" id="inicioSolicitudesCard" aria-labelledby="inicioSolicitudesTitle">
+            <h3 class="nx-tarjeta__titulo" id="inicioSolicitudesTitle">Solicitudes pendientes</h3>
             <p class="inicio-resumen-card__total">
                 <span class="inicio-resumen-card__total-value" id="inicioTotalCount">0</span>
                 <span class="inicio-resumen-card__total-label">Total</span>
@@ -130,51 +134,50 @@
                 <li class="inicio-status-row inicio-status-row--vigilancia"><span class="inicio-status-row__label">En vigilancia</span><span class="inicio-status-row__value" id="inicioVigilanciaCount">0</span></li>
                 <li class="inicio-status-row inicio-status-row--bloqueadas"><span class="inicio-status-row__label">Bloqueadas</span><span class="inicio-status-row__value" id="inicioBloqueadasCount">0</span></li>
             </ul>
-            <a class="btn btn-primary inicio-resumen-card__cta" id="inicioVerPendientes" href="farmacia_actividad_servicio.html"><i class="fas fa-arrow-right" aria-hidden="true"></i> Ver pendientes</a>
+            <a class="nx-boton nx-boton--principal inicio-resumen-card__cta" id="inicioVerPendientes" href="farmacia_actividad_servicio.html">Ver pendientes</a>
         </article>
-        <article class="inicio-resumen-card inicio-resumen-card--futura" id="inicioRenovacionesCard" aria-label="Renovaciones de receta, próxima fase">
-            <h2 class="section-title"><i class="fas fa-prescription-bottle-alt" aria-hidden="true"></i> Renovaciones de receta</h2>
+        <article class="nx-tarjeta inicio-resumen-card inicio-resumen-card--futura" id="inicioRenovacionesCard" aria-label="Renovaciones de receta, próxima fase">
+            <h3 class="nx-tarjeta__titulo">Renovaciones de receta</h3>
             <div class="inicio-futura__state">
                 <p class="inicio-futura__count" id="inicioRenovacionesCount">?</p>
-                <p class="inicio-futura__estado">Próxima fase</p>
+                <p class="inicio-futura__estado"><span class="nx-etiqueta">Próxima fase</span></p>
             </div>
         </article>
-        <article class="inicio-resumen-card inicio-resumen-card--futura" id="inicioRecogidasCard" aria-label="Recogidas pendientes, próxima fase">
-            <h2 class="section-title"><i class="fas fa-shopping-bag" aria-hidden="true"></i> Recogidas pendientes</h2>
+        <article class="nx-tarjeta inicio-resumen-card inicio-resumen-card--futura" id="inicioRecogidasCard" aria-label="Recogidas pendientes, próxima fase">
+            <h3 class="nx-tarjeta__titulo">Recogidas pendientes</h3>
             <div class="inicio-futura__state">
                 <p class="inicio-futura__count" id="inicioRecogidasCount">?</p>
-                <p class="inicio-futura__estado">Próxima fase</p>
+                <p class="inicio-futura__estado"><span class="nx-etiqueta">Próxima fase</span></p>
             </div>
         </article>
     </div>
 </section>
 
-<section class="dashboard-card" id="modCargaDatosProyecto">
-    <h2 class="section-title"><i class="fas fa-file-import"></i> Carga de datos del proyecto</h2>
-    <p class="validation-module__intro">Cargue manualmente los Excel locales de Enfermería y Farmacia. La población queda solo en memoria y la sesión conserva únicamente el paciente actual. El catálogo CIMA se intenta cargar automáticamente al abrir la app.</p>
-    <div class="import-grid">
-        <section class="import-card">
-            <h3 class="card-title card-title--tight"><i class="fas fa-notes-medical"></i> Excel de Enfermería</h3>
-            <p class="import-card__status" id="estadoCargaEnfermeria">No se ha cargado Excel de Enfermería</p>
-            <p class="import-card__detail" id="detalleCargaEnfermeria">Sin importación local almacenada.</p>
-            <button type="button" class="btn btn-primary import-card__button" id="btnCargarExcelEnfermeria"><i class="fas fa-upload"></i> Cargar Excel de Enfermería</button>
-            <input type="file" id="inputExcelEnfermeria" class="hidden" accept=".xlsx,.xls">
+<section class="nx-tarjeta" id="modCargaDatosProyecto" aria-labelledby="cargaDatosTitulo">
+            <header class="nx-tarjeta__cabecera">
+                <h2 class="nx-tarjeta__titulo" id="cargaDatosTitulo">Carga de datos del proyecto</h2>
+                <p class="nx-tarjeta__subtitulo">Cargue manualmente los Excel locales de Enfermería y Farmacia. La población queda solo en memoria y la sesión conserva únicamente el paciente actual. El catálogo CIMA se intenta cargar automáticamente al abrir la app.</p>
+            </header>
+            <div class="nx-tarjeta__cuerpo">
+                <div class="nx-rejilla">
+                    <section class="nx-tarjeta">
+                        <h3 class="nx-tarjeta__titulo">Excel de Enfermería</h3>
+                        <p id="estadoCargaEnfermeria">No se ha cargado Excel de Enfermería</p>
+                        <p class="nx-campo__ayuda" id="detalleCargaEnfermeria">Sin importación local almacenada.</p>
+                        <div><button type="button" class="nx-boton nx-boton--principal" id="btnCargarExcelEnfermeria"><i class="fas fa-upload" aria-hidden="true"></i> Cargar Excel de Enfermería</button></div>
+                        <input type="file" id="inputExcelEnfermeria" class="hidden" accept=".xlsx,.xls">
+                    </section>
+                    <section class="nx-tarjeta">
+                        <h3 class="nx-tarjeta__titulo">Excel de Farmacia</h3>
+                        <p id="estadoCargaFarmacia">No se ha cargado Excel de Farmacia</p>
+                        <p class="nx-campo__ayuda" id="detalleCargaFarmacia">Sin importación local almacenada.</p>
+                        <div><button type="button" class="nx-boton nx-boton--principal" id="btnCargarExcelFarmacia"><i class="fas fa-upload" aria-hidden="true"></i> Cargar Excel de Farmacia</button></div>
+                        <input type="file" id="inputExcelFarmacia" class="hidden" accept=".xlsx,.xls">
+                    </section>
+                </div>
+                <dl class="nx-datos"><dt>CIMA</dt><dd data-catalog-status data-catalog-solo-texto>Catálogo farmacológico: pendiente de carga automática</dd></dl>
+            </div>
         </section>
-        <section class="import-card">
-            <h3 class="card-title card-title--tight"><i class="fas fa-clinic-medical"></i> Excel de Farmacia</h3>
-            <p class="import-card__status" id="estadoCargaFarmacia">No se ha cargado Excel de Farmacia</p>
-            <p class="import-card__detail" id="detalleCargaFarmacia">Sin importación local almacenada.</p>
-            <button type="button" class="btn btn-primary import-card__button" id="btnCargarExcelFarmacia"><i class="fas fa-upload"></i> Cargar Excel de Farmacia</button>
-            <input type="file" id="inputExcelFarmacia" class="hidden" accept=".xlsx,.xls">
-        </section>
-    </div>
-    <div class="validation-note-block">
-        <span class="validation-note-block__label">CIMA</span>
-        <p class="validation-note-block__value" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</p>
-    </div>
-</section>
-
-
                 </main>
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
