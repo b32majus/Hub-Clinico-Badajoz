@@ -389,8 +389,8 @@ async function attentionProbe(width, height) {
     assert.equal(new Set(probe.rows.map((row) => row.paint)).size, 3, 'status rows are visually distinct');
     assert.ok(/^\d+$/.test(probe.totalText), `prominent total is numeric: ${probe.totalText}`);
     assert.ok(probe.totalFontSize >= 30 && probe.totalFontSize <= 34, `total prominent ~30-34px: ${probe.totalFontSize}`);
-    assert.ok(probe.outerRadius >= 20 && probe.outerRadius <= 26, `outer radius ~22px: ${probe.outerRadius}`);
-    assert.ok(probe.innerRadius >= 16 && probe.innerRadius <= 22, `inner radius ~17-20px: ${probe.innerRadius}`);
+    assert.equal(probe.outerRadius, 0, `el bloque ya no lleva caja propia (tramo 7): ${probe.outerRadius}`);
+    assert.ok(probe.innerRadius >= 8 && probe.innerRadius <= 22, `radio de la tarjeta nx-tarjeta: ${probe.innerRadius}`);
     assert.ok(probe.gridGap >= 12 && probe.gridGap <= 18, `inner grid gap ~14px: ${probe.gridGap}`);
     assert.ok(probe.innerPadding >= 16 && probe.innerPadding <= 24, `inner padding ~18px: ${probe.innerPadding}`);
     assert.ok(probe.innerMinHeight >= 220, `inner card min-height ~235px: ${probe.innerMinHeight}`);
