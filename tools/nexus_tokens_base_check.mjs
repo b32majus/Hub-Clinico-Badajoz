@@ -51,7 +51,7 @@ record('C4 en los ficheros comunes solo hay variables --nx-*',
 record('C5 sin palabras clínicas en los ficheros comunes',
   !CLINICAL_TOKEN_RE.test(tokensCss || '') && !CLINICAL_TOKEN_RE.test(baseCss || ''));
 
-// C6 las 19 páginas los enlazan, una vez, tras los CSS externos y antes del primer CSS local
+// C6 las 19 páginas los enlazan, una vez, tras las bibliotecas de terceros y antes del primer CSS propio
 const pages = fs.readdirSync(ROOT).filter((f) => f.endsWith('.html')).sort();
 const bad = [];
 for (const page of pages) {
@@ -59,8 +59,10 @@ for (const page of pages) {
   const links = [...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/g)].map((m) => (m[0].match(/href="([^"]+)"/) || [])[1]);
   const iT = links.indexOf(`${TOKENS}?v=${V}`);
   const iB = links.indexOf(`${BASE}?v=${V}`);
-  const firstLocal = links.findIndex((h) => !/^https?:/.test(h) && !h.startsWith('css/nexus_'));
-  const lastExternal = links.map((h) => /^https?:/.test(h)).lastIndexOf(true);
+  // Bibliotecas de terceros (CDN o vendor/, tramo 2) van antes; los CSS propios, después.
+  const isThirdParty = (h) => /^https?:/.test(h) || h.startsWith('vendor/');
+  const firstLocal = links.findIndex((h) => !isThirdParty(h) && !h.startsWith('css/nexus_'));
+  const lastExternal = links.map(isThirdParty).lastIndexOf(true);
   const countT = links.filter((h) => h && h.includes('nexus_tokens.css')).length;
   const countB = links.filter((h) => h && h.includes('nexus_base.css')).length;
   if (!(iT >= 0 && iB === iT + 1 && countT === 1 && countB === 1 && iT > lastExternal && (firstLocal === -1 || iB < firstLocal))) {

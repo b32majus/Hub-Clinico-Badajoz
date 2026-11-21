@@ -270,12 +270,12 @@ async function upload(selector, name, buffer) {
 
 async function clickLink(name) {
   const link = page.getByRole('link', { name, exact: false }).first();
-  await Promise.all([page.waitForLoadState('domcontentloaded'), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), link.click()]);
 }
 
 async function clickQuickViewLink(name) {
   const link = page.locator('#fhQvActions').getByRole('link', { name, exact: false });
-  await Promise.all([page.waitForLoadState('domcontentloaded'), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), link.click()]);
 }
 
 try {

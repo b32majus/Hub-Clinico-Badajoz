@@ -1,0 +1,143 @@
+{
+  "descripcion": "Inventario de dependencias guardadas dentro de la app (ADR-009 R2, #715). Se actualizan solo a mano, con PR y capturas; nunca automáticamente.",
+  "fecha": "2026-11-21",
+  "bibliotecas": [
+    {
+      "id": "fontawesome",
+      "nombre": "Font Awesome Free",
+      "version": "6.0.0-beta3",
+      "origen": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/ (contrastado con npm @fortawesome/fontawesome-free@6.0.0-beta3)",
+      "licencia": "Iconos CC BY 4.0; fuentes SIL OFL 1.1; código MIT",
+      "usan": "17 páginas de Reuma y Farmacia (iconos)",
+      "ficheros": [
+        {
+          "ruta": "vendor/fontawesome/LICENSE.txt",
+          "sha256": "3960bccdb10203104075a1d1ad3f6bb4b116f4344dc57444d6222f35297a052c"
+        },
+        {
+          "ruta": "vendor/fontawesome/css/all.min.css",
+          "sha256": "a361e7885c36bacb3fd9cb068da207c3b9329962cac022d06e28923939f575e8"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-brands-400.ttf",
+          "sha256": "523dc72caa42687c946e5a8d7e6b438880a26881964466cf1425ce5114e49701"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-brands-400.woff2",
+          "sha256": "33a252d6393cbd6debe0ac517229c7aa258a0ee68fc0253f8be6a7cee8b65ee9"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-regular-400.ttf",
+          "sha256": "e47616185481b0ecd636dc35fc4673a4a332b1ac96585fc1f9cf0d0553dac2a0"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-regular-400.woff2",
+          "sha256": "886fd1e6ce992ede514743a826fa71fefdb577047a2a899ca95f6f28f3305d09"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-solid-900.ttf",
+          "sha256": "1c210c134c340a1133991a605b0aac990ce8505c48fce37c915063402964e994"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-solid-900.woff2",
+          "sha256": "94e1bbc1c2a41ebc73fa5253fd563256c0035b4d69181e48f9aef9e474a11251"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-v4compatibility.ttf",
+          "sha256": "a77fc4d94850e5a9b3964d08f5e2d2fad5c6635ba68d38b2a7e17cf4c560bf37"
+        },
+        {
+          "ruta": "vendor/fontawesome/webfonts/fa-v4compatibility.woff2",
+          "sha256": "4dc08f15f61ce16b97c0c4580bd233be0c9ea52165333fe460af54040a5c425c"
+        }
+      ]
+    },
+    {
+      "id": "chartjs",
+      "nombre": "Chart.js 4.4.0 + chartjs-plugin-annotation 3.0.1 + chartjs-adapter-date-fns 3.0.0 (incluye date-fns ^2.19)",
+      "version": "4.4.0 / 3.0.1 / 3.0.0",
+      "origen": "https://cdn.jsdelivr.net/npm/ (huellas SRI sha384 iguales a las que llevaban las páginas)",
+      "licencia": "MIT (los cuatro)",
+      "usan": "dashboard_paciente.html y estadisticas.html (gráficos)",
+      "ficheros": [
+        {
+          "ruta": "vendor/chartjs/LICENSE-chart.js.md",
+          "sha256": "5a0877ad6d818529be4f33009d0942cdf7e2ed7656156f4aba7308459a546030"
+        },
+        {
+          "ruta": "vendor/chartjs/LICENSE-chartjs-adapter-date-fns.md",
+          "sha256": "b4b8355c2cd2b18354980a0c6422181d7bd6e895d94ae88b3570e97c60eea03d"
+        },
+        {
+          "ruta": "vendor/chartjs/LICENSE-chartjs-plugin-annotation.md",
+          "sha256": "868e144ac8fc605036f5a4403fd1007dcb70d69150619b95bc87c200bcbdb8c5"
+        },
+        {
+          "ruta": "vendor/chartjs/LICENSE-date-fns.md",
+          "sha256": "8d3951c38967b964b1fe259bfd200c2647cc04c858b55a4414e3122a60f1ef4b"
+        },
+        {
+          "ruta": "vendor/chartjs/chart.umd.min.js",
+          "sha256": "0e2326c6868072bec1592760c6729043caeea2960a2b46cee6a2192aac6abff0"
+        },
+        {
+          "ruta": "vendor/chartjs/chartjs-adapter-date-fns.bundle.min.js",
+          "sha256": "ea7ab30d26c38dcf1f2d26bb43e73a94537b58f1906f55e1a546dd09321b5615"
+        },
+        {
+          "ruta": "vendor/chartjs/chartjs-plugin-annotation.min.js",
+          "sha256": "f010c3c42842c98381f34ffa5613a99abeea2391080f20cfcf1b1678f3c555fa"
+        }
+      ]
+    },
+    {
+      "id": "inter",
+      "nombre": "Inter (subconjuntos latin y latin-ext, fuente variable)",
+      "version": "Google Fonts v20",
+      "origen": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700 (ficheros de fonts.gstatic.com)",
+      "licencia": "SIL OFL 1.1",
+      "usan": "style.css (Reuma y Farmacia)",
+      "ficheros": [
+        {
+          "ruta": "vendor/inter/LICENSE.txt",
+          "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+        },
+        {
+          "ruta": "vendor/inter/inter-latin-ext.woff2",
+          "sha256": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956"
+        },
+        {
+          "ruta": "vendor/inter/inter-latin.woff2",
+          "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62"
+        },
+        {
+          "ruta": "vendor/inter/inter.css",
+          "sha256": "47da46b23b7f5fcb2976b8963ebf488d464ac4452c7fb66018c212a18c9682be"
+        }
+      ]
+    },
+    {
+      "id": "sheetjs",
+      "nombre": "SheetJS Community Edition",
+      "version": "0.18.5",
+      "origen": "https://sheetjs.com/",
+      "licencia": "Apache 2.0",
+      "usan": "lectura y exportación de Excel",
+      "ficheros": [
+        {
+          "ruta": "vendor/sheetjs/LICENSE",
+          "sha256": "5fd4e12e5b12acf53c34373381655d70d6ed9aaa1872a50b8f1fbed8294e34c9"
+        },
+        {
+          "ruta": "vendor/sheetjs/README.md",
+          "sha256": "75f5690ed927149313020628ea6c6b4733a00d0c9f88507661c2e54676ceb23a"
+        },
+        {
+          "ruta": "vendor/sheetjs/xlsx.full.min.js",
+          "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99"
+        }
+      ]
+    }
+  ],
+  "huella": "sha256; en ficheros de texto (.css .js .md .txt, LICENSE) se calcula con finales de línea LF, porque git los guarda así y los saca en CRLF"
+}

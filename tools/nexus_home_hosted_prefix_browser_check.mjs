@@ -540,11 +540,9 @@ try {
     const externalHosts = [...new Set(positiveResponses
       .map((r) => new URL(r.url).host)
       .filter((host) => host !== new URL(origin).host))];
-    // Pre-existing external surface only: the pages' own CDN scripts
-    // (cdnjs) and the long-standing style.css Google-Fonts @import, both
-    // untouched by T2. Anything beyond that would be a newly added
-    // dependency and fails.
-    const allowedExternal = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+    // #956 tramo 2 (ADR-009 R2): icons, charts and the Inter font are
+    // vendored under vendor/, so no external host is allowed any more.
+    const allowedExternal = [];
     const newExternal = externalHosts.filter((host) => !allowedExternal.includes(host));
     record('H7a console.error = 0 on every positive page', positiveConsole.length === 0,
       positiveConsole.length === 0 ? 'clean' : JSON.stringify(positiveConsole.slice(0, 5)));
@@ -557,7 +555,7 @@ try {
     }
     record('H7d no origin-root asset path requested', originRootHits.length === 0,
       originRootHits.length === 0 ? 'everything under the project prefix' : JSON.stringify(originRootHits));
-    record('H7e no new external dependency (only the pre-existing CDN + fonts)', newExternal.length === 0,
+    record('H7e no external dependency at all (ADR-009 R2)', newExternal.length === 0,
       `external=${JSON.stringify(externalHosts)}`);
   }
 } catch (err) {

@@ -223,16 +223,16 @@ async function search(cip) {
 async function openLongitudinal(cip) {
   await search(cip);
   const dashboard = page.locator('#fhQvActions').getByRole('link', { name: 'Dashboard', exact: false });
-  await Promise.all([page.waitForLoadState('domcontentloaded'), dashboard.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), dashboard.click()]);
   await page.waitForFunction(expected => document.querySelector('#patientIdBadge')?.textContent.trim() === expected, cip);
   const full = page.locator('#longitudinalStandaloneLink');
   assert.match(await full.getAttribute('href'), /generation=/, 'supported dashboard link retains the patient session');
-  await Promise.all([page.waitForLoadState('domcontentloaded'), full.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), full.click()]);
   await page.waitForFunction(expected => document.querySelector('#longitudinalPatientSelect')?.value === expected, cip);
 }
 async function returnToStart() {
   const start = page.getByRole('link', { name: 'Inicio Farmacia', exact: false }).first();
-  await Promise.all([page.waitForLoadState('domcontentloaded'), start.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), start.click()]);
   await page.locator('#inputExcelFarmacia').waitFor({ state: 'attached' });
   await page.waitForFunction(() => window.FarmaciaDataImports && window.FarmaciaPatientFlowRuntime);
   await upload();
