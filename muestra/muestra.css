@@ -1,0 +1,68 @@
+@layer nx.tokens, nx.base, nx.piezas, modulo;
+
+/* Maquetación propia de la página de muestra (capa modulo). Solo var(--nx-*). */
+@layer modulo {
+  .muestra {
+    max-inline-size: var(--nx-ancho-pagina);
+    margin: 0 auto;
+    padding: var(--nx-espacio-6) var(--nx-espacio-5) var(--nx-espacio-7);
+  }
+
+  .muestra h1 {
+    margin: 0 0 var(--nx-espacio-2);
+    font-size: var(--nx-texto-3xl);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  .muestra h2 {
+    margin: 0 0 var(--nx-espacio-4);
+    font-size: var(--nx-texto-xl);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  .muestra__nota {
+    margin: 0;
+    color: var(--nx-color-texto-suave);
+  }
+
+  .muestra__cabecera {
+    margin-block-end: var(--nx-espacio-6);
+  }
+
+  .muestra__seccion {
+    display: grid;
+    gap: var(--nx-espacio-4);
+    margin-block-end: var(--nx-espacio-6);
+    padding-block-start: var(--nx-espacio-5);
+    border-block-start: var(--nx-borde-fino) solid var(--nx-color-borde);
+  }
+
+  .muestra__seccion > p {
+    margin: 0;
+  }
+
+  .muestra__grupo {
+    display: grid;
+    gap: var(--nx-espacio-1);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .muestra__pila {
+    display: grid;
+    gap: var(--nx-espacio-2);
+    max-inline-size: var(--nx-ancho-lectura);
+  }
+
+  .muestra code {
+    font-family: var(--nx-fuente-mono);
+    font-size: var(--nx-texto-sm);
+  }
+
+  @media (max-width: 36em) {
+    .muestra {
+      padding: var(--nx-espacio-4) var(--nx-espacio-4) var(--nx-espacio-6);
+    }
+  }
+}

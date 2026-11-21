@@ -1,0 +1,684 @@
+@layer nx.tokens, nx.base, nx.piezas, modulo;
+
+/*
+ * PROMueve Nexus — catálogo de piezas (capa nx.piezas). ADR-010 §3, DESIGN.md §4.
+ * Tramo 4 de #956: lo usa solo la página de muestra (muestra/nexus_piezas.html);
+ * cada pantalla adopta las piezas al migrarse (tramo 7).
+ * Reglas: clases BEM nx-*, solo var(--nx-*), escritorio primero. Los tres puntos
+ * de cambio (64em = 1024 px, 48em = 768 px, 36em = 576 px) solo recolocan cuando
+ * la pantalla es más estrecha; el móvil no se diseña aparte (ADR-009 R4).
+ * Ojo al migrar: una regla sin capa de los CSS antiguos (p. ej. «button {}»)
+ * gana a estas; hay que quitarla de la pantalla que adopta la pieza.
+ */
+
+@layer nx.piezas {
+  /* ---------- Página: tipografía y fondo comunes, solo si se pide ---------- */
+  .nx-pagina {
+    margin: 0;
+    background: var(--nx-color-fondo);
+    color: var(--nx-color-texto);
+    font-family: var(--nx-fuente);
+    font-size: var(--nx-texto-base);
+    line-height: var(--nx-interlineado);
+  }
+
+  .nx-pagina *,
+  .nx-pagina *::before,
+  .nx-pagina *::after {
+    box-sizing: border-box;
+  }
+
+  .nx-solo-lector {
+    position: absolute;
+    inline-size: var(--nx-borde-fino);
+    block-size: var(--nx-borde-fino);
+    margin: calc(-1 * var(--nx-borde-fino));
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ---------- Botón ---------- */
+  .nx-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--nx-espacio-2);
+    min-block-size: var(--nx-control-alto);
+    padding: var(--nx-espacio-2) var(--nx-espacio-4);
+    border: var(--nx-borde-fino) solid transparent;
+    border-radius: var(--nx-radio-md);
+    background: var(--nx-color-superficie);
+    color: var(--nx-color-principal);
+    font: inherit;
+    font-size: var(--nx-texto-base);
+    font-weight: var(--nx-peso-semi);
+    line-height: var(--nx-interlineado-titulo);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--nx-transicion), border-color var(--nx-transicion);
+  }
+
+  .nx-boton--principal {
+    background: var(--nx-color-principal);
+    color: var(--nx-color-sobre-principal);
+  }
+
+  .nx-boton--principal:hover {
+    background: var(--nx-color-principal-hover);
+  }
+
+  .nx-boton--secundario {
+    border-color: var(--nx-color-tenue);
+  }
+
+  .nx-boton--secundario:hover,
+  .nx-boton--discreto:hover {
+    background: var(--nx-color-principal-suave);
+  }
+
+  .nx-boton--discreto {
+    background: transparent;
+  }
+
+  .nx-boton--peligro {
+    background: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
+  }
+
+  .nx-boton--peligro:hover {
+    background: var(--nx-color-error-hover);
+  }
+
+  .nx-boton--pequeno {
+    min-block-size: var(--nx-control-alto-sm);
+    padding: var(--nx-espacio-1) var(--nx-espacio-3);
+    font-size: var(--nx-texto-sm);
+  }
+
+  /* Solo icono: lleva aria-label con lo que hace */
+  .nx-boton--icono {
+    min-inline-size: var(--nx-control-alto);
+    padding-inline: var(--nx-espacio-2);
+  }
+
+  .nx-boton:disabled,
+  .nx-boton[aria-disabled="true"] {
+    border-color: var(--nx-color-borde);
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    cursor: not-allowed;
+  }
+
+  /* Cargando: aria-busy="true" + texto que lo diga («Guardando…») */
+  .nx-boton[aria-busy="true"] {
+    cursor: progress;
+  }
+
+  .nx-boton[aria-busy="true"]::before {
+    content: "";
+    inline-size: var(--nx-texto-base);
+    block-size: var(--nx-texto-base);
+    border: var(--nx-borde-medio) solid currentColor;
+    border-inline-end-color: transparent;
+    border-radius: var(--nx-radio-pildora);
+    animation: nx-girar var(--nx-giro) linear infinite;
+  }
+
+  @keyframes nx-girar {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  .nx-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--nx-espacio-2);
+  }
+
+  .nx-acciones--final {
+    justify-content: flex-end;
+  }
+
+  /* ---------- Campo, casilla y buscador ---------- */
+  .nx-campo {
+    display: grid;
+    gap: var(--nx-espacio-1);
+    align-content: start;
+  }
+
+  .nx-campo__etiqueta {
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-sm);
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-campo__obligatorio {
+    color: var(--nx-color-texto-suave);
+    font-weight: var(--nx-peso-normal);
+  }
+
+  .nx-campo__control {
+    inline-size: 100%;
+    min-block-size: var(--nx-control-alto);
+    padding: var(--nx-espacio-2) var(--nx-espacio-3);
+    border: var(--nx-borde-fino) solid var(--nx-color-tenue);
+    border-radius: var(--nx-radio-md);
+    background: var(--nx-color-superficie);
+    color: var(--nx-color-texto);
+    font: inherit;
+    font-size: var(--nx-texto-base);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  textarea.nx-campo__control {
+    min-block-size: calc(var(--nx-control-alto) * 2);
+    resize: vertical;
+  }
+
+  .nx-campo__control:hover {
+    border-color: var(--nx-color-texto-suave);
+  }
+
+  .nx-campo__control[aria-invalid="true"] {
+    border-color: var(--nx-color-error);
+  }
+
+  .nx-campo__control:disabled {
+    border-color: var(--nx-color-borde);
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    cursor: not-allowed;
+  }
+
+  .nx-campo__ayuda {
+    margin: 0;
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  /* El texto empieza por «Error:»; el color no basta */
+  .nx-campo__error {
+    margin: 0;
+    color: var(--nx-color-error);
+    font-size: var(--nx-texto-sm);
+    font-weight: var(--nx-peso-medio);
+  }
+
+  .nx-casilla {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--nx-espacio-2);
+    min-block-size: var(--nx-control-alto-sm);
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-base);
+    cursor: pointer;
+  }
+
+  .nx-casilla input {
+    inline-size: var(--nx-texto-lg);
+    block-size: var(--nx-texto-lg);
+    margin: 0;
+    accent-color: var(--nx-color-principal);
+  }
+
+  .nx-buscador {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--nx-espacio-2);
+  }
+
+  .nx-buscador > .nx-campo {
+    flex: 1 1 auto;
+  }
+
+  .nx-formulario {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--nx-ancho-tarjeta-min)), 1fr));
+    gap: var(--nx-espacio-4) var(--nx-espacio-5);
+  }
+
+  /* ---------- Tabla ---------- */
+  /* El marco desplaza en horizontal: lleva role="region", aria-label y tabindex="0" */
+  .nx-tabla-marco {
+    overflow-x: auto;
+    border: var(--nx-borde-fino) solid var(--nx-color-borde);
+    border-radius: var(--nx-radio-lg);
+    background: var(--nx-color-superficie);
+  }
+
+  /* Cabecera fija: el marco desplaza también en vertical */
+  .nx-tabla-marco--alto {
+    max-block-size: var(--nx-alto-tabla);
+    overflow-y: auto;
+  }
+
+  .nx-tabla {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--nx-texto-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nx-tabla caption {
+    padding: var(--nx-espacio-3) var(--nx-espacio-4);
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-base);
+    font-weight: var(--nx-peso-semi);
+    text-align: start;
+  }
+
+  .nx-tabla th,
+  .nx-tabla td {
+    padding: var(--nx-espacio-2) var(--nx-espacio-4);
+    border-block-end: var(--nx-borde-fino) solid var(--nx-color-borde);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  .nx-tabla thead th {
+    position: sticky;
+    inset-block-start: 0;
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto);
+    font-weight: var(--nx-peso-semi);
+    vertical-align: bottom;
+    text-wrap: balance;
+  }
+
+  .nx-tabla tbody tr:last-child > * {
+    border-block-end: 0;
+  }
+
+  .nx-tabla tbody tr:hover {
+    background: var(--nx-color-fondo);
+  }
+
+  .nx-tabla .nx-tabla__num {
+    text-align: end;
+  }
+
+  .nx-tabla--compacta th,
+  .nx-tabla--compacta td {
+    padding: var(--nx-espacio-1) var(--nx-espacio-3);
+  }
+
+  /* ---------- Pestañas (<nx-pestanas>, modules/nexus/piezas/nx-pestanas.js) ---------- */
+  nx-pestanas {
+    display: block;
+  }
+
+  .nx-pestanas__lista {
+    display: flex;
+    gap: var(--nx-espacio-1);
+    overflow-x: auto;
+    border-block-end: var(--nx-borde-fino) solid var(--nx-color-borde);
+  }
+
+  .nx-pestanas__pestana {
+    position: relative;
+    flex: none;
+    min-block-size: var(--nx-control-alto);
+    padding: var(--nx-espacio-2) var(--nx-espacio-4);
+    border: 0;
+    border-radius: var(--nx-radio-md) var(--nx-radio-md) 0 0;
+    background: transparent;
+    color: var(--nx-color-texto-suave);
+    font: inherit;
+    font-size: var(--nx-texto-base);
+    font-weight: var(--nx-peso-semi);
+    cursor: pointer;
+  }
+
+  .nx-pestanas__pestana:hover {
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto);
+  }
+
+  .nx-pestanas__pestana:focus-visible {
+    outline-offset: calc(-1 * var(--nx-foco-ancho));
+  }
+
+  /* La elegida: color y raya debajo (nunca solo color) */
+  .nx-pestanas__pestana[aria-selected="true"] {
+    color: var(--nx-color-principal);
+  }
+
+  .nx-pestanas__pestana[aria-selected="true"]::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    border-block-end: var(--nx-borde-grueso) solid var(--nx-color-principal);
+  }
+
+  .nx-pestanas__panel {
+    padding-block: var(--nx-espacio-4);
+  }
+
+  /* ---------- Tarjeta ---------- */
+  .nx-rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--nx-ancho-tarjeta-min)), 1fr));
+    gap: var(--nx-espacio-4);
+  }
+
+  .nx-tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-espacio-3);
+    padding: var(--nx-espacio-5);
+    border: var(--nx-borde-fino) solid var(--nx-color-borde);
+    border-radius: var(--nx-radio-lg);
+    background: var(--nx-color-superficie);
+    box-shadow: var(--nx-sombra-sm);
+    overflow-wrap: break-word;
+  }
+
+  .nx-tarjeta--farmacia {
+    border-block-start: var(--nx-borde-acento) solid var(--nx-color-farmacia);
+  }
+
+  .nx-tarjeta--reuma {
+    border-block-start: var(--nx-borde-acento) solid var(--nx-color-reuma);
+  }
+
+  .nx-tarjeta--derma {
+    border-block-start: var(--nx-borde-acento) solid var(--nx-color-derma);
+  }
+
+  .nx-tarjeta__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--nx-espacio-2);
+  }
+
+  .nx-tarjeta__titulo {
+    margin: 0;
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-lg);
+    font-weight: var(--nx-peso-semi);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  .nx-tarjeta__subtitulo {
+    margin: 0;
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-tarjeta__cuerpo {
+    flex: 1 1 auto;
+    margin: 0;
+    color: var(--nx-color-texto);
+  }
+
+  .nx-tarjeta__pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--nx-espacio-2);
+    margin-block-start: auto;
+  }
+
+  /* Pares dato: valor dentro de una tarjeta */
+  .nx-datos {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--nx-espacio-1) var(--nx-espacio-4);
+    margin: 0;
+  }
+
+  .nx-datos dt {
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-datos dd {
+    margin: 0;
+    font-weight: var(--nx-peso-medio);
+  }
+
+  /* ---------- Etiqueta de estado (el texto dice el estado) ---------- */
+  .nx-etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--nx-espacio-1);
+    padding: 0 var(--nx-espacio-2);
+    border: var(--nx-borde-fino) solid currentColor;
+    border-radius: var(--nx-radio-pildora);
+    background: var(--nx-color-superficie-suave);
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+    font-weight: var(--nx-peso-semi);
+    line-height: var(--nx-interlineado);
+    white-space: nowrap;
+  }
+
+  .nx-etiqueta--ok {
+    background: var(--nx-color-ok-fondo);
+    color: var(--nx-color-ok);
+  }
+
+  .nx-etiqueta--aviso {
+    background: var(--nx-color-aviso-fondo);
+    color: var(--nx-color-aviso);
+  }
+
+  .nx-etiqueta--error {
+    background: var(--nx-color-error-fondo);
+    color: var(--nx-color-error);
+  }
+
+  .nx-etiqueta--info {
+    background: var(--nx-color-info-fondo);
+    color: var(--nx-color-info);
+  }
+
+  /* ---------- Aviso (<nx-aviso>) y zona de avisos ---------- */
+  nx-aviso {
+    --nx-aviso-color: var(--nx-color-info);
+    --nx-aviso-fondo: var(--nx-color-info-fondo);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: var(--nx-espacio-1) var(--nx-espacio-3);
+    padding: var(--nx-espacio-3) var(--nx-espacio-4);
+    border: var(--nx-borde-fino) solid var(--nx-aviso-color);
+    border-radius: var(--nx-radio-md);
+    background: var(--nx-aviso-fondo);
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-sm);
+  }
+
+  nx-aviso[tipo="error"] {
+    --nx-aviso-color: var(--nx-color-error);
+    --nx-aviso-fondo: var(--nx-color-error-fondo);
+  }
+
+  nx-aviso[tipo="aviso"] {
+    --nx-aviso-color: var(--nx-color-aviso);
+    --nx-aviso-fondo: var(--nx-color-aviso-fondo);
+  }
+
+  nx-aviso[tipo="ok"] {
+    --nx-aviso-color: var(--nx-color-ok);
+    --nx-aviso-fondo: var(--nx-color-ok-fondo);
+  }
+
+  .nx-aviso__etiqueta {
+    grid-column: 1;
+    grid-row: 1;
+    color: var(--nx-aviso-color);
+    font-weight: var(--nx-peso-negrita);
+  }
+
+  .nx-aviso__titulo,
+  .nx-aviso__texto {
+    grid-column: 2;
+  }
+
+  .nx-aviso__titulo {
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-aviso__cerrar {
+    grid-column: 3;
+    grid-row: 1;
+    min-block-size: var(--nx-control-alto-sm);
+    padding: var(--nx-espacio-1) var(--nx-espacio-3);
+    border: var(--nx-borde-fino) solid var(--nx-color-tenue);
+    border-radius: var(--nx-radio-sm);
+    background: var(--nx-color-superficie);
+    color: var(--nx-color-texto);
+    font: inherit;
+    font-size: var(--nx-texto-sm);
+    font-weight: var(--nx-peso-semi);
+    cursor: pointer;
+  }
+
+  .nx-aviso__cerrar:hover {
+    background: var(--nx-color-superficie-suave);
+  }
+
+  /* Zona única «Avisos» que crea avisar(): abajo a la derecha, encima del contenido */
+  .nx-avisos {
+    position: fixed;
+    inset-block-end: var(--nx-espacio-4);
+    inset-inline-end: var(--nx-espacio-4);
+    z-index: var(--nx-capa-avisos);
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-espacio-2);
+    inline-size: min(var(--nx-ancho-avisos), calc(100% - 2 * var(--nx-espacio-4)));
+    max-block-size: calc(100% - 2 * var(--nx-espacio-4));
+    overflow-y: auto;
+  }
+
+  .nx-avisos > nx-aviso {
+    box-shadow: var(--nx-sombra-md);
+  }
+
+  /* ---------- Ventana emergente (<dialog class="nx-dialogo">, confirmar()) ---------- */
+  .nx-dialogo {
+    inline-size: min(var(--nx-ancho-dialogo), calc(100% - 2 * var(--nx-espacio-4)));
+    max-block-size: calc(100% - 2 * var(--nx-espacio-6));
+    padding: var(--nx-espacio-5);
+    border: var(--nx-borde-fino) solid var(--nx-color-borde);
+    border-radius: var(--nx-radio-lg);
+    background: var(--nx-color-superficie);
+    color: var(--nx-color-texto);
+    box-shadow: var(--nx-sombra-lg);
+    font-family: var(--nx-fuente);
+    line-height: var(--nx-interlineado);
+  }
+
+  /* Que la página de detrás no se desplace (guía de <dialog>) */
+  .nx-dialogo:modal {
+    overscroll-behavior: contain;
+  }
+
+  .nx-dialogo::backdrop {
+    overflow: hidden;
+    overscroll-behavior: contain;
+    background: var(--nx-color-velo);
+  }
+
+  .nx-dialogo__titulo {
+    margin: 0 0 var(--nx-espacio-2);
+    font-size: var(--nx-texto-xl);
+    font-weight: var(--nx-peso-semi);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  .nx-dialogo__texto {
+    max-inline-size: var(--nx-ancho-lectura);
+    margin: 0 0 var(--nx-espacio-5);
+  }
+
+  .nx-dialogo__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--nx-espacio-2);
+    margin: 0;
+  }
+
+  /* ---------- Vacío ---------- */
+  .nx-vacio {
+    display: grid;
+    justify-items: center;
+    gap: var(--nx-espacio-2);
+    padding: var(--nx-espacio-6) var(--nx-espacio-4);
+    border: var(--nx-borde-fino) dashed var(--nx-color-tenue);
+    border-radius: var(--nx-radio-lg);
+    color: var(--nx-color-texto-suave);
+    text-align: center;
+  }
+
+  .nx-vacio__titulo {
+    margin: 0;
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-base);
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-vacio__texto {
+    max-inline-size: var(--nx-ancho-lectura);
+    margin: 0;
+  }
+
+  /* ---------- Pantallas más estrechas: solo recolocar ---------- */
+  @media (max-width: 64em) {
+    .nx-tarjeta {
+      padding: var(--nx-espacio-4);
+    }
+  }
+
+  @media (max-width: 48em) {
+    .nx-buscador {
+      flex-wrap: wrap;
+    }
+
+    .nx-datos {
+      grid-template-columns: 1fr;
+    }
+
+    .nx-datos dd {
+      margin-block-end: var(--nx-espacio-2);
+    }
+  }
+
+  @media (max-width: 36em) {
+    .nx-dialogo__acciones {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+
+    .nx-avisos {
+      inset-inline: var(--nx-espacio-2);
+      inset-block-end: var(--nx-espacio-2);
+      inline-size: auto;
+    }
+
+    nx-aviso {
+      grid-template-columns: 1fr auto;
+    }
+
+    .nx-aviso__titulo,
+    .nx-aviso__texto {
+      grid-column: 1 / -1;
+    }
+
+    .nx-aviso__cerrar {
+      grid-column: 2;
+    }
+  }
+}

@@ -84,5 +84,26 @@
     --nx-sombra-sm: 0 1px 2px rgba(31, 36, 48, 0.08);
     --nx-sombra-md: 0 4px 12px rgba(31, 36, 48, 0.10);
     --nx-sombra-lg: 0 12px 32px rgba(31, 36, 48, 0.14);
+
+    /* Tramo 4: lo que necesitan las piezas del catálogo (css/nexus_piezas.css) */
+    --nx-color-principal-hover: #2a0b57;    /* 16,4: botón principal al pasar el ratón */
+    --nx-color-principal-suave: #f0ebf7;    /* fondo de botón secundario/discreto al pasar; principal encima 11,5 */
+    --nx-color-error-hover: #851f24;        /* 9,5: botón de peligro al pasar el ratón */
+    --nx-color-velo: rgba(31, 36, 48, 0.55); /* fondo detrás de una ventana modal */
+    --nx-borde-fino: 1px;
+    --nx-borde-medio: 2px;                  /* aro de «cargando» */
+    --nx-borde-grueso: 3px;                 /* pestaña elegida */
+    --nx-borde-acento: 4px;                 /* franja de módulo en tarjeta */
+    --nx-control-alto: 2.5rem;              /* alto mínimo de botón y campo */
+    --nx-control-alto-sm: 2rem;
+    --nx-ancho-pagina: 72rem;
+    --nx-ancho-dialogo: 32rem;
+    --nx-ancho-avisos: 28rem;
+    --nx-ancho-lectura: 70ch;
+    --nx-ancho-tarjeta-min: 18rem;
+    --nx-alto-tabla: 32rem;                 /* tabla con cabecera fija */
+    --nx-capa-avisos: 100;
+    --nx-transicion: 120ms ease-out;
+    --nx-giro: 0.8s;                        /* una vuelta del aro de «cargando» */
   }
 }

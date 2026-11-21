@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = 'modules/nexus';
-const FILES = ['index.js', 'texto.js', 'fechas.js', 'avisos.js', 'piezas/nx-aviso.js'];
+const FILES = ['index.js', 'texto.js', 'fechas.js', 'avisos.js', 'piezas/nx-aviso.js', 'piezas/nx-pestanas.js'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
 const load = (rel) => import(pathToFileURL(path.join(ROOT, DIR, rel)).href);
 function walk(dir) {
@@ -65,7 +65,7 @@ await test('M4 index.js reexporta la API pública', async () => {
     const m = await load('texto.js');
     const f = await load('fechas.js');
     const idx = read(`${DIR}/index.js`);
-    for (const name of ['escaparHtml', 'normalizarTexto', 'claveBusqueda', 'leerFecha', 'fechaIso', 'fechaCorta', 'fechaLarga', 'avisar', 'confirmar']) {
+    for (const name of ['escaparHtml', 'normalizarTexto', 'claveBusqueda', 'leerFecha', 'fechaIso', 'fechaCorta', 'fechaLarga', 'avisar', 'confirmar', 'NxPestanas']) {
         assert.ok(new RegExp(`\\b${name}\\b`).test(idx), `index.js no reexporta ${name}`);
     }
     assert.equal(typeof m.escaparHtml, 'function');
