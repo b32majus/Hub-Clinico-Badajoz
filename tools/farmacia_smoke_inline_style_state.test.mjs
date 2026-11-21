@@ -48,7 +48,8 @@ function withSandbox(run) {
 function injectFixture(root, fixtureLines) {
   const filename = path.join(root, 'farmacia_farmacos.html');
   const html = fs.readFileSync(filename, 'utf8');
-  const anchor = '        <body>';
+  // Fármacos lleva <body class="nx-pagina"> desde el tramo 7 de #956.
+  const anchor = '        <body class="nx-pagina">';
   assert.equal(html.split(anchor).length, 2, 'known supported fixture insertion point');
   fs.writeFileSync(filename, html.replace(anchor, fixtureLines.join('\n') + '\n' + anchor));
 }

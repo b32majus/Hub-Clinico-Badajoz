@@ -24,3 +24,8 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 - **H-15 · Colores en el JS.** Chart.js (`script_dashboard.js`, `script_estadisticas.js`, `treatmentEventsManager.js`), las escalas de actividad de `scoreCalculators.js` (`#28a745`, `#ffc107`, `#dc3545`…), `formController.js` y los chips de EA de `farmacia_seguimiento.js` (`#008777`/`#E6F4F1`, que fija `farmacia_ea_suspect_identity_browser_check`) siguen con hex propios. Llevan significado clínico: decidir su paleta en el tramo 7.
 - **H-16 · Sombras.** Pasaron a `color-mix(var(--nx-color-texto) N%)` conservando cada sombra; unificarlas con `--nx-sombra-sm/md/lg` al migrar cada pantalla.
 - **H-17 · `style="…"` en el HTML.** Quedan 4 atributos `style` con color en las páginas; pasarlos a clases al migrar.
+
+## Tramo 7 (pantalla a pantalla)
+
+- **H-18 · Estado del catálogo dentro de la pantalla.** `farmacia_common.js` da a todo `[data-catalog-status]` el aspecto de la barra (`catalog-sidebar-status`), también al que está en el contenido (Inicio de Farmacia). En las pantallas migradas se marca con `data-catalog-solo-texto` y solo se escribe el texto; al migrar Inicio, hacer lo mismo.
+- **H-19 · Degradado de fondo del contenido.** Las pantallas migradas siguen con el fondo degradado de `.main-content` (regla sin capa de `style.css`, H-03), porque los scripts de Farmacia buscan `main.main-content` (H-02). Se quita al resolver H-02/H-03.

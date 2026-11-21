@@ -1915,6 +1915,8 @@
             var statusNodes = document.querySelectorAll('[data-catalog-status]');
             statusNodes.forEach(function (node) {
                 node.textContent = catalogStatus.message;
+                // Pantallas migradas (#956 tramo 7): el estado va como texto en su pieza, sin el aspecto de la barra.
+                if (node.hasAttribute('data-catalog-solo-texto')) return;
                 node.className = 'catalog-sidebar-status';
                 if (catalogStatus.state === 'loaded') {
                     node.classList.add('catalog-status--loaded');
