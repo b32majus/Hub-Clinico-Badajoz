@@ -51,9 +51,10 @@ assert(!html.includes('fhSegEaShowStructureBtn') && !html.includes('fhSegEaReset
 assert(js.includes('Medicamentos señalados expresamente como sospechosos') && !js.includes('Información clínica adicional (opcional)'), 'B (#869): la tarjeta lleva el bloque de sospechosos y ya no el disclosure de información adicional de maqueta');
 assert(!js.includes('data-ea-demo-control'), 'B (#869): sin controles demo deshabilitados en la tarjeta');
 // C-088 VIS-01: insignia de recuento y de sección con el tratamiento de píldora del máster.
-assert(/#fhSegEaCountBadge,\s*\n\s*#modSeguimientoEa > \.section-title > \.status-badge/.test(html) && html.includes('border: 1px solid #c9dbe5;'), 'Insignia de recuento EA y de sección con el tratamiento de píldora encajonada del máster');
+assert(/#fhSegEaCountBadge,\s*\n\s*#modSeguimientoEa > \.section-title > \.status-badge/.test(html) && html.includes('border: 1px solid var(--nx-color-borde);'), 'Insignia de recuento EA y de sección con el tratamiento de píldora encajonada del máster');
+// Tramo 6 de #956: colores de la paleta (--nx-*) en vez de los hex del máster.
 // C-088 VIS-03: insignia de estado de las tarjetas EA con el tratamiento del máster.
-assert(html.includes('#fhSegEaList .ea-t01-card .status-badge--ea-card') && html.includes('background: #FEF3C7;') && html.includes('border: 1px solid #FDE68A;'), 'Insignia de estado de las tarjetas EA con el tratamiento ámbar/naranja casi cuadrado del máster (VIS-03), acotado a las tarjetas EA');
+assert(html.includes('#fhSegEaList .ea-t01-card .status-badge--ea-card') && html.includes('background: var(--nx-color-aviso-fondo);') && html.includes('border: 1px solid var(--nx-color-aviso-borde);'), 'Insignia de estado de las tarjetas EA con el tratamiento ámbar/naranja casi cuadrado del máster (VIS-03), acotado a las tarjetas EA');
 assert(js.includes("return 'status-badge--ea-card '") && js.includes("'status-badge--ea-card status-badge--pending'"), 'eaCardBadgeClass marca la insignia de estado de cada tarjeta EA con la clase del tratamiento del máster');
 assert(html.includes('data-fh-transient" id="fhSegEaList"') || /id="fhSegEaList"[^>]*data-fh-transient/.test(html), 'La lista de EA queda fuera del envelope de borradores del paciente (data-fh-transient)');
 assert(html.includes('modSeguimientoCausalidad'), 'La sección de causalidad se mantiene independiente y sin duplicar');

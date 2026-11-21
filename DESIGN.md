@@ -30,6 +30,22 @@ Los valores exactos están en `css/nexus_tokens.css` (tramo 1, 21-11). Estados, 
 
 Grises: `--nx-color-texto-suave` `#5a6272` (6,1) para texto secundario; `--nx-color-tenue` `#8a93a5` (3,1) solo para iconos y bordes, nunca para texto; `--nx-color-borde` `#d6dae2`; `--nx-color-superficie-suave` `#eef0f4`. Son los mismos valores que ya usaba la Home, cuyas variables `--nexus-home-*` apuntan ahora a estas.
 
+### Aplicar la paleta a las pantallas antiguas (tramo 6, aprobado por Sil con capturas, 21-11)
+
+Las 7 hojas antiguas (`style.css`, `farmacia_style.css`, `style_primera_visita.css`, `style_seguimiento.css`, `style_dashboard.css`, `style_estadisticas.css`, `style_manage.css`) y los `<style>` de `farmacia_primera_visita.html` y `farmacia_seguimiento.html` ya no escriben colores: cada uno pasó a la variable de su papel (unos 2.200 cambios, con la herramienta `bin/paleta_mapear.py` de la carpeta de trabajo). Reglas:
+
+| Antes | Ahora |
+|---|---|
+| Grises (escala slate/bootstrap) | Por papel y claridad: `texto`, `texto-suave`, `superficie`, `fondo`, `superficie-suave`, `borde`; el borde de los campos de formulario, `tenue` (como el catálogo). El gris claro como texto pasa a `texto-suave` (`tenue` no es para texto). Cambian ligeramente de tono |
+| Verde `#008777` y familia (`--primary-blue`, `--ses-green*`) | Botones, foco y elegido → `principal` (morado); éxito → `ok`; el resto → acento del módulo de la página |
+| Rojo, ámbar, verde y azul de estado | Oscuro → el estado; claro → su `-fondo`; intermedio en bordes → su `-borde` |
+| Morados | `principal` / `principal-suave` |
+| Transparencias y sombras | `color-mix(in srgb, var(--nx-color-…) N%, transparent)` |
+
+**Acento del módulo:** `--nx-color-modulo`, `-texto`, `-suave` y `-borde` valen el de Farmacia, Reuma o Derma según el `<nx-shell modulo>` de la página (`:root:has(...)` en `nexus_tokens.css`); sin barra, el principal. Por eso Reuma pasa del verde a su rosa. Variables nuevas: `--nx-color-{ok,aviso,error,info}-borde` y `--nx-color-{farmacia,reuma,derma}-suave`. El check `nexus_paleta_check` (CI) impide volver a escribir colores a mano en esas hojas.
+
+Fuera de este tramo (tramo 7): los colores que pone el JS (gráficos de Chart.js, escalas de actividad de `scoreCalculators.js`, chips de EA de `farmacia_seguimiento.js`), porque tienen significado clínico; las sombras siguen siendo las de cada hoja hasta migrar a `--nx-sombra-*`.
+
 ## 2. Capas CSS
 
 `@layer nx.tokens, nx.base, nx.piezas, modulo;`

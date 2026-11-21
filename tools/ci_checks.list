@@ -120,3 +120,4 @@ reuma_nota_mda_check.mjs
 reuma_patient_read_port_check.mjs
 reuma_pcr_units_check.mjs
 reuma_read_harness_check.mjs
+nexus_paleta_check.mjs

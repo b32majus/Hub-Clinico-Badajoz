@@ -6,63 +6,63 @@
 /* === VARIABLES CSS - SISTEMA DE COLORES === */
 :root {
     /* Colores de Estado Clínico (semánticos) */
-    --color-remission: #10B981;
-    --color-remission-light: #D1FAE5;
-    --color-remission-dark: #059669;
+    --color-remission: var(--nx-color-ok);
+    --color-remission-light: var(--nx-color-sobre-principal);
+    --color-remission-dark: var(--nx-color-ok);
 
-    --color-low-activity: #3B82F6;
-    --color-low-activity-light: #DBEAFE;
-    --color-low-activity-dark: #2563EB;
+    --color-low-activity: var(--nx-color-info);
+    --color-low-activity-light: var(--nx-color-sobre-principal);
+    --color-low-activity-dark: var(--nx-color-info);
 
-    --color-moderate: #F59E0B;
-    --color-moderate-light: #FEF3C7;
-    --color-moderate-dark: #D97706;
+    --color-moderate: var(--nx-color-aviso);
+    --color-moderate-light: var(--nx-color-sobre-principal);
+    --color-moderate-dark: var(--nx-color-aviso);
 
-    --color-high-activity: #EF4444;
-    --color-high-activity-light: #FEE2E2;
-    --color-high-activity-dark: #DC2626;
+    --color-high-activity: var(--nx-color-error);
+    --color-high-activity-light: var(--nx-color-sobre-principal);
+    --color-high-activity-dark: var(--nx-color-error);
 
     /* Colores de Tratamiento */
-    --color-biologic: #8B5CF6;
-    --color-biologic-light: #EDE9FE;
-    --color-fame: #06B6D4;
-    --color-fame-light: #CFFAFE;
-    --color-systemic: #EC4899;
-    --color-systemic-light: #FCE7F3;
-    --color-other-treatment: #6B7280;
-    --color-other-treatment-light: #F3F4F6;
+    --color-biologic: var(--nx-color-principal);
+    --color-biologic-light: var(--nx-color-sobre-principal);
+    --color-fame: var(--nx-color-info);
+    --color-fame-light: var(--nx-color-sobre-principal);
+    --color-systemic: var(--nx-color-error);
+    --color-systemic-light: var(--nx-color-sobre-principal);
+    --color-other-treatment: var(--nx-color-texto-suave);
+    --color-other-treatment-light: var(--nx-color-sobre-principal);
 
     /* Colores de UI */
-    --color-primary: #008777;
-    --color-primary-hover: #006B5E;
-    --color-primary-light: #E8F5EE;
-    --color-secondary: #64748B;
-    --color-secondary-hover: #475569;
-    --color-secondary-light: #F1F5F9;
+    --color-primary: var(--nx-color-modulo-texto);
+    --color-primary-hover: var(--nx-color-modulo-texto);
+    --color-primary-light: var(--nx-color-sobre-principal);
+    --color-secondary: var(--nx-color-texto-suave);
+    --color-secondary-hover: var(--nx-color-texto-suave);
+    --color-secondary-light: var(--nx-color-sobre-principal);
 
     /* Fondos y Superficies */
-    --color-background: #F8FAFC;
-    --color-card: #FFFFFF;
-    --color-card-hover: #FAFBFC;
-    --color-border: #E2E8F0;
-    --color-border-light: #F1F5F9;
+    --color-background: var(--nx-color-fondo);
+    --color-card: var(--nx-color-superficie);
+    --color-card-hover: var(--nx-color-fondo);
+    --color-border: var(--nx-color-borde);
+    --color-border-light: var(--nx-color-borde);
 
     /* Texto */
-    --color-text: #1E293B;
-    --color-text-secondary: #475569;
-    --color-text-muted: #94A3B8;
+    --color-text: var(--nx-color-texto);
+    --color-text-secondary: var(--nx-color-texto-suave);
+    --color-text-muted: var(--nx-color-texto-suave);
 
     /* Estados */
-    --color-success: #10B981;
-    --color-warning: #F59E0B;
-    --color-error: #EF4444;
-    --color-info: #3B82F6;
+    --color-success: var(--nx-color-ok);
+    --color-warning: var(--nx-color-aviso);
+    --color-error: var(--nx-color-error);
+    --color-info: var(--nx-color-info);
 
     /* Sombras */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 1px 2px 0 color-mix(in srgb, var(--nx-color-texto) 5%, transparent);
+    --shadow-md: 0 4px 6px -1px color-mix(in srgb, var(--nx-color-texto) 10%, transparent), 0 2px 4px -2px color-mix(in srgb, var(--nx-color-texto) 10%, transparent);
+    --shadow-lg: 0 10px 15px -3px color-mix(in srgb, var(--nx-color-texto) 10%, transparent), 0 4px 6px -4px color-mix(in srgb, var(--nx-color-texto) 10%, transparent);
+    --shadow-xl: 0 20px 25px -5px color-mix(in srgb, var(--nx-color-texto) 10%, transparent), 0 8px 10px -6px color-mix(in srgb, var(--nx-color-texto) 10%, transparent);
 
     /* Transiciones */
     --transition-fast: 150ms ease;
@@ -133,7 +133,7 @@
 
 .patient-avatar i {
     font-size: 2.5rem;
-    color: white;
+    color: var(--nx-color-sobre-principal);
 }
 
 .patient-info {
@@ -261,13 +261,13 @@
 
 .btn-primary {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+    color: var(--nx-color-sobre-principal);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-info) 30%, transparent);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--nx-color-info) 40%, transparent);
 }
 
 .btn-secondary {
@@ -396,7 +396,7 @@
 .kpi-threshold {
     display: block;
     font-size: 0.62rem;
-    color: rgba(255, 255, 255, 0.45);
+    color: color-mix(in srgb, var(--nx-color-sobre-principal) 45%, transparent);
     text-align: center;
     margin-top: 4px;
     line-height: 1.3;
@@ -408,7 +408,7 @@
 .kpi-card--warning .kpi-threshold,
 .kpi-card--danger .kpi-threshold,
 .kpi-card--info .kpi-threshold {
-    color: rgba(255, 255, 255, 0.5);
+    color: color-mix(in srgb, var(--nx-color-sobre-principal) 50%, transparent);
 }
 
 .kpi-card--success .kpi-status {
@@ -920,7 +920,7 @@
 .pagination-btn.active {
     background: var(--color-primary);
     border-color: var(--color-primary);
-    color: white;
+    color: var(--nx-color-sobre-principal);
 }
 
 .pagination-btn:disabled {
@@ -957,7 +957,7 @@
 .loading-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--nx-color-superficie) 90%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1121,23 +1121,23 @@
 }
 
 .badge-apto {
-    background-color: #28a745;
-    color: #fff;
+    background-color: var(--nx-color-ok);
+    color: var(--nx-color-sobre-principal);
 }
 
 .badge-en-curso {
-    background-color: #ffc107;
-    color: #212529;
+    background-color: var(--nx-color-aviso);
+    color: var(--nx-color-texto);
 }
 
 .badge-no-apto {
-    background-color: #dc3545;
-    color: #fff;
+    background-color: var(--nx-color-error);
+    color: var(--nx-color-sobre-principal);
 }
 
 .badge-no-evaluado {
-    background-color: #6c757d;
-    color: #fff;
+    background-color: var(--nx-color-tenue);
+    color: var(--nx-color-sobre-principal);
 }
 
 .patient-prebiologic-badge {
