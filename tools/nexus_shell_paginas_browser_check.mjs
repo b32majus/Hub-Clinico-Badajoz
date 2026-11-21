@@ -46,7 +46,9 @@ const mime = new Map([
     ['.css', 'text/css; charset=utf-8'], ['.json', 'application/json'],
     ['.svg', 'image/svg+xml'], ['.png', 'image/png']
 ]);
-const server = createServer((request, response) => {
+// B7 simula la latencia de Pages: cada petición espera `retardoMs`.
+let retardoMs = 0;
+const server = createServer((request, response) => setTimeout(() => {
     const relative = decodeURIComponent(new URL(request.url || '/', 'http://127.0.0.1').pathname).replace(/^\/+/, '') || 'farmacia_index.html';
     const file = path.resolve(ROOT, relative);
     if (file !== ROOT && !file.startsWith(ROOT + path.sep)) return response.writeHead(403).end();
@@ -57,7 +59,7 @@ const server = createServer((request, response) => {
     } catch {
         response.writeHead(404).end('Not found');
     }
-});
+}, retardoMs));
 await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
 const base = `http://127.0.0.1:${server.address().port}/`;
 
@@ -171,6 +173,30 @@ try {
         for (const p of ['index', 'nexus_home']) {
             await page.goto(`${base}${p}.html`, { waitUntil: 'load' });
             assert.equal(await page.locator('nx-shell').count(), 0, p);
+        }
+    });
+
+    await test('B7 la barra se monta mientras la página aún carga, sin esperar al resto de scripts', async () => {
+        // Sil, 21-11: con el módulo diferido, el menú tardaba ~2 s en salir (esperaba a los ~25 scripts de cada página).
+        // B3 deja la sesión sin profesional: sin él, Reuma redirige a la pantalla de carga y se mediría otra página.
+        await page.evaluate(() => sessionStorage.removeItem('t5SinProfesional'));
+        retardoMs = 60;
+        try {
+            await page.addInitScript(() => {
+                new MutationObserver((_, obs) => {
+                    if (document.querySelector('nx-shell .nx-shell__nav')) { window.__tNav = performance.now(); obs.disconnect(); }
+                }).observe(document, { childList: true, subtree: true });
+                document.addEventListener('DOMContentLoaded', () => { window.__tDcl = performance.now(); });
+            });
+            for (const p of ['farmacia_index', 'farmacia_seguimiento', 'seguimiento']) {
+                await page.goto(`${base}${p}.html`, { waitUntil: 'load' });
+                assert.ok(page.url().includes(`${p}.html`), `${p}: redirigió a ${page.url()}`);
+                const { nav, dcl } = await page.evaluate(() => ({ nav: window.__tNav, dcl: window.__tDcl }));
+                // Con el módulo diferido salía justo antes de DOMContentLoaded (~10 ms); ahora sale 1,5-2 s antes.
+                assert.ok(nav && dcl - nav > 300, `${p}: menú a ${Math.round(nav)} ms, fin de carga a ${Math.round(dcl)} ms`);
+            }
+        } finally {
+            retardoMs = 0;
         }
     });
 

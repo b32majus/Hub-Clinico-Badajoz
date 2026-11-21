@@ -10,7 +10,11 @@
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t1">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261121-t1">
     <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t5">
-    <script type="module" src="modules/nexus/piezas/nx-shell.js"></script>
+    <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
+    <link rel="modulepreload" href="modules/nexus/menus.js">
+    <link rel="modulepreload" href="modules/nexus/version.js">
+    <link rel="modulepreload" href="modules/nexus/avisos.js">
+    <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20260307u">
     <link rel="stylesheet" href="style_dashboard.css?v=20260307s">
 </head>
@@ -35,6 +39,7 @@
                 </div>
             </div>
 </nx-shell>
+<script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
 
         <!-- MAIN CONTENT -->
         <main class="main-content nx-marco__contenido dashboard-paciente">
