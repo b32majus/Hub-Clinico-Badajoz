@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t6">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261121-t6">
-    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t5">
+    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t7">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
     <link rel="modulepreload" href="modules/nexus/menus.js">
     <link rel="modulepreload" href="modules/nexus/version.js">
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="style.css?v=20261121-t6">
     <link rel="stylesheet" href="farmacia_style.css?v=20261121-t6">
 </head>
-        <body>
+        <body class="nx-pagina">
             <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_profesionales.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -48,25 +48,34 @@
     </div>
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
-                <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--profesionales">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card module-hero">
-    <div class="patient-header-main">
-        <div class="patient-avatar"><i class="fas fa-users" aria-hidden="true"></i></div>
-        <div class="patient-info">
-            <div class="patient-id-badge">Farmacia Hospitalaria</div>
-            <p class="hero-eyebrow">Farmacia Hospitalaria · Personal</p>
-            <h1 class="patient-name">Profesionales</h1>
-            <p class="hero-description">Personal demo con nombres claramente sintéticos.</p>
-        </div>
-        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
-    </div>
-</section><section class="dashboard-card"><h2 class="card-title"><i class="fas fa-users"></i> Profesionales demo</h2><table class="data-table"><thead><tr><th>ID</th><th>Nombre demo</th><th>Rol</th><th>Especialidad</th><th>Estado</th></tr></thead><tbody><tr><td>PRO-FH-01</td><td>Profesional FH-01</td><td>Farmacéutico/a Hospitalario/a</td><td>Dermatología; Reumatología</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>PRO-FH-02</td><td>Profesional FH-02</td><td>Farmacéutico/a Hospitalario/a</td><td>Digestivo; Oncología</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>PRO-FH-03</td><td>Profesional FH-03</td><td>Residente Farmacia</td><td>Rotación Farmacia Hospitalaria</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>PRO-FH-04</td><td>Profesional FH-04</td><td>Farmacéutico/a Hospitalario/a</td><td>Hematología; soporte demo</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr></tbody></table></section>
+                <main class="main-content nx-marco__contenido">
+                    <nx-aviso tipo="aviso" role="note" titulo="Demo de Farmacia con datos sintéticos.">Prototipo sin datos reales, sin conexión con JARA, SES ni Farmatool y sin la seguridad de un sistema en producción.</nx-aviso>
+                    <header class="nx-cabecera">
+                        <div>
+                            <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Gestión</p>
+                            <h1 class="nx-cabecera__titulo">Profesionales</h1>
+                            <p class="nx-cabecera__texto">Personal de la demo, con nombres claramente sintéticos.</p>
+                        </div>
+                        <p class="nx-cabecera__estado"><span class="nx-etiqueta">Perfil demo: farmacéutico</span></p>
+                    </header>
+                    <section class="nx-tarjeta" aria-labelledby="titulo-profesionales">
+                        <h2 class="nx-tarjeta__titulo" id="titulo-profesionales">Profesionales de la demo</h2>
+                        <div class="nx-tabla-marco" role="region" aria-labelledby="titulo-profesionales" tabindex="0">
+                            <table class="nx-tabla">
+                                <caption class="nx-solo-lector">Profesionales de la demo, con su rol, especialidad y estado</caption>
+                                <thead><tr><th scope="col">ID</th><th scope="col">Nombre</th><th scope="col">Rol</th><th scope="col">Especialidad</th><th scope="col">Estado</th></tr></thead>
+                                <tbody>
+                                <tr><td>PRO-FH-01</td><td>Profesional FH-01</td><td>Farmacéutico/a Hospitalario/a</td><td>Dermatología; Reumatología</td><td><span class="nx-etiqueta nx-etiqueta--ok">Activo</span></td></tr>
+                                <tr><td>PRO-FH-02</td><td>Profesional FH-02</td><td>Farmacéutico/a Hospitalario/a</td><td>Digestivo; Oncología</td><td><span class="nx-etiqueta nx-etiqueta--ok">Activo</span></td></tr>
+                                <tr><td>PRO-FH-03</td><td>Profesional FH-03</td><td>Residente Farmacia</td><td>Rotación Farmacia Hospitalaria</td><td><span class="nx-etiqueta nx-etiqueta--ok">Activo</span></td></tr>
+                                <tr><td>PRO-FH-04</td><td>Profesional FH-04</td><td>Farmacéutico/a Hospitalario/a</td><td>Hematología; soporte demo</td><td><span class="nx-etiqueta nx-etiqueta--ok">Activo</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </main>
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
-            <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
+            <script src="scripts/farmacia_common.js?v=20261121-t7"></script>
         </body>
         </html>

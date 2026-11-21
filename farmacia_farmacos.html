@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261121-t6">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261121-t6">
-    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t5">
+    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261121-t7">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
     <link rel="modulepreload" href="modules/nexus/menus.js">
     <link rel="modulepreload" href="modules/nexus/version.js">
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="style.css?v=20261121-t6">
     <link rel="stylesheet" href="farmacia_style.css?v=20261121-t6">
 </head>
-        <body>
+        <body class="nx-pagina">
             <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_farmacos.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -48,31 +48,40 @@
     </div>
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
-                <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--farmacos">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card module-hero">
-    <div class="patient-header-main">
-        <div class="patient-avatar"><i class="fas fa-pills" aria-hidden="true"></i></div>
-        <div class="patient-info">
-            <div class="patient-id-badge">Farmacia Hospitalaria</div>
-            <p class="hero-eyebrow">Farmacia Hospitalaria · Catálogo</p>
-            <h1 class="patient-name">Fármacos</h1>
-            <p class="hero-description">Catálogo de referencia para demo con carga automática del catálogo farmacológico y fallback local si no está disponible.</p>
-        </div>
-        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
-    </div>
-</section><section class="dashboard-card">
-    <h2 class="section-title"><i class="fas fa-pills"></i> Catálogo farmacológico</h2>
-    <div class="info-grid">
-        <div class="info-field"><span class="info-field__label">Estado técnico</span><span class="info-field__value" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</span></div>
-        <div class="info-field"><span class="info-field__label">Modo</span><span class="info-field__value">Carga automática sin botón manual de CIMA</span></div>
-    </div>
-</section><section class="dashboard-card"><h2 class="card-title"><i class="fas fa-table"></i> Fármacos demo</h2><table class="data-table"><thead><tr><th>Principio activo</th><th>Presentación</th><th>Indicaciones demo</th><th>Dosis / pauta frecuente</th><th>Estado</th></tr></thead><tbody><tr><td>Secukinumab</td><td>300 mg SC</td><td>HS; Psoriasis</td><td>Inducción y mantenimiento SC</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>Adalimumab</td><td>40 mg SC</td><td>AR; HS</td><td>Cada 2 semanas / según indicación</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>Upadacitinib</td><td>15 mg oral</td><td>AR; dermatitis atópica</td><td>Una vez al día</td><td><span class="status-badge status-badge--pending">Demo</span></td></tr></tbody></table></section>
+                <main class="main-content nx-marco__contenido">
+                    <nx-aviso tipo="aviso" role="note" titulo="Demo de Farmacia con datos sintéticos.">Prototipo sin datos reales, sin conexión con JARA, SES ni Farmatool y sin la seguridad de un sistema en producción.</nx-aviso>
+                    <header class="nx-cabecera">
+                        <div>
+                            <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Gestión</p>
+                            <h1 class="nx-cabecera__titulo">Fármacos</h1>
+                            <p class="nx-cabecera__texto">Catálogo de referencia de la demo. El catálogo farmacológico se carga solo y, si no está disponible, se usa la copia local.</p>
+                        </div>
+                        <p class="nx-cabecera__estado"><span class="nx-etiqueta">Perfil demo: farmacéutico</span></p>
+                    </header>
+                    <section class="nx-tarjeta" aria-labelledby="titulo-catalogo">
+                        <h2 class="nx-tarjeta__titulo" id="titulo-catalogo">Catálogo farmacológico</h2>
+                        <dl class="nx-datos">
+                            <dt>Estado técnico</dt><dd data-catalog-status data-catalog-solo-texto>Catálogo farmacológico: pendiente de carga automática</dd>
+                            <dt>Modo</dt><dd>Carga automática sin botón manual de CIMA</dd>
+                        </dl>
+                    </section>
+                    <section class="nx-tarjeta" aria-labelledby="titulo-farmacos">
+                        <h2 class="nx-tarjeta__titulo" id="titulo-farmacos">Fármacos de la demo</h2>
+                        <div class="nx-tabla-marco" role="region" aria-labelledby="titulo-farmacos" tabindex="0">
+                            <table class="nx-tabla">
+                                <caption class="nx-solo-lector">Fármacos de la demo, con presentación, indicaciones, pauta frecuente y estado</caption>
+                                <thead><tr><th scope="col">Principio activo</th><th scope="col">Presentación</th><th scope="col">Indicaciones</th><th scope="col">Dosis / pauta frecuente</th><th scope="col">Estado</th></tr></thead>
+                                <tbody>
+                                <tr><td>Secukinumab</td><td>300 mg SC</td><td>HS; Psoriasis</td><td>Inducción y mantenimiento SC</td><td><span class="nx-etiqueta nx-etiqueta--ok">Activo</span></td></tr>
+                                <tr><td>Adalimumab</td><td>40 mg SC</td><td>AR; HS</td><td>Cada 2 semanas / según indicación</td><td><span class="nx-etiqueta nx-etiqueta--ok">Activo</span></td></tr>
+                                <tr><td>Upadacitinib</td><td>15 mg oral</td><td>AR; dermatitis atópica</td><td>Una vez al día</td><td><span class="nx-etiqueta nx-etiqueta--aviso">Demo</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </main>
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
-            <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
+            <script src="scripts/farmacia_common.js?v=20261121-t7"></script>
         </body>
         </html>

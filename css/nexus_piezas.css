@@ -491,6 +491,46 @@
     color: var(--nx-color-info);
   }
 
+  /* ---------- Cabecera de pantalla (tramo 7) ---------- */
+  .nx-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--nx-espacio-3) var(--nx-espacio-5);
+    margin-block: var(--nx-espacio-5);
+    padding-block-end: var(--nx-espacio-4);
+    border-block-end: var(--nx-borde-fino) solid var(--nx-color-borde);
+  }
+
+  .nx-cabecera__ruta {
+    margin: 0 0 var(--nx-espacio-1);
+    color: var(--nx-color-modulo-texto);
+    font-size: var(--nx-texto-sm);
+    font-weight: var(--nx-peso-medio);
+  }
+
+  .nx-cabecera__titulo {
+    margin: 0;
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-2xl);
+    font-weight: var(--nx-peso-semi);
+    line-height: var(--nx-interlineado-titulo);
+  }
+
+  .nx-cabecera__texto {
+    max-inline-size: var(--nx-ancho-lectura);
+    margin: var(--nx-espacio-2) 0 0;
+    color: var(--nx-color-texto-suave);
+  }
+
+  .nx-cabecera__estado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nx-espacio-2);
+    margin: 0;
+  }
+
   /* ---------- Aviso (<nx-aviso>) y zona de avisos ---------- */
   nx-aviso {
     --nx-aviso-color: var(--nx-color-info);

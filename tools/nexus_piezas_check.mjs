@@ -23,7 +23,7 @@ const FILES = [PIEZAS, ...MUESTRAS, MUESTRA_CSS, 'muestra/muestra.js', 'modules/
 const PUNTOS = ['64em', '48em', '36em'];
 const BLOQUES = ['nx-pagina', 'nx-solo-lector', 'nx-boton', 'nx-acciones', 'nx-campo', 'nx-casilla', 'nx-buscador',
     'nx-formulario', 'nx-tabla-marco', 'nx-tabla', 'nx-pestanas', 'nx-rejilla', 'nx-tarjeta', 'nx-datos', 'nx-etiqueta',
-    'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell', 'nx-profesional'];
+    'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell', 'nx-profesional', 'nx-cabecera'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 const sinComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -190,6 +190,27 @@ await test('S12 la versión que enseña <nx-shell> es la misma que la de la Home
     const { VERSION_SITIO } = await import(path.join(ROOT, 'modules/nexus/version.js'));
     const releases = new Set(JSON.parse(read('data/platform/home/module-readiness.json')).modules.map((m) => m.release));
     assert.deepEqual([...releases], [VERSION_SITIO]);
+});
+
+// Pantallas ya migradas al catálogo (tramo 7, pantalla a pantalla). Al migrar otra, añadirla aquí.
+const MIGRADAS = ['farmacia_profesionales.html', 'farmacia_farmacos.html'];
+const CLASES_VIEJAS = ['demo-banner', 'patient-header-card', 'module-hero', 'patient-avatar', 'hero-eyebrow', 'hero-description',
+    'patient-status-badge', 'dashboard-card', 'card-title', 'section-title', 'data-table', 'status-badge', 'info-grid', 'info-field'];
+
+await test('S13 pantallas migradas: body nx-pagina, cabecera nx-cabecera con un h1, aviso de demo con nx-aviso, tablas del catálogo y sin clases viejas', async () => {
+    for (const p of MIGRADAS) {
+        const html = read(p);
+        assert.match(html, /<body class="nx-pagina">/, `${p}: el body no lleva nx-pagina`);
+        assert.equal((html.match(/<h1\b/g) || []).length, 1, `${p}: debe haber un solo h1`);
+        assert.match(html, /<header class="nx-cabecera">[\s\S]*?<h1 class="nx-cabecera__titulo">/, `${p}: sin nx-cabecera con su h1`);
+        assert.match(html, /<nx-aviso tipo="aviso" role="note"/, `${p}: el aviso de demo no es <nx-aviso role="note">`);
+        const tablas = (html.match(/<table\b[^>]*>/g) || []);
+        assert.ok(tablas.every((t) => t === '<table class="nx-tabla">'), `${p}: tabla sin nx-tabla`);
+        assert.ok(!/<th>/.test(html), `${p}: <th> sin scope`);
+        const viejas = CLASES_VIEJAS.filter((c) => new RegExp(`class="[^"]*(?<![\\w-])${c}(?![\\w-])`).test(html));
+        assert.deepEqual(viejas, [], `${p}: clases viejas`);
+        assert.ok(!/style="/.test(html), `${p}: estilos en línea`);
+    }
 });
 
 console.log(`\n${passed} PASS, ${failures.length} FAIL`);
