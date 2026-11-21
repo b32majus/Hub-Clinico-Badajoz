@@ -39,3 +39,7 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 **H-15, avance (tanda 3b, 21-11).** Estadísticas de Farmacia sin hex en el JS (anillos con series, «No registrado» en gris). Quedan Chart.js de Reuma, `scoreCalculators.js`, `formController.js` y los chips de EA de `farmacia_seguimiento.js`.
 
 **H-22 (tanda 3b, 21-11).** Estadísticas de Farmacia muestra claves en bruto en las leyendas («cambio_farmaco», «optimizacion_intervalo», «tratamiento_anadido»). Falta traducirlas a texto; no se hace aquí porque cambia el texto que leen los checks.
+
+**H-20, cierre (tanda 3c, 22-11).** Actividad del servicio con `nx-cifra` y `nx-solicitud`. Las clases `pending-validation-card*`, `prebio-chip`, `status-*` y `status-badge--*` siguen en el DOM como enganche de 6 checks; los colores de `status-*` y `status-badge--*` siguen en `farmacia_style.css`. Código muerto en `scripts/farmacia_index.js` (≈703-1000, tablero de Enfermería que ya no se pinta).
+
+**H-23 (tanda 3c, 22-11).** Los chips del prebiológico muestran el estado en inglés y en bruto («Mantoux/IGRA: pending», «Medicina preventiva: unknown»). Lo fijan `farmacia_qa676_superficies_browser_check` y `farmacia_pendientes_queue_check`; traducir a la vez texto y checks. En Inicio de Farmacia, las filas «Listas / En vigilancia / Bloqueadas» llevan color de estado aunque valgan 0 («Bloqueadas 0» en rojo); lo fija `farmacia_inicio_compacto_browser_check` («status rows are visually distinct»): decidir con Sil.

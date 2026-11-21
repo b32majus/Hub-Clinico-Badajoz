@@ -489,6 +489,130 @@
     color: var(--nx-color-info);
   }
 
+  /* ---------- Cifra (tramo 7): un recuento con su nombre ---------- */
+  .nx-cifras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--nx-ancho-cifra-min)), 1fr));
+    gap: var(--nx-espacio-3);
+  }
+
+  .nx-cifra {
+    padding: var(--nx-espacio-3) var(--nx-espacio-4);
+    border: var(--nx-borde-fino) solid var(--nx-color-borde);
+    border-radius: var(--nx-radio-md);
+    background: var(--nx-color-superficie);
+  }
+
+  .nx-cifra__etiqueta {
+    margin: 0;
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-cifra__valor {
+    margin: var(--nx-espacio-1) 0 0;
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-3xl);
+    font-weight: var(--nx-peso-negrita);
+    line-height: var(--nx-interlineado-titulo);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Solicitud pendiente (tramo 7, H-20): fila de una cola de trabajo ---------- */
+  .nx-solicitudes {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nx-solicitud {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-espacio-3);
+    padding-block: var(--nx-espacio-4);
+    border-block-end: var(--nx-borde-fino) solid var(--nx-color-borde);
+  }
+
+  .nx-solicitud:first-child {
+    padding-block-start: 0;
+  }
+
+  .nx-solicitud:last-child {
+    padding-block-end: 0;
+    border-block-end: 0;
+  }
+
+  .nx-solicitud__cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--nx-espacio-3);
+  }
+
+  .nx-solicitud__titulo {
+    margin: 0;
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-base);
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-solicitud__subtitulo {
+    margin: var(--nx-espacio-1) 0 0;
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-solicitud__datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--nx-ancho-dato-min)), 1fr));
+    gap: var(--nx-espacio-1) var(--nx-espacio-5);
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-solicitud__dato i {
+    inline-size: var(--nx-icono-ancho);
+    color: var(--nx-color-tenue);
+    text-align: center;
+  }
+
+  .nx-solicitud__nota {
+    color: var(--nx-color-texto-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-solicitud__prebio {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-espacio-2);
+    padding: var(--nx-espacio-2) var(--nx-espacio-3);
+    border-radius: var(--nx-radio-sm);
+    background: var(--nx-color-superficie-suave);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-solicitud__prebio-titulo {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-espacio-2);
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-solicitud__prebio--ok .nx-solicitud__prebio-titulo { color: var(--nx-color-ok); }
+  .nx-solicitud__prebio--aviso .nx-solicitud__prebio-titulo { color: var(--nx-color-aviso); }
+  .nx-solicitud__prebio--error .nx-solicitud__prebio-titulo { color: var(--nx-color-error); }
+
+  .nx-solicitud__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nx-espacio-1);
+  }
+
+  .nx-solicitud__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nx-espacio-2);
+  }
+
   /* ---------- Cabecera de pantalla (tramo 7) ---------- */
   .nx-cabecera {
     display: flex;

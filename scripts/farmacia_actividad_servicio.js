@@ -163,20 +163,16 @@
 
     function buildSummaryCard(def, value) {
         var card = document.createElement('div');
-        card.className = 'dashboard-card';
+        card.className = 'nx-cifra';
         card.setAttribute('data-summary', def.key);
 
-        var heading = document.createElement('h2');
-        heading.className = 'card-title';
-        var icon = document.createElement('i');
-        icon.className = 'fas ' + def.icon;
-        icon.setAttribute('aria-hidden', 'true');
-        heading.appendChild(icon);
-        heading.appendChild(document.createTextNode(' ' + def.title));
+        var heading = document.createElement('p');
+        heading.className = 'nx-cifra__etiqueta';
+        heading.textContent = def.title;
         card.appendChild(heading);
 
         var count = document.createElement('p');
-        count.className = 'patient-name';
+        count.className = 'nx-cifra__valor';
         count.textContent = String(value);
         card.appendChild(count);
 
@@ -185,7 +181,7 @@
 
     function buildPendingMeta(iconClass, text) {
         var row = document.createElement('div');
-        row.className = 'pending-validation-card__meta';
+        row.className = 'pending-validation-card__meta nx-solicitud__dato';
         var icon = document.createElement('i');
         icon.className = 'fas ' + iconClass;
         icon.setAttribute('aria-hidden', 'true');
@@ -203,7 +199,7 @@
 
     function buildPrebioBlock(patient) {
         var block = document.createElement('div');
-        block.className = 'pending-validation-card__prebio';
+        block.className = 'pending-validation-card__prebio nx-solicitud__prebio';
 
         if (!patient) {
             block.textContent = 'Prebiológico no evaluable';
@@ -231,13 +227,13 @@
         var blockers = result.blockers || [];
 
         var labelRow = document.createElement('div');
-        labelRow.className = 'pending-validation-card__prebio-label';
+        labelRow.className = 'pending-validation-card__prebio-label nx-solicitud__prebio-titulo';
         var icon = document.createElement('i');
         icon.setAttribute('aria-hidden', 'true');
         var text = document.createElement('span');
 
         if (overallStatus === 'complete') {
-            block.className = 'pending-validation-card__prebio prebio-complete pending-validation-card__prebio--ok';
+            block.className = 'pending-validation-card__prebio prebio-complete pending-validation-card__prebio--ok nx-solicitud__prebio nx-solicitud__prebio--ok';
             icon.className = 'fas fa-check-circle';
             text.textContent = 'Prebiológico completo · Listo para validación';
             labelRow.appendChild(icon);
@@ -247,8 +243,8 @@
         }
 
         if (overallStatus === 'blocked' || overallStatus === 'incomplete') {
-            var statusClass = overallStatus === 'blocked' ? 'prebio-blocked pending-validation-card__prebio--alerta' : 'prebio-incomplete pending-validation-card__prebio--pending';
-            block.className = 'pending-validation-card__prebio ' + statusClass;
+            var statusClass = overallStatus === 'blocked' ? 'prebio-blocked pending-validation-card__prebio--alerta nx-solicitud__prebio--error' : 'prebio-incomplete pending-validation-card__prebio--pending nx-solicitud__prebio--aviso';
+            block.className = 'pending-validation-card__prebio nx-solicitud__prebio ' + statusClass;
 
             if (overallStatus === 'blocked') {
                 icon.className = 'fas fa-exclamation-triangle';
@@ -271,7 +267,7 @@
                 });
 
                 var chipsContainer = document.createElement('div');
-                chipsContainer.className = 'pending-validation-card__prebio-chips';
+                chipsContainer.className = 'pending-validation-card__prebio-chips nx-solicitud__chips';
                 var maxShown = 3;
                 var shown = sorted.slice(0, maxShown);
                 var extra = sorted.length - maxShown;
@@ -279,7 +275,7 @@
                 for (var i = 0; i < shown.length; i++) {
                     var item = shown[i];
                     var chip = document.createElement('span');
-                    chip.className = 'prebio-chip status-' + item.status;
+                    chip.className = 'nx-etiqueta prebio-chip status-' + item.status;
                     chip.textContent = item.label + ': ' + item.status;
                     if (item.detail) {
                         chip.setAttribute('title', item.detail);
@@ -289,7 +285,7 @@
 
                 if (extra > 0) {
                     var moreChip = document.createElement('span');
-                    moreChip.className = 'prebio-chip prebio-chip--more';
+                    moreChip.className = 'nx-etiqueta prebio-chip prebio-chip--more';
                     moreChip.textContent = '+' + extra + ' más';
                     chipsContainer.appendChild(moreChip);
                 }
@@ -414,7 +410,7 @@
 
     function buildEnfermeriaCard(patient, groupKey, detailId) {
         var card = document.createElement('article');
-        card.className = 'pending-validation-card';
+        card.className = 'pending-validation-card nx-solicitud';
         card.setAttribute('data-enf-cip', patient.cip);
         card.setAttribute('data-enf-estado', groupKey);
         card.setAttribute('data-pendientes-estado', groupKey);
@@ -423,14 +419,14 @@
         }
 
         var header = document.createElement('div');
-        header.className = 'pending-validation-card__header';
+        header.className = 'pending-validation-card__header nx-solicitud__cabecera';
         var titleWrap = document.createElement('div');
         titleWrap.className = 'pending-validation-card__title-wrap';
         var title = document.createElement('h3');
-        title.className = 'pending-validation-card__title';
+        title.className = 'pending-validation-card__title nx-solicitud__titulo';
         title.textContent = textOrDash(patient.cip);
         var subtitle = document.createElement('p');
-        subtitle.className = 'pending-validation-card__subtitle';
+        subtitle.className = 'pending-validation-card__subtitle nx-solicitud__subtitulo';
         subtitle.textContent = textOrDash(patient.nombre || patient.paciente_nombre);
         titleWrap.appendChild(title);
         titleWrap.appendChild(subtitle);
@@ -442,7 +438,7 @@
                     ? { cls: 'blocked', text: ENFERMERIA_GROUP_LABELS.conflicto }
                     : null;
         var badge = document.createElement('span');
-        badge.className = 'status-badge status-badge--' + (resolvedBadge ? resolvedBadge.cls : (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending'));
+        badge.className = 'nx-etiqueta status-badge--' + (resolvedBadge ? resolvedBadge.cls : (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending'));
         badge.textContent = resolvedBadge ? resolvedBadge.text : (groupKey === 'sin_clasificar'
             ? ENFERMERIA_GROUP_LABELS.sin_clasificar
             : (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—'));
@@ -451,7 +447,7 @@
         card.appendChild(header);
 
         var body = document.createElement('div');
-        body.className = 'pending-validation-card__body';
+        body.className = 'pending-validation-card__body nx-solicitud__datos';
         body.appendChild(buildPendingMeta('fa-hospital', 'Servicio: ' + textOrDash(patient.servicio || patient.servicio_origen)));
         body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología: ' + textOrDash(patient.patologia || patient.patologia_indicacion)));
         body.appendChild(buildPendingMeta('fa-pills', 'Fármaco: ' + textOrDash(patient.farmaco || patient.farmaco_solicitado)));
@@ -478,10 +474,10 @@
         var badges = F.getEnfermeriaBadges(patient);
         if (badges.length > 0) {
             var badgesContainer = document.createElement('div');
-            badgesContainer.className = 'pending-validation-card__prebio-chips';
+            badgesContainer.className = 'pending-validation-card__prebio-chips nx-solicitud__chips';
             for (var bi = 0; bi < badges.length; bi++) {
                 var chip = document.createElement('span');
-                chip.className = 'prebio-chip status-' + badges[bi].status;
+                chip.className = 'nx-etiqueta prebio-chip status-' + badges[bi].status;
                 chip.textContent = badges[bi].label + ': ' + badges[bi].display;
                 badgesContainer.appendChild(chip);
             }
@@ -490,8 +486,7 @@
 
         if (patient.observaciones_prebiologico) {
             var obsRow = document.createElement('div');
-            obsRow.className = 'pending-validation-card__meta';
-            obsRow.style.fontStyle = 'italic';
+            obsRow.className = 'pending-validation-card__meta nx-solicitud__nota';
             obsRow.textContent = 'Observación: ' + patient.observaciones_prebiologico;
             card.appendChild(obsRow);
         }
@@ -500,7 +495,7 @@
         card.appendChild(detailPanel);
 
         var actions = document.createElement('div');
-        actions.className = 'pending-validation-card__actions';
+        actions.className = 'pending-validation-card__actions nx-solicitud__acciones';
         if (groupKey === 'ok_farmacia') {
             var link = buildValidationLink(patient);
             link.setAttribute('data-enf-action', 'validar');
@@ -515,31 +510,31 @@
 
     function buildGeneralCard(patient) {
         var card = document.createElement('article');
-        card.className = 'pending-validation-card';
+        card.className = 'pending-validation-card nx-solicitud';
         card.setAttribute('data-pendientes-estado', 'general');
         card.setAttribute('data-pendientes-cip', patient.cip || '');
 
         var header = document.createElement('div');
-        header.className = 'pending-validation-card__header';
+        header.className = 'pending-validation-card__header nx-solicitud__cabecera';
         var titleWrap = document.createElement('div');
         titleWrap.className = 'pending-validation-card__title-wrap';
         var title = document.createElement('h3');
-        title.className = 'pending-validation-card__title';
+        title.className = 'pending-validation-card__title nx-solicitud__titulo';
         title.textContent = textOrDash(patient.cip);
         var subtitle = document.createElement('p');
-        subtitle.className = 'pending-validation-card__subtitle';
+        subtitle.className = 'pending-validation-card__subtitle nx-solicitud__subtitulo';
         subtitle.textContent = textOrDash(patient.nombre);
         titleWrap.appendChild(title);
         titleWrap.appendChild(subtitle);
         var badge = document.createElement('span');
-        badge.className = 'status-badge status-badge--pending';
+        badge.className = 'nx-etiqueta status-badge--pending';
         badge.textContent = 'Pendiente de validación';
         header.appendChild(titleWrap);
         header.appendChild(badge);
         card.appendChild(header);
 
         var body = document.createElement('div');
-        body.className = 'pending-validation-card__body';
+        body.className = 'pending-validation-card__body nx-solicitud__datos';
         body.appendChild(buildPendingMeta('fa-hospital', 'Servicio origen: ' + textOrDash(patient.servicio)));
         body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología / indicación: ' + textOrDash(patient.patologia || patient.motivoClinico)));
         body.appendChild(buildPendingMeta('fa-pills', 'Fármaco / tratamiento: ' + textOrDash(patient.farmaco || patient.principioActivo)));
@@ -552,7 +547,7 @@
         card.appendChild(buildPrebioBlock(patient));
 
         var actions = document.createElement('div');
-        actions.className = 'pending-validation-card__actions';
+        actions.className = 'pending-validation-card__actions nx-solicitud__acciones';
         actions.appendChild(buildValidationLink(patient));
         card.appendChild(actions);
 
@@ -579,7 +574,7 @@
         }
 
         var grid = document.createElement('div');
-        grid.className = 'enfermeria-card-grid';
+        grid.className = 'enfermeria-card-grid nx-solicitudes';
         grid.setAttribute('data-pendientes-grid', 'solicitudes');
 
         for (var i = 0; i < queue.length; i++) {
