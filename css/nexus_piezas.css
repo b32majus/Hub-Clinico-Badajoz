@@ -218,6 +218,11 @@
     font-weight: var(--nx-peso-medio);
   }
 
+  /* Cuando el error sale de un script que no puede llevar «Error:» en su texto */
+  .nx-campo__error--prefijo:not(:empty)::before {
+    content: "Error: ";
+  }
+
   .nx-casilla {
     display: inline-flex;
     align-items: center;
@@ -311,6 +316,11 @@
 
   .nx-tabla .nx-tabla__num {
     text-align: end;
+  }
+
+  .nx-tabla .nx-tabla__vacio {
+    text-align: center;
+    color: var(--nx-color-texto-suave);
   }
 
   .nx-tabla--compacta th,

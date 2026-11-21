@@ -29,3 +29,5 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 
 - **H-18 · Estado del catálogo dentro de la pantalla.** `farmacia_common.js` da a todo `[data-catalog-status]` el aspecto de la barra (`catalog-sidebar-status`), también al que está en el contenido (Inicio de Farmacia). En las pantallas migradas se marca con `data-catalog-solo-texto` y solo se escribe el texto; al migrar Inicio, hacer lo mismo.
 - **H-19 · Degradado de fondo del contenido.** Las pantallas migradas siguen con el fondo degradado de `.main-content` (regla sin capa de `style.css`, H-03), porque los scripts de Farmacia buscan `main.main-content` (H-02). Se quita al resolver H-02/H-03.
+
+**H-20 (tanda 2a, 21-11).** Actividad del servicio e Inicio de Farmacia pintan sus tarjetas desde JS con clases viejas (`pending-validation-card`, `dashboard-card`, `prebio-chip`, `status-badge`), compartidas y con 7 checks atados. Marco migrado; las tarjetas piden una pieza «solicitud pendiente» y migrar JS y checks a la vez (tanda 3).

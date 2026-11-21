@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (professionalsData.length === 0) {
             const row = document.createElement('tr');
-            row.innerHTML = '<td colspan="3" class="management-empty">No hay profesionales cargados todavía.</td>';
+            row.innerHTML = '<td colspan="3" class="nx-tabla__vacio">No hay profesionales cargados todavía.</td>';
             listBody.appendChild(row);
             return;
         }
@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${professional.Nombre_Completo}</td>
-                <td><span class="management-chip">${professional.cargo}</span></td>
-                <td><button type="button" class="delete-btn management-btn management-btn--danger" data-index="${index}"><i class="fas fa-trash-alt"></i><span>Eliminar</span></button></td>
+                <td><span class="nx-etiqueta">${professional.cargo}</span></td>
+                <td><button type="button" class="delete-btn nx-boton nx-boton--peligro nx-boton--pequeno" data-index="${index}"><i class="fas fa-trash-alt" aria-hidden="true"></i><span>Eliminar</span></button></td>
             `;
             listBody.appendChild(row);
         });
