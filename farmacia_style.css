@@ -119,14 +119,7 @@
     padding: 24px;
 }
 
-.dashboard-card { position: relative; overflow: hidden; }
-.dashboard-card::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 4px;
-    background: var(--nx-color-modulo-texto);
-}
+.dashboard-card { position: relative; }
 
 .card-title,
 .section-title {

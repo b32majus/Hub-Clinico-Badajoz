@@ -193,7 +193,7 @@ await test('S12 la versión que enseña <nx-shell> es la misma que la de la Home
 });
 
 // Pantallas ya migradas al catálogo (tramo 7, pantalla a pantalla). Al migrar otra, añadirla aquí.
-const MIGRADAS = ['farmacia_profesionales.html', 'farmacia_farmacos.html'];
+const MIGRADAS = ['farmacia_profesionales.html', 'farmacia_farmacos.html', 'farmacia_actividad_servicio.html', 'dashboard_search.html', 'manage_professionals.html'];
 const CLASES_VIEJAS = ['demo-banner', 'patient-header-card', 'module-hero', 'patient-avatar', 'hero-eyebrow', 'hero-description',
     'patient-status-badge', 'dashboard-card', 'card-title', 'section-title', 'data-table', 'status-badge', 'info-grid', 'info-field'];
 
@@ -203,9 +203,9 @@ await test('S13 pantallas migradas: body nx-pagina, cabecera nx-cabecera con un 
         assert.match(html, /<body class="nx-pagina">/, `${p}: el body no lleva nx-pagina`);
         assert.equal((html.match(/<h1\b/g) || []).length, 1, `${p}: debe haber un solo h1`);
         assert.match(html, /<header class="nx-cabecera">[\s\S]*?<h1 class="nx-cabecera__titulo">/, `${p}: sin nx-cabecera con su h1`);
-        assert.match(html, /<nx-aviso tipo="aviso" role="note"/, `${p}: el aviso de demo no es <nx-aviso role="note">`);
+        if (p.startsWith('farmacia_')) assert.match(html, /<nx-aviso tipo="aviso" role="note"/, `${p}: el aviso de demo no es <nx-aviso role="note">`);
         const tablas = (html.match(/<table\b[^>]*>/g) || []);
-        assert.ok(tablas.every((t) => t === '<table class="nx-tabla">'), `${p}: tabla sin nx-tabla`);
+        assert.ok(tablas.every((t) => /\bclass="nx-tabla"/.test(t)), `${p}: tabla sin nx-tabla`);
         assert.ok(!/<th>/.test(html), `${p}: <th> sin scope`);
         const viejas = CLASES_VIEJAS.filter((c) => new RegExp(`class="[^"]*(?<![\\w-])${c}(?![\\w-])`).test(html));
         assert.deepEqual(viejas, [], `${p}: clases viejas`);

@@ -218,6 +218,11 @@
     font-weight: var(--nx-peso-medio);
   }
 
+  /* Cuando el error sale de un script que no puede llevar «Error:» en su texto */
+  .nx-campo__error--prefijo:not(:empty)::before {
+    content: "Error: ";
+  }
+
   .nx-casilla {
     display: inline-flex;
     align-items: center;
@@ -313,6 +318,11 @@
     text-align: end;
   }
 
+  .nx-tabla .nx-tabla__vacio {
+    text-align: center;
+    color: var(--nx-color-texto-suave);
+  }
+
   .nx-tabla--compacta th,
   .nx-tabla--compacta td {
     padding: var(--nx-espacio-1) var(--nx-espacio-3);
@@ -387,18 +397,6 @@
     background: var(--nx-color-superficie);
     box-shadow: var(--nx-sombra-sm);
     overflow-wrap: break-word;
-  }
-
-  .nx-tarjeta--farmacia {
-    border-block-start: var(--nx-borde-acento) solid var(--nx-color-farmacia);
-  }
-
-  .nx-tarjeta--reuma {
-    border-block-start: var(--nx-borde-acento) solid var(--nx-color-reuma);
-  }
-
-  .nx-tarjeta--derma {
-    border-block-start: var(--nx-borde-acento) solid var(--nx-color-derma);
   }
 
   .nx-tarjeta__cabecera {
