@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus · Catálogo de piezas</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="../vendor/inter/inter.css">
+    <link rel="stylesheet" href="../css/nexus_tokens.css">
+    <link rel="stylesheet" href="../css/nexus_base.css">
+    <link rel="stylesheet" href="../css/nexus_piezas.css">
+    <link rel="stylesheet" href="muestra.css">
+    <script type="module" src="muestra.js"></script>
+</head>
+<body class="nx-pagina">
+<main class="muestra">
+    <header class="muestra__cabecera">
+        <h1>Catálogo de piezas de Nexus</h1>
+        <p class="muestra__nota">Página de muestra (#956, tramo 4). Datos inventados. Cada pieza está descrita en <code>DESIGN.md</code> §4.</p>
+    </header>
+
+    <section class="muestra__seccion" aria-labelledby="s-botones">
+        <h2 id="s-botones">Botones</h2>
+        <div class="nx-acciones">
+            <button type="button" class="nx-boton nx-boton--principal">Guardar</button>
+            <button type="button" class="nx-boton nx-boton--secundario">Exportar Excel</button>
+            <button type="button" class="nx-boton nx-boton--discreto">Ver detalle</button>
+            <button type="button" class="nx-boton nx-boton--peligro">Descartar cambios</button>
+        </div>
+        <div class="nx-acciones">
+            <button type="button" class="nx-boton nx-boton--principal nx-boton--pequeno">Pequeño</button>
+            <button type="button" class="nx-boton nx-boton--secundario nx-boton--pequeno">Pequeño</button>
+            <button type="button" class="nx-boton nx-boton--secundario nx-boton--icono" aria-label="Imprimir"><i class="fas fa-print" aria-hidden="true"></i></button>
+            <button type="button" class="nx-boton nx-boton--principal" disabled>Desactivado</button>
+            <button type="button" class="nx-boton nx-boton--principal" aria-busy="true" aria-disabled="true">Guardando…</button>
+        </div>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-campos">
+        <h2 id="s-campos">Campos</h2>
+        <form class="nx-formulario" action="#" novalidate>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-nombre">Nombre del profesional <span class="nx-campo__obligatorio">(obligatorio)</span></label>
+                <input class="nx-campo__control" id="c-nombre" type="text" autocomplete="off" aria-describedby="c-nombre-ayuda">
+                <p class="nx-campo__ayuda" id="c-nombre-ayuda">Tal como aparece en la plantilla.</p>
+            </div>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-fecha">Fecha de la visita</label>
+                <input class="nx-campo__control" id="c-fecha" type="date" value="2026-11-21">
+            </div>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-servicio">Servicio</label>
+                <select class="nx-campo__control" id="c-servicio">
+                    <option>Reumatología</option>
+                    <option>Farmacia Hospitalaria</option>
+                    <option>Dermatología</option>
+                </select>
+            </div>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-codigo">Código de prueba</label>
+                <input class="nx-campo__control" id="c-codigo" type="text" value="ABC" aria-invalid="true" aria-describedby="c-codigo-error">
+                <p class="nx-campo__error" id="c-codigo-error">Error: tiene que tener 6 cifras.</p>
+            </div>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-bloqueado">Campo desactivado</label>
+                <input class="nx-campo__control" id="c-bloqueado" type="text" value="No editable" disabled>
+            </div>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-notas">Observaciones</label>
+                <textarea class="nx-campo__control" id="c-notas"></textarea>
+            </div>
+            <fieldset class="muestra__grupo">
+                <legend class="nx-campo__etiqueta">Opciones</legend>
+                <label class="nx-casilla"><input type="checkbox" checked> Incluir histórico</label>
+                <label class="nx-casilla"><input type="checkbox"> Solo pendientes</label>
+            </fieldset>
+        </form>
+        <form class="nx-buscador" role="search" action="#">
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="c-buscar">Buscar</label>
+                <input class="nx-campo__control" id="c-buscar" type="search" placeholder="Nombre o identificador">
+            </div>
+            <button type="submit" class="nx-boton nx-boton--principal">Buscar</button>
+        </form>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-tabla">
+        <h2 id="s-tabla">Tabla</h2>
+        <div class="nx-tabla-marco" role="region" aria-labelledby="t-caption" tabindex="0">
+            <table class="nx-tabla">
+                <caption id="t-caption">Solicitudes de ejemplo</caption>
+                <thead>
+                    <tr><th scope="col">Identificador</th><th scope="col">Servicio</th><th scope="col">Fecha</th><th scope="col" class="nx-tabla__num">Unidades</th><th scope="col">Estado</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>DEMO-001</td><td>Reumatología</td><td>03/11/2026</td><td class="nx-tabla__num">2</td><td><span class="nx-etiqueta nx-etiqueta--ok">Validada</span></td></tr>
+                    <tr><td>DEMO-002</td><td>Farmacia Hospitalaria</td><td>07/11/2026</td><td class="nx-tabla__num">12</td><td><span class="nx-etiqueta nx-etiqueta--aviso">Pendiente</span></td></tr>
+                    <tr><td>DEMO-003</td><td>Dermatología</td><td>12/11/2026</td><td class="nx-tabla__num">1</td><td><span class="nx-etiqueta nx-etiqueta--error">Denegada</span></td></tr>
+                    <tr><td>DEMO-004</td><td>Reumatología</td><td>18/11/2026</td><td class="nx-tabla__num">140</td><td><span class="nx-etiqueta nx-etiqueta--info">En revisión</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="nx-tabla-marco" role="region" aria-labelledby="t2-caption" tabindex="0">
+            <table class="nx-tabla nx-tabla--compacta">
+                <caption id="t2-caption">Variante compacta</caption>
+                <thead><tr><th scope="col">Mes</th><th scope="col" class="nx-tabla__num">Altas</th><th scope="col" class="nx-tabla__num">Bajas</th></tr></thead>
+                <tbody>
+                    <tr><td>Septiembre</td><td class="nx-tabla__num">14</td><td class="nx-tabla__num">3</td></tr>
+                    <tr><td>Octubre</td><td class="nx-tabla__num">9</td><td class="nx-tabla__num">5</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-pestanas">
+        <h2 id="s-pestanas">Pestañas</h2>
+        <nx-pestanas>
+            <div class="nx-pestanas__lista" role="tablist" aria-label="Vistas de ejemplo">
+                <button type="button" role="tab" class="nx-pestanas__pestana" id="p-resumen" aria-selected="true">Resumen</button>
+                <button type="button" role="tab" class="nx-pestanas__pestana" id="p-historial" aria-selected="false" tabindex="-1">Historial</button>
+                <button type="button" role="tab" class="nx-pestanas__pestana" id="p-documentos" aria-selected="false" tabindex="-1">Documentos</button>
+            </div>
+            <div role="tabpanel" class="nx-pestanas__panel" aria-labelledby="p-resumen" tabindex="0"><p>Contenido de «Resumen». Con el teclado: flechas izquierda y derecha, Inicio y Fin.</p></div>
+            <div role="tabpanel" class="nx-pestanas__panel" aria-labelledby="p-historial" tabindex="0" hidden><p>Contenido de «Historial».</p></div>
+            <div role="tabpanel" class="nx-pestanas__panel" aria-labelledby="p-documentos" tabindex="0" hidden>
+                <div class="nx-vacio">
+                    <p class="nx-vacio__titulo">Todavía no hay documentos</p>
+                    <p class="nx-vacio__texto">Cuando se adjunte uno, aparecerá aquí.</p>
+                </div>
+            </div>
+        </nx-pestanas>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-tarjetas">
+        <h2 id="s-tarjetas">Tarjetas</h2>
+        <div class="nx-rejilla">
+            <article class="nx-tarjeta">
+                <header class="nx-tarjeta__cabecera">
+                    <h3 class="nx-tarjeta__titulo">Tarjeta general</h3>
+                    <span class="nx-etiqueta">Borrador</span>
+                </header>
+                <p class="nx-tarjeta__cuerpo">Bloque de contenido con título, texto y acciones al pie.</p>
+                <footer class="nx-tarjeta__pie">
+                    <button type="button" class="nx-boton nx-boton--secundario nx-boton--pequeno">Editar</button>
+                </footer>
+            </article>
+            <article class="nx-tarjeta nx-tarjeta--reuma">
+                <header class="nx-tarjeta__cabecera">
+                    <div>
+                        <h3 class="nx-tarjeta__titulo">Reumatología</h3>
+                        <p class="nx-tarjeta__subtitulo">Franja con el color del módulo</p>
+                    </div>
+                    <span class="nx-etiqueta nx-etiqueta--ok">Activo</span>
+                </header>
+                <dl class="nx-datos">
+                    <dt>Última visita</dt><dd>21/11/2026</dd>
+                    <dt>Profesional</dt><dd>Usuario de prueba</dd>
+                </dl>
+            </article>
+            <article class="nx-tarjeta nx-tarjeta--farmacia">
+                <header class="nx-tarjeta__cabecera">
+                    <h3 class="nx-tarjeta__titulo">Farmacia Hospitalaria</h3>
+                    <span class="nx-etiqueta nx-etiqueta--aviso">Pendiente</span>
+                </header>
+                <p class="nx-tarjeta__cuerpo">El color del módulo solo va en la franja; los botones siguen siendo morados.</p>
+                <footer class="nx-tarjeta__pie">
+                    <button type="button" class="nx-boton nx-boton--principal nx-boton--pequeno">Abrir</button>
+                </footer>
+            </article>
+            <article class="nx-tarjeta nx-tarjeta--derma">
+                <header class="nx-tarjeta__cabecera">
+                    <h3 class="nx-tarjeta__titulo">Dermatología</h3>
+                    <span class="nx-etiqueta nx-etiqueta--info">Próximamente</span>
+                </header>
+                <p class="nx-tarjeta__cuerpo">Tercera variante de módulo.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-etiquetas">
+        <h2 id="s-etiquetas">Etiquetas de estado</h2>
+        <p class="nx-acciones">
+            <span class="nx-etiqueta nx-etiqueta--ok">Validado</span>
+            <span class="nx-etiqueta nx-etiqueta--aviso">Pendiente</span>
+            <span class="nx-etiqueta nx-etiqueta--error">Denegado</span>
+            <span class="nx-etiqueta nx-etiqueta--info">En revisión</span>
+            <span class="nx-etiqueta">Sin dato</span>
+        </p>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-avisos">
+        <h2 id="s-avisos">Avisos</h2>
+        <p>Dentro de la página:</p>
+        <div class="muestra__pila">
+            <nx-aviso tipo="error">No se pudo leer el Excel. Compruebe que es el libro correcto.</nx-aviso>
+            <nx-aviso tipo="aviso" titulo="Fecha dudosa">La fecha de la visita es posterior a hoy.</nx-aviso>
+            <nx-aviso tipo="ok">Datos copiados al portapapeles.</nx-aviso>
+            <nx-aviso tipo="info">Hay 3 registros sin revisar.</nx-aviso>
+        </div>
+        <p>Como notificación (<code>avisar()</code>): sale abajo a la derecha y no se cierra sola.</p>
+        <div class="nx-acciones">
+            <button type="button" class="nx-boton nx-boton--secundario" data-muestra-avisar="error"><i class="fas fa-bell" aria-hidden="true"></i> Aviso de error</button>
+            <button type="button" class="nx-boton nx-boton--secundario" data-muestra-avisar="ok">Aviso de «hecho»</button>
+        </div>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-dialogo">
+        <h2 id="s-dialogo">Ventana emergente y confirmación</h2>
+        <p>Con <code>confirmar()</code>, que sustituye a <code>confirm()</code>.</p>
+        <div class="nx-acciones">
+            <button type="button" class="nx-boton nx-boton--secundario" data-muestra-confirmar="normal">Confirmación normal</button>
+            <button type="button" class="nx-boton nx-boton--peligro" data-muestra-confirmar="peligro">Confirmación peligrosa</button>
+        </div>
+        <p class="muestra__nota" id="muestra-resultado" aria-live="polite"></p>
+    </section>
+
+    <section class="muestra__seccion" aria-labelledby="s-vacio">
+        <h2 id="s-vacio">Vacío</h2>
+        <div class="nx-vacio">
+            <p class="nx-vacio__titulo">No hay resultados</p>
+            <p class="nx-vacio__texto">Pruebe con otro nombre o quite algún filtro.</p>
+            <button type="button" class="nx-boton nx-boton--secundario nx-boton--pequeno">Quitar filtros</button>
+        </div>
+    </section>
+</main>
+</body>
+</html>

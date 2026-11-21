@@ -1,6 +1,6 @@
 # DESIGN.md — Sistema de diseño de PROMueve Nexus
 
-**Estado:** tramo 1 de #956 (2026-11-21): variables y base cargadas en las 19 páginas, sin uso todavía. Se completa por tramos.
+**Estado:** tramo 4 de #956 (2026-11-21): variables y base en las 19 páginas; catálogo de piezas y página de muestra (`muestra/nexus_piezas.html`), que ninguna pantalla usa todavía. Se completa por tramos.
 **Decisiones de fondo:** `docs/architecture/adr/ADR-009` (entorno) y `ADR-010` (sistema de diseño y arquitectura de interfaz).
 
 Quien implemente una pantalla no inventa colores, medidas ni piezas: usa lo que hay aquí. Si falta algo, **para y avisa**. La pieza nueva la diseña el modelo fuerte, Sil la aprueba y entra en este catálogo (ADR-010 §4).
@@ -45,7 +45,7 @@ Grises: `--nx-color-texto-suave` `#5a6272` (6,1) para texto secundario; `--nx-co
 
 - Ningún color ni medida escrita a mano: solo `var(--nx-*)`. Lo comprueba un check.
 - Clases de piezas: BEM con prefijo `nx-` (`nx-boton`, `nx-boton--principal`, `nx-tabla__fila`).
-- Tres puntos de cambio a móvil (valores en el tramo 4). El diseño principal es de escritorio (ADR-009 R4).
+- **Escritorio primero** (ADR-009 R4; Sil, 21-11): se diseña y se pule el escritorio. Tres puntos de cambio, siempre `max-width` y en `em`: **64em** (1024 px), **48em** (768 px) y **36em** (576 px). Solo recolocan al estrechar (columnas que se apilan, botones uno bajo otro); la tableta se comprueba y el móvil solo no se rompe (sin desplazamiento lateral). Las variables no valen dentro de `@media`, por eso los valores se escriben ahí y en ningún otro sitio.
 - Sin estilos en línea. Nunca `innerHTML`.
 - Solo lo que Edge y Chrome actualizados traen de serie, sin compilar (ADR-009 R3).
 - Accesibilidad WCAG 2.1 AA: foco visible, teclado, contraste y nunca solo color (R8).
@@ -53,18 +53,26 @@ Grises: `--nx-color-texto-suave` `#5a6272` (6,1) para texto secundario; `--nx-co
 
 ## 4. Catálogo de piezas
 
-*Pendiente del tramo 4.* Cada pieza tendrá aquí su nombre, para qué se usa, sus variantes, sus estados (normal, foco, desactivado, cargando, error, vacío) y su ejemplo en la página de muestra.
+Estilos en `css/nexus_piezas.css` (capa `nx.piezas`); ejemplo vivo de cada pieza en `muestra/nexus_piezas.html` (Pages: `/muestra/nexus_piezas.html`). Lo comprueban `tools/nexus_piezas_check.mjs` (CI) y `tools/nexus_piezas_browser_check.mjs` (local: axe-core WCAG 2.1 AA, teclado, foco y anchos).
 
-Lista prevista:
-- `<nx-shell>`
-- botón
-- campo y buscador
-- tabla
-- pestañas
-- tarjeta
-- `<nx-aviso>`: aviso y notificación
-- ventana emergente y confirmación: `<dialog class="nx-dialogo">` nativo, sin componente propio (el navegador ya da el modo modal, el foco, Esc y la vuelta del foco)
-- etiqueta
+**Al migrar una pantalla (tramo 7):** las reglas sin capa de los CSS antiguos ganan a las del catálogo, aunque sean tan generales como `button {}`. La pantalla que adopta una pieza quita antes sus reglas viejas para esos elementos.
+
+| Pieza | Marcado | Variantes y estados | Reglas |
+|---|---|---|---|
+| Página | `<body class="nx-pagina">` | — | Letra Inter, fondo y texto comunes. Las 19 páginas aún no la llevan. `nx-solo-lector`: texto solo para lector de pantalla |
+| Botón | `<button type="button" class="nx-boton nx-boton--principal">` | `--principal` (una acción por zona), `--secundario`, `--discreto` (enlace con aspecto de botón), `--peligro` (borrar, descartar), `--pequeno`, `--icono` (lleva `aria-label`); `disabled`; cargando con `aria-busy="true"` y texto «Guardando…» | Morado para actuar; rojo solo para peligro; nunca verde ni color de módulo. Alto mínimo 2,5rem. Grupo de botones: `nx-acciones` (`--final` los alinea a la derecha) |
+| Campo | `.nx-campo` › `label.nx-campo__etiqueta` + `.nx-campo__control` (input, select, textarea) + `p.nx-campo__ayuda` / `p.nx-campo__error` | obligatorio con `<span class="nx-campo__obligatorio">(obligatorio)</span>`; error con `aria-invalid="true"` y `aria-describedby` hacia el texto de error; `disabled` | El error empieza por «Error:» (no solo borde rojo). Rejilla de campos: `nx-formulario`. Selector nativo `<select>`, sin desplegables hechos a mano |
+| Casilla | `<label class="nx-casilla"><input type="checkbox"> Texto</label>` | — | Casilla nativa en morado |
+| Buscador | `<form class="nx-buscador" role="search">` con un `nx-campo` (`type="search"`) y un botón | — | La etiqueta se ve siempre; el `placeholder` es solo un ejemplo |
+| Tabla | `<div class="nx-tabla-marco" role="region" aria-labelledby="…" tabindex="0">` › `<table class="nx-tabla">` con `<caption>` y `<th scope="col">` | `--compacta`; marco `nx-tabla-marco--alto` (cabecera fija y desplazamiento vertical); números en `td.nx-tabla__num` (a la derecha, cifras alineadas) | Sin rayado: separadores finos y fila resaltada al pasar el ratón. En pantallas estrechas el marco se desplaza de lado; la página no |
+| Pestañas | `<nx-pestanas>` (`modules/nexus/piezas/nx-pestanas.js`) con `.nx-pestanas__lista[role=tablist]`, `button.nx-pestanas__pestana[role=tab]` y `.nx-pestanas__panel[role=tabpanel]` | elegida: `aria-selected="true"`; el resto `tabindex="-1"` y su panel `hidden`, ya escrito en el HTML | Flechas, Inicio y Fin; la selección sigue al foco; evento `nx-cambio`. La elegida lleva raya, no solo color. Para vistas dentro de una página, nunca para navegar entre páginas |
+| Tarjeta | `<article class="nx-tarjeta">` › `header.nx-tarjeta__cabecera` (`h3.nx-tarjeta__titulo`, `p.nx-tarjeta__subtitulo`) + `.nx-tarjeta__cuerpo` + `footer.nx-tarjeta__pie` | `--farmacia`, `--reuma`, `--derma`: franja superior con el color del módulo | El color de módulo solo en la franja. Rejilla: `nx-rejilla`. Pares dato–valor: `<dl class="nx-datos">` |
+| Etiqueta | `<span class="nx-etiqueta nx-etiqueta--ok">Validado</span>` | `--ok`, `--aviso`, `--error`, `--info`; sin variante, neutra («Sin dato») | El texto dice el estado; el color lo acompaña. Siempre los cuatro colores de estado, nunca colores sueltos |
+| Aviso | `<nx-aviso tipo="error">` o `avisar(texto, { tipo })` (§5) | `error`, `aviso`, `ok`, `info`; `titulo`; `cerrable` | Etiqueta en texto («Error», «Atención», «Hecho», «Información») fondo suave y borde fino del color de estado; sin franja gruesa a un lado (Sil, 21-11). Los de `avisar()` van en la zona `nx-avisos`, abajo a la derecha, y no se cierran solos |
+| Ventana emergente | `<dialog class="nx-dialogo" aria-labelledby="…">` con `h2.nx-dialogo__titulo`, `p.nx-dialogo__texto` y `form[method=dialog].nx-dialogo__acciones`; para confirmar, `confirmar()` (§5) | peligrosa: botón `--peligro` y foco inicial en «Cancelar» | Siempre `showModal()`. Sin `role`, `aria-modal`, trampa de foco ni manejo de Esc propios: los da el navegador. Ancho máximo 32rem; en móvil los botones se apilan |
+| Vacío | `<div class="nx-vacio">` › `p.nx-vacio__titulo` + `p.nx-vacio__texto` (+ botón opcional) | — | Dice qué falta y qué hacer, nunca una zona en blanco |
+
+Pendiente para cuando lo pida una pantalla (se diseña aquí antes de usarlo): `<nx-shell>` (tramo 5), ordenar columnas de tabla, paginación, ayuda emergente y menú. Sin modo oscuro: la app es clara (como la Home).
 
 ## 5. Biblioteca común (`modules/nexus/`, tramo 3)
 
