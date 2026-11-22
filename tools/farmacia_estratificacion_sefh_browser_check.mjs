@@ -154,7 +154,7 @@ try {
   await seg.page.goto(new URL(`farmacia_seguimiento.html?cip=${INITIAL_CIP}`, BASE_URL).href, { waitUntil: 'domcontentloaded' });
   await seg.page.waitForFunction(() => window.FarmaciaSeguimiento);
 
-  const evoHeading = seg.page.locator('h2.section-title', { hasText: 'Evolución farmacoterapéutica' });
+  const evoHeading = seg.page.locator('h2.nx-tarjeta__titulo', { hasText: 'Evolución farmacoterapéutica' });
   assert.equal(await evoHeading.count(), 1, '"Evolución farmacoterapéutica" block is present');
   const evoSection = seg.page.locator('section.dashboard-card', { has: evoHeading });
 
