@@ -215,7 +215,7 @@
 }
 
 /* Ajuste específico para el icono del usuario en datos del paciente */
-.patient-info-section .section-title i.fa-user-check {
+.patient-info-section :is(.section-title, .seccion-titulo) i.fa-user-check {
     color: var(--nx-color-modulo-texto);
 }
 
@@ -847,7 +847,7 @@
         font-size: 2em;
     }
 
-    .section-title {
+    :is(.section-title, .seccion-titulo) {
         font-size: 1.7em;
     }
 
@@ -1418,4 +1418,9 @@
 
 .treatment-dose-input--debajo {
     margin-top: 4px;
+}
+
+/* tramo 7: el nombre de la patología dentro del título del catálogo */
+.nx-cabecera__titulo .highlight {
+    color: var(--nx-color-modulo-texto);
 }
