@@ -110,7 +110,7 @@ body:has(.nx-marco) {
     margin-bottom: 20px;
 }
 
-.section-title {
+:is(.section-title, .seccion-titulo) {
     font-size: 1.3em;
     color: var(--nx-color-texto);
     margin: 0 0 12px 0;
@@ -2662,4 +2662,9 @@ body:has(.nx-marco) {
 
 .treatment-dose-input--debajo {
     margin-top: 4px;
+}
+
+/* tramo 7: el nombre de la patología dentro del título del catálogo */
+.nx-cabecera__titulo .highlight {
+    color: var(--nx-color-modulo-texto);
 }
