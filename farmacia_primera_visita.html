@@ -17,14 +17,14 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7r">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7s">
     <style>
         .autocomplete-dropdown { z-index: 1000; }
-        .dashboard-card { overflow: visible !important; }
-        section.dashboard-card { overflow: visible; }
+        .nx-tarjeta { overflow: visible !important; }
+        section.nx-tarjeta { overflow: visible; }
     </style>
 </head>
-        <body>
+        <body class="nx-pagina">
             <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_primera_visita.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -55,17 +55,15 @@
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
                 <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--primera">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card module-hero">
-    <div class="patient-header-main">
-        <div class="patient-info">
-            <h1 class="patient-name">Primera Visita Farmacia</h1>
-            <p class="hero-description">Registre el inicio del seguimiento farmacoterapéutico con datos precargados desde validación o alta guiada.</p>
-        </div>
+        <nx-aviso tipo="aviso" role="note" titulo="Demo Farmacia v0.2 — Datos sintéticos.">Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</nx-aviso>
+<header class="nx-cabecera">
+    <div>
+        <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Paciente</p>
+        <h1 class="nx-cabecera__titulo">Primera Visita Farmacia</h1>
+        <p class="nx-cabecera__texto">Registre el inicio del seguimiento farmacoterapéutico con datos precargados desde validación o alta guiada.</p>
     </div>
-</section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-id-card"></i> Datos del paciente</h2>
+</header>
+<section class="nx-tarjeta"><header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Datos del paciente</h2></header>
     <div class="form-grid">
         <div class="form-group">
             <label for="fhPvCip">CIP</label>
@@ -99,17 +97,17 @@
             <input type="text" class="form-control hidden" id="fhPvPatologiaOtro" placeholder="Especificar otra patología">
         </div>
     </div></section>
-    <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
+    <section class="nx-tarjeta"><header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Tratamiento validado por Farmacia</h2></header>
         <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco principal / validado</label><div class="autocomplete-wrapper"><input type="text" id="fhPvFarmaco" class="form-control" placeholder="Buscar por marca, principio activo, presentación o código..." autocomplete="off"><div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div><div class="form-group"><label for="fhPvDosis">Presentación / dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><select class="form-select" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><select class="form-select" id="fhPvVia"><option value="">Seleccionar…</option><option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option></select></div></div>
-        <div class="info-grid" id="fhPvTratamientoGrid"></div>
+        <div class="resumen-datos" id="fhPvTratamientoGrid"></div>
     </section>
-<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
+<section class="nx-tarjeta"><header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Registro de primera visita</h2></header>
     <div class="form-grid form-grid--align-end"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / inicio / primera dispensación o administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option value="">No informado</option><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option value="">No informado</option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
     <small class="form-hint">Fecha canónica única del circuito de Primera Visita.</small>
-    <div class="form-actions"><a class="btn btn-outline" href="https://ramonmorillo.github.io/hub-estratificacionCMO/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Acceso a Estratificación SEFH</a></div>
+    <div class="form-actions"><a class="nx-boton nx-boton--secundario" href="https://ramonmorillo.github.io/hub-estratificacionCMO/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Acceso a Estratificación SEFH</a></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option value="">No informado</option><option>No</option><option>Sí</option></select></div></div>
 <div id="fhPvPromsExpanded" class="hidden">
-    <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA basal</h3>
+    <h3 class="nx-tarjeta__titulo">PROMs — DLQI y EVA basal</h3>
     <div class="proms-block" id="fhPvDlqiBlock">
         <p class="proms-block__subtitle">DLQI — Índice de Calidad de Vida en Dermatología. Señale cómo le ha afectado su piel durante la <strong>última semana</strong>.</p>
         <div class="dlqi-questions" id="fhPvDlqiQuestions"></div>
@@ -141,8 +139,8 @@
     </div>
 </div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="form-textarea" id="fhPvNotas" rows="4"></textarea></div></div>
-    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline hidden" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhPvExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
-    <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhPvExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
+    <div class="form-actions"><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="nx-boton nx-boton--secundario hidden" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+    <div class="form-actions" data-export-version="v2"><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
     <p class="search-card__hint">Prepara una copia de los datos para demostrar futuras integraciones. Esta acción no envía información a otros sistemas ni la guarda automáticamente. Uso exclusivo con datos sintéticos.</p>
     <p id="fhPvExportV2Status" role="status" aria-live="polite"></p>
 </section>
