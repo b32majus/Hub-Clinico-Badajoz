@@ -16,9 +16,9 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7o">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7q">
 </head>
-<body>
+<body class="nx-pagina">
             <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_dashboard_paciente.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -49,76 +49,70 @@
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
                 <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--dashboard">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card">
-    <div class="patient-header-main">
-        <div class="patient-avatar"><i class="fas fa-user" aria-hidden="true"></i></div>
-        <div class="patient-info">
-            <div class="patient-header-topline">
-                <h1 class="patient-name" id="patientName">Paciente Demo</h1>
-                <span class="patient-id-badge" id="patientIdBadge">—</span>
-                <span class="status-badge" id="patientStatusBadge">—</span>
-            </div>
-            <div class="patient-meta">
-                <span class="patient-meta-chip"><i class="fas fa-stethoscope"></i> <span id="patientDiagnosis">—</span></span>
-                <span class="patient-meta-chip"><i class="fas fa-hospital"></i> <span id="patientService">—</span></span>
-                <span class="patient-meta-chip"><i class="fas fa-calendar-alt"></i> Última visita: <span id="patientLastVisit">—</span></span>
-                <span class="patient-meta-chip"><i class="fas fa-birthday-cake"></i> <span id="patientAge">—</span> años</span>
-                <span class="patient-meta-chip"><i class="fas fa-venus-mars"></i> <span id="patientGender">—</span></span>
-            </div>
-        </div>
+        <nx-aviso tipo="aviso" role="note" titulo="Demo Farmacia v0.2 — Datos sintéticos.">Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</nx-aviso>
+<header class="nx-cabecera">
+    <div>
+        <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Paciente</p>
+        <h1 class="nx-cabecera__titulo" id="patientName">Paciente Demo</h1>
+        <p class="nx-cabecera__texto"><span id="patientDiagnosis">—</span> · <span id="patientService">—</span> · Última visita: <span id="patientLastVisit">—</span> · <span id="patientAge">—</span> años · <span id="patientGender">—</span></p>
     </div>
-    <div class="patient-header-actions"><a href="farmacia_seguimiento.html" class="btn btn-primary" id="navToSeguimiento"><i class="fas fa-clipboard-list"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="btn btn-secondary"><i class="fas fa-check-double"></i> Validación</a></div>
-</section>
-<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Resumen Farmacia</h2><div class="info-grid" id="dashboardSummaryGrid"></div></section>
-<section id="longitudinal-section" class="dashboard-card hidden">
+    <p class="nx-cabecera__estado"><span class="nx-etiqueta" id="patientIdBadge">—</span> <span class="nx-etiqueta" id="patientStatusBadge">—</span></p>
+</header>
+<div class="nx-acciones"><a href="farmacia_seguimiento.html" class="nx-boton nx-boton--principal" id="navToSeguimiento"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="nx-boton nx-boton--secundario"><i class="fas fa-check-double" aria-hidden="true"></i> Validación</a></div>
+<section class="nx-tarjeta" aria-labelledby="tituloResumenFarmacia"><header class="nx-tarjeta__cabecera"><h2 id="tituloResumenFarmacia" class="nx-tarjeta__titulo">Resumen Farmacia</h2></header><div class="nx-tarjeta__cuerpo"><div class="resumen-datos" id="dashboardSummaryGrid"></div></div></section>
+<section id="longitudinal-section" class="nx-tarjeta hidden">
     <div class="longitudinal-section-header">
-        <h2 class="card-title card-title--flush"><i class="fas fa-chart-line"></i> Evolución longitudinal del paciente</h2>
-        <a href="farmacia_dashboard_longitudinal.html" class="btn btn-sm btn-outline longitudinal-standalone-link" id="longitudinalStandaloneLink" title="Abrir en vista completa"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Vista completa</a>
+        <h2 class="nx-tarjeta__titulo">Evolución longitudinal del paciente</h2>
+        <a href="farmacia_dashboard_longitudinal.html" class="nx-boton nx-boton--secundario nx-boton--pequeno longitudinal-standalone-link" id="longitudinalStandaloneLink" title="Abrir en vista completa"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Vista completa</a>
         <div class="longitudinal-controls">
-            <select id="clinical-var-select" class="form-select form-select--longitudinal"><option value="">Variable clínica</option></select>
-            <select id="prom-select" class="form-select form-select--longitudinal"><option value="">PROM</option></select>
-            <button id="toggle-legend" class="btn btn-sm btn-outline">Ver leyenda</button>
+            <select id="clinical-var-select" class="nx-campo__control"><option value="">Variable clínica</option></select>
+            <select id="prom-select" class="nx-campo__control"><option value="">PROM</option></select>
+            <button id="toggle-legend" type="button" class="nx-boton nx-boton--secundario nx-boton--pequeno">Ver leyenda</button>
         </div>
     </div>
-    <div class="card-body card-body--flush">
+    <div class="nx-tarjeta__cuerpo">
         <div id="longitudinal-chart-container" class="longitudinal-chart-container"></div>
         <div id="longitudinal-legend" class="hidden"></div>
-        <div id="longitudinal-no-data" class="alert alert-info hidden">Sin datos longitudinales disponibles para este paciente.</div>
+        <div id="longitudinal-no-data" class="nx-vacio hidden"><p class="nx-vacio__texto">Sin datos longitudinales disponibles para este paciente.</p></div>
         <div id="longitudinal-demo-note" class="longitudinal-demo-banner longitudinal-demo-banner--spaced hidden"><i class="fas fa-flask" aria-hidden="true"></i><span>Datos demo/sintéticos — no usar para decisiones clínicas.</span></div>
     </div>
 </section>
-<section id="clinical-activity-section" class="dashboard-card">
-    <h2 class="card-title"><i class="fas fa-heartbeat"></i> Actividad clínica / Índices</h2>
-    <div class="card-body" id="clinicalActivityContainer"></div>
+<section id="clinical-activity-section" class="nx-tarjeta">
+    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Actividad clínica / Índices</h2></header>
+    <div class="nx-tarjeta__cuerpo" id="clinicalActivityContainer"></div>
+
 </section>
-<section id="proms-section" class="dashboard-card">
-    <h2 class="card-title"><i class="fas fa-comment-medical"></i> PROMs</h2>
-    <div class="card-body" id="promsDashboardContainer"></div>
+<section id="proms-section" class="nx-tarjeta">
+    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">PROMs</h2></header>
+    <div class="nx-tarjeta__cuerpo" id="promsDashboardContainer"></div>
+
 </section>
-<section id="biologic-lines-section" class="dashboard-card">
-    <h2 class="card-title"><i class="fas fa-syringe"></i> Líneas biológicas</h2>
-    <div class="card-body" id="biologicLinesContainer"></div>
+<section id="biologic-lines-section" class="nx-tarjeta">
+    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Líneas biológicas</h2></header>
+    <div class="nx-tarjeta__cuerpo" id="biologicLinesContainer"></div>
+
 </section>
 <section id="timelines-section" class="dashboard-timeline-grid">
-    <div class="dashboard-card">
-        <h2 class="card-title"><i class="fas fa-stream"></i> Timeline longitudinal mínima</h2>
-        <div class="card-body" id="timelineEpisodiosContainer"></div>
+    <div class="nx-tarjeta">
+        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Timeline longitudinal mínima</h2></header>
+        <div class="nx-tarjeta__cuerpo" id="timelineEpisodiosContainer"></div>
+
     </div>
-    <div class="dashboard-card">
-        <h2 class="card-title"><i class="fas fa-pills"></i> Timeline de tratamiento</h2>
-        <div class="card-body" id="timelineTratamientoContainer"></div>
+    <div class="nx-tarjeta">
+        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Timeline de tratamiento</h2></header>
+        <div class="nx-tarjeta__cuerpo" id="timelineTratamientoContainer"></div>
+
     </div>
 </section>
-<section id="adverse-events-section" class="dashboard-card">
-    <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Eventos adversos</h2>
-    <div class="card-body" id="adverseEventsContainer"></div>
+<section id="adverse-events-section" class="nx-tarjeta">
+    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Eventos adversos</h2></header>
+    <div class="nx-tarjeta__cuerpo" id="adverseEventsContainer"></div>
+
 </section>
-<section id="comorbidities-section" class="dashboard-card">
-    <h2 class="card-title"><i class="fas fa-stethoscope"></i> Comorbilidades</h2>
-    <div class="card-body" id="comorbiditiesContainer"></div>
+<section id="comorbidities-section" class="nx-tarjeta">
+    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Comorbilidades</h2></header>
+    <div class="nx-tarjeta__cuerpo" id="comorbiditiesContainer"></div>
+
 </section>
 
                 </main>
