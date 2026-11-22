@@ -16,9 +16,9 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7h">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7o">
 </head>
-<body>
+<body class="nx-pagina">
     <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_dashboard_longitudinal.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -50,78 +50,79 @@
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
 
         <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--longitudinal">
-            <div class="demo-banner demo-banner--sandbox" role="note">
-                <i class="fas fa-flask" aria-hidden="true"></i>
-                <span><strong>Sandbox técnico v0.3.</strong> La visualización canónica se integra en el Panel del paciente.</span>
-            </div>
-
-            <section class="patient-header-card module-hero">
-                <div class="patient-header-main">
-                    <div class="patient-avatar"><i class="fas fa-stream" aria-hidden="true"></i></div>
-                    <div class="patient-info">
-                        <h1 class="patient-name">Panel longitudinal del paciente</h1>
-                        <p class="hero-description">Vista exploratoria de evolución temporal combinando PROMs, actividad clínica y línea de tratamiento para un paciente seleccionado.</p>
-                    </div>
+            <nx-aviso tipo="aviso" role="note" titulo="Sandbox técnico v0.3.">La visualización canónica se integra en el Panel del paciente. Datos sintéticos de demostración.</nx-aviso>
+            <header class="nx-cabecera">
+                <div>
+                    <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Paciente</p>
+                    <h1 class="nx-cabecera__titulo">Panel longitudinal del paciente</h1>
+                    <p class="nx-cabecera__texto">Vista exploratoria de evolución temporal combinando PROMs, actividad clínica y línea de tratamiento para un paciente seleccionado.</p>
                 </div>
-            </section>
+            </header>
 
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-sliders-h"></i> Controles</h2>
+            <section class="nx-tarjeta">
+                <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Controles</h2></header>
+                <div class="nx-tarjeta__cuerpo">
                 <div class="longitudinal-controls-grid">
-                    <div class="form-group">
-                        <label class="form-label" for="longitudinalPatientSelect">Paciente</label>
-                        <select id="longitudinalPatientSelect" class="form-select">
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="longitudinalPatientSelect">Paciente</label>
+                        <select id="longitudinalPatientSelect" class="nx-campo__control">
                             <option value="">Seleccionar paciente…</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="longitudinalPromSelect">PROM</label>
-                        <select id="longitudinalPromSelect" class="form-select"></select>
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="longitudinalPromSelect">PROM</label>
+                        <select id="longitudinalPromSelect" class="nx-campo__control"></select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="longitudinalClinicalSelect">Actividad clínica</label>
-                        <select id="longitudinalClinicalSelect" class="form-select"></select>
+                    <div class="nx-campo">
+                        <label class="nx-campo__etiqueta" for="longitudinalClinicalSelect">Actividad clínica</label>
+                        <select id="longitudinalClinicalSelect" class="nx-campo__control"></select>
                     </div>
-                    <div class="form-group">
-                        <span class="form-label">Estado</span>
+                    <div class="nx-campo">
+                        <span class="nx-campo__etiqueta">Estado</span>
                         <span id="longitudinalDataStatus" class="longitudinal-data-status">Sin datos cargados</span>
                     </div>
                 </div>
-            </section>
+            </div></section>
 
             <div class="longitudinal-chart-grid">
-                <section class="dashboard-card">
-                    <h2 class="card-title"><i class="fas fa-user"></i> Resumen del paciente</h2>
-                    <div id="longitudinalPatientSummary" class="info-grid"></div>
-                </section>
+                <section class="nx-tarjeta">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Resumen del paciente</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
+                    <div id="longitudinalPatientSummary" class="longitudinal-resumen"></div>
+                </div></section>
 
-                <section class="dashboard-card">
-                    <h2 class="card-title"><i class="fas fa-pills"></i> Línea de tratamiento</h2>
+                <section class="nx-tarjeta">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Línea de tratamiento</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div id="longitudinalTreatmentTimeline" class="longitudinal-timeline"></div>
-                </section>
+                </div></section>
             </div>
 
             <div class="longitudinal-chart-grid">
-                <section class="dashboard-card">
-                    <h2 class="card-title"><i class="fas fa-chart-line"></i> PROM longitudinal</h2>
+                <section class="nx-tarjeta">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">PROM longitudinal</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div id="longitudinalPromChart"></div>
-                </section>
+                </div></section>
 
-                <section class="dashboard-card">
-                    <h2 class="card-title"><i class="fas fa-stethoscope"></i> Actividad clínica longitudinal</h2>
+                <section class="nx-tarjeta">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Actividad clínica longitudinal</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div id="longitudinalClinicalChart"></div>
-                </section>
+                </div></section>
             </div>
 
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Eventos adversos</h2>
+            <section class="nx-tarjeta">
+                <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Eventos adversos</h2></header>
+                <div class="nx-tarjeta__cuerpo">
                 <div id="longitudinalAdverseEvents"></div>
-            </section>
+            </div></section>
 
-            <section class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-info-circle"></i> Leyenda</h2>
+            <section class="nx-tarjeta">
+                <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Leyenda</h2></header>
+                <div class="nx-tarjeta__cuerpo">
                 <div id="longitudinalLegend" class="longitudinal-legend"></div>
-            </section>
+            </div></section>
         </main>
     </div>
 

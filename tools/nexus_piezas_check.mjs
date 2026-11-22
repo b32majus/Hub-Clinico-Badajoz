@@ -194,7 +194,7 @@ await test('S12 la versión que enseña <nx-shell> es la misma que la de la Home
 });
 
 // Pantallas ya migradas al catálogo (tramo 7, pantalla a pantalla). Al migrar otra, añadirla aquí.
-const MIGRADAS = ['farmacia_profesionales.html', 'farmacia_farmacos.html', 'farmacia_actividad_servicio.html', 'dashboard_search.html', 'manage_professionals.html', 'farmacia_index.html'];
+const MIGRADAS = ['farmacia_profesionales.html', 'farmacia_farmacos.html', 'farmacia_actividad_servicio.html', 'dashboard_search.html', 'manage_professionals.html', 'farmacia_index.html', 'farmacia_dashboard_longitudinal.html'];
 const CLASES_VIEJAS = ['demo-banner', 'patient-header-card', 'module-hero', 'patient-avatar', 'hero-eyebrow', 'hero-description',
     'patient-status-badge', 'dashboard-card', 'card-title', 'section-title', 'data-table', 'status-badge', 'info-grid', 'info-field'];
 
