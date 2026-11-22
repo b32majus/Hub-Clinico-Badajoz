@@ -1905,7 +1905,7 @@ function generateRealChartData(patients, filters = {}) {
         correlation: {
             datasets: [{
                 data: correlationData,
-                label: `${scatterX} vs ${scatterY}`
+                label: `${scatterX} frente a ${scatterY}`
             }],
             xLabel: scatterX,
             yLabel: scatterY
