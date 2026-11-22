@@ -1064,6 +1064,8 @@
         listas.textContent = String(summary.listas);
         vigilancia.textContent = String(summary.vigilancia);
         bloqueadas.textContent = String(summary.bloqueadas);
+        var fila = bloqueadas.closest('.inicio-status-row');
+        if (fila) fila.classList.toggle('inicio-status-row--cero', summary.bloqueadas === 0);
     }
 
     document.addEventListener('DOMContentLoaded', function () {

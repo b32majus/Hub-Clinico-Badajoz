@@ -756,10 +756,10 @@
 }
 
 .kpi-card--success .kpi-icon { background: var(--color-remission-light); color: var(--color-remission); }
-.kpi-card--warning .kpi-icon { background: var(--color-moderate-light); color: var(--color-moderate); }
+.kpi-card--warning .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
 .kpi-card--danger .kpi-icon { background: var(--color-high-activity-light); color: var(--color-high-activity); }
-.kpi-card--info .kpi-icon { background: var(--color-low-activity-light); color: var(--color-low-activity); }
-.kpi-card--purple .kpi-icon { background: var(--color-biologic-light); color: var(--color-biologic); }
+.kpi-card--info .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
+.kpi-card--purple .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
 
 .kpi-label {
     display: block;
@@ -1296,3 +1296,9 @@
         font-size: 1rem;
     }
 }
+
+/* Estados de la tabla de cohorte (antes con style= en el JS; H-24) */
+.empty-state--tabla { text-align: center; padding: 40px; }
+.empty-state__icono { font-size: 2rem; margin-bottom: 10px; display: block; color: var(--nx-color-tenue); }
+.empty-state__icono--error, .empty-state__texto--error { color: var(--nx-color-error); }
+.empty-state__texto { color: var(--nx-color-texto-suave); }

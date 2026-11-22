@@ -19,22 +19,31 @@ let activeFilters = {};
 const POPULATION_UNAVAILABLE_COPY = 'No hay datos cargados. Carga el Excel para consultar la cohorte.';
 const POPULATION_ERROR_COPY = 'No se pudieron consultar los datos de la cohorte. Inténtalo de nuevo.';
 
+// Los colores de los gráficos salen de los tokens (--nx-*): el canvas de Chart.js
+// no lee var(), así que se resuelven aquí al cargar (H-24).
+function nxColor(nombre, alfa) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--nx-color-' + nombre).trim();
+    const m = /^#([0-9a-f]{6})$/i.exec(v);
+    if (alfa === undefined || !m) return v;
+    const n = parseInt(m[1], 16);
+    return 'rgba(' + (n >> 16) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + alfa + ')';
+}
+
 // === PALETA DE COLORES UNIFICADA ===
+// Estado clínico: colores de estado (el dato significa eso). Tratamientos: serie
+// de categorías. «Otros» = gris de «sin dato».
 const COLORS = {
-    // Estados clínicos
-    remission: '#10B981',
-    lowActivity: '#3B82F6',
-    moderate: '#F59E0B',
-    highActivity: '#EF4444',
-    // Tratamientos
-    biologic: '#8B5CF6',
-    fame: '#06B6D4',
-    systemic: '#EC4899',
-    other: '#6B7280',
-    // UI
-    primary: '#2563EB',
-    secondary: '#64748B',
-    border: '#E2E8F0'
+    remission: nxColor('ok'),
+    lowActivity: nxColor('info'),
+    moderate: nxColor('aviso'),
+    highActivity: nxColor('error'),
+    biologic: nxColor('serie-2'),
+    fame: nxColor('serie-3'),
+    systemic: nxColor('serie-4'),
+    other: nxColor('serie-sin-dato'),
+    primary: nxColor('serie-1'),
+    secondary: nxColor('texto-suave'),
+    border: nxColor('borde')
 };
 
 const applyFiltersAndRefresh = () => {
@@ -223,13 +232,13 @@ function initializeFiltersCollapsible() {
 function configureChartDefaults() {
     Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     Chart.defaults.font.size = 12;
-    Chart.defaults.color = '#64748B';
+    Chart.defaults.color = nxColor('texto-suave');
     Chart.defaults.plugins.legend.position = 'bottom';
     Chart.defaults.plugins.legend.labels.usePointStyle = true;
     Chart.defaults.plugins.legend.labels.padding = 20;
-    Chart.defaults.plugins.tooltip.backgroundColor = '#1E293B';
-    Chart.defaults.plugins.tooltip.titleColor = '#F8FAFC';
-    Chart.defaults.plugins.tooltip.bodyColor = '#E2E8F0';
+    Chart.defaults.plugins.tooltip.backgroundColor = nxColor('texto');
+    Chart.defaults.plugins.tooltip.titleColor = nxColor('superficie');
+    Chart.defaults.plugins.tooltip.bodyColor = nxColor('superficie-suave');
     Chart.defaults.plugins.tooltip.cornerRadius = 8;
     Chart.defaults.plugins.tooltip.padding = 12;
     Chart.defaults.plugins.tooltip.displayColors = true;
@@ -713,9 +722,9 @@ function renderPopulationFailSafe(status) {
     if (tbody) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-state" style="text-align: center; padding: 40px;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #B91C1C; margin-bottom: 10px; display: block;"></i>
-                    <span style="color: #B91C1C;">${message}</span>
+                <td colspan="6" class="empty-state empty-state--tabla">
+                    <i class="fas fa-exclamation-triangle empty-state__icono empty-state__icono--error"></i>
+                    <span class="empty-state__texto--error">${message}</span>
                 </td>
             </tr>
         `;
@@ -939,7 +948,7 @@ function renderActivityDonutChart(canvasId, data) {
             datasets: [{
                 data: data?.datasets?.[0]?.data || [35, 25, 20, 20],
                 backgroundColor: colors,
-                borderColor: '#ffffff',
+                borderColor: nxColor('superficie'),
                 borderWidth: 3,
                 hoverOffset: 8
             }]
@@ -1001,7 +1010,7 @@ function renderTreatmentBarChart(canvasId, data) {
             scales: {
                 x: {
                     beginAtZero: true,
-                    grid: { color: '#F1F5F9' }
+                    grid: { color: nxColor('superficie-suave') }
                 },
                 y: {
                     grid: { display: false }
@@ -1023,7 +1032,7 @@ function renderComorbidityBarChart(canvasId, data) {
     const dataLength = data?.labels?.length || 4;
     const colors = Array(dataLength).fill(COLORS.primary).map((c, i) => {
         const opacity = 1 - (i * 0.1);
-        return `rgba(37, 99, 235, ${Math.max(0.4, opacity)})`;
+        return nxColor('serie-1', Math.max(0.4, opacity));
     });
 
     chartInstances[canvasId] = new Chart(ctx, {
@@ -1048,7 +1057,7 @@ function renderComorbidityBarChart(canvasId, data) {
             scales: {
                 x: {
                     beginAtZero: true,
-                    grid: { color: '#F1F5F9' }
+                    grid: { color: nxColor('superficie-suave') }
                 },
                 y: {
                     grid: { display: false }
@@ -1075,7 +1084,7 @@ function renderCorrelationScatterChart(canvasId, chartConfig) {
             datasets: [{
                 label: `${scatterX} vs ${scatterY}`,
                 data: chartConfig?.datasets?.[0]?.data || generateMockScatterData(),
-                backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                backgroundColor: nxColor('serie-1', 0.6),
                 borderColor: COLORS.primary,
                 borderWidth: 2,
                 pointRadius: 6,
@@ -1092,7 +1101,7 @@ function renderCorrelationScatterChart(canvasId, chartConfig) {
                         text: scatterX,
                         font: { weight: 'bold' }
                     },
-                    grid: { color: '#F1F5F9' }
+                    grid: { color: nxColor('superficie-suave') }
                 },
                 y: {
                     beginAtZero: true,
@@ -1102,7 +1111,7 @@ function renderCorrelationScatterChart(canvasId, chartConfig) {
                         text: scatterY,
                         font: { weight: 'bold' }
                     },
-                    grid: { color: '#F1F5F9' }
+                    grid: { color: nxColor('superficie-suave') }
                 }
             },
             plugins: {
@@ -1143,9 +1152,9 @@ function renderTablePage() {
     if (pageData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-state" style="text-align: center; padding: 40px;">
-                    <i class="fas fa-search" style="font-size: 2rem; color: #94A3B8; margin-bottom: 10px; display: block;"></i>
-                    <span style="color: #64748B;">No se encontraron pacientes con los filtros seleccionados</span>
+                <td colspan="6" class="empty-state empty-state--tabla">
+                    <i class="fas fa-search empty-state__icono"></i>
+                    <span class="empty-state__texto">No se encontraron pacientes con los filtros seleccionados</span>
                 </td>
             </tr>
         `;
