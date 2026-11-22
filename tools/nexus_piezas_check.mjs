@@ -203,7 +203,7 @@ await test('S13 pantallas migradas: body nx-pagina, cabecera nx-cabecera con un 
         const html = read(p);
         assert.match(html, /<body class="nx-pagina">/, `${p}: el body no lleva nx-pagina`);
         assert.equal((html.match(/<h1\b/g) || []).length, 1, `${p}: debe haber un solo h1`);
-        assert.match(html, /<header class="nx-cabecera">[\s\S]*?<h1 class="nx-cabecera__titulo">/, `${p}: sin nx-cabecera con su h1`);
+        assert.match(html, /<header class="nx-cabecera">[\s\S]*?<h1 class="nx-cabecera__titulo"[^>]*>/, `${p}: sin nx-cabecera con su h1`);
         if (p.startsWith('farmacia_')) assert.match(html, /<nx-aviso tipo="aviso" role="note"/, `${p}: el aviso de demo no es <nx-aviso role="note">`);
         const tablas = (html.match(/<table\b[^>]*>/g) || []);
         assert.ok(tablas.every((t) => /\bclass="nx-tabla"/.test(t)), `${p}: tabla sin nx-tabla`);
