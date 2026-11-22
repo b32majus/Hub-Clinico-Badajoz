@@ -783,15 +783,11 @@
             } else {
                 mostrarFormulario('derma');
             }
-            var dermaTitle = document.querySelector('#formDerma h2.section-title');
+            var dermaTitle = document.querySelector('#formDerma h2.nx-tarjeta__titulo');
             if (dermaTitle) {
                 var sd = enfServicio || 'Enfermería / Inicio biológico';
                 dermaTitle.textContent = '';
-                var iconEl = document.createElement('i');
-                iconEl.className = 'fas fa-disease';
-                iconEl.setAttribute('aria-hidden', 'true');
-                dermaTitle.appendChild(iconEl);
-                dermaTitle.appendChild(document.createTextNode(' Datos de solicitud — ' + sd));
+                dermaTitle.appendChild(document.createTextNode('Datos de solicitud — ' + sd));
             }
             var srvInput = byId('fhDermaServicioOrigen');
             if (srvInput) srvInput.value = enfServicio || 'Enfermería / Inicio biológico';

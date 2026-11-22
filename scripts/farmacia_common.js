@@ -1866,7 +1866,7 @@
         link.appendChild(linkIcon);
         link.appendChild(document.createTextNode(' Ir al buscador de Farmacia'));
         banner.append(icon, msg, link);
-        var firstCard = document.querySelector('section.dashboard-card');
+        var firstCard = document.querySelector('section.nx-tarjeta, section.dashboard-card');
         if (firstCard) firstCard.parentNode.insertBefore(banner, firstCard);
     }
 
