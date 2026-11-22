@@ -124,8 +124,8 @@ function calcularIMC() {
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
     const isWarning = tipo === 'warning';
-    const background = tipo === 'success' ? '#28a745' : isWarning ? '#ffc107' : '#dc3545';
-    const foreground = isWarning ? '#1f2937' : '#ffffff';
+    const background = tipo === 'success' ? 'var(--nx-color-ok)' : isWarning ? 'var(--nx-color-aviso)' : 'var(--nx-color-error)';
+    const foreground = 'var(--nx-color-superficie)';
     const durationMs = isWarning ? 10000 : tipo === 'error' ? 6000 : 3000;
     const notif = document.createElement('div');
     notif.style.cssText = `
@@ -312,7 +312,7 @@ function validarCamposRequeridos(tipoFormulario) {
         if (!elem || !elem.value.trim()) {
             errores.push(id);
             if (elem) {
-                elem.style.borderColor = '#dc3545';
+                elem.style.borderColor = 'var(--nx-color-error)';
                 elem.style.borderWidth = '2px';
             }
         } else if (elem) {
@@ -337,7 +337,7 @@ function validarRangosNumericos() {
             const valor = parseFloat(elem.value);
             if (isNaN(valor) || valor < range.min || valor > range.max) {
                 errores.push(`${range.label} debe estar entre ${range.min} y ${range.max}`);
-                elem.style.borderColor = '#ffc107'; // Amarillo warning
+                elem.style.borderColor = 'var(--nx-color-aviso)';
                 elem.style.borderWidth = '2px';
             } else {
                 elem.style.borderColor = '';

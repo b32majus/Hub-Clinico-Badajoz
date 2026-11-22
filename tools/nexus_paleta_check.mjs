@@ -76,6 +76,13 @@ for (const f of ['primera_visita.html', 'seguimiento.html']) {
 }
 record('P6 el SVG del mapa de articulaciones no lleva colores sueltos', svgHex.length === 0, vacio(svgHex));
 
+// P7: los colores de estado del JS compartido de Reuma (categorías de puntuación, avisos, validación) van por token (H-26, tramo 7).
+const jsHex = [];
+for (const f of ['modules/scoreCalculators.js', 'modules/utils.js', 'modules/formController.js']) {
+    for (const m of read(f).matchAll(/['"`]#[0-9a-f]{3,8}\b/gi)) jsHex.push(`${f}: ${m[0]}`);
+}
+record('P7 el JS compartido de Reuma no lleva colores de estado sueltos', jsHex.length === 0, vacio(jsHex));
+
 const failed = results.filter((ok) => !ok).length;
 console.log(`\nRESULTADO: ${results.length - failed} OK / ${failed} FALLIDO`);
 process.exit(failed ? 1 : 0);
