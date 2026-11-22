@@ -202,7 +202,7 @@ async function queueCards(page) {
     assert.equal(await expectedQueueLength(page), rows.length, 'rendered queue reflects the published sync population');
     const queueText = rows.map((r) => r.text).join('\n');
     assert.ok(queueText.includes('CIP-DEMO-FH-002'), 'demo pending row visible without import');
-    assert.ok(!queueText.includes('Dashboard'), 'no per-card indicator action on demo rows');
+    assert.ok(!queueText.includes('Panel'), 'no per-card indicator action on demo rows');
     const bodyText = await page.locator('body').innerText();
     for (const removed of ['Validaciones pendientes', 'PROMs pendientes', 'Optimizaciones',
       'Fármacos frecuentes', 'En seguimiento', 'solicitudes generales']) {
@@ -273,7 +273,7 @@ async function queueCards(page) {
     assert.ok(rows.length > 1, `imported rows visible in the single queue: ${rows.length}`);
     const queueText = rows.map((r) => r.text).join('\n');
     assert.ok(queueText.includes('Origen: Excel Enfermería'), 'Enfermería origin present as card provenance');
-    assert.ok(!queueText.includes('Dashboard'), 'no per-card indicator action on imported rows');
+    assert.ok(!queueText.includes('Panel'), 'no per-card indicator action on imported rows');
     assert.ok(!queueText.toLowerCase().includes('solicitudes generales'), 'no second inbox with import');
     // Supported interaction: expand the first detail toggle.
     const toggle = page.locator('#actividadPendientesPanel [data-pendientes-toggle]').first();
@@ -358,7 +358,7 @@ async function queueCards(page) {
     assert.equal(broadCard.enfCip, null, 'broad-only row never receives the Enfermería card');
     assert.ok(broadCard.text.includes(`Origen: ${BROAD_ONLY_ORIGIN}`), 'broad-only card shows the verbatim origin');
     assert.ok(!broadCard.text.includes('Origen: Excel Enfermería'), 'broad-only card never carries the hardcoded Enfermería origin');
-    assert.ok(!broadCard.text.includes('Dashboard'), 'no per-card indicator action on the broad-only card');
+    assert.ok(!broadCard.text.includes('Panel'), 'no per-card indicator action on the broad-only card');
     assertNoPageFailure(pageErrors, consoleErrors);
     ok('broad-only fixture counts only in total as a general card with verbatim origin');
   } catch (error) {

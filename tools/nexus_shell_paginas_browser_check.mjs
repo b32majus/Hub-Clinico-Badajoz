@@ -161,7 +161,7 @@ try {
         assert.ok(/\/(index\.html)?$/.test(new URL(page.url()).pathname), page.url());
     });
 
-    await test('B4 el enlace «Dashboard Paciente» de la barra conserva el CIP en el Seguimiento de Farmacia', async () => {
+    await test('B4 el enlace «Panel del paciente» de la barra conserva el CIP en el Seguimiento de Farmacia', async () => {
         await page.goto(`${base}farmacia_seguimiento.html?cip=${CIP}`, { waitUntil: 'load' });
         await page.waitForFunction((cip) => {
             const a = document.querySelector('nx-shell a.nx-shell__enlace[href*="farmacia_dashboard_paciente.html"]');

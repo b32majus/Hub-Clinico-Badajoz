@@ -350,8 +350,8 @@
         if (value === 'primary' || value === 'principal' || value === 'base') return 'Principal';
         if (value === 'additional' || value === 'adicional') return 'Adicional';
         if (value === 'unknown' || !value) return 'Relación no registrada';
-        if (value === 'cambio_terapeutico' || value === 'cambio_farmaco') return 'Switch terapéutico';
-        if (value === 'tratamiento_anadido' || value === 'tratamiento_añadido') return 'Add-on terapéutico';
+        if (value === 'cambio_terapeutico' || value === 'cambio_farmaco') return 'Cambio terapéutico';
+        if (value === 'tratamiento_anadido' || value === 'tratamiento_añadido') return 'Tratamiento añadido';
         return raw ? 'Relación no registrada' : 'Seguimiento';
     }
 

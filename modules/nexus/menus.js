@@ -16,7 +16,7 @@ export const MENUS = Object.freeze({
                     { texto: 'Validación', href: 'farmacia_validacion.html', icono: 'fa-check-double' },
                     { texto: 'Primera Visita', href: 'farmacia_primera_visita.html', icono: 'fa-plus-circle' },
                     { texto: 'Seguimiento', href: 'farmacia_seguimiento.html', icono: 'fa-clipboard-list' },
-                    { texto: 'Dashboard Paciente', href: 'farmacia_dashboard_paciente.html', icono: 'fa-user-circle' },
+                    { texto: 'Panel del paciente', href: 'farmacia_dashboard_paciente.html', icono: 'fa-user-circle' },
                 ],
             },
             {

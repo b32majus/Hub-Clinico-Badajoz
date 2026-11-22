@@ -717,7 +717,7 @@
     function dashboardView(model) {
         try {
             if (!isRecord(model) || declaredDataValue(model, 'ok') !== true) {
-                return fail('INVALID_MODEL', 'El Dashboard necesita una salida ok:true del modelo de pantalla.');
+                return fail('INVALID_MODEL', 'El Panel necesita una salida ok:true del modelo de pantalla.');
             }
             var episodes = declaredDataValue(model, 'episodes');
             if (!Array.isArray(episodes)) {
@@ -742,7 +742,7 @@
             }
             return { ok: true, title: DASHBOARD_TITLE, empty: null, cards: cards };
         } catch (problem) {
-            return fail('INVALID_MODEL', 'El Dashboard no se pudo construir.');
+            return fail('INVALID_MODEL', 'El Panel no se pudo construir.');
         }
     }
 

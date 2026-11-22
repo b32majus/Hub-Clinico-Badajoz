@@ -2008,7 +2008,7 @@ function getChartAnnotations(treatmentHistory, chartLabels, pathology) {
     return annotations;
 }
 
-function showEmptyState(message = 'Busca un paciente para ver su dashboard.') {
+function showEmptyState(message = 'Busca un paciente para ver su panel.') {
     const emptyState = document.getElementById('emptyState');
     const dashboardContent = document.getElementById('dashboardContent');
 

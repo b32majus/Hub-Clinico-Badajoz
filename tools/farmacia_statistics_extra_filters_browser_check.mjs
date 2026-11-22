@@ -312,7 +312,7 @@ try {
         const ids = await tableIdentifiers(demo);
         assert.deepEqual(ids.sort(), ['CIP-DEMO-FH-001', 'CIP-DEMO-FH-004'], 'both cambio_farmaco patients present once');
         assert.doesNotMatch(await demo.locator('#patients-table tbody').innerText(), /CIP-DEMO-FH-003/);
-        assert.match(await demo.locator('#cohort-pills').textContent(), /Movimiento terapéutico registrado: cambio_farmaco/);
+        assert.match(await demo.locator('#cohort-pills').textContent(), /Movimiento terapéutico registrado: Cambio de fármaco/);
         await demo.locator('#qf-movimiento').selectOption('tratamiento_anadido');
         await demo.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
         assert.deepEqual((await tableIdentifiers(demo)).sort(), ['CIP-DEMO-FH-004'], 'different movement type enables a different selection');
@@ -376,7 +376,7 @@ try {
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
         const ids = await tableIdentifiers(child);
         assert.deepEqual(ids.sort(), ['CIP-GRAV-01', 'CIP-GRAV-02'], 'CIP-GRAV-01 with TWO schedule_change movements appears once; brand-change CIP-GRAV-03 and no_change_recorded CIP-GRAV-04 never match');
-        assert.match(await child.locator('#cohort-pills').textContent(), /Movimiento terapéutico registrado: schedule_change/);
+        assert.match(await child.locator('#cohort-pills').textContent(), /Movimiento terapéutico registrado: Cambio de pauta/);
         ok('raw: explicit movement type enters; two movements of the same type = one patient; brand change and no_change_recorded never match');
     } catch (error) { bad('raw: explicit movement type enters; two movements of the same type = one patient; brand change and no_change_recorded never match', error.message); }
 
@@ -399,16 +399,16 @@ try {
         assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*2/);
         let chartText = await child.locator('#chart-tratamiento-content').innerText();
         assert.match(chartText, /Movimientos explícitos/, 'movimientos chart block rendered');
-        assert.match(chartText, /schedule_change\s*2/, 'chart counts patients per movement type (schedule_change: 2 patients)');
-        assert.doesNotMatch(chartText, /schedule_change\s*3/, 'chart never counts the same patient twice for one movement type');
+        assert.match(chartText, /Cambio de pauta\s*2/, 'chart counts patients per movement type (schedule_change: 2 patients)');
+        assert.doesNotMatch(chartText, /Cambio de pauta\s*3/, 'chart never counts the same patient twice for one movement type');
         await child.locator('#qf-principio').selectOption('Molécula sintética G-02');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
         assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-02'], 'adding principio activo narrows to exactly that cohort');
         assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*1/, 'KPI reflects the final single-patient cohort');
         chartText = await child.locator('#chart-tratamiento-content').innerText();
         assert.match(chartText, /Movimientos explícitos/, 'movimientos chart block still rendered for the final cohort');
-        assert.match(chartText, /schedule_change\s*1/, 'movement chart counts only the final cohort (schedule_change: 1 patient)');
-        assert.doesNotMatch(chartText, /schedule_change\s*2/, 'movement chart reflects the narrowing (schedule_change was 2 before principio)');
+        assert.match(chartText, /Cambio de pauta\s*1/, 'movement chart counts only the final cohort (schedule_change: 1 patient)');
+        assert.doesNotMatch(chartText, /Cambio de pauta\s*2/, 'movement chart reflects the narrowing (schedule_change was 2 before principio)');
         const csvIds = await exportedCsvIdentifiers(child);
         assert.deepEqual(csvIds, ['CIP-GRAV-02'], 'CSV membership equals the filtered population');
         ok('raw: MOV AND EA AND principio activo AND servicio produce exactly that cohort in table/KPI/charts/CSV');

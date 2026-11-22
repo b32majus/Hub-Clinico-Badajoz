@@ -299,7 +299,7 @@ try {
   assert.doesNotMatch(await page.locator('#fhQvGrid').innerText(), /10 mg solicitados.*Tratamiento actual/s);
   await assertNoRetiredUi();
 
-  await clickQuickViewLink('Dashboard');
+  await clickQuickViewLink('Panel');
   await page.waitForSelector('#patientIdBadge');
   assert.equal((await page.locator('#patientIdBadge').textContent()).trim(), CIP_A);
   const dashboardSummary = await page.locator('#dashboardSummaryGrid').innerText();
@@ -344,7 +344,7 @@ try {
   assert.match(await page.locator('#longitudinalPromChart').innerText(), /RAW_PROM_A[\s\S]*0/);
   await assertNoRetiredUi();
 
-  await clickLink('Dashboard Paciente');
+  await clickLink('Panel del paciente');
   await clickLink('Validación');
   await page.waitForSelector('#fhDermaFarmaco');
   assert.equal(await page.locator('#fhDermaFarmaco').inputValue(), 'Solicitado RAW A');
@@ -447,7 +447,7 @@ try {
   assert.deepEqual(cleanBState.drafts, {});
   await assertNoRetiredUi();
 
-  await clickQuickViewLink('Dashboard');
+  await clickQuickViewLink('Panel');
   await page.waitForSelector('#patientIdBadge');
   assert.equal((await page.locator('#patientIdBadge').textContent()).trim(), CIP_B);
   const activeLineCard = page.locator('#biologicLinesContainer .info-field').filter({ hasText: 'Activo RAW B1' });
@@ -468,7 +468,7 @@ try {
   assert.match(await unknownLongitudinalLine.innerText(), /Fecha no registrada · No registrado · Relación no registrada/);
   await assertNoRetiredUi();
 
-  await clickLink('Dashboard Paciente');
+  await clickLink('Panel del paciente');
   await clickLink('Seguimiento');
   await page.waitForFunction((cip) => document.getElementById('fhSegCip')?.value === cip, CIP_B);
   assert.equal(await page.locator('#fhSegCip').inputValue(), CIP_B);

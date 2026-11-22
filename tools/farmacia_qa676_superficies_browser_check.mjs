@@ -194,7 +194,7 @@ const PENDIENTES_EXPECT = {
     blockClassForbids: ['prebio-complete', 'prebio-incomplete'],
     labelIncludes: 'Prebiológico bloqueado · 3 bloqueos',
     blockers: 3,
-    chips: ['Mantoux/IGRA: pending', 'Vacunación: pending', 'Medicina preventiva: unknown'],
+    chips: ['Mantoux/IGRA: pendiente', 'Vacunación: pendiente', 'Medicina preventiva: no informado'],
     chipClasses: ['status-pending', 'status-pending', 'status-unknown'],
     statuses: { tuberculosis: 'pending', vacunacion: 'pending', serologias: 'complete', medicinaPreventiva: 'unknown' }
   },

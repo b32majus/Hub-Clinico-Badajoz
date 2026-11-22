@@ -205,6 +205,14 @@
         return Cohort.eaSummary(eaRecords(items), eaFiltersOf(currentFilters));
     }
 
+    // Tipos de movimiento terapéutico (claves internas) → texto en español.
+    var MOVIMIENTO_ES = { sin_cambios: 'Sin cambios', optimizacion: 'Optimización', optimizacion_intervalo: 'Optimización de intervalo', tratamiento_anadido: 'Tratamiento añadido', cambio_terapeutico: 'Cambio terapéutico', cambio_farmaco: 'Cambio de fármaco', dose_change: 'Cambio de dosis', schedule_change: 'Cambio de pauta', dose_and_schedule_change: 'Cambio de dosis y pauta', other: 'Otro', suspension: 'Suspensión', revision_linea: 'Revisión de línea', no_aplica: 'No aplica' };
+    function movementLabel(type) {
+        if (MOVIMIENTO_ES[type]) return MOVIMIENTO_ES[type];
+        var texto = String(type || '').replace(/_/g, ' ');
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
     function explicitMovementTypes(types) {
         return (types || []).filter(function (type) {
             return present(type) && type !== 'not_recorded' && type !== 'no_change_recorded';
@@ -258,7 +266,7 @@
         fillSelect('qf-principio', options.principio, 'Todos');
         fillSelect('qf-ea_sospechoso', options.ea_sospechoso, 'Todos');
         fillSelect('qf-ea_metodo', options.ea_metodo, 'Todos');
-        fillSelect('qf-movimiento', options.movimiento, 'Todos');
+        fillSelect('qf-movimiento', options.movimiento, 'Todos', movementLabel);
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
         fillSelect('qf-validacion', options.validacion, 'Todas', careLabel);
         fillSelect('qf-concurrentes', options.concurrentes, 'Todas', concurrentLabel);
@@ -389,7 +397,7 @@
         var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', ea_sospechoso: 'Sospechoso de EA', ea_metodo: 'Método de causalidad', movimiento: 'Movimiento terapéutico registrado', validacion: 'Validación', concurrentes: 'Líneas activas', dosis: 'Dosis', via: 'Vía', pauta: 'Pauta', desde: 'Desde', hasta: 'Hasta' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
-            chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
+            chip.appendChild(el('span', '', labels[key] + ': ' + (key === 'movimiento' ? movementLabel(currentFilters[key]) : currentFilters[key])));
             var remove = el('button', 'stats-cohort-chip-remove', '×');
             remove.type = 'button';
             remove.setAttribute('aria-label', 'Quitar filtro ' + labels[key]);
@@ -525,7 +533,7 @@
             clearChildren(treatment);
             var treatmentGrid = el('div', 'stats-treatment-grid');
             treatmentGrid.appendChild(chartGroup('Principios activos explícitos', countValues(filteredPatients, function (item) { return item.profile.activeLineIngredients; })));
-            treatmentGrid.appendChild(donutGroup('Movimientos explícitos', countValues(filteredPatients, function (item) { return item.profile.movementTypes; })));
+            treatmentGrid.appendChild(donutGroup('Movimientos explícitos', countValues(filteredPatients, function (item) { return item.profile.movementTypes; }).map(function (item) { return { label: movementLabel(item.label), value: item.value }; })));
             treatment.appendChild(treatmentGrid);
         }
         if (evolution) {

@@ -96,18 +96,18 @@
         if (patient.estado === 'pending' || patient.estado === 'denied' || patient.estado === 'not_recorded') {
             return [
                 { label: 'Validaci\u00f3n', icon: 'fa-check-double', href: 'farmacia_validacion.html', entrada: 'validacion', cls: 'btn-primary' },
-                { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
+                { label: 'Panel', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
             ];
         }
         if (patient.estado === 'validated') {
             return [
                 { label: 'Primera Visita', icon: 'fa-plus-circle', href: 'farmacia_primera_visita.html', entrada: 'primera_visita', cls: 'btn-primary' },
-                { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
+                { label: 'Panel', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
             ];
         }
         return [
             { label: 'Seguimiento', icon: 'fa-clipboard-list', href: 'farmacia_seguimiento.html', entrada: 'seguimiento', cls: 'btn-primary' },
-            { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
+            { label: 'Panel', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
         ];
     }
 
@@ -944,7 +944,7 @@
             cip: patient.cip,
             entrada: 'dashboard'
         });
-        F.appendIconText(dashLink, 'fa-user-circle', 'Dashboard');
+        F.appendIconText(dashLink, 'fa-user-circle', 'Panel');
         actions.appendChild(dashLink);
         card.appendChild(actions);
 

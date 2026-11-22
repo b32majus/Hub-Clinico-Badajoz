@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cima.aemps.es; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hub Clínico — Dashboard Longitudinal Farmacia</title>
+    <title>Hub Clínico — Panel Longitudinal Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261122-t7f">
@@ -29,7 +29,7 @@
 </div>
 <button type="button" class="nx-boton nx-boton--secundario nx-boton--icono hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda"><i class="fas fa-times-circle" aria-hidden="true"></i></button>
 </div>
-<div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+<div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Conjunto de datos demo de Farmacia cargado">
                 <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
                 <div class="db-status-indicator__text">
                     <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
@@ -52,14 +52,14 @@
         <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--longitudinal">
             <div class="demo-banner demo-banner--sandbox" role="note">
                 <i class="fas fa-flask" aria-hidden="true"></i>
-                <span><strong>Sandbox técnico v0.3.</strong> La visualización canónica se integra en Dashboard Paciente.</span>
+                <span><strong>Sandbox técnico v0.3.</strong> La visualización canónica se integra en el Panel del paciente.</span>
             </div>
 
             <section class="patient-header-card module-hero">
                 <div class="patient-header-main">
                     <div class="patient-avatar"><i class="fas fa-stream" aria-hidden="true"></i></div>
                     <div class="patient-info">
-                        <h1 class="patient-name">Dashboard longitudinal paciente</h1>
+                        <h1 class="patient-name">Panel longitudinal del paciente</h1>
                         <p class="hero-description">Vista exploratoria de evolución temporal combinando PROMs, actividad clínica y línea de tratamiento para un paciente seleccionado.</p>
                     </div>
                 </div>
@@ -136,6 +136,6 @@
     <script src="scripts/farmacia_adherence_presentation.js?v=20260914-adherencia-r2"></script>
     <script src="modules/hubTools.js?v=20261029-ea-v1-demo"></script>
     <script src="modules/farmacia_ea_screen_model.js?v=20261029-ea-v1-demo"></script>
-    <script src="scripts/farmacia_dashboard_longitudinal.js?v=20260930-f43a-r1"></script>
+    <script src="scripts/farmacia_dashboard_longitudinal.js?v=20261122-t7k"></script>
 </body>
 </html>

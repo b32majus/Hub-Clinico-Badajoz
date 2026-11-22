@@ -929,7 +929,7 @@
             html += '<div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">' + dateStr + ' · ' + translateEventType(event.type) + '</div>';
             if (event.metadata && event.metadata.scoreDelta) {
                 var sign = event.metadata.scoreDelta > 0 ? '+' : '';
-                html += '<div style="font-size: 11px; color: #e67e22; margin-top: 2px;">Δ ' + escapeHtml(event.metadata.scoreName || 'Score') + ': ' + sign + event.metadata.scoreDelta.toFixed(1) + '</div>';
+                html += '<div style="font-size: 11px; color: #e67e22; margin-top: 2px;">Δ ' + escapeHtml(event.metadata.scoreName || 'Puntuación') + ': ' + sign + event.metadata.scoreDelta.toFixed(1) + '</div>';
             }
             html += '</div>';
             html += '</div>';

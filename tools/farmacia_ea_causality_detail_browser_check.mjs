@@ -229,7 +229,7 @@ try {
     });
 
     await test('Dashboard del paciente: E3 muestra puntuación, categoría, valoración final y respuestas plegadas', async () => {
-        await openFromSearch('Dashboard', /farmacia_dashboard_paciente\.html/);
+        await openFromSearch('Panel', /farmacia_dashboard_paciente\.html/);
         const card = page.locator('.adverse-event-card', { hasText: 'Exantema' }).first();
         await card.waitFor({ state: 'visible', timeout: 10000 });
         assertE3(await readDetail(card.locator('.ea-causality-detail')), 'Dashboard');

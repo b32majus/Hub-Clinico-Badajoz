@@ -133,7 +133,7 @@ try {
   // ── 5. Ruta soportada (Escenario A): Inicio Farmacia → tarjeta demo FH-004 → Dashboard ──
   await page.goto(appUrl('farmacia_index.html'), { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaDemo && window.FarmaciaPatientFlowRuntime);
-  const demoCard = page.locator('#demoCaseFh004 .demo-case-card__actions a', { hasText: 'Ver dashboard FH-004' });
+  const demoCard = page.locator('#demoCaseFh004 .demo-case-card__actions a', { hasText: 'Ver panel FH-004' });
   assert.equal(await demoCard.count(), 1, 'Inicio tiene la tarjeta demo FH-004 con enlace directo al Dashboard');
   await Promise.all([page.waitForLoadState('domcontentloaded'), demoCard.click()]);
   await page.waitForFunction(expected => document.querySelector('#patientIdBadge')?.textContent.trim() === expected, 'CIP-DEMO-FH-004');
@@ -149,7 +149,7 @@ try {
   await page.waitForFunction(expected => document.querySelector('#fhSubtitle')?.textContent === expected, 'CIP-DEMO-FH-002');
   const fh002QuickView = await page.locator('#fhQvGrid').innerText();
   assert.doesNotMatch(fh002QuickView, /\bundefined\b/, 'FH-002 Quick View sin undefined');
-  const qvDashboardLink = page.locator('#fhQvActions').getByRole('link', { name: 'Dashboard', exact: false });
+  const qvDashboardLink = page.locator('#fhQvActions').getByRole('link', { name: 'Panel', exact: false });
   await Promise.all([page.waitForLoadState('domcontentloaded'), qvDashboardLink.click()]);
   await page.waitForFunction(expected => document.querySelector('#patientIdBadge')?.textContent.trim() === expected, 'CIP-DEMO-FH-002');
   const fh002ViaSearch = await page.locator('#promsDashboardContainer').innerText();
