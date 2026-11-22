@@ -16,11 +16,11 @@
     <link rel="modulepreload" href="modules/nexus/version.js">
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
-    <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="style_seguimiento.css?v=20261122-t7j">
+    <link rel="stylesheet" href="style.css?v=20261122-t7s">
+    <link rel="stylesheet" href="style_seguimiento.css?v=20261122-t7s">
 </head>
 
-<body>
+<body class="nx-pagina">
 
     <div class="nx-marco">
 <nx-shell modulo="reuma" raiz="" pagina="seguimiento.html">
@@ -44,14 +44,16 @@
 
         <main class="main-content nx-marco__contenido">
             <div class="form-container">
-                <header class="form-header">
-                    <h1>HUB CL&Iacute;NICO - VISITA DE SEGUIMIENTO <span class="highlight"
-                            id="patologiaHighlight">Reumatología</span></h1>
-                    <p class="subtitle" id="patologiaSubtitle">Seleccione diagnóstico para adaptar el formulario</p>
+                <header class="nx-cabecera">
+                    <div>
+                        <p class="nx-cabecera__ruta">Reumatología · Consulta</p>
+                        <h1 class="nx-cabecera__titulo">Visita de seguimiento · <span class="highlight" id="patologiaHighlight">Reumatología</span></h1>
+                        <p class="nx-cabecera__texto" id="patologiaSubtitle">Seleccione diagnóstico para adaptar el formulario</p>
+                    </div>
                 </header>
 
                 <section class="patient-info-section">
-                    <h2 class="section-title"><i class="fas fa-id-card"></i> Datos del Paciente</h2>
+                    <h2 class="seccion-titulo">Datos del paciente</h2>
                     <div class="patient-prebiologic-badge" id="prebiologicBadgeContainer" style="display:none;"></div>
                     <div class="patient-fields">
                         <div class="form-group">
