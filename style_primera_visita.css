@@ -2650,3 +2650,16 @@ body:has(.nx-marco) {
     color: var(--nx-color-texto-suave);
     font-style: italic;
 }
+
+/* Tramo 7 (#956): estilos que estaban en `style=` de primera_visita.html. */
+.pv-peso-titulo {
+    margin-top: 12px;
+}
+
+.pv-campo-extra {
+    margin-top: 10px;
+}
+
+.treatment-dose-input--debajo {
+    margin-top: 4px;
+}
