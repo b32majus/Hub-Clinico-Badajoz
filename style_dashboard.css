@@ -348,6 +348,12 @@
 
 .kpi-card--biologic .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
 
+/* H-25: el nombre del fármaco ocupa la tarjeta entera: tamaño menor y salto de línea, sin recorte */
+.kpi-card .kpi-value-small {
+    font-size: 1.05rem;
+    overflow-wrap: break-word;
+}
+
 .kpi-value {
     display: block;
     font-size: 2rem;
@@ -463,36 +469,6 @@
     align-items: center;
     justify-content: center;
     font-size: 0.9rem;
-}
-
-.dashboard-card--clinical .card-title i {
-    background: var(--color-remission-light);
-    color: var(--color-remission);
-}
-
-.dashboard-card--biomarkers .card-title i {
-    background: var(--color-low-activity-light);
-    color: var(--color-low-activity);
-}
-
-.dashboard-card--summary .card-title i {
-    background: var(--color-moderate-light);
-    color: var(--color-moderate);
-}
-
-.dashboard-card--treatment .card-title i {
-    background: var(--color-biologic-light);
-    color: var(--color-biologic);
-}
-
-.dashboard-card--history .card-title i {
-    background: var(--color-fame-light);
-    color: var(--color-fame);
-}
-
-.dashboard-card--events .card-title i {
-    background: var(--color-high-activity-light);
-    color: var(--color-high-activity);
 }
 
 .card-content {
