@@ -2773,7 +2773,12 @@
     border-bottom: 1px solid var(--nx-color-borde);
 }
 
-.longitudinal-section-header .card-title {
+.longitudinal-controls .nx-campo__control {
+    width: auto;
+}
+
+.longitudinal-section-header .card-title,
+.longitudinal-section-header .nx-tarjeta__titulo {
     margin: 0;
     padding: 0;
     border: none;
