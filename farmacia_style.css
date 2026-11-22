@@ -1905,9 +1905,6 @@
     flex-shrink: 0;
 }
 
-.fh-dashboard-check--ok {
-    border-left: 3px solid var(--nx-color-ok);
-}
 .fh-dashboard-check--ok i {
     color: var(--nx-color-ok);
 }
@@ -1915,9 +1912,6 @@
     color: var(--nx-color-ok);
 }
 
-.fh-dashboard-check--pending {
-    border-left: 3px solid var(--nx-color-aviso);
-}
 .fh-dashboard-check--pending i {
     color: var(--nx-color-aviso);
 }
@@ -1925,9 +1919,6 @@
     color: var(--nx-color-aviso);
 }
 
-.fh-dashboard-check--review {
-    border-left: 3px solid var(--nx-color-tenue);
-}
 .fh-dashboard-check--review i {
     color: var(--nx-color-texto-suave);
 }
@@ -1935,9 +1926,6 @@
     color: var(--nx-color-texto-suave);
 }
 
-.fh-dashboard-check--demo {
-    border-left: 3px solid var(--nx-color-borde);
-}
 .fh-dashboard-check--demo i {
     color: var(--nx-color-texto-suave);
 }
@@ -2304,16 +2292,7 @@
     line-height: 1.4;
 }
 
-/* T7 — Severity badge & card border for adverse events */
-.longitudinal-ae-card {
-    border-left: 4px solid var(--nx-color-borde);
-}
-
-.longitudinal-ae-card--low       { border-left-color: var(--nx-color-aviso); }
-.longitudinal-ae-card--moderate  { border-left-color: var(--nx-color-aviso); }
-.longitudinal-ae-card--high      { border-left-color: var(--nx-color-error); }
-.longitudinal-ae-card--serious   { border-left-color: var(--nx-color-error); }
-
+/* T7 — Severity badge for adverse events (la gravedad la lleva la etiqueta, sin franja) */
 .longitudinal-ae-badge {
     display: inline-flex;
     align-items: center;
@@ -2484,7 +2463,6 @@
     border-radius: 10px;
     background: var(--nx-color-fondo);
     border: 1px solid var(--nx-color-borde);
-    border-left: 3px solid var(--nx-color-modulo-texto);
     font-size: 0.85rem;
     line-height: 1.45;
     transition: background 0.15s, border-color 0.15s;
@@ -3817,7 +3795,6 @@
     border-radius: 12px;
     background: var(--nx-color-superficie);
     border: 1px solid var(--nx-color-borde);
-    border-left: 4px solid var(--nx-color-borde);
     box-shadow: 0 1px 2px color-mix(in srgb, var(--nx-color-texto) 4%, transparent);
     margin-bottom: 12px;
 }
