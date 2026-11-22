@@ -147,7 +147,7 @@ function buildMockDom() {
   mockElements['validationBlock'] = validationBlock;
 
   // Header title
-  var dermaTitle = createMockElement('h2', { className: 'section-title' });
+  var dermaTitle = createMockElement('h2', { className: 'nx-tarjeta__titulo' });
   dermaTitle.textContent = '';
   var initialIcon = createMockElement('i', { className: 'fas fa-disease' });
   initialIcon.setAttribute('aria-hidden', 'true');
@@ -310,7 +310,7 @@ function buildMockDom() {
     },
     getElementById: function (id) { return mockElements[id] || null; },
     querySelector: function (sel) {
-      if (sel === '#formDerma h2.section-title') return dermaTitle;
+      if (sel === '#formDerma h2.nx-tarjeta__titulo') return dermaTitle;
       if (sel === '[data-context="cip"]') return ctxCip;
       if (sel === '[data-context="servicio"]') return ctxServ;
       if (sel === '[data-context="patologia"]') return ctxPat;
