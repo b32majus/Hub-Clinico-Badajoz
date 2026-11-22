@@ -16,9 +16,9 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7q">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7r">
 </head>
-<body>
+<body class="nx-pagina">
     <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_estadisticas.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -49,51 +49,31 @@
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
         <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--estadisticas">
-            <div class="demo-banner" role="note">
-                <i class="fas fa-flask" aria-hidden="true"></i>
-                <span><strong>Demo Farmacia v0.3 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-            </div>
+            <nx-aviso tipo="aviso" role="note" titulo="Demo Farmacia v0.3 — Datos sintéticos.">Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</nx-aviso>
 
             <!-- 1. Header de página con resumen ejecutivo -->
             <div class="stats-note stats-population-only" id="statsImportNotice" role="note"><i class="fas fa-info-circle" aria-hidden="true"></i> Demo sintética versionada. Datos inventados para evaluación; no usar en decisiones clínicas.</div>
 
-            <section class="stats-hero-header stats-population-only">
-                <div class="stats-hero-main">
-                    <div class="stats-hero-icon">
-                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+            <div class="stats-population-only">
+                <header class="nx-cabecera">
+                    <div>
+                        <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Gestión</p>
+                        <h1 class="nx-cabecera__titulo">Estadísticas del servicio</h1>
+                        <p class="nx-cabecera__texto">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
+                        <p class="nx-cabecera__texto" id="executive-summary"><strong id="summary-pacientes">0</strong> pacientes · <strong id="summary-servicios">0</strong> servicios · <strong id="summary-patologias">0</strong> patologías · <strong id="summary-farmacos">0</strong> fármacos · <strong id="summary-ea">0</strong> con EA</p>
                     </div>
-                    <div class="stats-hero-info">
-                        <h1 class="stats-hero-title">Estadísticas del servicio</h1>
-                        <p class="stats-hero-subtitle">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
-                        <div class="stats-hero-summary" id="executive-summary">
-                            <span class="stats-hero-summary-item"><i class="fas fa-users"></i> <strong id="summary-pacientes">0</strong> pacientes</span>
-                            <span class="stats-hero-summary-dot">·</span>
-                            <span class="stats-hero-summary-item"><i class="fas fa-hospital"></i> <strong id="summary-servicios">0</strong> servicios</span>
-                            <span class="stats-hero-summary-dot">·</span>
-                            <span class="stats-hero-summary-item"><i class="fas fa-disease"></i> <strong id="summary-patologias">0</strong> patologías</span>
-                            <span class="stats-hero-summary-dot">·</span>
-                            <span class="stats-hero-summary-item"><i class="fas fa-pills"></i> <strong id="summary-farmacos">0</strong> fármacos</span>
-                            <span class="stats-hero-summary-dot">·</span>
-                            <span class="stats-hero-summary-item"><i class="fas fa-exclamation-triangle"></i> <strong id="summary-ea">0</strong> con EA</span>
-                        </div>
-                    </div>
+                </header>
+                <div class="nx-acciones">
+                    <button type="button" class="nx-boton nx-boton--secundario" id="exportReportBtn"><i class="fas fa-download" aria-hidden="true"></i> Exportar cohorte CSV</button>
+                    <button type="button" class="nx-boton nx-boton--secundario nx-boton--icono stats-hero-notify" id="notifyBtn" aria-label="Notificaciones"><i class="fas fa-bell" aria-hidden="true"></i> <span class="stats-hero-notify-badge" id="notifyBadge">0</span></button>
                 </div>
-                <div class="stats-hero-actions">
-                    <button type="button" class="btn btn-outline stats-hero-export" id="exportReportBtn">
-                        <i class="fas fa-download"></i> Exportar cohorte CSV
-                    </button>
-                    <button type="button" class="stats-hero-notify" id="notifyBtn" aria-label="Notificaciones">
-                        <i class="fas fa-bell"></i>
-                        <span class="stats-hero-notify-badge" id="notifyBadge">0</span>
-                    </button>
-                </div>
-            </section>
+            </div>
 
             <!-- Vistas: análisis poblacional / informes (#576) -->
             <section class="stats-view-switcher-section" id="stats-view-switcher-section">
                 <div class="stats-view-switcher" role="group" aria-label="Vistas de Estadísticas">
-                    <button type="button" class="btn btn-outline stats-view-btn" id="population-view-btn" aria-pressed="true"><i class="fas fa-users" aria-hidden="true"></i> Análisis poblacional</button>
-                    <button type="button" class="btn btn-outline stats-view-btn" id="informes-view-btn" aria-pressed="false"><i class="fas fa-file-excel" aria-hidden="true"></i> Informes</button>
+                    <button type="button" class="nx-boton nx-boton--secundario stats-view-btn" id="population-view-btn" aria-pressed="true"><i class="fas fa-users" aria-hidden="true"></i> Análisis poblacional</button>
+                    <button type="button" class="nx-boton nx-boton--secundario stats-view-btn" id="informes-view-btn" aria-pressed="false"><i class="fas fa-file-excel" aria-hidden="true"></i> Informes</button>
                 </div>
             </section>
 
@@ -103,10 +83,10 @@
                  Selección progresiva Fármaco → Tipo de reporte → Período →
                  «Ver reporte»; cada fármaco expone su único tipo soportado y
                  los periodos se enumeran desde los modelos vivos. -->
-            <section id="informes-section" class="dashboard-card informes-section" aria-labelledby="informes-title">
+            <section id="informes-section" class="nx-tarjeta informes-section" aria-labelledby="informes-title">
                 <div class="informes-header">
                     <div>
-                        <h2 class="card-title" id="informes-title"><i class="fas fa-file-excel" aria-hidden="true"></i> <span id="informes-title-text">Reportes farmacéuticos</span></h2>
+                        <h2 class="nx-tarjeta__titulo" id="informes-title"><span id="informes-title-text">Reportes farmacéuticos</span></h2>
                         <p class="informes-subtitle" id="informes-subtitle">Entrada neutral: seleccione fármaco, tipo de reporte y período y pulse «Ver reporte». Informes de demostración calculados exclusivamente desde fixtures sintéticos dedicados.</p>
                     </div>
                     <div class="informes-controls">
@@ -123,7 +103,7 @@
                         <span id="informes-cosentyx-controls" class="informes-report-controls" hidden>
                             <label for="informes-quarter-select" class="informes-quarter-label">Trimestre</label>
                             <select id="informes-quarter-select" class="informes-quarter-select"></select>
-                            <button type="button" class="btn btn-primary" id="informes-download-xlsx" disabled><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                            <button type="button" class="nx-boton nx-boton--principal" id="informes-download-xlsx" disabled><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
                         </span>
                         <span id="informes-kisqali-controls" class="informes-report-controls" hidden>
                             <label for="kisqali-mode-select" class="informes-quarter-label">Ventana</label>
@@ -135,9 +115,9 @@
                             </select>
                             <label for="kisqali-period-select" class="informes-quarter-label" id="kisqali-period-label">Periodo</label>
                             <select id="kisqali-period-select" class="informes-quarter-select" aria-label="Periodo seleccionado"></select>
-                            <button type="button" class="btn btn-primary" id="kisqali-download-xlsx" disabled><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                            <button type="button" class="nx-boton nx-boton--principal" id="kisqali-download-xlsx" disabled><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
                         </span>
-                        <button type="button" class="btn btn-primary" id="informes-view-report" disabled>Ver reporte</button>
+                        <button type="button" class="nx-boton nx-boton--principal" id="informes-view-report" disabled>Ver reporte</button>
                     </div>
                 </div>
                 <p class="informes-notice" id="informes-synthetic-notice" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Datos sintéticos específicos del informe</p>
@@ -150,10 +130,11 @@
                 <div id="informes-cosentyx-panel" class="informes-report-panel" hidden>
                     <p class="informes-period-line">Trimestre: <strong id="informes-period"></strong></p>
                     <div class="informes-kpi-grid" id="informes-kpis" aria-live="polite"></div>
-                    <button type="button" class="btn btn-outline cosentyx-detail-toggle" id="informes-detail-toggle" aria-expanded="false" aria-controls="informes-detail-panel">Ver detalle</button>
+                    <button type="button" class="nx-boton nx-boton--secundario cosentyx-detail-toggle" id="informes-detail-toggle" aria-expanded="false" aria-controls="informes-detail-panel">Ver detalle</button>
                     <div id="informes-detail-panel" hidden>
-                        <div class="table-responsive-wrapper cosentyx-detail-scroll">
-                            <table id="informes-detail-table" class="data-table stats-data-table">
+                        <div class="nx-tabla-marco cosentyx-detail-scroll" role="region" aria-label="Detalle del informe" tabindex="0">
+                            <table id="informes-detail-table" class="nx-tabla">
+<caption class="nx-solo-lector">Detalle del informe del fármaco</caption>
                                 <thead></thead>
                                 <tbody></tbody>
                             </table>
@@ -179,10 +160,11 @@
                         <p class="kisqali-closing-note" id="kisqali-closing-note"></p>
                     </section>
                     <p class="kisqali-secondary" id="kisqali-secondary"></p>
-                    <button type="button" class="btn btn-outline kisqali-detail-toggle" id="kisqali-detail-toggle" aria-expanded="false" aria-controls="kisqali-detail-panel">Ver detalle</button>
+                    <button type="button" class="nx-boton nx-boton--secundario kisqali-detail-toggle" id="kisqali-detail-toggle" aria-expanded="false" aria-controls="kisqali-detail-panel">Ver detalle</button>
                     <div id="kisqali-detail-panel" hidden>
-                        <div class="table-responsive-wrapper kisqali-detail-scroll">
-                            <table id="kisqali-patients-table" class="data-table stats-data-table">
+                        <div class="nx-tabla-marco kisqali-detail-scroll" role="region" aria-label="Pacientes del informe de Kisqali" tabindex="0">
+                            <table id="kisqali-patients-table" class="nx-tabla">
+<caption class="nx-solo-lector">Pacientes del informe de Kisqali</caption>
                                 <thead></thead>
                                 <tbody></tbody>
                             </table>
@@ -307,7 +289,7 @@
                         <i class="fas fa-users"></i> Cohorte actual:
                         <span class="stats-cohort-pills" id="cohort-pills"></span>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline" id="clear-quick-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+                    <button type="button" class="nx-boton nx-boton--secundario nx-boton--pequeno" id="clear-quick-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
                 </div>
                 <div id="filter-result-count" class="filter-result-count"></div>
             </section>
@@ -342,18 +324,19 @@
                     </div>
                     <h3 class="stats-empty-state-title">No hay pacientes que coincidan con los filtros aplicados</h3>
                     <p class="stats-empty-state-desc">Ajuste los criterios o limpie los filtros para ver todos los pacientes.</p>
-                    <button type="button" class="btn btn-primary" id="empty-clear-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+                    <button type="button" class="nx-boton nx-boton--principal" id="empty-clear-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
                 </div>
             </section>
 
             <!-- 7. Tabla de pacientes filtrados -->
-            <section id="patients-table-section" class="dashboard-card stats-table-section stats-population-only">
+            <section id="patients-table-section" class="nx-tarjeta stats-table-section stats-population-only">
                 <div class="stats-table-header">
-                    <h2 class="card-title stats-table-title"><i class="fas fa-table"></i> Pacientes incluidos en la cohorte filtrada</h2>
-                    <button type="button" class="btn btn-sm btn-outline" id="customizeColumnsBtn"><i class="fas fa-columns"></i> Personalizar columnas</button>
+                    <h2 class="nx-tarjeta__titulo stats-table-title">Pacientes incluidos en la cohorte filtrada</h2>
+                    <button type="button" class="nx-boton nx-boton--secundario nx-boton--pequeno" id="customizeColumnsBtn"><i class="fas fa-columns"></i> Personalizar columnas</button>
                 </div>
-                <div class="table-responsive-wrapper">
-                    <table id="patients-table" class="data-table stats-data-table">
+                <div class="nx-tabla-marco" role="region" aria-label="Pacientes de la cohorte filtrada" tabindex="0">
+                    <table id="patients-table" class="nx-tabla">
+<caption class="nx-solo-lector">Pacientes incluidos en la cohorte filtrada</caption>
                         <thead></thead>
                         <tbody></tbody>
                     </table>
