@@ -214,7 +214,8 @@
 .guided-intake-card { animation: farmaciaFadeIn 0.22s ease; }
 @keyframes farmaciaFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-.info-grid {
+.info-grid,
+.longitudinal-resumen {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 12px;
