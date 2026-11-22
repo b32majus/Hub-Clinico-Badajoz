@@ -17,7 +17,7 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="style_primera_visita.css?v=20261121-t6">
+    <link rel="stylesheet" href="style_primera_visita.css?v=20261122-t7i">
 </head>
 
 <body>
@@ -487,11 +487,11 @@
                                         <defs>
                                             <pattern id="legendDoublePattern" patternUnits="userSpaceOnUse" width="8"
                                                 height="8" patternTransform="rotate(45)">
-                                                <rect x="0" y="0" width="4" height="8" fill="#ffc107" />
-                                                <rect x="4" y="0" width="4" height="8" fill="#dc3545" />
+                                                <rect x="0" y="0" width="4" height="8" fill="var(--nx-color-aviso)" />
+                                                <rect x="4" y="0" width="4" height="8" fill="var(--nx-color-error)" />
                                             </pattern>
                                         </defs>
-                                        <circle cx="12" cy="12" r="10" fill="url(#legendDoublePattern)" stroke="#b8860b"
+                                        <circle cx="12" cy="12" r="10" fill="url(#legendDoublePattern)" stroke="var(--nx-color-aviso)"
                                             stroke-width="2.5" />
                                     </svg>
                                     <span id="doubleMarkCount">0</span> articulación(es) con dolor E inflamación
@@ -510,13 +510,13 @@
                                         <defs>
                                             <pattern id="doubleMarkPattern" patternUnits="userSpaceOnUse" width="8"
                                                 height="8" patternTransform="rotate(45)">
-                                                <rect x="0" y="0" width="4" height="8" fill="#ffc107" />
-                                                <rect x="4" y="0" width="4" height="8" fill="#dc3545" />
+                                                <rect x="0" y="0" width="4" height="8" fill="var(--nx-color-aviso)" />
+                                                <rect x="4" y="0" width="4" height="8" fill="var(--nx-color-error)" />
                                             </pattern>
                                         </defs>
 
                                         <!-- Cuerpo Base (Trazado Anatómico) -->
-                                        <g id="bodyOutline" stroke="#999" stroke-width="1.5" fill="none">
+                                        <g id="bodyOutline" stroke="var(--nx-color-tenue)" stroke-width="1.5" fill="none">
                                             <!-- Cabeza -->
                                             <circle cx="300" cy="40" r="25" />
                                             <!-- Cuello -->
@@ -573,9 +573,9 @@
                                         <!-- MANOS AMPLIADAS - Mano Derecha -->
                                         <g id="mano-derecha">
                                             <!-- Contorno de la mano -->
-                                            <rect x="20" y="120" width="120" height="180" rx="10" stroke="#aaa"
-                                                stroke-width="1" fill="#f9f9f9" opacity="0.5" />
-                                            <text x="80" y="110" text-anchor="middle" font-size="12" fill="#555"
+                                            <rect x="20" y="120" width="120" height="180" rx="10" stroke="var(--nx-color-tenue)"
+                                                stroke-width="1" fill="var(--nx-color-superficie-suave)" opacity="0.5" />
+                                            <text x="80" y="110" text-anchor="middle" font-size="12" fill="var(--nx-color-texto-suave)"
                                                 font-weight="bold">Mano Derecha</text>
 
                                             <!-- MCF (Metacarpofalángicas) Derecha - Fila superior -->
@@ -592,7 +592,7 @@
 
                                             <!-- Etiqueta MCF -->
                                             <text x="80" y="140" text-anchor="middle" font-size="9"
-                                                fill="#666">MCF</text>
+                                                fill="var(--nx-color-texto-suave)">MCF</text>
 
                                             <!-- IFP (Interfalángicas Proximales) Derecha - Fila media -->
                                             <circle cx="40" cy="190" r="7" class="body-region"
@@ -608,25 +608,25 @@
 
                                             <!-- Etiqueta IFP -->
                                             <text x="80" y="180" text-anchor="middle" font-size="9"
-                                                fill="#666">IFP</text>
+                                                fill="var(--nx-color-texto-suave)">IFP</text>
 
                                             <!-- Líneas de dedos -->
-                                            <line x1="40" y1="158" x2="40" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="65" y1="158" x2="65" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="90" y1="158" x2="90" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="115" y1="158" x2="115" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="130" y1="162" x2="130" y2="189" stroke="#ccc" stroke-width="1" />
+                                            <line x1="40" y1="158" x2="40" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="65" y1="158" x2="65" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="90" y1="158" x2="90" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="115" y1="158" x2="115" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="130" y1="162" x2="130" y2="189" stroke="var(--nx-color-borde)" stroke-width="1" />
 
                                             <!-- Números de dedos -->
                                             <text x="40" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">5</text>
+                                                fill="var(--nx-color-texto-suave)">5</text>
                                             <text x="65" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">4</text>
+                                                fill="var(--nx-color-texto-suave)">4</text>
                                             <text x="90" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">3</text>
+                                                fill="var(--nx-color-texto-suave)">3</text>
                                             <text x="115" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">2</text>
-                                            <text x="130" y="215" text-anchor="middle" font-size="12" fill="#d9534f"
+                                                fill="var(--nx-color-texto-suave)">2</text>
+                                            <text x="130" y="215" text-anchor="middle" font-size="12" fill="var(--nx-color-error)"
                                                 font-weight="bold">P</text>
 
                                             <!-- Dactilitis - Dedos Mano Derecha -->
@@ -643,15 +643,15 @@
 
                                             <!-- Etiqueta Dactilitis -->
                                             <text x="80" y="280" text-anchor="middle" font-size="9"
-                                                fill="#666">Dactilitis</text>
+                                                fill="var(--nx-color-texto-suave)">Dactilitis</text>
                                         </g>
 
                                         <!-- MANOS AMPLIADAS - Mano Izquierda -->
                                         <g id="mano-izquierda">
                                             <!-- Contorno de la mano -->
-                                            <rect x="460" y="120" width="120" height="180" rx="10" stroke="#aaa"
-                                                stroke-width="1" fill="#f9f9f9" opacity="0.5" />
-                                            <text x="520" y="110" text-anchor="middle" font-size="12" fill="#555"
+                                            <rect x="460" y="120" width="120" height="180" rx="10" stroke="var(--nx-color-tenue)"
+                                                stroke-width="1" fill="var(--nx-color-superficie-suave)" opacity="0.5" />
+                                            <text x="520" y="110" text-anchor="middle" font-size="12" fill="var(--nx-color-texto-suave)"
                                                 font-weight="bold">Mano Izquierda</text>
 
                                             <!-- MCF Izquierda -->
@@ -668,7 +668,7 @@
 
                                             <!-- Etiqueta MCF -->
                                             <text x="520" y="140" text-anchor="middle" font-size="9"
-                                                fill="#666">MCF</text>
+                                                fill="var(--nx-color-texto-suave)">MCF</text>
 
                                             <!-- IFP Izquierda -->
                                             <circle cx="470" cy="195" r="6" class="body-region"
@@ -684,26 +684,26 @@
 
                                             <!-- Etiqueta IFP -->
                                             <text x="520" y="180" text-anchor="middle" font-size="9"
-                                                fill="#666">IFP</text>
+                                                fill="var(--nx-color-texto-suave)">IFP</text>
 
                                             <!-- Líneas de dedos -->
-                                            <line x1="470" y1="162" x2="470" y2="189" stroke="#ccc" stroke-width="1" />
-                                            <line x1="485" y1="158" x2="485" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="510" y1="158" x2="510" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="535" y1="158" x2="535" y2="183" stroke="#ccc" stroke-width="1" />
-                                            <line x1="560" y1="158" x2="560" y2="183" stroke="#ccc" stroke-width="1" />
+                                            <line x1="470" y1="162" x2="470" y2="189" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="485" y1="158" x2="485" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="510" y1="158" x2="510" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="535" y1="158" x2="535" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
+                                            <line x1="560" y1="158" x2="560" y2="183" stroke="var(--nx-color-borde)" stroke-width="1" />
 
                                             <!-- Números de dedos -->
-                                            <text x="470" y="215" text-anchor="middle" font-size="12" fill="#d9534f"
+                                            <text x="470" y="215" text-anchor="middle" font-size="12" fill="var(--nx-color-error)"
                                                 font-weight="bold">P</text>
                                             <text x="485" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">2</text>
+                                                fill="var(--nx-color-texto-suave)">2</text>
                                             <text x="510" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">3</text>
+                                                fill="var(--nx-color-texto-suave)">3</text>
                                             <text x="535" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">4</text>
+                                                fill="var(--nx-color-texto-suave)">4</text>
                                             <text x="560" y="215" text-anchor="middle" font-size="10"
-                                                fill="#888">5</text>
+                                                fill="var(--nx-color-texto-suave)">5</text>
 
                                             <!-- Dactilitis - Dedos Mano Izquierda -->
                                             <rect class="body-region" data-region-id="dactilitis-dedo5-mano-izquierda"
@@ -719,20 +719,20 @@
 
                                             <!-- Etiqueta Dactilitis -->
                                             <text x="520" y="280" text-anchor="middle" font-size="9"
-                                                fill="#666">Dactilitis</text>
+                                                fill="var(--nx-color-texto-suave)">Dactilitis</text>
                                         </g>
 
                                         <!-- PIES AMPLIADOS - Pie Derecho -->
                                         <g id="pie-derecho">
                                             <!-- Contorno del pie -->
-                                            <rect x="20" y="340" width="120" height="130" rx="10" stroke="#aaa"
-                                                stroke-width="1" fill="#f9f9f9" opacity="0.5" />
-                                            <text x="80" y="330" text-anchor="middle" font-size="12" fill="#555"
+                                            <rect x="20" y="340" width="120" height="130" rx="10" stroke="var(--nx-color-tenue)"
+                                                stroke-width="1" fill="var(--nx-color-superficie-suave)" opacity="0.5" />
+                                            <text x="80" y="330" text-anchor="middle" font-size="12" fill="var(--nx-color-texto-suave)"
                                                 font-weight="bold">Pie Derecho</text>
 
                                             <!-- Etiqueta Dactilitis de dedos -->
                                             <text x="80" y="355" text-anchor="middle" font-size="9"
-                                                fill="#666">Dactilitis de Dedos</text>
+                                                fill="var(--nx-color-texto-suave)">Dactilitis de Dedos</text>
 
                                             <!-- Dactilitis - Dedos Pie Derecho -->
                                             <rect class="body-region" data-region-id="dactilitis-dedo1-pie-derecho"
@@ -748,34 +748,34 @@
 
                                             <!-- Números de dedos -->
                                             <text x="41" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">5</text>
+                                                fill="var(--nx-color-texto-suave)">5</text>
                                             <text x="61" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">4</text>
+                                                fill="var(--nx-color-texto-suave)">4</text>
                                             <text x="81" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">3</text>
+                                                fill="var(--nx-color-texto-suave)">3</text>
                                             <text x="101" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">2</text>
-                                            <text x="121" y="420" text-anchor="middle" font-size="12" fill="#d9534f"
+                                                fill="var(--nx-color-texto-suave)">2</text>
+                                            <text x="121" y="420" text-anchor="middle" font-size="12" fill="var(--nx-color-error)"
                                                 font-weight="bold">P</text>
 
                                             <!-- Visualización simplificada del pie -->
-                                            <ellipse cx="80" cy="445" rx="35" ry="15" stroke="#bbb" stroke-width="1"
+                                            <ellipse cx="80" cy="445" rx="35" ry="15" stroke="var(--nx-color-borde)" stroke-width="1"
                                                 fill="none" />
                                             <text x="80" y="450" text-anchor="middle" font-size="8"
-                                                fill="#999">Metatarso</text>
+                                                fill="var(--nx-color-texto-suave)">Metatarso</text>
                                         </g>
 
                                         <!-- PIES AMPLIADOS - Pie Izquierdo -->
                                         <g id="pie-izquierdo">
                                             <!-- Contorno del pie -->
-                                            <rect x="460" y="340" width="120" height="130" rx="10" stroke="#aaa"
-                                                stroke-width="1" fill="#f9f9f9" opacity="0.5" />
-                                            <text x="520" y="330" text-anchor="middle" font-size="12" fill="#555"
+                                            <rect x="460" y="340" width="120" height="130" rx="10" stroke="var(--nx-color-tenue)"
+                                                stroke-width="1" fill="var(--nx-color-superficie-suave)" opacity="0.5" />
+                                            <text x="520" y="330" text-anchor="middle" font-size="12" fill="var(--nx-color-texto-suave)"
                                                 font-weight="bold">Pie Izquierdo</text>
 
                                             <!-- Etiqueta Dactilitis de dedos -->
                                             <text x="520" y="355" text-anchor="middle" font-size="9"
-                                                fill="#666">Dactilitis de Dedos</text>
+                                                fill="var(--nx-color-texto-suave)">Dactilitis de Dedos</text>
 
                                             <!-- Dactilitis - Dedos Pie Izquierdo -->
                                             <rect class="body-region" data-region-id="dactilitis-dedo5-pie-izquierdo"
@@ -790,22 +790,22 @@
                                                 data-type="dactylitis" x="554" y="365" width="10" height="40" rx="3" />
 
                                             <!-- Números de dedos -->
-                                            <text x="479" y="420" text-anchor="middle" font-size="12" fill="#d9534f"
+                                            <text x="479" y="420" text-anchor="middle" font-size="12" fill="var(--nx-color-error)"
                                                 font-weight="bold">P</text>
                                             <text x="499" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">2</text>
+                                                fill="var(--nx-color-texto-suave)">2</text>
                                             <text x="519" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">3</text>
+                                                fill="var(--nx-color-texto-suave)">3</text>
                                             <text x="539" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">4</text>
+                                                fill="var(--nx-color-texto-suave)">4</text>
                                             <text x="559" y="420" text-anchor="middle" font-size="10"
-                                                fill="#888">5</text>
+                                                fill="var(--nx-color-texto-suave)">5</text>
 
                                             <!-- Visualización simplificada del pie -->
-                                            <ellipse cx="520" cy="445" rx="35" ry="15" stroke="#bbb" stroke-width="1"
+                                            <ellipse cx="520" cy="445" rx="35" ry="15" stroke="var(--nx-color-borde)" stroke-width="1"
                                                 fill="none" />
                                             <text x="520" y="450" text-anchor="middle" font-size="8"
-                                                fill="#999">Metatarso</text>
+                                                fill="var(--nx-color-texto-suave)">Metatarso</text>
                                         </g>
                                     </svg>
                                 </div>
@@ -1151,7 +1151,7 @@
                                 <label><input type="checkbox" id="nodulosReumatoideos"> Presencia de nódulos
                                     reumatoideos</label>
                             </div>
-                            <div class="form-group" id="nodulosLocalizacion" style="display:none;margin-top:10px;">
+                            <div class="form-group pv-campo-extra" id="nodulosLocalizacion" style="display:none;">
                                 <label for="nodulosLocalizacionTexto">Localización:</label>
                                 <input type="text" id="nodulosLocalizacionTexto"
                                     placeholder="Codos, manos, tendón de Aquiles...">
@@ -1165,7 +1165,7 @@
                                 <label><input type="checkbox" id="erosionesRadiologicas"> Presencia de erosiones
                                     radiológicas</label>
                             </div>
-                            <div class="form-group" id="erosionesDescripcion" style="display:none;margin-top:10px;">
+                            <div class="form-group pv-campo-extra" id="erosionesDescripcion" style="display:none;">
                                 <label for="erosionesDescripcionTexto">Descripción:</label>
                                 <textarea id="erosionesDescripcionTexto" rows="2"
                                     placeholder="Localización y grado de erosiones..."></textarea>
@@ -1908,7 +1908,7 @@
                             <p class="info-note"><i class="fas fa-info-circle"></i> Marque los ítems presentes en los últimos 10 días. Puntuación ponderada automática.</p>
 
                             <!-- Peso 8 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 8</h6>
+                            <h6 class="pv-peso-titulo">Peso 8</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiSeizure" class="sledai-item"> Convulsiones</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPsychosis" class="sledai-item"> Psicosis</label></div>
@@ -1921,7 +1921,7 @@
                             </div>
 
                             <!-- Peso 4 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 4</h6>
+                            <h6 class="pv-peso-titulo">Peso 4</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiArthritis" class="sledai-item"> Artritis</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiMyositis" class="sledai-item"> Miositis</label></div>
@@ -1932,7 +1932,7 @@
                             </div>
 
                             <!-- Peso 2 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 2</h6>
+                            <h6 class="pv-peso-titulo">Peso 2</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiRash" class="sledai-item"> Rash / exantema</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiAlopecia" class="sledai-item"> Alopecia</label></div>
@@ -1944,7 +1944,7 @@
                             </div>
 
                             <!-- Peso 1 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 1</h6>
+                            <h6 class="pv-peso-titulo">Peso 1</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiFever" class="sledai-item"> Fiebre</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiThrombocytopenia" class="sledai-item"> Trombocitopenia</label></div>
@@ -2464,7 +2464,7 @@
                                 <option value="Cevimelina">Cevimelina</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <input type="text" id="tratSintomaticoSequedadDosis" class="form-control treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                            <input type="text" id="tratSintomaticoSequedadDosis" class="form-control treatment-dose-input treatment-dose-input--debajo" placeholder="Dosis / frecuencia">
                         </div>
                         <div class="form-group">
                             <label for="tratInmunomodulador"><i class="fas fa-shield-virus"></i> Inmunomodulador:</label>
@@ -2478,7 +2478,7 @@
                                 <option value="Ciclofosfamida">Ciclofosfamida</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <input type="text" id="tratInmunomoduladorDosis" class="form-control treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                            <input type="text" id="tratInmunomoduladorDosis" class="form-control treatment-dose-input treatment-dose-input--debajo" placeholder="Dosis / frecuencia">
                         </div>
                     </div>
                 </div>

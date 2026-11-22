@@ -69,6 +69,13 @@ for (const [f, css] of fuentes) {
 }
 record('P5 los botones principales no usan el acento del módulo (DESIGN.md §1)', botones.length === 0, vacio(botones));
 
+// P6: el mapa de articulaciones (SVG de Primera visita y Seguimiento) usa tokens, no hex en fill/stroke (tramo 7).
+const svgHex = [];
+for (const f of ['primera_visita.html', 'seguimiento.html']) {
+    for (const m of read(f).replace(/<!--[\s\S]*?-->/g, '').matchAll(/\b(?:fill|stroke)="(#[0-9a-f]{3,8})"/gi)) svgHex.push(`${f}: ${m[0]}`);
+}
+record('P6 el SVG del mapa de articulaciones no lleva colores sueltos', svgHex.length === 0, vacio(svgHex));
+
 const failed = results.filter((ok) => !ok).length;
 console.log(`\nRESULTADO: ${results.length - failed} OK / ${failed} FALLIDO`);
 process.exit(failed ? 1 : 0);
