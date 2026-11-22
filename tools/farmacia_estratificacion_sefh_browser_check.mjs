@@ -108,7 +108,7 @@ try {
   await pv.page.goto(new URL(`farmacia_primera_visita.html?cip=${INITIAL_CIP}`, BASE_URL).href, { waitUntil: 'domcontentloaded' });
   await pv.page.waitForFunction(() => window.FarmaciaPrimeraVisita);
 
-  const rowSelector = 'section:has(h2.section-title:text("Registro de primera visita")) .form-grid--align-end';
+  const rowSelector = 'section:has(h2.nx-tarjeta__titulo:text("Registro de primera visita")) .form-grid--align-end';
   const pvRow = pv.page.locator(rowSelector);
   assert.equal(await pvRow.count(), 1, 'exactly one aligned first-visit row');
 
@@ -129,7 +129,7 @@ try {
   assert.equal(await pv.page.locator('#fhPvInduccionRealizada').inputValue(), 'Sí');
   assert.equal(await pv.page.locator('#fhPvEstratificacion').inputValue(), 'Nivel 2');
 
-  const pvLink = await assertSefhAccess(pv.page, 'section:has(h2.section-title:text("Registro de primera visita"))');
+  const pvLink = await assertSefhAccess(pv.page, 'section:has(h2.nx-tarjeta__titulo:text("Registro de primera visita"))');
 
   // Keyboard: the access is reachable by keyboard focus.
   await pvLink.focus();
