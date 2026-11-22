@@ -15,10 +15,10 @@
     <link rel="modulepreload" href="modules/nexus/version.js">
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
-    <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="style_dashboard.css?v=20261122-t7m">
+    <link rel="stylesheet" href="style.css?v=20261122-t7p">
+    <link rel="stylesheet" href="style_dashboard.css?v=20261122-t7p">
 </head>
-<body>
+<body class="nx-pagina">
 
     <div class="nx-marco">
         <!-- SIDEBAR (Reutilizable) -->
@@ -53,35 +53,18 @@
             <!-- Dashboard Content (se muestra cuando hay paciente) -->
             <div id="dashboardContent">
                 <!-- Header Premium del Paciente -->
-                <div class="patient-header-card" id="patientHeaderCard">
-                    <div class="patient-header-main">
-                        <div class="patient-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="patient-info">
-                            <div class="patient-id-badge" id="patientIdBadge">---</div>
-                            <h1 class="patient-name" id="patientName">Nombre del Paciente</h1>
-                            <div class="patient-meta">
-                                <span><i class="fas fa-stethoscope"></i> <span id="patientDiagnosis">---</span></span>
-                                <span><i class="fas fa-calendar-alt"></i> Última visita: <span id="patientLastVisit">---</span></span>
-                                <span><i class="fas fa-birthday-cake"></i> <span id="patientAge">---</span> años</span>
-                                <span><i class="fas fa-venus-mars"></i> <span id="patientGender">---</span></span>
-                            </div>
-                            <div class="patient-prebiologic-badge" id="prebiologicBadgeContainer" style="display:none;"></div>
-                        </div>
-                        <div class="patient-status-badge" id="patientStatusBadge">
-                            <span class="status-dot"></span>
-                            <span class="status-text" id="patientStatusText">---</span>
-                        </div>
+                <header class="nx-cabecera" id="patientHeaderCard">
+                    <div>
+                        <p class="nx-cabecera__ruta">Reumatología · Paciente</p>
+                        <h1 class="nx-cabecera__titulo" id="patientName">Nombre del Paciente</h1>
+                        <p class="nx-cabecera__texto"><span id="patientDiagnosis">---</span> · Última visita: <span id="patientLastVisit">---</span> · <span id="patientAge">---</span> años · <span id="patientGender">---</span></p>
+                        <div class="patient-prebiologic-badge" id="prebiologicBadgeContainer" style="display:none;"></div>
                     </div>
-                    <div class="patient-header-actions">
-                        <a href="#" id="btnSeguimiento" class="btn btn-primary">
-                            <i class="fas fa-clipboard-list"></i> Registrar Seguimiento
-                        </a>
-                        <button id="btnSolicitudFH" class="btn btn-secondary" title="Generar solicitud a Farmacia Hospitalaria">
-                            <i class="fas fa-file-prescription"></i> Solicitud FH
-                        </button>
-                    </div>
+                    <p class="nx-cabecera__estado"><span class="nx-etiqueta" id="patientIdBadge">---</span> <span class="nx-etiqueta" id="patientStatusBadge"><span id="patientStatusText">---</span></span></p>
+                </header>
+                <div class="nx-acciones">
+                    <a href="#" id="btnSeguimiento" class="nx-boton nx-boton--principal">Registrar seguimiento</a>
+                    <button type="button" id="btnSolicitudFH" class="nx-boton nx-boton--secundario" title="Generar solicitud a Farmacia Hospitalaria">Solicitud FH</button>
                 </div>
 
                 <!-- KPIs del Paciente -->
@@ -124,9 +107,9 @@
                 <!-- Grid de Tarjetas -->
                 <div class="dashboard-grid" id="dashboardGrid">
                     <!-- Tarjeta 1: Datos Generales del Paciente -->
-                    <div class="dashboard-card dashboard-card--clinical">
-                        <h2 class="card-title"><i class="fas fa-user-circle"></i> Datos Generales</h2>
-                        <div class="card-content">
+                    <div class="nx-tarjeta dashboard-card--clinical">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Datos Generales</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                             <ul>
                                 <li><strong>ID:</strong> <span id="patientGeneralId">---</span></li>
                                 <li><strong>Nombre:</strong> <span id="patientGeneralName">---</span></li>
@@ -139,9 +122,9 @@
                     </div>
 
                     <!-- Tarjeta 2: Biomarcadores Clave -->
-                    <div class="dashboard-card dashboard-card--biomarkers">
-                        <h2 class="card-title"><i class="fas fa-dna"></i> Biomarcadores Clave</h2>
-                        <div class="card-content">
+                    <div class="nx-tarjeta dashboard-card--biomarkers">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Biomarcadores Clave</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                             <ul>
                                 <li class="biomarker-item"><i class="fas fa-vial"></i> HLA-B27: <span id="biomarkerHlaB27">---</span></li>
                                 <li class="biomarker-item"><i class="fas fa-vial"></i> FR: <span id="biomarkerFr">---</span></li>
@@ -151,14 +134,14 @@
                     </div>
 
                     <!-- Tarjeta 3: Resumen Clínico Rápido -->
-                    <div class="dashboard-card dashboard-card--summary">
-                        <h2 class="card-title"><i class="fas fa-notes-medical"></i> Resumen Clínico</h2>
-                        <div class="card-content">
+                    <div class="nx-tarjeta dashboard-card--summary">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Resumen Clínico</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                             <p><strong>Comorbilidades:</strong></p>
                             <ul id="comorbiditiesList">
                                 <li>Sin comorbilidades registradas</li>
                             </ul>
-                            <p style="margin-top: 12px;"><strong>Manifestaciones Extra-articulares:</strong></p>
+                            <p class="tarjeta-separado"><strong>Manifestaciones extraarticulares:</strong></p>
                             <ul id="extraArticularManifestationsList">
                                 <li>Sin manifestaciones registradas</li>
                             </ul>
@@ -166,9 +149,9 @@
                     </div>
 
                     <!-- Tarjeta 4: Tratamiento Activo -->
-                    <div class="dashboard-card dashboard-card--treatment">
-                        <h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento Activo</h2>
-                        <div class="card-content">
+                    <div class="nx-tarjeta dashboard-card--treatment">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Tratamiento Activo</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                             <ul>
                                 <li><strong>Fármaco:</strong> <span id="activeTreatmentName">---</span></li>
                                 <li><strong>Fecha Inicio:</strong> <span id="activeTreatmentStartDate">---</span></li>
@@ -178,24 +161,27 @@
                     </div>
 
                     <!-- Tarjeta 5: Historial de Tratamientos -->
-                    <div class="dashboard-card dashboard-card--history">
-                        <h2 class="card-title"><i class="fas fa-history"></i> Historial de Tratamientos</h2>
+                    <div class="nx-tarjeta dashboard-card--history">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Historial de Tratamientos</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                         <div class="card-content timeline" id="treatmentHistory">
                             <p class="empty-message">No hay historial de tratamientos previos.</p>
                         </div>
-                    </div>
+                    </div></div>
 
                     <!-- Tarjeta 6: Eventos Clínicos Clave -->
-                    <div class="dashboard-card dashboard-card--events">
-                        <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Eventos Clínicos</h2>
+                    <div class="nx-tarjeta dashboard-card--events">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Eventos Clínicos</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                         <div class="card-content timeline" id="keyEventsTimeline">
                             <p class="empty-message">No hay eventos clínicos registrados.</p>
                         </div>
-                    </div>
+                    </div></div>
 
                     <!-- Tarjeta 7: Evoluci&oacute;n de &Iacute;ndices de Actividad -->
-                    <div class="dashboard-card dashboard-card--chart">
-                        <h2 class="card-title"><i class="fas fa-chart-area"></i> Evoluci&oacute;n de &Iacute;ndices de Actividad</h2>
+                    <div class="nx-tarjeta dashboard-card--chart">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Evoluci&oacute;n de &Iacute;ndices de Actividad</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                         <div class="chart-controls">
                             <label for="selectActivityIndex">&Iacute;ndice:</label>
                             <select id="selectActivityIndex" class="select-modern">
@@ -243,11 +229,12 @@
                             <canvas id="activityChart"></canvas>
                         </div>
                         <p class="empty-chart-message hidden" id="emptyActivityChart">Se necesitan al menos 2 visitas para mostrar la evolución.</p>
-                    </div>
+                    </div></div>
 
                     <!-- Tarjeta 8: Evolución Reporte Paciente (PROs) -->
-                    <div class="dashboard-card dashboard-card--chart">
-                        <h2 class="card-title"><i class="fas fa-user-edit"></i> Evolución PROs (Reportes del Paciente)</h2>
+                    <div class="nx-tarjeta dashboard-card--chart">
+                        <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Evolución PROs (Reportes del Paciente)</h2></header>
+                        <div class="nx-tarjeta__cuerpo card-content">
                         <div class="chart-controls">
                             <label for="selectPRO">PRO:</label>
                             <select id="selectPRO" class="select-modern">
@@ -271,18 +258,19 @@
                             <canvas id="proChart"></canvas>
                         </div>
                         <p class="empty-chart-message hidden" id="emptyPROChart">Se necesitan al menos 2 visitas para mostrar la evolución.</p>
-                    </div>
+                    </div></div>
 
                     <!-- Tarjeta 9: Historial de Visitas (Tabla) -->
-                    <div class="dashboard-card visits-table-card">
-                        <div class="table-header">
-                            <h2 class="card-title"><i class="fas fa-list-alt"></i> Historial de Visitas</h2>
-                            <button class="btn btn-secondary btn-sm" id="exportVisitsBtn">
+                    <div class="nx-tarjeta visits-table-card">
+                        <div class="table-header nx-tarjeta__cabecera">
+                            <h2 class="nx-tarjeta__titulo">Historial de visitas</h2>
+                            <button class="nx-boton nx-boton--secundario btn-sm" id="exportVisitsBtn">
                                 <i class="fas fa-download"></i> Exportar CSV
                             </button>
                         </div>
                         <div class="table-container">
-                            <table class="data-table" id="visitsTable">
+                            <table class="nx-tabla" id="visitsTable">
+                                <caption class="nx-solo-lector">Historial de visitas del paciente</caption>
                                 <thead>
                                     <tr>
                                         <th data-sort="fecha">Fecha <i class="fas fa-sort"></i></th>
@@ -290,7 +278,7 @@
                                         <th data-sort="asdas" id="visitsTableSecondaryHeader">ASDAS <i class="fas fa-sort"></i></th>
                                         <th data-sort="evaDolor">EVA Dolor <i class="fas fa-sort"></i></th>
                                         <th data-sort="pcr">PCR (mg/L) <i class="fas fa-sort"></i></th>
-                                        <th>Tratamiento</th>
+                                        <th scope="col">Tratamiento</th>
                                     </tr>
                                 </thead>
                                 <tbody id="visitsTableBody">
@@ -333,6 +321,6 @@
 
     <script src="script.js?v=20261114a"></script>
     <script src="scripts/reuma_patient_read_port.js?v=20260926a"></script>
-    <script src="scripts/script_dashboard.js?v=20261122b"></script>
+    <script src="scripts/script_dashboard.js?v=20261122-t7p"></script>
 </body>
 </html>
