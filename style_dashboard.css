@@ -436,7 +436,7 @@
     transition: all var(--transition-normal);
 }
 
-.dashboard-card:has(.custom-select) {
+:is(.dashboard-card, .nx-tarjeta):has(.custom-select) {
     overflow: visible;
 }
 
@@ -681,18 +681,18 @@
 }
 
 /* Tarjetas de gráficos */
-.dashboard-card:has(canvas) {
+:is(.dashboard-card, .nx-tarjeta):has(canvas) {
     grid-column: span 2;
     min-height: 480px;
     display: flex;
     flex-direction: column;
 }
 
-.dashboard-card:has(canvas) .card-title {
+:is(.dashboard-card, .nx-tarjeta):has(canvas) .card-title {
     flex-shrink: 0;
 }
 
-.dashboard-card:has(canvas) .chart-controls {
+:is(.dashboard-card, .nx-tarjeta):has(canvas) .chart-controls {
     flex-shrink: 0;
 }
 
@@ -705,7 +705,7 @@
     width: 100%;
 }
 
-.dashboard-card canvas {
+:is(.dashboard-card, .nx-tarjeta) canvas {
     position: absolute;
     top: 0;
     left: 0;
@@ -964,7 +964,7 @@
 
 /* === RESPONSIVE === */
 @media (max-width: 1024px) {
-    .dashboard-card:has(canvas) {
+    :is(.dashboard-card, .nx-tarjeta):has(canvas) {
         grid-column: span 1;
     }
 }
@@ -1097,3 +1097,13 @@
 .treatment-item__fecha { font-size: 12px; color: var(--nx-color-texto-suave); }
 .treatment-item__estado { font-size: 11px; margin-top: 2px; }
 .treatment-type-badge { background: var(--nx-color-superficie-suave); padding: 2px 6px; border-radius: 3px; font-size: 11px; }
+
+/* tramo 7 (panel de Reuma): separación entre listas dentro de una tarjeta */
+.tarjeta-separado {
+    margin-top: 12px;
+}
+
+/* tramo 7: las tarjetas del catálogo no ensanchan la rejilla en móvil (la vieja lo evitaba con overflow:hidden) */
+.dashboard-grid > .nx-tarjeta {
+    min-width: 0;
+}

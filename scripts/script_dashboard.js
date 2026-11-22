@@ -551,26 +551,26 @@ function calculateClinicalStatus(visit) {
         const das28 = getARPrimaryMetric(visit);
         if (das28 !== null && !isNaN(das28)) {
             if (das28 < 2.6) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
-            if (das28 < 3.2) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (das28 <= 5.1) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (das28 < 3.2) return { status: 'low', text: 'Baja Actividad', class: 'nx-etiqueta--ok' };
+            if (das28 <= 5.1) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
 
         const cdai = getARSecondaryMetric(visit);
         if (cdai !== null && !isNaN(cdai)) {
             if (cdai <= 2.8) return { status: 'remission', text: 'Remisión', class: '' };
-            if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'nx-etiqueta--ok' };
+            if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
 
         // Fallback SDAI
         const sdai = getVisitMetric(visit, 'sdai');
         if (sdai !== null && !isNaN(sdai)) {
             if (sdai <= 3.3) return { status: 'remission', text: 'Remisión', class: '' };
-            if (sdai <= 11) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (sdai <= 26) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (sdai <= 11) return { status: 'low', text: 'Baja Actividad', class: 'nx-etiqueta--ok' };
+            if (sdai <= 26) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
     }
 
@@ -579,15 +579,15 @@ function calculateClinicalStatus(visit) {
 
     if (asdas !== null && !isNaN(asdas)) {
         if (asdas < 1.3) return { status: 'remission', text: 'Enfermedad Inactiva', class: '' };
-        if (asdas < 2.1) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-        if (asdas <= 3.5) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-        return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        if (asdas < 2.1) return { status: 'low', text: 'Baja Actividad', class: 'nx-etiqueta--ok' };
+        if (asdas <= 3.5) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+        return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
     }
 
     if (basdai !== null && !isNaN(basdai)) {
         if (basdai < 4) return { status: 'remission', text: 'Remisión', class: '' };
-        if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-        return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+        return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
     }
 
     // ── APs: DAPSA > RAPID3 > HAQ ──
@@ -595,22 +595,22 @@ function calculateClinicalStatus(visit) {
         const dapsa = getVisitMetric(visit, 'dapsa');
         if (dapsa !== null && !isNaN(dapsa)) {
             if (dapsa <= 4) return { status: 'remission', text: 'Remisión', class: '' };
-            if (dapsa <= 14) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (dapsa <= 28) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (dapsa <= 14) return { status: 'low', text: 'Baja Actividad', class: 'nx-etiqueta--ok' };
+            if (dapsa <= 28) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
         const rapid3 = getVisitMetric(visit, 'rapid3');
         if (rapid3 !== null && !isNaN(rapid3)) {
             if (rapid3 <= 3) return { status: 'remission', text: 'Remisión', class: '' };
-            if (rapid3 <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (rapid3 <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
         const haq = getVisitMetric(visit, 'haq');
         if (haq !== null && !isNaN(haq)) {
             if (haq <= 0.5) return { status: 'remission', text: 'Remisión', class: '' };
-            if (haq <= 1.5) return { status: 'low', text: 'Actividad Leve', class: 'patient-status-badge--low' };
-            if (haq <= 2) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (haq <= 1.5) return { status: 'low', text: 'Actividad Leve', class: 'nx-etiqueta--ok' };
+            if (haq <= 2) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
     }
 
@@ -619,9 +619,9 @@ function calculateClinicalStatus(visit) {
         const sledai = getVisitMetric(visit, 'sledai2k');
         if (sledai !== null && !isNaN(sledai)) {
             if (sledai <= 2) return { status: 'remission', text: 'Remisión', class: '' };
-            if (sledai <= 6) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (sledai <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (sledai <= 6) return { status: 'low', text: 'Baja Actividad', class: 'nx-etiqueta--ok' };
+            if (sledai <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
     }
 
@@ -630,8 +630,8 @@ function calculateClinicalStatus(visit) {
         const essdai = getVisitMetric(visit, 'essdai');
         if (essdai !== null && !isNaN(essdai)) {
             if (essdai < 5) return { status: 'remission', text: 'Baja Actividad', class: '' };
-            if (essdai < 14) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
-            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+            if (essdai < 14) return { status: 'moderate', text: 'Actividad Moderada', class: 'nx-etiqueta--aviso' };
+            return { status: 'high', text: 'Alta Actividad', class: 'nx-etiqueta--error' };
         }
     }
 
@@ -645,7 +645,7 @@ function updateStatusBadge(clinicalStatus) {
     if (!badge || !statusText) return;
 
     // Resetear clases
-    badge.className = 'patient-status-badge';
+    badge.className = 'nx-etiqueta';
     if (clinicalStatus.class) {
         badge.classList.add(clinicalStatus.class);
     }
@@ -904,7 +904,7 @@ function initVisitsTable(visits) {
 }
 
 function initTableSorting() {
-    const headers = document.querySelectorAll('.data-table th[data-sort]');
+    const headers = document.querySelectorAll('.nx-tabla th[data-sort]');
     headers.forEach(header => {
         header.addEventListener('click', () => {
             const column = header.dataset.sort;
