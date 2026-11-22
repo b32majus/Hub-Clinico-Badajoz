@@ -332,6 +332,7 @@ async function attentionProbe(width, height) {
         value: valueNode.textContent.trim(),
         modifier: [...row.classList].find((name) => name.startsWith('inicio-status-row--')) || '',
         paint: `${computed(row).backgroundColor}|${computed(row).borderTopColor}`,
+        cero: row.classList.contains('inicio-status-row--cero'),
         gap: Math.round(valueNode.getBoundingClientRect().left - labelNode.getBoundingClientRect().right)
       };
     });
@@ -387,6 +388,8 @@ async function attentionProbe(width, height) {
     }
     assert.equal(new Set(probe.rows.map((row) => row.modifier)).size, 3, 'each status row has a distinct semantic modifier');
     assert.equal(new Set(probe.rows.map((row) => row.paint)).size, 3, 'status rows are visually distinct');
+    const bloq = probe.rows.find((row) => row.modifier === 'inicio-status-row--bloqueadas');
+    assert.equal(bloq.cero, bloq.value === '0', 'Bloqueadas a 0 va en gris, con datos sigue en rojo');
     assert.ok(/^\d+$/.test(probe.totalText), `prominent total is numeric: ${probe.totalText}`);
     assert.ok(probe.totalFontSize >= 30 && probe.totalFontSize <= 34, `total prominent ~30-34px: ${probe.totalFontSize}`);
     assert.equal(probe.outerRadius, 0, `el bloque ya no lleva caja propia (tramo 7): ${probe.outerRadius}`);

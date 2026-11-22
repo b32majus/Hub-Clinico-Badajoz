@@ -306,26 +306,12 @@
     transition: all var(--transition-normal);
 }
 
-.kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--color-secondary);
-}
 
 .kpi-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
 
-.kpi-card--success::before { background: var(--color-remission); }
-.kpi-card--warning::before { background: var(--color-moderate); }
-.kpi-card--danger::before { background: var(--color-high-activity); }
-.kpi-card--info::before { background: var(--color-low-activity); }
-.kpi-card--biologic::before { background: var(--color-biologic); }
 
 .kpi-icon {
     width: 48px;
@@ -360,10 +346,7 @@
     color: var(--color-low-activity);
 }
 
-.kpi-card--biologic .kpi-icon {
-    background: var(--color-biologic-light);
-    color: var(--color-biologic);
-}
+.kpi-card--biologic .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
 
 .kpi-value {
     display: block;
@@ -451,28 +434,12 @@
     overflow: visible;
 }
 
-.dashboard-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--color-primary);
-}
 
 .dashboard-card:hover {
     box-shadow: var(--shadow-lg);
 }
 
 /* Variantes de tarjetas */
-.dashboard-card--clinical::before { background: var(--color-remission); }
-.dashboard-card--biomarkers::before { background: var(--color-info); }
-.dashboard-card--summary::before { background: var(--color-moderate); }
-.dashboard-card--treatment::before { background: var(--color-biologic); }
-.dashboard-card--history::before { background: var(--color-fame); }
-.dashboard-card--events::before { background: var(--color-high-activity); }
-.dashboard-card--chart::before { background: var(--color-primary); }
 
 .card-title {
     display: flex;
@@ -1143,3 +1110,14 @@
 .patient-prebiologic-badge {
     margin-top: 6px;
 }
+
+/* Lista de tratamientos del panel (antes con style= en el JS; H-24) */
+.treatment-item { padding: 10px 0; border-bottom: 1px solid var(--nx-color-borde); }
+.treatment-item__fila { display: flex; justify-content: space-between; align-items: flex-start; }
+.treatment-item__nombre { font-weight: 600; font-size: 14px; color: var(--nx-color-texto); }
+.treatment-item__meta { font-size: 12px; color: var(--nx-color-texto-suave); margin-top: 3px; }
+.treatment-item__motivo { font-size: 11px; color: var(--nx-color-texto-suave); margin-top: 3px; font-style: italic; }
+.treatment-item__lado { text-align: right; }
+.treatment-item__fecha { font-size: 12px; color: var(--nx-color-texto-suave); }
+.treatment-item__estado { font-size: 11px; margin-top: 2px; }
+.treatment-type-badge { background: var(--nx-color-superficie-suave); padding: 2px 6px; border-radius: 3px; font-size: 11px; }

@@ -6155,6 +6155,13 @@
     color: var(--nx-color-error);
 }
 
+/* Sin ninguna bloqueada no hay nada que avisar: gris, no rojo (H-23, Sil 22-11). */
+.inicio-status-row--bloqueadas.inicio-status-row--cero {
+    background: var(--nx-color-superficie-suave);
+    border-color: var(--nx-color-borde);
+    color: var(--nx-color-texto-suave);
+}
+
 .inicio-resumen-card__cta {
     align-self: flex-start;
     margin-top: auto;

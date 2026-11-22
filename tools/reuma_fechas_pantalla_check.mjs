@@ -59,7 +59,7 @@ try {
   c3.window = c3;
   vm.createContext(c3);
   vm.runInContext(lector + '\n' + ['getVisitDate', 'getMetricLabel', 'prepareChartData'].map((n) => grab(dash, n)).join('\n') +
-    '\nfunction getVisitMetric(v, m) { return v[m]; }', c3);
+    '\nfunction getVisitMetric(v, m) { return v[m]; }\nfunction nxColor() { return \'\'; }\nconst COLORS = {};', c3);
   c3.patientHistory = { allVisits: [
     { fechaVisita: '05/03/2024', basdai: 3 },
     { fechaVisita: 'rota', basdai: 9 },
@@ -78,8 +78,8 @@ try {
 }
 
 // Caché de los scripts tocados.
-ok(/scripts\/script_dashboard\.js\?v=20261114b/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar script_dashboard.js?v=20261114b');
-ok(/scripts\/script_estadisticas\.js\?v=20261113b/.test(rd('estadisticas.html')), 'caché: estadisticas.html debe cargar script_estadisticas.js?v=20261113b');
+ok(/scripts\/script_dashboard\.js\?v=20261122a/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar script_dashboard.js?v=20261122a');
+ok(/scripts\/script_estadisticas\.js\?v=20261122a/.test(rd('estadisticas.html')), 'caché: estadisticas.html debe cargar script_estadisticas.js?v=20261122a');
 
 if (fails.length) {
   console.error('FAIL reuma_fechas_pantalla_check (' + fails.length + ')');

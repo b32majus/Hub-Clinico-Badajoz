@@ -30,15 +30,26 @@ let visitsTableState = {
 // and keeps the legacy mock presentation. Set by the bundle builders below.
 let dashboardTreatmentSource = 'read';
 
-// Colores consistentes con el sistema de diseño
+// Los colores de los gráficos salen de los tokens (--nx-*): el canvas de Chart.js
+// no lee var(), así que se resuelven aquí al cargar (H-24).
+function nxColor(nombre, alfa) {
+    if (typeof getComputedStyle !== 'function' || typeof document === 'undefined' || !document.documentElement) return '';
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--nx-color-' + nombre).trim();
+    const m = /^#([0-9a-f]{6})$/i.exec(v);
+    if (alfa === undefined || !m) return v;
+    const n = parseInt(m[1], 16);
+    return 'rgba(' + (n >> 16) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + alfa + ')';
+}
+
+// Colores consistentes con el sistema de diseño (tokens --nx-*)
 const COLORS = {
-    remission: '#10B981',
-    lowActivity: '#3B82F6',
-    moderate: '#F59E0B',
-    highActivity: '#EF4444',
-    biologic: '#8B5CF6',
-    primary: '#2563EB',
-    secondary: '#64748B'
+    remission: nxColor('ok'),
+    lowActivity: nxColor('info'),
+    moderate: nxColor('aviso'),
+    highActivity: nxColor('error'),
+    biologic: nxColor('serie-2'),
+    primary: nxColor('serie-1'),
+    secondary: nxColor('texto-suave')
 };
 
 function normalizePathology(value) {
@@ -1329,21 +1340,21 @@ function populateTreatmentHistory() {
         var statusClass = isSuspended ? 'status-suspended' : (isExplicitActive ? 'status-active' : '');
         var statusLabel = isSuspended ? 'Suspendido' : (isExplicitActive ? 'Activo' : 'Registrado');
 
-        html += '<div class="treatment-item ' + statusClass + '" style="padding: 10px 0; border-bottom: 1px solid #eee;">';
-        html += '<div style="display: flex; justify-content: space-between; align-items: flex-start;">';
+        html += '<div class="treatment-item ' + statusClass + '">';
+        html += '<div class="treatment-item__fila">';
         html += '<div>';
-        html += '<div style="font-weight: 600; font-size: 14px; color: #2c3e50;">' + escapeHtml(name) + '</div>';
-        html += '<div style="font-size: 12px; color: #7f8c8d; margin-top: 3px;">';
-        html += '<span class="treatment-type-badge" style="background: #ecf0f1; padding: 2px 6px; border-radius: 3px; font-size: 11px;">' + typeLabel + '</span>';
+        html += '<div class="treatment-item__nombre">' + escapeHtml(name) + '</div>';
+        html += '<div class="treatment-item__meta">';
+        html += '<span class="treatment-type-badge">' + typeLabel + '</span>';
         if (dose) html += ' · ' + escapeHtml(dose);
         html += '</div>';
         if (reason) {
-            html += '<div style="font-size: 11px; color: #95a5a6; margin-top: 3px; font-style: italic;">' + escapeHtml(reason) + '</div>';
+            html += '<div class="treatment-item__motivo">' + escapeHtml(reason) + '</div>';
         }
         html += '</div>';
-        html += '<div style="text-align: right;">';
-        html += '<div style="font-size: 12px; color: #7f8c8d;">' + dateStr + '</div>';
-        html += '<div style="font-size: 11px; margin-top: 2px;" class="' + statusClass + '">' + statusLabel + '</div>';
+        html += '<div class="treatment-item__lado">';
+        html += '<div class="treatment-item__fecha">' + dateStr + '</div>';
+        html += '<div class="treatment-item__estado ' + statusClass + '">' + statusLabel + '</div>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
@@ -1516,7 +1527,7 @@ function initActivityChart() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#1E293B',
+                    backgroundColor: nxColor('texto'),
                     cornerRadius: 8,
                     padding: 12
                 },
@@ -1543,12 +1554,12 @@ function initActivityChart() {
                         tooltipFormat: 'dd/MM/yyyy'
                     },
                     title: { display: true, text: 'Fecha' },
-                    grid: { color: '#E2E8F0' }
+                    grid: { color: nxColor('borde') }
                 },
                 y: {
                     beginAtZero: true,
                     title: { display: true, text: primaryMetric.toUpperCase() },
-                    grid: { color: '#E2E8F0' }
+                    grid: { color: nxColor('borde') }
                 },
                 ...(secondaryMetric ? { y1: {
                     position: 'right',
@@ -1667,7 +1678,7 @@ function initPROChart() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#1E293B',
+                    backgroundColor: nxColor('texto'),
                     cornerRadius: 8,
                     padding: 12
                 },
@@ -1693,13 +1704,13 @@ function initPROChart() {
                         tooltipFormat: 'dd/MM/yyyy'
                     },
                     title: { display: true, text: 'Fecha' },
-                    grid: { color: '#E2E8F0' }
+                    grid: { color: nxColor('borde') }
                 },
                 y: {
                     beginAtZero: true,
                     max: 10,
                     title: { display: true, text: primaryMetric === 'evaDolor' ? 'EVA Dolor' : 'EVA Global' },
-                    grid: { color: '#E2E8F0' }
+                    grid: { color: nxColor('borde') }
                 },
                 ...(secondaryMetric ? { y1: {
                     position: 'right',
@@ -1851,7 +1862,7 @@ function prepareChartData(primaryMetric, secondaryMetric = null) {
             label: getMetricLabel(primaryMetric),
             data: primaryValues,
             borderColor: COLORS.primary,
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            backgroundColor: nxColor('serie-1', 0.1),
             fill: true,
             tension: 0.3,
             pointRadius: 5,
@@ -1866,7 +1877,7 @@ function prepareChartData(primaryMetric, secondaryMetric = null) {
             label: getMetricLabel(secondaryMetric),
             data: secondaryValues,
             borderColor: COLORS.highActivity,
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            backgroundColor: nxColor('error', 0.1),
             fill: false,
             tension: 0.3,
             pointRadius: 5,
@@ -1980,8 +1991,8 @@ function getChartAnnotations(treatmentHistory, chartLabels, pathology) {
                 type: 'box',
                 xMin: chartLabels[startIndex],
                 xMax: endIndex !== -1 ? chartLabels[endIndex] : chartLabels[chartLabels.length - 1],
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                borderColor: 'rgba(139, 92, 246, 0.5)',
+                backgroundColor: nxColor('serie-2', 0.1),
+                borderColor: nxColor('serie-2', 0.5),
                 borderWidth: 1,
                 label: {
                     content: treatment.name,
