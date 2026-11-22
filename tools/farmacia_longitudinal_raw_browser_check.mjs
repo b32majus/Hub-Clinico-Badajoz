@@ -222,7 +222,7 @@ async function search(cip) {
 }
 async function openLongitudinal(cip) {
   await search(cip);
-  const dashboard = page.locator('#fhQvActions').getByRole('link', { name: 'Dashboard', exact: false });
+  const dashboard = page.locator('#fhQvActions').getByRole('link', { name: 'Panel', exact: false });
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), dashboard.click()]);
   await page.waitForFunction(expected => document.querySelector('#patientIdBadge')?.textContent.trim() === expected, cip);
   const full = page.locator('#longitudinalStandaloneLink');

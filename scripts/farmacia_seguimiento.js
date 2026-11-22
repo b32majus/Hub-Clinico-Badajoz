@@ -160,8 +160,8 @@
         if (type === 'primary' || type === 'principal' || type === 'base') return 'Principal';
         if (type === 'additional' || type === 'adicional') return 'Adicional';
         if (type === 'unknown' || !type) return 'Relación no registrada';
-        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
-        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
+        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Cambio terapéutico';
+        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Tratamiento añadido';
         if (type === 'revision_linea') return 'Revisión de línea';
         return 'Sin cambios';
     }

@@ -298,7 +298,7 @@
                 + (raw && patient.adherencia !== undefined && patient.adherencia !== null && patient.adherencia !== ''
                     ? ' · Último resultado explícito' : '') },
             { l: 'Causalidad', v: causalityText || 'No registrado' },
-            { l: 'Status', v: raw ? 'Paciente actual cargado desde Excel Farmacia' : 'pending_review / demo — datos sintéticos' }
+            { l: 'Estado', v: raw ? 'Paciente actual cargado desde Excel Farmacia' : 'pendiente de revisión / demo — datos sintéticos' }
         ];
 
         for (var j = 0; j < fields.length; j++) {

@@ -107,12 +107,12 @@ check('actividad page keeps the demo banner explicitly synthetic',
   /Demo Farmacia|datos demo/i.test(actividadHtml));
 // Desde #956 tramo 5 la barra la genera <nx-shell> desde modules/nexus/menus.js (los enlaces ya no están en el HTML).
 const menusJs = fs.readFileSync(path.join(ROOT, 'modules/nexus/menus.js'), 'utf8');
-check('actividad sidebar keeps the Dashboard Paciente entry unchanged',
+check('actividad sidebar keeps the Panel del paciente entry unchanged',
   actividadHtml.indexOf('<nx-shell modulo="farmacia"') !== -1
-  && menusJs.indexOf("texto: 'Dashboard Paciente', href: 'farmacia_dashboard_paciente.html'") !== -1);
+  && menusJs.indexOf("texto: 'Panel del paciente', href: 'farmacia_dashboard_paciente.html'") !== -1);
 
 check('actividad coordinator has no per-card indicator action',
-  actividadSrc.indexOf('Dashboard') === -1);
+  actividadSrc.indexOf('Panel del paciente') === -1);
 check('actividad coordinator consumes the published sync population read',
   actividadSrc.indexOf('readAvailablePatientsSync') !== -1);
 check('actividad coordinator consumes the published sync pending-population read',
@@ -651,7 +651,7 @@ check('general cards render the prebiológico block with blocker chips',
 
 // Evidence 6: indicator action absent.
 check('no per-card indicator action anywhere on the queue',
-  panel.textContent.indexOf('Dashboard') === -1);
+  panel.textContent.indexOf('Panel del paciente') === -1);
 
 // Evidence 7: re-render + synthetic import events never duplicate rows.
 {

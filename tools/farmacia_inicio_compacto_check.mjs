@@ -175,7 +175,7 @@ check('preserve-exactly: Excel import stays accessible',
 const menusJs = fs.readFileSync(path.join(ROOT, 'modules/nexus/menus.js'), 'utf8');
 check('preserve-exactly: sidebar Dashboard Paciente + Pendientes href intact',
   indexHtml.indexOf('<nx-shell modulo="farmacia"') !== -1
-  && menusJs.indexOf("'Dashboard Paciente'") !== -1
+  && menusJs.indexOf("'Panel del paciente'") !== -1
   && menusJs.indexOf("'farmacia_actividad_servicio.html'") !== -1
   && menusJs.indexOf("'Pendientes'") !== -1);
 check('farmacia_common still loads before the page script',

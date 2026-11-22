@@ -59,6 +59,8 @@
         { key: 'bloqueadas', title: 'Bloqueadas', icon: 'fa-exclamation-triangle' }
     ];
 
+    // Estados del prebiológico (claves internas en inglés) → texto en español para el chip. La clase CSS sigue siendo status-<clave>.
+    var ESTADO_PREBIO_ES = { complete: 'completo', pending: 'pendiente', missing: 'falta', unknown: 'no informado', not_applicable: 'no aplica', alert: 'alerta' };
     var QUEUE_TITLE = 'Solicitudes pendientes';
     var QUEUE_EMPTY_TEXT = 'No hay solicitudes pendientes.';
 
@@ -276,7 +278,7 @@
                     var item = shown[i];
                     var chip = document.createElement('span');
                     chip.className = 'nx-etiqueta prebio-chip status-' + item.status;
-                    chip.textContent = item.label + ': ' + item.status;
+                    chip.textContent = item.label + ': ' + (ESTADO_PREBIO_ES[item.status] || item.status);
                     if (item.detail) {
                         chip.setAttribute('title', item.detail);
                     }

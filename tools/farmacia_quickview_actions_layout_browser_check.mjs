@@ -16,7 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CIP = 'CIP-DEMO-FH-001';
 const EXPECTED_ACTIONS = [
   { label: 'Seguimiento', page: 'farmacia_seguimiento.html', entrada: 'seguimiento' },
-  { label: 'Dashboard', page: 'farmacia_dashboard_paciente.html', entrada: 'dashboard' }
+  { label: 'Panel', page: 'farmacia_dashboard_paciente.html', entrada: 'dashboard' }
 ];
 const VIEWPORTS = [
   { name: '1440x1000', width: 1440, height: 1000, desktop: true },

@@ -614,8 +614,8 @@ function runSegmentation(rawInput) {
             ends,
             SOURCE_EORDEN,
             BLOCK_MULTI_EORDEN,
-            'Two or more e-Orden units detected in one raw input; D17/D13 ' +
-            'provide no safe partition for multiple e-Orden units.'
+            'Se han detectado dos o más unidades e-Orden en una misma entrada; D17/D13 ' +
+            'no ofrecen una partición segura para varias unidades e-Orden.'
         );
     }
 
@@ -634,8 +634,8 @@ function runSegmentation(rawInput) {
             ends,
             SOURCE_UNKNOWN,
             BLOCK_MIXED_NO_UNIQUE_PARTITION,
-            'Input mixes e-Orden text with a PreSalud record-shaped line ' +
-            'inside an e-Orden span; no unique structural partition exists.'
+            'La entrada mezcla texto e-Orden con una línea con forma de registro PreSalud ' +
+            'dentro de un tramo e-Orden; no existe una partición estructural única.'
         );
     }
 
