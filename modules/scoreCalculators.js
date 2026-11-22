@@ -524,7 +524,7 @@ function calcularSDAI(datos) {
 
 function categorizeScore(valor, scoreType) {
     if (!Number.isFinite(valor)) {
-        return { categoria: 'unknown', color: '#6c757d', label: 'N/A', backgroundColor: '#6c757d22' };
+        return { categoria: 'unknown', color: 'var(--nx-color-texto-suave)', label: 'N/A', backgroundColor: 'var(--nx-color-superficie-suave)' };
     }
 
     const normalizedScoreType = String(scoreType || '').toLowerCase().replace(/[-_\s]/g, '');
@@ -538,17 +538,17 @@ function categorizeScore(valor, scoreType) {
     };
     const cutoffKey = HubTools?.dashboard?.activityCutoffs?.[scoreType] ? scoreType : (cutoffKeyMap[normalizedScoreType] || scoreType);
     const cutoffs = HubTools?.dashboard?.activityCutoffs?.[cutoffKey];
-    if (!cutoffs) return { categoria: 'unknown', color: '#6c757d', label: 'N/A', backgroundColor: '#6c757d22' };
+    if (!cutoffs) return { categoria: 'unknown', color: 'var(--nx-color-texto-suave)', label: 'N/A', backgroundColor: 'var(--nx-color-superficie-suave)' };
 
     let categoria, color, label;
     switch (cutoffKey) {
         case 'basdai':
             if (valor < cutoffs.remission) {
-                categoria = 'low'; color = '#28a745'; label = 'Baja Actividad';
+                categoria = 'low'; color = 'var(--nx-color-ok)'; label = 'Baja Actividad';
             } else if (valor < cutoffs.high) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Actividad Moderada';
             } else {
-                categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';
+                categoria = 'high'; color = 'var(--nx-color-error)'; label = 'Actividad Alta';
             }
             break;
         case 'asdas':
@@ -560,75 +560,81 @@ function categorizeScore(valor, scoreType) {
         case 'sledai2k':
         case 'esspri':
             if (valor <= cutoffs.remission) {
-                categoria = 'remission'; color = '#28a745'; label = 'Remisión';
+                categoria = 'remission'; color = 'var(--nx-color-ok)'; label = 'Remisión';
             } else if (valor <= cutoffs.lowActivity) {
-                categoria = 'low'; color = '#90ee90'; label = 'Baja Actividad';
+                categoria = 'low'; color = 'var(--nx-color-ok)'; label = 'Baja Actividad';
             } else if (valor <= cutoffs.moderate) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Actividad Moderada';
             } else {
-                categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';
+                categoria = 'high'; color = 'var(--nx-color-error)'; label = 'Actividad Alta';
             }
             break;
         case 'essdai':
             if (valor < cutoffs.remission) {
-                categoria = 'low'; color = '#28a745'; label = 'Baja Actividad';
+                categoria = 'low'; color = 'var(--nx-color-ok)'; label = 'Baja Actividad';
             } else if (valor < cutoffs.moderate) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Actividad Moderada';
             } else {
-                categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';
+                categoria = 'high'; color = 'var(--nx-color-error)'; label = 'Actividad Alta';
             }
             break;
         case 'pasi':
         case 'bsa':
             if (valor < cutoffs.remission) {
-                categoria = 'remission'; color = '#28a745'; label = 'Remisión';
+                categoria = 'remission'; color = 'var(--nx-color-ok)'; label = 'Remisión';
             } else if (cutoffs.lowActivity !== undefined && valor < cutoffs.lowActivity) {
-                categoria = 'low'; color = '#90ee90'; label = 'Baja Actividad';
+                categoria = 'low'; color = 'var(--nx-color-ok)'; label = 'Baja Actividad';
             } else if (valor < cutoffs.moderate) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Actividad Moderada';
             } else {
-                categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';
+                categoria = 'high'; color = 'var(--nx-color-error)'; label = 'Actividad Alta';
             }
             break;
         case 'haq':
             if (valor < cutoffs.remission) {
-                categoria = 'remission'; color = '#28a745'; label = 'Remisión';
+                categoria = 'remission'; color = 'var(--nx-color-ok)'; label = 'Remisión';
             } else if (valor < cutoffs.mild) {
-                categoria = 'mild'; color = '#90ee90'; label = 'Leve';
+                categoria = 'mild'; color = 'var(--nx-color-ok)'; label = 'Leve';
             } else if (valor < cutoffs.moderate) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Moderado';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Moderado';
             } else {
-                categoria = 'severe'; color = '#dc3545'; label = 'Severo';
+                categoria = 'severe'; color = 'var(--nx-color-error)'; label = 'Severo';
             }
             break;
         case 'lei':
             if (valor <= 1) {
-                categoria = 'remission'; color = '#28a745'; label = 'Sin Entesitis';
+                categoria = 'remission'; color = 'var(--nx-color-ok)'; label = 'Sin Entesitis';
             } else if (valor <= 3) {
-                categoria = 'mild'; color = '#90ee90'; label = 'Leve';
+                categoria = 'mild'; color = 'var(--nx-color-ok)'; label = 'Leve';
             } else if (valor <= 5) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Moderado';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Moderado';
             } else {
-                categoria = 'high'; color = '#dc3545'; label = 'Alto';
+                categoria = 'high'; color = 'var(--nx-color-error)'; label = 'Alto';
             }
             break;
         case 'evaGlobal':
         case 'evaDolor':
             if (valor < cutoffs.remission) {
-                categoria = 'minimal'; color = '#28a745'; label = 'Mínimo';
+                categoria = 'minimal'; color = 'var(--nx-color-ok)'; label = 'Mínimo';
             } else if (valor < cutoffs.mild) {
-                categoria = 'mild'; color = '#90ee90'; label = 'Leve';
+                categoria = 'mild'; color = 'var(--nx-color-ok)'; label = 'Leve';
             } else if (valor < cutoffs.moderate) {
-                categoria = 'moderate'; color = '#ffc107'; label = 'Moderado';
+                categoria = 'moderate'; color = 'var(--nx-color-aviso)'; label = 'Moderado';
             } else {
-                categoria = 'severe'; color = '#dc3545'; label = 'Severo';
+                categoria = 'severe'; color = 'var(--nx-color-error)'; label = 'Severo';
             }
             break;
         default:
-            categoria = 'unknown'; color = '#6c757d'; label = 'N/A';
+            categoria = 'unknown'; color = 'var(--nx-color-texto-suave)'; label = 'N/A';
     }
 
-    return { categoria, color, label, backgroundColor: color + '22' };
+    // H-26 (#956 tramo 7): colores de estado por token (DESIGN.md §1); el fondo es el «-fondo» del mismo estado.
+    const FONDO_POR_COLOR = {
+        'var(--nx-color-ok)': 'var(--nx-color-ok-fondo)',
+        'var(--nx-color-aviso)': 'var(--nx-color-aviso-fondo)',
+        'var(--nx-color-error)': 'var(--nx-color-error-fondo)'
+    };
+    return { categoria, color, label, backgroundColor: FONDO_POR_COLOR[color] || 'var(--nx-color-superficie-suave)' };
 }
 
 // ============================================================

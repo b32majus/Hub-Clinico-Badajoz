@@ -375,12 +375,12 @@ function recalcularACREULAR() {
     if (resultEl) {
         if (total >= 6) {
             resultEl.textContent = 'Clasifica como AR definida (≥6)';
-            resultEl.style.color = '#dc3545';
-            if (boxEl) boxEl.style.borderColor = '#dc3545';
+            resultEl.style.color = 'var(--nx-color-info)';
+            if (boxEl) boxEl.style.borderColor = 'var(--nx-color-info)';
         } else {
             resultEl.textContent = 'No clasifica como AR (<6)';
-            resultEl.style.color = '#28a745';
-            if (boxEl) boxEl.style.borderColor = '#28a745';
+            resultEl.style.color = 'var(--nx-color-texto-suave)';
+            if (boxEl) boxEl.style.borderColor = 'var(--nx-color-borde)';
         }
     }
 }
@@ -934,12 +934,12 @@ function setupTreatmentControls(selectId, doseId) {
         if (inactive) {
             doseEl.value = '';
             doseEl.disabled = true;
-            doseEl.style.background = '#f8fafc';
-            doseEl.style.color = '#64748b';
+            doseEl.style.background = 'var(--nx-color-superficie-suave)';
+            doseEl.style.color = 'var(--nx-color-texto-suave)';
         } else {
             doseEl.disabled = false;
-            doseEl.style.background = '#fff';
-            doseEl.style.color = '#1e293b';
+            doseEl.style.background = 'var(--nx-color-superficie)';
+            doseEl.style.color = 'var(--nx-color-texto)';
             // Enfocar automáticamente el campo de dosis para entrada inmediata
             setTimeout(() => {
                 doseEl.focus();
@@ -973,12 +973,12 @@ function inicializarEventosTratamientos() {
             if (inactive) {
                 doseInput.value = '';
                 doseInput.disabled = true;
-                doseInput.style.background = '#f8fafc';
-                doseInput.style.color = '#64748b';
+                doseInput.style.background = 'var(--nx-color-superficie-suave)';
+                doseInput.style.color = 'var(--nx-color-texto-suave)';
             } else {
                 doseInput.disabled = false;
-                doseInput.style.background = '#fff';
-                doseInput.style.color = '#1e293b';
+                doseInput.style.background = 'var(--nx-color-superficie)';
+                doseInput.style.color = 'var(--nx-color-texto)';
             }
             syncPautaStateForLine(container, inactive);
         };
@@ -2855,13 +2855,13 @@ function initScoreWiring() {
             if (statusEl) {
                 if (isPendiente) {
                     statusEl.textContent = '—';
-                    statusEl.style.color = '#6c757d';
+                    statusEl.style.color = 'var(--nx-color-texto-suave)';
                 } else if (isCumplido) {
                     statusEl.textContent = '✓';
-                    statusEl.style.color = '#28a745';
+                    statusEl.style.color = 'var(--nx-color-ok)';
                 } else {
                     statusEl.textContent = '✗';
-                    statusEl.style.color = '#dc3545';
+                    statusEl.style.color = 'var(--nx-color-aviso)';
                 }
                 var estadoLabel = isPendiente
                     ? 'Pendiente — falta la fuente: ' + criterio.fuente
@@ -2871,7 +2871,7 @@ function initScoreWiring() {
                 statusEl.setAttribute('aria-label', estadoLabel);
             }
             if (criterioEl) {
-                criterioEl.style.backgroundColor = isCumplido ? '#28a74522' : '';
+                criterioEl.style.backgroundColor = isCumplido ? 'var(--nx-color-ok-fondo)' : '';
             }
             if (valueEl) {
                 // Corrección #516: los siete spans de valor se recogen verbatim
@@ -2892,16 +2892,16 @@ function initScoreWiring() {
         if (mdaResultEl) {
             if (verdicto === 'alcanzado') {
                 mdaResultEl.textContent = 'MDA ALCANZADO ✓';
-                mdaResultEl.style.color = '#28a745';
+                mdaResultEl.style.color = 'var(--nx-color-ok)';
                 mdaResultEl.style.fontWeight = 'bold';
             } else if (verdicto === 'pendiente') {
                 var ausentes = Array.isArray(result.fuentesPendientes) ? result.fuentesPendientes : [];
                 mdaResultEl.textContent = 'MDA PENDIENTE — fuentes ausentes: ' + ausentes.join(', ');
-                mdaResultEl.style.color = '#6c757d';
+                mdaResultEl.style.color = 'var(--nx-color-texto-suave)';
                 mdaResultEl.style.fontWeight = 'normal';
             } else {
                 mdaResultEl.textContent = 'MDA NO ALCANZADO';
-                mdaResultEl.style.color = '#dc3545';
+                mdaResultEl.style.color = 'var(--nx-color-aviso)';
                 mdaResultEl.style.fontWeight = 'normal';
             }
         }
