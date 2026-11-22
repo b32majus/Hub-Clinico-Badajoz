@@ -16,11 +16,11 @@
     <link rel="modulepreload" href="modules/nexus/version.js">
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
-    <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="style_estadisticas.css?v=20261122-t7h">
+    <link rel="stylesheet" href="style.css?v=20261122-t7q">
+    <link rel="stylesheet" href="style_estadisticas.css?v=20261122-t7q">
 </head>
 
-<body>
+<body class="nx-pagina">
     <div class="nx-marco">
 <nx-shell modulo="reuma" raiz="" pagina="estadisticas.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional"></span></p>
@@ -42,12 +42,18 @@
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
 
         <main class="main-content nx-marco__contenido dashboard-poblacional">
-            <h1 class="page-title"><i class="fas fa-chart-line"></i> Estadísticas del Servicio</h1>
+            <header class="nx-cabecera">
+                <div>
+                    <p class="nx-cabecera__ruta">Reumatología · Gestión</p>
+                    <h1 class="nx-cabecera__titulo">Estadísticas del servicio</h1>
+                    <p class="nx-cabecera__texto">Cohorte de pacientes con los filtros aplicados. Datos sintéticos de demostración.</p>
+                </div>
+            </header>
 
             <!-- Panel de Filtros Rediseñado -->
             <section class="filters-panel collapsible-section">
                 <div class="collapsible-header" id="filtersHeader">
-                    <h2 class="card-title">
+                    <h2 class="filtros-titulo">
                         <i class="fas fa-filter"></i>
                         Filtros de Cohorte
                         <span class="filters-count-badge" id="filtersCountBadge" style="display: none;">0</span>
@@ -364,26 +370,30 @@
 
             <!-- Panel de Visualizaciones -->
             <section class="dashboard-visuals-panel" id="chartsPanel">
-                <div class="dashboard-card chart-card">
-                    <h2 class="card-title"><i class="fas fa-chart-pie"></i> Estado de Actividad de la Cohorte</h2>
+                <div class="nx-tarjeta chart-card">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Estado de Actividad de la Cohorte</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div class="chart-container">
                         <canvas id="activityDonutChart"></canvas>
                     </div>
-                </div>
-                <div class="dashboard-card chart-card">
-                    <h2 class="card-title"><i class="fas fa-pills"></i> Distribución de Tratamientos</h2>
+                </div></div>
+                <div class="nx-tarjeta chart-card">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Distribución de Tratamientos</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div class="chart-container">
                         <canvas id="treatmentDistChart"></canvas>
                     </div>
-                </div>
-                <div class="dashboard-card chart-card">
-                    <h2 class="card-title"><i class="fas fa-heartbeat"></i> Top 10 Comorbilidades</h2>
+                </div></div>
+                <div class="nx-tarjeta chart-card">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Top 10 Comorbilidades</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div class="chart-container">
                         <canvas id="comorbidityChart"></canvas>
                     </div>
-                </div>
-                <div class="dashboard-card chart-card">
-                    <h2 class="card-title"><i class="fas fa-project-diagram"></i> Correlación de Índices</h2>
+                </div></div>
+                <div class="nx-tarjeta chart-card">
+                    <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Correlación de Índices</h2></header>
+                    <div class="nx-tarjeta__cuerpo">
                     <div class="correlation-controls">
                         <label for="scatterX">Eje X:</label>
                         <select id="scatterX" class="select-field select-modern"></select>
@@ -393,13 +403,13 @@
                     <div class="chart-container">
                         <canvas id="correlationScatterChart"></canvas>
                     </div>
-                </div>
+                </div></div>
             </section>
 
             <!-- Tabla de Pacientes Mejorada -->
-            <section class="dashboard-card export-table-panel">
-                <div class="table-header">
-                    <h2 class="card-title"><i class="fas fa-table"></i> Pacientes de la Cohorte</h2>
+            <section class="nx-tarjeta export-table-panel">
+                <div class="table-header nx-tarjeta__cabecera">
+                    <h2 class="nx-tarjeta__titulo">Pacientes de la cohorte</h2>
                     <div class="table-controls">
                         <button id="exportCohortBtn" class="button primary-button">
                             <i class="fas fa-file-csv"></i> Exportar CSV
@@ -407,15 +417,16 @@
                     </div>
                 </div>
                 <div id="exportTableContainer" class="responsive-table-container">
-                    <table class="data-table" id="cohortTable">
+                    <table class="nx-tabla" id="cohortTable">
+                        <caption class="nx-solo-lector">Pacientes de la cohorte filtrada</caption>
                         <thead>
                             <tr>
-                                <th data-sort="ID_Paciente">CIP <i class="fas fa-sort"></i></th>
-                                <th data-sort="Nombre">Nombre <i class="fas fa-sort"></i></th>
-                                <th data-sort="pathology">Patología <i class="fas fa-sort"></i></th>
-                                <th data-sort="Fecha_Visita">Última Visita <i class="fas fa-sort"></i></th>
-                                <th data-sort="BASDAI">BASDAI <i class="fas fa-sort"></i></th>
-                                <th data-sort="Tratamiento_Actual">Tratamiento <i class="fas fa-sort"></i></th>
+                                <th scope="col" data-sort="ID_Paciente">CIP <i class="fas fa-sort"></i></th>
+                                <th scope="col" data-sort="Nombre">Nombre <i class="fas fa-sort"></i></th>
+                                <th scope="col" data-sort="pathology">Patología <i class="fas fa-sort"></i></th>
+                                <th scope="col" data-sort="Fecha_Visita">Última Visita <i class="fas fa-sort"></i></th>
+                                <th scope="col" data-sort="BASDAI">BASDAI <i class="fas fa-sort"></i></th>
+                                <th scope="col" data-sort="Tratamiento_Actual">Tratamiento <i class="fas fa-sort"></i></th>
                             </tr>
                         </thead>
                         <tbody id="cohortTableBody">
@@ -456,7 +467,7 @@
     <!-- Scripts globales y coordinadores -->
     <script src="script.js?v=20261114a"></script>
     <script src="scripts/reuma_population_read_port.js?v=20261112d"></script>
-    <script src="scripts/script_estadisticas.js?v=20261122a"></script>
+    <script src="scripts/script_estadisticas.js?v=20261122c"></script>
 </body>
 
 </html>

@@ -211,7 +211,7 @@ function initializeFiltersCollapsible() {
     };
 
     header.addEventListener('click', (event) => {
-        if (event.target.closest('.toggle-filters-btn') || event.currentTarget === header || event.target.closest('.card-title')) {
+        if (event.target.closest('.toggle-filters-btn') || event.currentTarget === header || event.target.closest('.filtros-titulo')) {
             toggle();
         }
     });
@@ -319,7 +319,7 @@ function initializeDatePresets() {
 // === CONTROLES DE TABLA ===
 function initializeTableControls() {
     // Ordenamiento por columnas
-    const headers = document.querySelectorAll('.data-table th[data-sort]');
+    const headers = document.querySelectorAll('.nx-tabla th[data-sort]');
     headers.forEach(header => {
         header.addEventListener('click', () => {
             const column = header.dataset.sort;
@@ -1228,7 +1228,7 @@ function handleSort(column, header) {
     }
 
     // Actualizar iconos
-    document.querySelectorAll('.data-table th i').forEach(icon => {
+    document.querySelectorAll('.nx-tabla th i').forEach(icon => {
         icon.className = 'fas fa-sort';
     });
     header.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
