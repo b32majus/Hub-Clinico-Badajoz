@@ -17,7 +17,7 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="style_seguimiento.css?v=20261121-t6">
+    <link rel="stylesheet" href="style_seguimiento.css?v=20261122-t7j">
 </head>
 
 <body>
@@ -873,7 +873,7 @@
                             <div class="form-group-checkbox">
                                 <label><input type="checkbox" id="nodulosReumatoideosSeg"> Presencia de nódulos reumatoideos</label>
                             </div>
-                            <div class="form-group" id="nodulosLocalizacionSeg" style="display:none;margin-top:10px;">
+                            <div class="form-group pv-campo-extra" id="nodulosLocalizacionSeg" style="display:none;">
                                 <label for="nodulosLocalizacionTextoSeg">Localización:</label>
                                 <input type="text" id="nodulosLocalizacionTextoSeg" placeholder="Codos, manos, tendón de Aquiles...">
                             </div>
@@ -885,7 +885,7 @@
                             <div class="form-group-checkbox">
                                 <label><input type="checkbox" id="erosionesRadiologicasSeg"> Presencia de erosiones radiológicas</label>
                             </div>
-                            <div class="form-group" id="erosionesDescripcionSeg" style="display:none;margin-top:10px;">
+                            <div class="form-group pv-campo-extra" id="erosionesDescripcionSeg" style="display:none;">
                                 <label for="erosionesDescripcionTextoSeg">Descripción:</label>
                                 <textarea id="erosionesDescripcionTextoSeg" rows="2" placeholder="Localización y grado de erosiones..."></textarea>
                             </div>
@@ -1515,7 +1515,7 @@
                             <p class="info-note"><i class="fas fa-info-circle"></i> Marque los ítems presentes en los últimos 10 días. Puntuación ponderada automática.</p>
 
                             <!-- Peso 8 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 8</h6>
+                            <h6 class="pv-peso-titulo">Peso 8</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiSeizure" class="sledai-item"> Convulsiones</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPsychosis" class="sledai-item"> Psicosis</label></div>
@@ -1528,7 +1528,7 @@
                             </div>
 
                             <!-- Peso 4 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 4</h6>
+                            <h6 class="pv-peso-titulo">Peso 4</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiArthritis" class="sledai-item"> Artritis</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiMyositis" class="sledai-item"> Miositis</label></div>
@@ -1539,7 +1539,7 @@
                             </div>
 
                             <!-- Peso 2 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 2</h6>
+                            <h6 class="pv-peso-titulo">Peso 2</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiRash" class="sledai-item"> Rash / exantema</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiAlopecia" class="sledai-item"> Alopecia</label></div>
@@ -1551,7 +1551,7 @@
                             </div>
 
                             <!-- Peso 1 -->
-                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 1</h6>
+                            <h6 class="pv-peso-titulo">Peso 1</h6>
                             <div class="two-col-grid">
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiFever" class="sledai-item"> Fiebre</label></div>
                                 <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiThrombocytopenia" class="sledai-item"> Trombocitopenia</label></div>
@@ -2081,7 +2081,7 @@
                                 <option value="Cevimelina">Cevimelina</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <input type="text" id="tratSintomaticoSequedadDosis" class="treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                            <input type="text" id="tratSintomaticoSequedadDosis" class="treatment-dose-input treatment-dose-input--debajo" placeholder="Dosis / frecuencia">
                         </div>
                         <div class="form-group">
                             <label for="tratInmunomodulador"><i class="fas fa-shield-virus"></i> Inmunomodulador:</label>
@@ -2095,7 +2095,7 @@
                                 <option value="Ciclofosfamida">Ciclofosfamida</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <input type="text" id="tratInmunomoduladorDosis" class="treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                            <input type="text" id="tratInmunomoduladorDosis" class="treatment-dose-input treatment-dose-input--debajo" placeholder="Dosis / frecuencia">
                         </div>
                     </div>
                 </div>
