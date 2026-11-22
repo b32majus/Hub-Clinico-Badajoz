@@ -33,6 +33,7 @@ let dashboardTreatmentSource = 'read';
 // Los colores de los gráficos salen de los tokens (--nx-*): el canvas de Chart.js
 // no lee var(), así que se resuelven aquí al cargar (H-24).
 function nxColor(nombre, alfa) {
+    if (typeof getComputedStyle !== 'function' || typeof document === 'undefined' || !document.documentElement) return '';
     const v = getComputedStyle(document.documentElement).getPropertyValue('--nx-color-' + nombre).trim();
     const m = /^#([0-9a-f]{6})$/i.exec(v);
     if (alfa === undefined || !m) return v;
