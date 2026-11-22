@@ -221,13 +221,15 @@
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 12px;
 }
-.info-field {
+.info-field,
+.dato-resumen {
     padding: 12px 14px;
     border-radius: 12px;
     background: var(--nx-color-fondo);
     border: 1px solid var(--nx-color-borde);
 }
-.info-field__label {
+.info-field__label,
+.dato-resumen__etiqueta {
     display: block;
     margin-bottom: 4px;
     color: var(--nx-color-texto-suave);
@@ -236,7 +238,8 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
-.info-field__value { display: block; color: var(--nx-color-texto); font-weight: 700; font-size: 1.05rem; line-height: 1.45; }
+.info-field__value,
+.dato-resumen__valor { display: block; color: var(--nx-color-texto); font-weight: 700; font-size: 1.05rem; line-height: 1.45; }
 
 .status-badge {
     display: inline-flex;
@@ -5436,7 +5439,8 @@
     border: 1px solid var(--nx-color-modulo-borde);
 }
 
-.causality-result-grid--top .info-field {
+.causality-result-grid--top .info-field,
+.causality-result-grid--top .dato-resumen {
     background: transparent;
     border: none;
     padding: 0;
@@ -5444,7 +5448,8 @@
     min-width: 140px;
 }
 
-.causality-result-grid--top .info-field__value {
+.causality-result-grid--top .info-field__value,
+.causality-result-grid--top .dato-resumen__valor {
     color: var(--nx-color-modulo-texto);
 }
 

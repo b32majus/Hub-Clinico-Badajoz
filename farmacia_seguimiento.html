@@ -17,13 +17,13 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261121-t6">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7s">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261122-t7u">
     <style>
     /* T01 #795 (C-088 VIS-01): tratamiento de insignias del segmento EA según
        el máster G0 v0.4 aprobado (píldora encajonada). Solo alcanza a la
        insignia de recuento EA y a la insignia de la sección EA. */
     #fhSegEaCountBadge,
-    #modSeguimientoEa > .section-title > .status-badge {
+    #modSeguimientoEa > .nx-tarjeta__titulo > .nx-etiqueta {
         border: 1px solid var(--nx-color-borde);
         background: var(--nx-color-superficie-suave);
         color: var(--nx-color-texto-suave);
@@ -136,7 +136,7 @@
     }
     </style>
 </head>
-        <body>
+        <body class="nx-pagina">
             <div class="nx-marco">
 <nx-shell modulo="farmacia" raiz="" pagina="farmacia_seguimiento.html">
 <p class="nx-profesional"><i class="fas fa-user-circle" aria-hidden="true"></i> <span id="currentProfessional">Profesional FH-01</span></p>
@@ -167,38 +167,36 @@
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
                 <main class="main-content nx-marco__contenido farmacia-paciente farmacia-paciente--seguimiento">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card module-hero">
-    <div class="patient-header-main">
-        <div class="patient-info">
-            <h1 class="patient-name">Visita de Seguimiento</h1>
-            <p class="hero-description">Registre optimización, suspensión, adherencia Morisky-Green, PROMs y efectos adversos.</p>
-        </div>
+        <nx-aviso tipo="aviso" role="note" titulo="Demo Farmacia v0.2 — Datos sintéticos.">Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</nx-aviso>
+<header class="nx-cabecera">
+    <div>
+        <p class="nx-cabecera__ruta">Farmacia Hospitalaria · Paciente</p>
+        <h1 class="nx-cabecera__titulo">Visita de Seguimiento</h1>
+        <p class="nx-cabecera__texto">Registre optimización, suspensión, adherencia Morisky-Green, PROMs y efectos adversos.</p>
     </div>
-</section><section class="dashboard-card validation-modules-nav-card validation-modules-nav-card--compact hidden">
+</header>
+<section class="nx-tarjeta validation-modules-nav-card validation-modules-nav-card--compact hidden">
     <div class="validation-modules-nav validation-modules-nav--compact" aria-labelledby="seguimientoModulesTitle">
         <div class="validation-modules-nav__header">
-            <h2 class="section-title section-title--compact" id="seguimientoModulesTitle"><i class="fas fa-th-large"></i> Módulos disponibles</h2>
+            <h2 class="nx-tarjeta__titulo" id="seguimientoModulesTitle">Módulos disponibles</h2>
         </div>
         <div class="validation-modules-nav__links validation-modules-nav__links--compact">
-            <a class="btn btn-outline validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
-            <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
+            <a class="nx-boton nx-boton--secundario validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
+            <a class="nx-boton nx-boton--secundario validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
             <!-- modPrebiologico eliminado en WO7E.1: no aportaba info prebiológica real -->
-            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEa">Seguimiento / efectos adversos</a>
-            <a class="btn btn-outline validation-module-link" href="#modSeguimientoCausalidad">Análisis de causalidad</a>
-            <a class="btn btn-outline validation-module-link" href="#" id="navToDashboardPaciente"><i class="fas fa-user-circle" aria-hidden="true"></i> Panel del paciente</a>
-            <a class="btn btn-outline validation-module-link" href="#modExportacion">Exportación</a>
+            <a class="nx-boton nx-boton--secundario validation-module-link" href="#modSeguimientoEa">Seguimiento / efectos adversos</a>
+            <a class="nx-boton nx-boton--secundario validation-module-link" href="#modSeguimientoCausalidad">Análisis de causalidad</a>
+            <a class="nx-boton nx-boton--secundario validation-module-link" href="#" id="navToDashboardPaciente"><i class="fas fa-user-circle" aria-hidden="true"></i> Panel del paciente</a>
+            <a class="nx-boton nx-boton--secundario validation-module-link" href="#modExportacion">Exportación</a>
         </div>
     </div>
-</section><section class="dashboard-card" id="modTratamientoPrincipal"><h2 class="section-title"><i class="fas fa-pills"></i> Tratamiento actual</h2>
+</section><section class="nx-tarjeta" id="modTratamientoPrincipal"><h2 class="nx-tarjeta__titulo">Tratamiento actual</h2>
     <div class="form-grid"><div class="form-group"><label for="fhSegCip">CIP</label><div class="cip-search-wrap"><input type="text" id="fhSegCip" class="form-control" placeholder="Buscar paciente por CIP..." autocomplete="off"><i class="fas fa-search cip-search-icon" aria-hidden="true"></i><button type="button" class="cip-search-action" id="fhSegCipSearchBtn" aria-label="Buscar CIP"><i class="fas fa-search"></i></button></div></div><div class="form-group"><label for="fhSegServicio">Origen</label><select class="form-select" id="fhSegServicio"><option value="">Seleccionar...</option><option>Dermatología</option><option>Reumatología</option><option>Digestivo</option><option>Alergología</option><option>Farmacia Hospitalaria</option><option>Medicina Interna</option><option>Otro</option></select><input type="text" class="form-control hidden" id="fhSegServicioOtro" placeholder="Especificar otro servicio"></div><div class="form-group"><label for="fhSegPatologia">Indicación</label><select class="form-select" id="fhSegPatologia"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhSegPatologiaOtro" placeholder="Especificar otra patología"></div></div>
     <div class="seg-line-selection" aria-labelledby="fhSegLineCardsTitle"><h3 id="fhSegLineCardsTitle">Líneas de tratamiento del paciente</h3><div class="seg-line-cards" id="fhSegLineCards"></div><div class="seg-line-selection__editors"><div class="form-group seg-line-selection__selector"><label for="fhSegLineaPrincipal">Línea que estás editando</label><select class="form-select" id="fhSegLineaPrincipal"><option value="">Seleccionar línea...</option></select></div><div class="form-group seg-line-selection__dispensed"><label for="fhSegDispensado">Dispensado en esta visita</label><select class="form-select" id="fhSegDispensado" disabled><option value="" disabled selected>No aplicable sin línea</option><option value="no">No</option><option value="si">Sí</option></select></div></div><p class="seg-line-selection__help" id="fhSegLineEditorHelp">Seleccione una línea activa para registrar datos específicos de tratamiento.</p></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegTipoRelacionTerapia">Tipo de movimiento terapéutico</label><select class="form-select" id="fhSegTipoRelacionTerapia"><option value="sin_cambios">Sin cambios</option><option value="optimizacion">Optimización</option><option value="suspension">Suspensión</option></select></div><div class="form-group"><label for="fhSegEstadoLinea">Estado de la línea</label><input class="form-control" id="fhSegEstadoLinea" readonly></div></div>
-    <div class="info-grid" id="fhSegTratamientoGrid"></div>
+    <div class="resumen-datos" id="fhSegTratamientoGrid"></div>
     <div id="fhSegAutocompleteBlock" class="hidden"><div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDrugSearch">Buscar fármaco por marca, principio activo o código</label><div class="autocomplete-wrapper"><input type="text" id="fhSegDrugSearch" class="form-control" placeholder="Ej. Cosentyx, secukinumab, Humira..." autocomplete="off"><div id="fhSegAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhSegFarmaco">Fármaco / Marca</label><input class="form-control" id="fhSegFarmaco" readonly></div><div class="form-group"><label for="fhSegPrincipioActivo">Principio activo</label><input class="form-control" id="fhSegPrincipioActivo" readonly></div><div class="form-group"><label for="fhSegPresentacion">Presentación</label><input class="form-control" id="fhSegPresentacion" readonly></div><div class="form-group"><label for="fhSegDosisActual">Dosis</label><input class="form-control" id="fhSegDosisActual" readonly><span class="status-badge hidden" id="fhSegOptimizadoBadge" hidden>Optimizado en la visita anterior</span></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegFarmaco">Fármaco / Marca</label><input class="form-control" id="fhSegFarmaco" readonly></div><div class="form-group"><label for="fhSegPrincipioActivo">Principio activo</label><input class="form-control" id="fhSegPrincipioActivo" readonly></div><div class="form-group"><label for="fhSegPresentacion">Presentación</label><input class="form-control" id="fhSegPresentacion" readonly></div><div class="form-group"><label for="fhSegDosisActual">Dosis</label><input class="form-control" id="fhSegDosisActual" readonly><span class="nx-etiqueta hidden" id="fhSegOptimizadoBadge" hidden>Optimizado en la visita anterior</span></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegVia">Vía</label><select class="form-select" id="fhSegVia"><option value="">Seleccionar…</option><option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option></select></div><div class="form-group"><label for="fhSegPautaActual">Pauta / Intervalo</label><select class="form-select" id="fhSegPautaActual"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhSegPautaActualOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhSegCodigoNacional">Cód. Nacional</label><input class="form-control" id="fhSegCodigoNacional" readonly></div><div class="form-group"><label for="fhSegNregistro">Nº Registro</label><input class="form-control" id="fhSegNregistro" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegEtiquetas">Etiquetas</label><input class="form-control" id="fhSegEtiquetas" readonly></div><div class="form-group"><label for="fhSegFechaInicio">Fecha inicio / 1ª visita</label><input class="form-control" id="fhSegFechaInicio" readonly></div><div class="form-group"><label for="fhSegUltimaAdherencia">Última adherencia</label><input class="form-control" id="fhSegUltimaAdherencia" readonly></div><div class="form-group"><label for="fhSegUltimosProms">Últimos PROMs</label><input class="form-control" id="fhSegUltimosProms" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegOrigenCatalogo">Origen catálogo</label><input class="form-control" id="fhSegOrigenCatalogo" readonly></div><div class="form-group"><label for="fhSegEaPrevios">EA previos</label><input class="form-control" id="fhSegEaPrevios" readonly></div></div>
@@ -211,25 +209,25 @@
         </div>
     </div>
 </section>
-<section class="dashboard-card" id="modOtrosFarmacos" title="Otros fármacos / biológicos relacionados">
-    <h2 class="section-title"><i class="fas fa-pills"></i> Otros fármacos / biológicos</h2>
+<section class="nx-tarjeta" id="modOtrosFarmacos" title="Otros fármacos / biológicos relacionados">
+    <h2 class="nx-tarjeta__titulo">Otros fármacos / biológicos</h2>
     <p class="validation-module__intro">Registre aquí tratamientos activos previos o líneas ya existentes, biológicos históricos, concomitantes, exposiciones u otros fármacos relevantes. La documentación no inicia, añade ni cambia tratamientos; un tratamiento nuevo requiere solicitud y validación farmacoterapéutica.</p>
     <div class="validation-module__actions">
-        <button type="button" class="btn btn-primary btn-add-drug" id="btnSegAddOtherDrug"><i class="fas fa-plus"></i> Registrar tratamiento activo previo / línea existente</button>
+        <button type="button" class="nx-boton nx-boton--principal btn-add-drug" id="btnSegAddOtherDrug"><i class="fas fa-plus"></i> Registrar tratamiento activo previo / línea existente</button>
     </div>
     <p class="empty-state" id="segOtrosFarmacosEmpty">Sin otros fármacos añadidos todavía.</p>
     <div class="other-drugs-list" id="segOtrosFarmacosList" aria-live="polite"></div>
 </section>
 <!-- modPrebiologico eliminado en WO7E.1: no aportaba información prebiológica real en seguimiento -->
-<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-route"></i> Evolución farmacoterapéutica</h2>
+<section class="nx-tarjeta"><h2 class="nx-tarjeta__titulo">Evolución farmacoterapéutica</h2>
     <div class="form-grid"><div class="form-group"><label for="fhSegFecha">Fecha seguimiento</label><input type="date" class="form-control" id="fhSegFecha"></div><div class="form-group"><label for="fhSegCambiaNivel">¿Cambia nivel de estratificación?</label><select class="form-select" id="fhSegCambiaNivel"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegNuevoNivel">Nuevo nivel si cambia</label><select class="form-select" id="fhSegNuevoNivel"><option></option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
-    <div class="form-actions"><a class="btn btn-outline" href="https://ramonmorillo.github.io/hub-estratificacionCMO/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Acceso a Estratificación SEFH</a></div>
+    <div class="form-actions"><a class="nx-boton nx-boton--secundario" href="https://ramonmorillo.github.io/hub-estratificacionCMO/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Acceso a Estratificación SEFH</a></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegOptimiza">¿Requiere optimización?</label><select class="form-select" id="fhSegOptimiza"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegNuevaDosis">Nueva dosis</label><input class="form-control" id="fhSegNuevaDosis"></div><div class="form-group"><label for="fhSegNuevaPauta">Nueva pauta / intervalo</label><select class="form-select" id="fhSegNuevaPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhSegNuevaPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhSegMotivoOpt">Motivo optimización</label><select class="form-select" id="fhSegMotivoOpt"><option>No aplica</option><option>Respuesta clínica adecuada</option><option>Respuesta insuficiente</option><option>Ajuste por peso</option><option>Efecto adverso</option><option>Adherencia</option><option>Criterio farmacoterapéutico</option><option>Otro</option></select></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegSuspension">¿Suspensión?</label><select class="form-select" id="fhSegSuspension"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegMotivoSusp">Motivo suspensión</label><select class="form-select" id="fhSegMotivoSusp"><option>No aplica</option><option>Efecto adverso</option><option>Falta de eficacia</option><option>Decisión clínica</option><option>Preferencia paciente</option><option>Problema de adherencia</option><option>Otro</option></select></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegObservacionesLinea">Observaciones de esta línea</label><textarea class="form-textarea" id="fhSegObservacionesLinea" rows="3"></textarea></div></div>
     <div class="form-grid form-grid--full"><div id="fhSegCambioFarmacoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>El cambio de fármaco requiere nueva solicitud y validación farmacoterapéutica desde el servicio clínico de origen.</span></div></div>
 </section>
-<section class="dashboard-card" id="modSeguimientoAdherencia"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Adherencia al tratamiento</h2>
+<section class="nx-tarjeta" id="modSeguimientoAdherencia"><h2 class="nx-tarjeta__titulo">Adherencia al tratamiento</h2>
     <div class="form-grid form-grid--full">
         <div class="form-group">
             <label>Morisky-Green 4 preguntas</label>
@@ -275,12 +273,12 @@
     </div>
     <div class="mg-result" id="fhSegMoriskyResultado">Resultado Morisky-Green: pendiente de completar</div>
 </section>
-<section class="dashboard-card" id="modSeguimientoProms"><h2 class="section-title"><i class="fas fa-clipboard-list"></i> PROMs de seguimiento</h2>
+<section class="nx-tarjeta" id="modSeguimientoProms"><h2 class="nx-tarjeta__titulo">PROMs de seguimiento</h2>
     <div class="form-grid">
         <div class="form-group"><label for="fhSegProms">PROMs seguimiento</label><select class="form-select" id="fhSegProms"><option>No recogido</option><option>Sí, recoger DLQI + EVA dolor/prurito</option></select></div>
     </div>
     <div id="fhSegPromsExpanded" class="hidden">
-    <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA</h3>
+    <h3 class="nx-tarjeta__titulo">PROMs — DLQI y EVA</h3>
     <div class="proms-block" id="fhSegDlqiBlock">
         <p class="proms-block__subtitle">DLQI — Índice de Calidad de Vida en Dermatología. Señale cómo le ha afectado su piel durante la <strong>última semana</strong>.</p>
         <div class="dlqi-questions" id="fhSegDlqiQuestions"></div>
@@ -312,7 +310,7 @@
     </div>
 </div>
 </section>
-<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title ea-t01-section-heading"><span><i class="fas fa-exclamation-triangle"></i> Evaluación de efectos adversos</span><span class="status-badge ea-t01-section-note">FECHA DEL ACTO EN EVOLUCIÓN · SIN DUPLICADOS</span></h2>
+<section class="nx-tarjeta" id="modSeguimientoEa"><h2 class="nx-tarjeta__titulo ea-t01-section-heading"><span>Evaluación de efectos adversos</span><span class="nx-etiqueta ea-t01-section-note">FECHA DEL ACTO EN EVOLUCIÓN · SIN DUPLICADOS</span></h2>
     <div class="form-grid">
         <div class="form-group"><label for="fhSeguimientoEaPresente">¿Se han identificado o revisado acontecimientos adversos en esta visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select><p class="search-card__hint">No = ausencia documentada en esta visita · No consta = no hay información suficiente. Ninguno resuelve episodios anteriores.</p></div>
         <div class="form-group hidden" id="fhSeguimientoEaGravedadRow"><label for="fhSeguimientoEaGravedad">Gravedad del efecto adverso</label><select class="form-select" id="fhSeguimientoEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option><option value="Requiere suspensión / derivación">Requiere suspensión / derivación</option></select></div>
@@ -320,10 +318,10 @@
         <div class="form-group hidden" id="fhSeguimientoEaCorregidoRow"><label for="fhSeguimientoEaCorregido">¿Cómo se ha corregido el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaCorregido"><option value="no_consta">No consta</option><option value="reduccion_dosis">Reducción de dosis</option><option value="cambio_farmaco">Cambio de fármaco</option><option value="tratamiento_sintomatico">Tratamiento sintomático</option><option value="suspension_temporal">Suspensión temporal</option><option value="otro">Otro</option></select></div>
     </div>
     <div class="hidden" id="fhSegEaZone">
-        <div class="ea-t01-heading-row"><h3 class="card-title">EA de esta visita <span class="status-badge" id="fhSegEaCountBadge">0</span></h3></div>
+        <div class="ea-t01-heading-row"><h3 class="nx-tarjeta__titulo">EA de esta visita <span class="nx-etiqueta" id="fhSegEaCountBadge">0</span></h3></div>
         <p class="search-card__hint">Descripción del EA nuevo obligatoria al finalizar · Otros datos opcionales</p>
         <div class="form-actions ea-t01-entry-actions">
-            <button type="button" class="btn btn-primary btn-sm" id="fhSegAddEaBtn"><i class="fas fa-plus" aria-hidden="true"></i> Añadir EA nuevo</button>
+            <button type="button" class="nx-boton nx-boton--principal btn-sm" id="fhSegAddEaBtn"><i class="fas fa-plus" aria-hidden="true"></i> Añadir EA nuevo</button>
         </div>
         <p class="search-card__hint">Continuidad y recurrencia requieren selección explícita: pulse Continúa, Resuelto o Recurrencia en el episodio anterior. Cada visita registra su propia observación; el episodio anterior no se modifica.</p>
         <div id="fhSegEaPriorEpisodes" aria-live="polite"></div>
@@ -347,7 +345,7 @@
     <div id="fhSeguimientoEaActivationNotice" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Para activar los cuestionarios de causalidad, marque primero que existe efecto adverso en la visita de seguimiento.</span></div>
     <div class="hidden" id="fhSegEaSospechosos"></div>
 </section>
-<section class="dashboard-card hidden" id="modSeguimientoCausalidad"><h2 class="section-title"><i class="fas fa-calculator"></i> Análisis de causalidad</h2>
+<section class="nx-tarjeta hidden" id="modSeguimientoCausalidad"><h2 class="nx-tarjeta__titulo">Análisis de causalidad</h2>
 <div class="form-grid hidden" id="fhCausalityContextRow" hidden>
     <div class="form-group"><label for="fhCausalityEpisode">Episodio adverso de esta visita</label><select class="form-select" id="fhCausalityEpisode" disabled><option value="">Seleccionar episodio adverso…</option></select></div>
     <div class="form-group"><label for="fhCausalitySuspect">Medicamento sospechoso del episodio</label><select class="form-select" id="fhCausalitySuspect" disabled><option value="">Seleccionar sospechoso...</option></select></div>
@@ -355,17 +353,12 @@
 <div id="fhCausalityContextoVacio" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span></span></div>
 <div id="fhCausalityAvisoProvisional" class="notice-box notice-box--warning hidden"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Resultado provisional calculado con el algoritmo existente a partir de las respuestas registradas en esta edición. No constituye una evaluación clínica formal registrada ni forma parte del acto preparado.</span></div>
 <div class="causality-section" id="modNaranjo" title="Algoritmo de Naranjo">
-    <h2 class="section-title section-title--with-subtitle">
-        <i class="fas fa-calculator"></i>
-        <span class="section-title__text-group">
-            <span class="section-title__main">Algoritmo de Naranjo</span>
-            <span class="section-title__subtitle">Estimación de causalidad del evento adverso</span>
-        </span>
-    </h2>
+    <h3 class="nx-tarjeta__titulo">Algoritmo de Naranjo</h3>
+    <p class="nx-tarjeta__subtitulo">Estimación de causalidad del evento adverso</p>
     <div class="causality-result-grid causality-result-grid--top">
-        <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoNaranjo">—</span></div>
-        <div class="info-field"><span class="info-field__label">Puntuación</span><span class="info-field__value" id="naranjoScore">—</span></div>
-        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="naranjoCategoria">No evaluado</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Fármaco sospechoso</span><span class="dato-resumen__valor" id="fhSeguimientoEaContextoNaranjo">—</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Puntuación</span><span class="dato-resumen__valor" id="naranjoScore">—</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Categoría</span><span class="dato-resumen__valor" id="naranjoCategoria">No evaluado</span></div>
     </div>
     <p class="causality-help-text">Seleccione la opción más adecuada para cada criterio.</p>
     <details class="causality-details" open>
@@ -386,16 +379,11 @@
     <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
 </div>
 <div class="causality-section" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
-    <h2 class="section-title section-title--with-subtitle">
-        <i class="fas fa-project-diagram"></i>
-        <span class="section-title__text-group">
-            <span class="section-title__main">Algoritmo de Karch-Lasagna</span>
-            <span class="section-title__subtitle">Estimación de causalidad del evento adverso</span>
-        </span>
-    </h2>
+    <h3 class="nx-tarjeta__titulo">Algoritmo de Karch-Lasagna</h3>
+    <p class="nx-tarjeta__subtitulo">Estimación de causalidad del evento adverso</p>
     <div class="causality-result-grid causality-result-grid--top">
-        <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoKl">—</span></div>
-        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No evaluado</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Fármaco sospechoso</span><span class="dato-resumen__valor" id="fhSeguimientoEaContextoKl">—</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Categoría</span><span class="dato-resumen__valor" id="klCategoria">No evaluado</span></div>
     </div>
     <p class="causality-help-text">Seleccione la opción más adecuada para cada criterio.</p>
     <details class="causality-details" open>
@@ -413,20 +401,20 @@
     <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
 </div>
 <div id="modResumenCausalidad" title="Resumen de causalidad">
-    <h2 class="section-title"><i class="fas fa-notes-medical"></i> Resumen de causalidad</h2>
-    <div class="info-grid">
-        <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoResumen">—</span></div>
-        <div class="info-field"><span class="info-field__label">Naranjo</span><span class="info-field__value" id="resumenNaranjo">No evaluado</span></div>
-        <div class="info-field"><span class="info-field__label">Karch-Lasagna</span><span class="info-field__value" id="resumenKl">No evaluado</span></div>
+    <h2 class="nx-tarjeta__titulo">Resumen de causalidad</h2>
+    <div class="resumen-datos">
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Fármaco sospechoso</span><span class="dato-resumen__valor" id="fhSeguimientoEaContextoResumen">—</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Naranjo</span><span class="dato-resumen__valor" id="resumenNaranjo">No evaluado</span></div>
+        <div class="dato-resumen"><span class="dato-resumen__etiqueta">Karch-Lasagna</span><span class="dato-resumen__valor" id="resumenKl">No evaluado</span></div>
     </div>
     <div class="form-grid"><div class="form-group"><label for="fhCausalidadFinal">Causalidad final farmacéutica</label><select class="form-select" id="fhCausalidadFinal"><option value="No evaluada">No evaluada</option><option value="Dudosa / sin relación">Dudosa / sin relación</option><option value="Posible">Posible</option><option value="Probable">Probable</option><option value="Definida">Definida</option><option value="No clasificable">No clasificable</option></select></div></div>
     <p class="causality-help-text">Puedes apoyarte en Naranjo y Karch-Lasagna para registrar la valoración final.</p>
 </div>
 </section>
-<section class="dashboard-card" id="modExportacion">
-    <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
+<section class="nx-tarjeta" id="modExportacion">
+    <h2 class="nx-tarjeta__titulo">Exportación</h2>
     <div id="fhSegEaExportGuardNotice" class="notice-box notice-box--warning hidden" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span></span></div>
-    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline" id="fhSegExportBridgeRawBtn"><i class="fas fa-table" aria-hidden="true"></i> Copiar filas Excel FH</button></div>
+    <div class="form-actions"><button type="button" class="nx-boton nx-boton--secundario" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="nx-boton nx-boton--secundario" id="fhSegExportBridgeRawBtn"><i class="fas fa-table" aria-hidden="true"></i> Copiar filas Excel FH</button></div>
     <p class="search-card__hint">Copia las filas de esta visita (el acto y cada línea revisada) para pegarlas en el libro Excel FH. No guarda ni envía nada. Uso exclusivo con datos sintéticos.</p>
     <p id="fhSegExportBridgeRawStatus" class="search-card__hint" role="status" aria-live="polite">Estado de la copia: sin preparar.</p>
 </section>
