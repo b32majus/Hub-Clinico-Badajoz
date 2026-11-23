@@ -430,41 +430,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
-.checklist-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 24px;
-    background: var(--nx-color-fondo);
-    border: 1.5px solid var(--nx-color-borde);
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--nx-color-texto-suave);
-    transition: border-color 0.15s, background 0.15s;
-    user-select: none;
-    max-width: 100%;
-    box-sizing: border-box;
-    word-break: break-word;
-}
-.checklist-chip:hover {
-    border-color: var(--nx-color-modulo-texto);
-    background: var(--nx-color-modulo-suave);
-}
-.checklist-chip input[type="checkbox"] {
-    accent-color: var(--nx-color-principal);
-    width: 15px;
-    height: 15px;
-    margin: 0;
-}
-.checklist-chip:has(input:checked) {
-    background: var(--nx-color-principal-suave);
-    border-color: var(--nx-color-principal);
-    color: var(--nx-color-principal);
-    font-weight: 600;
-}
+}
 
 /* --- Session professional block (WO farmacia v0.1) --- */
 
@@ -798,9 +764,6 @@
 /* Farmacéutico responsable: separación clara del bloque anterior */
 
 /* Checklist chips: sin desbordamiento de texto */
-.checklist-chip {
-    overflow-wrap: break-word;
-}
 
 /* Responsive: chips y campos no desbordan en mobile */
 @media (max-width: 768px) {
@@ -813,10 +776,6 @@
     }
     .checklist-visual {
         gap: 6px;
-    }
-    .checklist-chip {
-        padding: 6px 10px;
-        font-size: 0.82rem;
     }
     .form-grid {
         grid-template-columns: 1fr;
