@@ -197,6 +197,11 @@
     border-color: var(--nx-color-error);
   }
 
+  /* Dato precargado que no se edita: fondo suave, el texto sigue legible */
+  .nx-campo__control[readonly] {
+    background: var(--nx-color-superficie-suave);
+  }
+
   .nx-campo__control:disabled {
     border-color: var(--nx-color-borde);
     background: var(--nx-color-superficie-suave);

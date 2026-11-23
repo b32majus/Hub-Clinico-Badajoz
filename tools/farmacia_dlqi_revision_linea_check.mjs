@@ -42,7 +42,7 @@ const LEYENDA = 'DLQI: 0-1 sin efecto · 2-5 efecto pequeño · 6-10 efecto mode
 
 // 3. Seguimiento: desplegable de movimiento terapéutico
 const html = read('farmacia_seguimiento.html');
-const select = (html.match(/<select class="form-select" id="fhSegTipoRelacionTerapia">[\s\S]*?<\/select>/) || [''])[0];
+const select = (html.match(/<select class="nx-campo__control" id="fhSegTipoRelacionTerapia">[\s\S]*?<\/select>/) || [''])[0];
 const values = [...select.matchAll(/value="([^"]*)"/g)].map((m) => m[1]);
 check('Seguimiento: desplegable = sin_cambios, optimizacion, suspension', JSON.stringify(values) === JSON.stringify(['sin_cambios', 'optimizacion', 'suspension']));
 check('Seguimiento: sin el texto «Revisión de línea» en el HTML', !html.includes('Revisión de línea'));

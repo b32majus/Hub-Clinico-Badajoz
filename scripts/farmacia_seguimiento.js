@@ -119,7 +119,7 @@
     }
 
     function buildSelectControl(options, selectedValue, placeholder) {
-        var select = createElement('select', 'form-select');
+        var select = createElement('select', 'nx-campo__control');
         if (placeholder !== undefined) {
             var placeholderOption = document.createElement('option');
             placeholderOption.value = '';
@@ -868,8 +868,8 @@
     }
 
     function buildFollowupField(labelText, control) {
-        var group = createElement('div', 'form-group');
-        var label = createElement('label', '', labelText);
+        var group = createElement('div', 'nx-campo');
+        var label = createElement('label', 'nx-campo__etiqueta', labelText);
         group.appendChild(label);
         group.appendChild(control);
         return group;
@@ -881,7 +881,7 @@
             pautaOptions = P.getPautaOptions();
         }
         var select = buildSelectControl(pautaOptions, drug.pautaCodigo, 'Seleccionar...');
-        var otroInput = createElement('input', 'form-control hidden');
+        var otroInput = createElement('input', 'nx-campo__control hidden');
         otroInput.type = 'text';
         otroInput.value = drug.pautaOtro || '';
         otroInput.placeholder = 'Especificar otra pauta';
@@ -947,12 +947,12 @@
         header.appendChild(removeBtn);
         card.appendChild(header);
 
-        var grid = createElement('div', 'form-grid other-drug-card__grid');
+        var grid = createElement('div', 'nx-formulario other-drug-card__grid');
         var relationSelect = buildSelectControl(FOLLOWUP_RELATION_OPTIONS, drug.relationType);
         relationSelect.addEventListener('change', function () { updateFollowupOtherDrug(drug.uid, 'relationType', this.value); });
         grid.appendChild(buildFollowupField('Tipo de relación', relationSelect));
 
-        var farmacoInput = createElement('input', 'form-control js-cima-autocomplete');
+        var farmacoInput = createElement('input', 'nx-campo__control js-cima-autocomplete');
         farmacoInput.type = 'text';
         farmacoInput.value = drug.farmaco || '';
         farmacoInput.setAttribute('data-field', 'farmaco');
@@ -972,7 +972,7 @@
             { key: 'dosis', label: 'Dosis', type: 'text' },
             { key: 'presentacion', label: 'Presentación', type: 'text' }
         ].forEach(function (field) {
-            var input = createElement('input', 'form-control');
+            var input = createElement('input', 'nx-campo__control');
             input.type = field.type;
             input.value = drug[field.key] || '';
             input.setAttribute('data-field', field.key);
@@ -1000,7 +1000,7 @@
             { key: 'codigoNacional', label: 'Cód. Nacional', type: 'text' },
             { key: 'nregistro', label: 'Nº Registro', type: 'text' }
         ].forEach(function (field) {
-            var input = createElement('input', 'form-control');
+            var input = createElement('input', 'nx-campo__control');
             input.type = field.type;
             input.value = drug[field.key] || '';
             input.setAttribute('data-field', field.key);
@@ -1009,7 +1009,7 @@
             grid.appendChild(buildFollowupField(field.label, input));
         });
 
-        var origenInput = createElement('input', 'form-control');
+        var origenInput = createElement('input', 'nx-campo__control');
         origenInput.type = 'text';
         origenInput.value = drug.origenCatalogo || '';
         origenInput.setAttribute('data-field', 'origenCatalogo');
@@ -1022,7 +1022,7 @@
             { key: 'fechaFin', label: 'Fecha fin', type: 'date' },
             { key: 'motivo', label: 'Motivo/contexto', type: 'text' }
         ].forEach(function (field) {
-            var input = createElement('input', 'form-control');
+            var input = createElement('input', 'nx-campo__control');
             input.type = field.type;
             input.value = drug[field.key] || '';
             input.setAttribute('data-field', field.key);
@@ -1985,7 +1985,7 @@
     // y en el estado clínicamente neutro «No evaluada».
     function eaCausalityFinalControlContainer(finalAssessment) {
         if (!finalAssessment || typeof finalAssessment.closest !== 'function') return null;
-        return finalAssessment.closest('.form-grid') || finalAssessment.closest('.form-group');
+        return finalAssessment.closest('.nx-formulario') || finalAssessment.closest('.nx-campo');
     }
 
     function eaCausalityHelpText() {
@@ -2830,7 +2830,7 @@
         }
         item.appendChild(textGroup);
         var actions = Array.isArray(episode.actions) ? episode.actions : [];
-        var actionsRow = createElement('div', 'form-actions');
+        var actionsRow = createElement('div', 'nx-acciones');
         var covered = eaActCoversEpisode(episode.episode_id);
         actions.forEach(function (action) {
             var label = EA_PRIOR_ACTION_LABELS[action] || String(action);
@@ -2904,9 +2904,9 @@
         var body = createElement('div');
         applyEaStyle(body, { marginTop: '10px' });
 
-        body.appendChild(createElement('span', 'form-label', 'Descripción original del EA (obligatoria al finalizar nuevo episodio)'));
+        body.appendChild(createElement('span', 'nx-campo__etiqueta', 'Descripción original del EA (obligatoria al finalizar nuevo episodio)'));
         var descriptionInput = document.createElement('textarea');
-        descriptionInput.className = 'form-textarea';
+        descriptionInput.className = 'nx-campo__control';
         descriptionInput.rows = 2;
         descriptionInput.setAttribute('aria-label', 'Descripción original del EA (obligatoria al finalizar nuevo episodio)');
         descriptionInput.setAttribute('data-ea-field', 'description');
@@ -2941,7 +2941,7 @@
         // VIS-04: ambos controles clínicos comparten la fila del maestro G0.
         var clinicalGrid = createElement('div', 'ea-t01-clinical-grid');
         var evolutionField = createElement('div', 'ea-t01-clinical-field');
-        evolutionField.appendChild(createElement('span', 'form-label', 'Evolución documentada en esta visita'));
+        evolutionField.appendChild(createElement('span', 'nx-campo__etiqueta', 'Evolución documentada en esta visita'));
         if (eaIsLongitudinalEvolution(event.evolution)) {
             // D4b-2 (#867): la evolución de una ficha longitudinal es la acción
             // elegida sobre el episodio anterior; se muestra fija, no se elige.
@@ -2956,7 +2956,7 @@
         clinicalGrid.appendChild(evolutionField);
 
         var severityField = createElement('div', 'ea-t01-clinical-field');
-        severityField.appendChild(createElement('span', 'form-label', 'Gravedad clínica si se ha registrado (opcional)'));
+        severityField.appendChild(createElement('span', 'nx-campo__etiqueta', 'Gravedad clínica si se ha registrado (opcional)'));
         var severitySelect = buildSelectControl(EA_SEVERITY_OPTIONS, event.severity, 'No consta');
         severitySelect.setAttribute('aria-label', 'Gravedad clínica si se ha registrado (opcional)');
         severitySelect.setAttribute('data-ea-field', 'severity');
@@ -2970,7 +2970,7 @@
         // textos de ayuda redundantes. Los candidatos a sospechosos siguen
         // siendo seleccionables explícitamente y solo viven en memoria de
         // edición de la ficha.
-        body.appendChild(createElement('div', 'form-label', 'Medicamentos señalados expresamente como sospechosos'));
+        body.appendChild(createElement('div', 'nx-campo__etiqueta', 'Medicamentos señalados expresamente como sospechosos'));
         // F1 (#867): la sospecha de la visita anterior es REFERENCIA, nunca
         // selección. Se muestra antes de la lista, sin inputs ni controles:
         // el profesional debe preguntar y marcar en esta visita lo que persista.
@@ -3748,7 +3748,7 @@
         icon.setAttribute('aria-hidden', 'true');
         div.appendChild(icon);
         div.appendChild(document.createTextNode(' ' + msg));
-        var fg = cipInput.closest('.form-group');
+        var fg = cipInput.closest('.nx-campo');
         if (fg) fg.insertAdjacentElement('afterend', div);
     }
 
@@ -4282,7 +4282,7 @@
 
     function toggleField(fieldId, show) {
         const el = document.getElementById(fieldId);
-        if (el) el.closest('.form-group').classList.toggle('hidden', !show);
+        if (el) el.closest('.nx-campo').classList.toggle('hidden', !show);
     }
 
     function updateMorisky() {
