@@ -1,5 +1,12 @@
 // /modules/dataManager.js
 // ACTUALIZACION: Patron clasico (sin import/export) + funciones adicionales para Fase 2
+// Los colores de los gráficos salen de los tokens (--nx-*): el canvas de Chart.js
+// no lee var(), así que se resuelven al usarlos (H-15).
+function nxColor(nombre) {
+    if (typeof getComputedStyle !== 'function' || typeof document === 'undefined' || !document.documentElement) return '';
+    return getComputedStyle(document.documentElement).getPropertyValue('--nx-color-' + nombre).trim();
+}
+
 let appState = { isLoaded: false, db: null, lastLoadedTime: null };
 const DB_CACHE_STORAGE = window.sessionStorage;
 const LEGACY_DB_KEYS = ['hubClinicoDB', 'hubClinicoDB_loadTime', 'hubClinicoDB_limited'];
@@ -1768,7 +1775,7 @@ function generateRealChartData(patients, filters = {}) {
     if (!treatmentLabels.length) {
         treatmentLabels = ['Sin datos'];
         treatmentValues = [0];
-        treatmentColors = ['#94a3b8'];
+        treatmentColors = [nxColor('tenue')];
     }
 
     console.log('?? Treatment counts (barras):', treatmentLabels.length, 'tratamientos');
@@ -1884,7 +1891,7 @@ function generateRealChartData(patients, filters = {}) {
             labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'],
             datasets: [{
                 data: [activityCounts.remission, activityCounts.low, activityCounts.moderate, activityCounts.high],
-                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+                backgroundColor: [nxColor('ok'), nxColor('info'), nxColor('aviso'), nxColor('error')]
             }],
             activityLabel: activityLabel
         },
@@ -2039,8 +2046,8 @@ function getPoblationalData(filters = {}) {
             avgBasdai: 0
         },
         chartData: {
-            activity: { labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
-            treatment: { labels: [], datasets: [{ data: [], backgroundColor: '#6366f1' }] },
+            activity: { labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: [nxColor('ok'), nxColor('info'), nxColor('aviso'), nxColor('error')] }] },
+            treatment: { labels: [], datasets: [{ data: [], backgroundColor: nxColor('serie-1') }] },
             comorbidity: { labels: [], datasets: [{ data: [] }] },
             correlation: { datasets: [] }
         }

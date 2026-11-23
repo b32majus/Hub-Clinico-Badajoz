@@ -99,7 +99,7 @@ ok(!/new Date\(\s*(?:a|b)\.(?:Fecha_Visita|fechaVisita|Fecha)\b/.test(tem), 'E9 
 ok(/parseVisitDate\(/.test(tem), 'E9 treatmentEventsManager.js debe usar parseVisitDate');
 
 // Caché.
-ok(/modules\/treatmentEventsManager\.js\?v=20261122a/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar treatmentEventsManager.js?v=20261122a');
+ok(/modules\/treatmentEventsManager\.js\?v=20261123a/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar treatmentEventsManager.js?v=20261123a');
 
 if (fails.length) {
   console.error('FAIL reuma_fechas_eventos_check (' + fails.length + ')');

@@ -1,3 +1,10 @@
+// Los colores de los gráficos salen de los tokens (--nx-*): el canvas de Chart.js
+// no lee var(), así que se resuelven al usarlos (H-15).
+function nxColor(nombre) {
+    if (typeof getComputedStyle !== 'function' || typeof document === 'undefined' || !document.documentElement) return '';
+    return getComputedStyle(document.documentElement).getPropertyValue('--nx-color-' + nombre).trim();
+}
+
 /**
  * treatmentEventsManager.js — Eventos terapéuticos en dashboard
  *
@@ -754,7 +761,7 @@
                     display: true,
                     content: shortLabel,
                     position: 'start',
-                    color: '#fff',
+                    color: nxColor('superficie'),
                     backgroundColor: color,
                     font: { size: 10 },
                     padding: 4
@@ -921,15 +928,15 @@
             var dateStr = formatEventDate(event.date);
             var html = '';
 
-            html += '<div class="timeline-item ' + colorClass + '" data-event-id="' + escapeHtml(event.id) + '" style="padding: 8px 0; border-bottom: 1px solid #eee; cursor: pointer;">';
+            html += '<div class="timeline-item ' + colorClass + '" data-event-id="' + escapeHtml(event.id) + '" style="padding: 8px 0; border-bottom: 1px solid var(--nx-color-borde); cursor: pointer;">';
             html += '<div style="display: flex; align-items: flex-start; gap: 10px;">';
             html += '<span class="timeline-icon" style="min-width: 24px; text-align: center; font-size: 16px;">' + icon + '</span>';
             html += '<div style="flex: 1;">';
-            html += '<div style="font-weight: 600; font-size: 13px; color: #2c3e50;">' + escapeHtml(event.description) + '</div>';
-            html += '<div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">' + dateStr + ' · ' + translateEventType(event.type) + '</div>';
+            html += '<div style="font-weight: 600; font-size: 13px; color: var(--nx-color-texto);">' + escapeHtml(event.description) + '</div>';
+            html += '<div style="font-size: 11px; color: var(--nx-color-texto-suave); margin-top: 2px;">' + dateStr + ' · ' + translateEventType(event.type) + '</div>';
             if (event.metadata && event.metadata.scoreDelta) {
                 var sign = event.metadata.scoreDelta > 0 ? '+' : '';
-                html += '<div style="font-size: 11px; color: #e67e22; margin-top: 2px;">Δ ' + escapeHtml(event.metadata.scoreName || 'Puntuación') + ': ' + sign + event.metadata.scoreDelta.toFixed(1) + '</div>';
+                html += '<div style="font-size: 11px; color: var(--nx-color-aviso); margin-top: 2px;">Δ ' + escapeHtml(event.metadata.scoreName || 'Puntuación') + ': ' + sign + event.metadata.scoreDelta.toFixed(1) + '</div>';
             }
             html += '</div>';
             html += '</div>';
@@ -1205,15 +1212,15 @@
                 type: 'line',
                 xMin: xValue,
                 xMax: xValue,
-                borderColor: treatment.type === 'biologico' || treatment.type === 'biologic' ? '#8B5CF6' : '#3B82F6',
+                borderColor: treatment.type === 'biologico' || treatment.type === 'biologic' ? nxColor('serie-2') : nxColor('serie-1'),
                 borderWidth: 2,
                 borderDash: [6, 4],
                 label: {
                     display: true,
                     content: labelText,
                     position: 'start',
-                    color: '#fff',
-                    backgroundColor: treatment.type === 'biologico' || treatment.type === 'biologic' ? '#8B5CF6' : '#3B82F6',
+                    color: nxColor('superficie'),
+                    backgroundColor: treatment.type === 'biologico' || treatment.type === 'biologic' ? nxColor('serie-2') : nxColor('serie-1'),
                     font: { size: 9 },
                     padding: 3
                 }

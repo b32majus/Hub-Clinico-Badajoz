@@ -223,7 +223,7 @@ const SYNTH_CATALOG_GAMMA = {
             border: getComputedStyle(label).borderTopColor,
             accent: getComputedStyle(label.querySelector('input')).accentColor
         }));
-        assert.equal(unmarkedChip.border, 'rgb(226, 232, 240)', 'unmarked chips keep the neutral border');
+        assert.equal(unmarkedChip.border, 'rgb(214, 218, 226)', 'unmarked chips keep the neutral border');
         assert.equal(unmarkedChip.accent, 'auto', 'unmarked checkboxes keep the neutral accent');
         ok('explicit A/B marks are per-episode, legacy state untouched, literal hint leads the block, teal master treatment on marked chips');
 

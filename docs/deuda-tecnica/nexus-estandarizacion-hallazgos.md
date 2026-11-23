@@ -65,7 +65,7 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-10 | cerrado por decisión (23-11) | la Home no lleva `<nx-shell>`: Sil no quiere barra lateral en ella | - |
 | H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
 | H-02, H-03, H-19 | abiertos | `main-content` en 30 sitios (24 ficheros); `style.css` sin `@layer`; fondo degradado de `.main-content` activo | M |
-| H-15 | parcial | hex en `farmacia_seguimiento.js` (6), `treatmentEventsManager.js` (5), `mockDashboardData.js` (5), `dataManager.js` (4), `farmacia_excel_row_export.js` (1) | M |
+| H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
 | H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
 | H-20 | abierto | `pending-validation*` 35, `status-badge` 20, `dashboard-card` 9, `prebio-chip` 7 | L |
 | H-26 | parcial | `display:none` en línea: `primera_visita` 42, `seguimiento` 30; CSS de formularios sin `@layer` | L |
