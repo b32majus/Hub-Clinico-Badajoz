@@ -354,7 +354,7 @@
     var code = failure && typeof failure.code === 'string' && failure.code.length > 0
       ? failure.code
       : 'HOME_ERROR';
-    rootEl.textContent = 'No se pudo iniciar el Home: ' + code;
+    rootEl.textContent = 'No se pudo abrir el inicio de NEXus (código ' + code + ').';
     return rootEl;
   }
 
