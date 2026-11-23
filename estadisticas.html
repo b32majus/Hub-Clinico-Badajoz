@@ -17,7 +17,7 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261123-t7c">
-    <link rel="stylesheet" href="style_estadisticas.css?v=20261123-t7c">
+    <link rel="stylesheet" href="style_estadisticas.css?v=20261123-t7r">
 </head>
 
 <body class="nx-pagina">
@@ -40,6 +40,7 @@
             </div>
 </nx-shell>
 <script type="module" async src="modules/nexus/piezas/nx-shell.js"></script>
+<script type="module" src="modules/nexus/piezas/nx-pestanas.js"></script>
 
         <main class="main-content nx-marco__contenido dashboard-poblacional">
             <header class="nx-cabecera">
@@ -63,28 +64,29 @@
 
                 <div class="collapsible-content">
                     <!-- Tabs de Navegación -->
-                    <div class="filter-tabs" role="tablist">
-                        <button class="filter-tab active" data-tab="periodo" role="tab" aria-selected="true">
+                    <nx-pestanas>
+                    <div class="nx-pestanas__lista" role="tablist" aria-label="Grupos de filtros">
+                        <button type="button" class="nx-pestanas__pestana filter-tab" data-tab="periodo" role="tab" id="pestana-periodo" aria-selected="true">
                             <i class="fas fa-calendar-alt"></i>
                             <span>Periodo</span>
                             <span class="filter-tab-badge" id="badge-periodo" style="display: none;">0</span>
                         </button>
-                        <button class="filter-tab" data-tab="demograficos" role="tab" aria-selected="false">
+                        <button type="button" class="nx-pestanas__pestana filter-tab" data-tab="demograficos" role="tab" id="pestana-demograficos" aria-selected="false" tabindex="-1">
                             <i class="fas fa-users"></i>
                             <span>Demografía</span>
                             <span class="filter-tab-badge" id="badge-demograficos" style="display: none;">0</span>
                         </button>
-                        <button class="filter-tab" data-tab="clinicos" role="tab" aria-selected="false">
+                        <button type="button" class="nx-pestanas__pestana filter-tab" data-tab="clinicos" role="tab" id="pestana-clinicos" aria-selected="false" tabindex="-1">
                             <i class="fas fa-heartbeat"></i>
                             <span>Clínicos</span>
                             <span class="filter-tab-badge" id="badge-clinicos" style="display: none;">0</span>
                         </button>
-                        <button class="filter-tab" data-tab="terapeuticos" role="tab" aria-selected="false">
+                        <button type="button" class="nx-pestanas__pestana filter-tab" data-tab="terapeuticos" role="tab" id="pestana-terapeuticos" aria-selected="false" tabindex="-1">
                             <i class="fas fa-pills"></i>
                             <span>Terapéuticos</span>
                             <span class="filter-tab-badge" id="badge-terapeuticos" style="display: none;">0</span>
                         </button>
-                        <button class="filter-tab" data-tab="historicos" role="tab" aria-selected="false">
+                        <button type="button" class="nx-pestanas__pestana filter-tab" data-tab="historicos" role="tab" id="pestana-historicos" aria-selected="false" tabindex="-1">
                             <i class="fas fa-history"></i>
                             <span>Históricos</span>
                             <span class="filter-tab-badge" id="badge-historicos" style="display: none;">0</span>
@@ -92,17 +94,17 @@
                     </div>
 
                     <!-- Contenido Tab: Periodo -->
-                    <div class="filter-tab-content active" id="tab-periodo" role="tabpanel">
+                    <div class="nx-pestanas__panel filter-tab-content" id="tab-periodo" role="tabpanel" aria-labelledby="pestana-periodo" tabindex="0">
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-calendar-day"></i> Rango de Fechas</h3>
-                                <div class="filter-group">
-                                    <label for="filterDateFrom">Desde:</label>
-                                    <input type="date" id="filterDateFrom" class="input-field">
+                                <div class="nx-campo filter-group">
+                                    <label for="filterDateFrom" class="nx-campo__etiqueta">Desde:</label>
+                                    <input type="date" id="filterDateFrom" class="nx-campo__control">
                                 </div>
-                                <div class="filter-group">
-                                    <label for="filterDateTo">Hasta:</label>
-                                    <input type="date" id="filterDateTo" class="input-field">
+                                <div class="nx-campo filter-group">
+                                    <label for="filterDateTo" class="nx-campo__etiqueta">Hasta:</label>
+                                    <input type="date" id="filterDateTo" class="nx-campo__control">
                                 </div>
                                 <div class="date-presets">
                                     <button type="button" class="date-preset-btn" data-preset="month">Último mes</button>
@@ -115,12 +117,12 @@
                     </div>
 
                     <!-- Contenido Tab: Demografía -->
-                    <div class="filter-tab-content" id="tab-demograficos" role="tabpanel">
+                    <div class="nx-pestanas__panel filter-tab-content" id="tab-demograficos" role="tabpanel" aria-labelledby="pestana-demograficos" tabindex="0" hidden>
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-disease"></i> Patología</h3>
-                                <div class="filter-group">
-                                    <label for="filterPathology">Tipo de Patología:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterPathology" class="nx-campo__etiqueta">Tipo de Patología:</label>
                                     <select id="filterPathology" class="select-field select-modern">
                                         <option value="Todos">Todas las patologías</option>
                                         <option value="AR">Artritis Reumatoide (AR)</option>
@@ -133,22 +135,22 @@
                             </div>
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-user"></i> Datos del Paciente</h3>
-                                <div class="filter-group">
-                                    <label for="filterSex">Sexo:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterSex" class="nx-campo__etiqueta">Sexo:</label>
                                     <select id="filterSex" class="select-field select-modern">
                                         <option value="Todos">Todos</option>
                                         <option value="M">Hombre</option>
                                         <option value="F">Mujer</option>
                                     </select>
                                 </div>
-                                <div class="filter-group">
-                                    <label for="filterAgeFrom">Edad desde:</label>
-                                    <input type="number" id="filterAgeFrom" class="input-field" placeholder="Ej: 18"
+                                <div class="nx-campo filter-group">
+                                    <label for="filterAgeFrom" class="nx-campo__etiqueta">Edad desde:</label>
+                                    <input type="number" id="filterAgeFrom" class="nx-campo__control" placeholder="Ej: 18"
                                         min="0" max="120">
                                 </div>
-                                <div class="filter-group">
-                                    <label for="filterAgeTo">Edad hasta:</label>
-                                    <input type="number" id="filterAgeTo" class="input-field" placeholder="Ej: 80"
+                                <div class="nx-campo filter-group">
+                                    <label for="filterAgeTo" class="nx-campo__etiqueta">Edad hasta:</label>
+                                    <input type="number" id="filterAgeTo" class="nx-campo__control" placeholder="Ej: 80"
                                         min="0" max="120">
                                 </div>
                             </div>
@@ -156,12 +158,12 @@
                     </div>
 
                     <!-- Contenido Tab: Clínicos -->
-                    <div class="filter-tab-content" id="tab-clinicos" role="tabpanel">
+                    <div class="nx-pestanas__panel filter-tab-content" id="tab-clinicos" role="tabpanel" aria-labelledby="pestana-clinicos" tabindex="0" hidden>
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-vial"></i> Biomarcadores</h3>
-                                <div class="filter-group">
-                                    <label for="filterBiomarker">Estado del Biomarcador:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterBiomarker" class="nx-campo__etiqueta">Estado del Biomarcador:</label>
                                     <select id="filterBiomarker" class="select-field select-modern">
                                         <option value="Todos">Todos los estados</option>
                                         <option value="HLA-B27_Positive">HLA-B27 Positivo</option>
@@ -175,8 +177,8 @@
                             </div>
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-chart-bar"></i> Índices de Actividad</h3>
-                                <div class="filter-group">
-                                    <label for="filterActivityIndex">Índice a evaluar:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterActivityIndex" class="nx-campo__etiqueta">Índice a evaluar:</label>
                                     <select id="filterActivityIndex" class="select-field select-modern">
                                         <option value="BASDAI">BASDAI</option>
                                         <option value="ASDAS">ASDAS</option>
@@ -197,8 +199,8 @@
                                         <option value="VSG">VSG</option>
                                     </select>
                                 </div>
-                                <div class="filter-group">
-                                    <label for="filterActivityState">Estado de Actividad:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterActivityState" class="nx-campo__etiqueta">Estado de Actividad:</label>
                                     <select id="filterActivityState" class="select-field select-modern">
                                         <option value="Todos">Todos los estados</option>
                                         <option value="Remision">Remisión</option>
@@ -231,12 +233,12 @@
                     </div>
 
                     <!-- Contenido Tab: Terapéuticos -->
-                    <div class="filter-tab-content" id="tab-terapeuticos" role="tabpanel">
+                    <div class="nx-pestanas__panel filter-tab-content" id="tab-terapeuticos" role="tabpanel" aria-labelledby="pestana-terapeuticos" tabindex="0" hidden>
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-syringe"></i> Tipo de Tratamiento</h3>
-                                <div class="filter-group">
-                                    <label for="filterTtoType">Categoría:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterTtoType" class="nx-campo__etiqueta">Categoría:</label>
                                     <select id="filterTtoType" class="select-field select-modern">
                                         <option value="Todos">Todos los tratamientos</option>
                                         <option value="FAMEs">FAMEs convencionales</option>
@@ -247,8 +249,8 @@
                             </div>
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-prescription-bottle-alt"></i> Fármaco Específico</h3>
-                                <div class="filter-group">
-                                    <label for="filterTtoSpecific">Medicamento:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterTtoSpecific" class="nx-campo__etiqueta">Medicamento:</label>
                                     <select id="filterTtoSpecific" class="select-field select-modern">
                                         <option value="Todos">Todos los fármacos</option>
                                     </select>
@@ -258,12 +260,12 @@
                     </div>
 
                     <!-- Contenido Tab: Históricos -->
-                    <div class="filter-tab-content" id="tab-historicos" role="tabpanel">
+                    <div class="nx-pestanas__panel filter-tab-content" id="tab-historicos" role="tabpanel" aria-labelledby="pestana-historicos" tabindex="0" hidden>
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-notes-medical"></i> Comorbilidades</h3>
-                                <div class="filter-group">
-                                    <label for="filterComorbidity">Condición asociada:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterComorbidity" class="nx-campo__etiqueta">Condición asociada:</label>
                                     <select id="filterComorbidity" class="select-field select-modern">
                                         <option value="Todos">Todas las comorbilidades</option>
                                         <option value="HTA">Hipertensión Arterial</option>
@@ -279,8 +281,8 @@
                             </div>
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-eye"></i> Manifestaciones Extra-articulares</h3>
-                                <div class="filter-group">
-                                    <label for="filterExtraArticular">Manifestación:</label>
+                                <div class="nx-campo filter-group">
+                                    <label for="filterExtraArticular" class="nx-campo__etiqueta">Manifestación:</label>
                                     <select id="filterExtraArticular" class="select-field select-modern">
                                         <option value="Todos">Todas las manifestaciones</option>
                                         <option value="Digestiva">Afectación Digestiva (EII)</option>
@@ -298,6 +300,7 @@
                             </div>
                         </div>
                     </div>
+                    </nx-pestanas>
 
                     <!-- Acciones de Filtro -->
                     <div class="filter-actions">
@@ -315,54 +318,30 @@
             </section>
 
             <!-- Panel de KPIs Mejorado -->
-            <section class="dashboard-kpis-panel" id="kpisPanel">
-                <div class="kpi-card kpi-card--info">
-                    <div class="kpi-icon"><i class="fas fa-users"></i></div>
-                    <span class="kpi-label">Total Pacientes</span>
-                    <span id="kpiTotalPatients" class="kpi-value">0</span>
-                    <span class="kpi-trend kpi-trend--neutral" id="kpiTotalTrend">
-                        <i class="fas fa-minus"></i> Sin cambios
-                    </span>
+            <section class="nx-cifras" id="kpisPanel" role="region" aria-label="Resumen de la cohorte">
+                <div class="nx-cifra">
+                    <p class="nx-cifra__etiqueta">Total Pacientes</p>
+                    <p class="nx-cifra__valor" id="kpiTotalPatients">0</p>
                 </div>
-                <div class="kpi-card kpi-card--success">
-                    <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
-                    <span class="kpi-label" id="kpiRemissionLabel">En Remisión</span>
-                    <span id="kpiRemissionPercent" class="kpi-value">0%</span>
-                    <span class="kpi-trend kpi-trend--up" id="kpiRemissionTrend">
-                        <i class="fas fa-arrow-up"></i> +0%
-                    </span>
+                <div class="nx-cifra">
+                    <p class="nx-cifra__etiqueta" id="kpiRemissionLabel">En Remisión</p>
+                    <p class="nx-cifra__valor" id="kpiRemissionPercent">0%</p>
                 </div>
-                <div class="kpi-card kpi-card--danger">
-                    <div class="kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
-                    <span class="kpi-label" id="kpiHighActivityLabel">Alta Actividad</span>
-                    <span id="kpiHighActivityPercent" class="kpi-value">0%</span>
-                    <span class="kpi-trend kpi-trend--down" id="kpiHighActivityTrend">
-                        <i class="fas fa-arrow-down"></i> -0%
-                    </span>
+                <div class="nx-cifra">
+                    <p class="nx-cifra__etiqueta" id="kpiHighActivityLabel">Alta Actividad</p>
+                    <p class="nx-cifra__valor" id="kpiHighActivityPercent">0%</p>
                 </div>
-                <div class="kpi-card kpi-card--purple">
-                    <div class="kpi-icon"><i class="fas fa-syringe"></i></div>
-                    <span class="kpi-label">Tto. Biológico</span>
-                    <span id="kpiBiologicPercent" class="kpi-value">0%</span>
-                    <span class="kpi-trend kpi-trend--neutral" id="kpiBiologicTrend">
-                        <i class="fas fa-minus"></i> Estable
-                    </span>
+                <div class="nx-cifra">
+                    <p class="nx-cifra__etiqueta">Tto. Biológico</p>
+                    <p class="nx-cifra__valor" id="kpiBiologicPercent">0%</p>
                 </div>
-                <div class="kpi-card kpi-card--warning">
-                    <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
-                    <span class="kpi-label" id="kpiActivityLabel">BASDAI Medio</span>
-                    <span id="kpiAvgActivity" class="kpi-value">0.0</span>
-                    <span class="kpi-trend kpi-trend--down" id="kpiActivityTrend">
-                        <i class="fas fa-arrow-down"></i> -0.0
-                    </span>
+                <div class="nx-cifra">
+                    <p class="nx-cifra__etiqueta" id="kpiActivityLabel">BASDAI Medio</p>
+                    <p class="nx-cifra__valor" id="kpiAvgActivity">0.0</p>
                 </div>
-                <div class="kpi-card kpi-card--info" id="kpiAsdasCard" style="display: none;">
-                    <div class="kpi-icon"><i class="fas fa-wave-square"></i></div>
-                    <span class="kpi-label">ASDAS Medio</span>
-                    <span id="kpiAvgAsdas" class="kpi-value">-</span>
-                    <span class="kpi-trend kpi-trend--neutral" id="kpiAsdasTrend">
-                        <i class="fas fa-minus"></i> Sin datos
-                    </span>
+                <div class="nx-cifra" id="kpiAsdasCard" style="display: none;">
+                    <p class="nx-cifra__etiqueta">ASDAS Medio</p>
+                    <p class="nx-cifra__valor" id="kpiAvgAsdas">-</p>
                 </div>
                 <!-- Métricas adicionales por patología -->
                 <div class="additional-metrics-container" id="additionalMetrics"></div>
@@ -411,7 +390,7 @@
                 <div class="table-header nx-tarjeta__cabecera">
                     <h2 class="nx-tarjeta__titulo">Pacientes de la cohorte</h2>
                     <div class="table-controls">
-                        <button id="exportCohortBtn" class="button primary-button">
+                        <button id="exportCohortBtn" class="nx-boton nx-boton--principal">
                             <i class="fas fa-file-csv"></i> Exportar CSV
                         </button>
                     </div>
@@ -467,7 +446,7 @@
     <!-- Scripts globales y coordinadores -->
     <script src="script.js?v=20261114a"></script>
     <script src="scripts/reuma_population_read_port.js?v=20261112d"></script>
-    <script src="scripts/script_estadisticas.js?v=20261122c"></script>
+    <script src="scripts/script_estadisticas.js?v=20261123-t7r"></script>
 </body>
 
 </html>

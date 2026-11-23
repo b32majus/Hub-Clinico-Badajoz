@@ -252,29 +252,9 @@ function configureChartDefaults() {
 
 // === SISTEMA DE TABS DE FILTROS ===
 function initializeFilterTabs() {
-    const tabs = document.querySelectorAll('.filter-tab');
-    const contents = document.querySelectorAll('.filter-tab-content');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const targetTab = tab.dataset.tab;
-
-            // Actualizar tabs
-            tabs.forEach(t => {
-                t.classList.remove('active');
-                t.setAttribute('aria-selected', 'false');
-            });
-            tab.classList.add('active');
-            tab.setAttribute('aria-selected', 'true');
-
-            // Actualizar contenido
-            contents.forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`tab-${targetTab}`).classList.add('active');
-            syncFiltersPanelHeight();
-        });
-    });
+    const pestanas = document.querySelector('.filters-panel nx-pestanas');
+    if (!pestanas) return;
+    pestanas.addEventListener('nx-cambio', () => syncFiltersPanelHeight());
 }
 
 // === PRESETS DE FECHA ===
