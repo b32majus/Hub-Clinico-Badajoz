@@ -13,7 +13,7 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 - **H-07 · Estado de BD y catálogo dentro de la barra.** Son bloques de la pantalla colocados en la barra por ser lo que había. El clic del indicador abre el selector de Excel (script.js); a medio plazo, la carga de datos pertenece a la pantalla, no a la barra.
 - **H-08 · `previews/caceres-fh/`.** Copia de despliegue generada por `tools/build_caceres_fh_review_snapshot.mjs`; sigue con la barra vieja y la regex del pie ya no aplica. Hay que regenerarla cuando toque publicar Cáceres y adaptar el script.
 - **H-09 · Terminar.** Antes, el botón de Reuma (`#logoutBtn`) llevaba a `reuma_index.html`; «Terminar» lleva a la Home y, hasta #713, solo olvida `hubSelectedProfessional`. Farmacia no tenía botón.
-- **H-10 · `index.html` y `nexus_home.html`.** Son idénticos byte a byte a propósito (lo exige `nexus_home_root_equivalence_check`). La entrada antigua de Reuma es `reuma_index.html`. Pendiente de decidir si `nexus_home.html` sigue haciendo falta.
+- **H-10 · `index.html` y `nexus_home.html`.** Son idénticos byte a byte a propósito (lo exige `nexus_home_root_equivalence_check`). La entrada antigua de Reuma es `reuma_index.html`. **Decisión de Sil (23-11): la Home no lleva barra lateral** (conserva su diseño de portada). Las dos páginas siguen idénticas a propósito. Cerrado.
 - **H-11 · Sangrías.** Las 17 páginas tienen el bloque `<nx-shell>` con sangría irregular (generado por script); se arregla en la pasada de limpieza del tramo 7.
 - **H-12 · `nx-pagina` en pantallas antiguas.** Al probarlo en el `<body>` de las 17 páginas cambió 4 px la altura de un campo de fecha de Primera Visita (`box-sizing: border-box` global) y rompió dos checks. Se quitó. Cada pantalla adoptará `nx-pagina` cuando se migre (tramo 7), con sus capturas antes/después.
 - **H-13 · Desborde horizontal en móvil de Profesionales de Reuma.** `manage_professionals.html` a 360 px se sale 184 px por su propia tarjeta (`management-card`); con la barra vieja eran 204 px. No es de la barra; a corregir al migrar esa pantalla.
@@ -62,7 +62,7 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-23 | cerrado (tanda 4c) | chips en español; el repaso lo marcó «parcial» por error | - |
 | H-28 | cerrado | solo quedan las clases `stats-*` como enganche de los checks | - |
 | H-25, H-22, H-24, H-27 | cerrados en este documento; no reverificados | - | - |
-| H-10 | abierto | `index.html` y `nexus_home.html` sin `<nx-shell>` (0); casilla abierta del tramo 5 | S |
+| H-10 | cerrado por decisión (23-11) | la Home no lleva `<nx-shell>`: Sil no quiere barra lateral en ella | - |
 | H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
 | H-02, H-03, H-19 | abiertos | `main-content` en 30 sitios (24 ficheros); `style.css` sin `@layer`; fondo degradado de `.main-content` activo | M |
 | H-15 | parcial | hex en `farmacia_seguimiento.js` (6), `treatmentEventsManager.js` (5), `mockDashboardData.js` (5), `dataManager.js` (4), `farmacia_excel_row_export.js` (1) | M |
