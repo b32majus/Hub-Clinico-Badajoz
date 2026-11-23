@@ -66,7 +66,7 @@ class Node {
   getAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null; }
   addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }
   dispatchEvent(event) { event.target = this; (this.listeners[event.type] || []).forEach((fn) => fn.call(this, event)); }
-  closest(selector) { if (selector !== '.form-group') return null; return (this.formGroup ||= new Node()); }
+  closest(selector) { if (selector !== '.nx-campo') return null; return (this.formGroup ||= new Node()); }
   querySelector(selector) { return selector === '.causality-chip--active' ? this.children.find((child) => child.classList.contains('causality-chip--active')) || null : null; }
   querySelectorAll(selector) { return selector === '.causality-chip' ? this.children : []; }
 }

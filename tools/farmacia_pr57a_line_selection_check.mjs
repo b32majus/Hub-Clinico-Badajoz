@@ -144,7 +144,7 @@ assert(api.getCanonicalLinesForPatient({ cip: 'CIP-DESCONOCIDO', farmaco: 'Conte
   api.syncLinesForPatient({ cip: `CIP-SYN-${status}`, biologicos: [{ linea_id: `SYN-${status}`, estado_linea: status }] });
   assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().some((input) => input.value === `SYN-${status}` && input.disabled && input.type === 'checkbox'), `una línea ${status} permanece visible, deshabilitada y sin autoselección`);
 });
-assert(html.includes('Líneas de tratamiento del paciente') && /<label for="fhSegLineaPrincipal">Línea que estás editando<\/label>/.test(html), 'la UI presenta el bloque y la etiqueta exacta del editor');
+assert(html.includes('Líneas de tratamiento del paciente') && /<label class="nx-campo__etiqueta" for="fhSegLineaPrincipal">Línea que estás editando<\/label>/.test(html), 'la UI presenta el bloque y la etiqueta exacta del editor');
 
 const strictIdentityPatient = { cip: 'CIP-SYN-STRICT', biologicos: [
   { linea_id: 'SYN-STRICT-A', farmaco_nombre: 'Marca fallback', principio_activo: 'Ingrediente fallback', tratamiento_id_principal: 'TRAT-FALLBACK', estado_linea: 'active', tipo_relacion: 'primary' },

@@ -164,7 +164,7 @@ assert(html.includes('scripts/farmacia_tratamiento_common.js'), 'Seguimiento car
 // 2. Tipo de movimiento tiene opciones del contrato (en HTML select)
 assert(html.indexOf('value="optimizacion"') !== -1, 'HTML incluye movimiento optimización');
 assert(html.indexOf('value="suspension"') !== -1, 'HTML incluye movimiento suspensión');
-const movementSelect = (html.match(/<select class="form-select" id="fhSegTipoRelacionTerapia">[\s\S]*?<\/select>/) || [''])[0];
+const movementSelect = (html.match(/<select class="nx-campo__control" id="fhSegTipoRelacionTerapia">[\s\S]*?<\/select>/) || [''])[0];
 assert(!movementSelect.includes('value="tratamiento_anadido"'), 'Seguimiento no permite iniciar tratamiento añadido');
 assert(!movementSelect.includes('value="cambio_terapeutico"'), 'Seguimiento no permite iniciar cambio terapéutico');
 assert(!movementSelect.includes('value="revision_linea"'), 'Seguimiento ya no ofrece revisión de línea (Sil 08-11)');
@@ -201,14 +201,14 @@ assert(html.includes('btnSegAddOtherDrug'), 'Botón de añadir fármaco concomit
 // --- WO7E.1: Pulido de Seguimiento: origen, indicación y tarjeta prebiológica ---
 
 // 10. Origen como select con opciones
-assert(html.indexOf('<select class="form-select" id="fhSegServicio"') !== -1, 'Origen es select guiado');
+assert(html.indexOf('<select class="nx-campo__control" id="fhSegServicio"') !== -1, 'Origen es select guiado');
 assert(html.indexOf('Dermatología') !== -1, 'Select Origen incluye Dermatología');
 assert(html.indexOf('Reumatología') !== -1, 'Select Origen incluye Reumatología');
 assert(html.indexOf('Medicina Interna') !== -1, 'Select Origen incluye Medicina Interna');
 assert(html.indexOf('Otro') !== -1, 'Select Origen incluye opción Otro');
 
 // 11. Indicación como select
-assert(html.indexOf('<select class="form-select" id="fhSegPatologia"') !== -1, 'Indicación es select guiado');
+assert(html.indexOf('<select class="nx-campo__control" id="fhSegPatologia"') !== -1, 'Indicación es select guiado');
 
 // 12. Inputs "Otro" para servicio y patología
 assert(html.indexOf('id="fhSegServicioOtro"') !== -1, 'Input otro servicio presente');
@@ -443,7 +443,7 @@ assert(js.indexOf(forbidden) === -1, 'JS de seguimiento no usa innerHTML');
 
 // 29. Pauta tratamiento actual es select editable con catálogo
 assert(html.indexOf('id="fhSegPautaActual"') !== -1, 'Pauta actual presente en HTML');
-assert(html.indexOf('<select class="form-select" id="fhSegPautaActual"') !== -1, 'Pauta actual es select guiado');
+assert(html.indexOf('<select class="nx-campo__control" id="fhSegPautaActual"') !== -1, 'Pauta actual es select guiado');
 assert(html.indexOf('id="fhSegPautaActualOtro"') !== -1, 'Pauta actual tiene input Otro');
 
 // 30. setSegPautaActualNormalized definida y usada
