@@ -10,14 +10,14 @@
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261122-t7f">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261122-t7f">
-    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261123-t8">
+    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261123-t9">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
     <link rel="modulepreload" href="modules/nexus/menus.js">
     <link rel="modulepreload" href="modules/nexus/version.js">
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261123-t7c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261123-t7e">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261123-t9">
     <style>
         .autocomplete-dropdown { z-index: 1000; }
         .nx-tarjeta { overflow: visible !important; }
@@ -64,20 +64,20 @@
     </div>
 </header>
 <section class="nx-tarjeta"><header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Datos del paciente</h2></header>
-    <div class="form-grid">
-        <div class="form-group">
-            <label for="fhPvCip">CIP</label>
+    <div class="nx-formulario">
+        <div class="nx-campo">
+            <label class="nx-campo__etiqueta" for="fhPvCip">CIP</label>
             <div class="cip-search-wrap">
-                <input type="text" id="fhPvCip" class="form-control" placeholder="Buscar paciente por CIP..." autocomplete="off">
+                <input type="text" id="fhPvCip" class="nx-campo__control" placeholder="Buscar paciente por CIP..." autocomplete="off">
                 <i class="fas fa-search cip-search-icon" aria-hidden="true"></i>
                 <button type="button" class="cip-search-action" id="fhPvCipSearchBtn" aria-label="Buscar CIP">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
         </div>
-        <div class="form-group">
-            <label for="fhPvServicio">Servicio origen</label>
-            <select class="form-select" id="fhPvServicio">
+        <div class="nx-campo">
+            <label class="nx-campo__etiqueta" for="fhPvServicio">Servicio origen</label>
+            <select class="nx-campo__control" id="fhPvServicio">
                 <option value="">Seleccionar...</option>
                 <option>Dermatología</option>
                 <option>Reumatología</option>
@@ -87,25 +87,25 @@
                 <option>Oncología</option>
                 <option>Otro</option>
             </select>
-            <input type="text" class="form-control hidden" id="fhPvServicioOtro" placeholder="Especificar otro servicio">
+            <input type="text" class="nx-campo__control hidden" id="fhPvServicioOtro" placeholder="Especificar otro servicio">
         </div>
-        <div class="form-group">
-            <label for="fhPvPatologia">Patología / indicación</label>
-            <select class="form-select" id="fhPvPatologia">
+        <div class="nx-campo">
+            <label class="nx-campo__etiqueta" for="fhPvPatologia">Patología / indicación</label>
+            <select class="nx-campo__control" id="fhPvPatologia">
                 <option value="">Seleccionar...</option>
             </select>
-            <input type="text" class="form-control hidden" id="fhPvPatologiaOtro" placeholder="Especificar otra patología">
+            <input type="text" class="nx-campo__control hidden" id="fhPvPatologiaOtro" placeholder="Especificar otra patología">
         </div>
     </div></section>
     <section class="nx-tarjeta"><header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Tratamiento validado por Farmacia</h2></header>
-        <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco principal / validado</label><div class="autocomplete-wrapper"><input type="text" id="fhPvFarmaco" class="form-control" placeholder="Buscar por marca, principio activo, presentación o código..." autocomplete="off"><div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div><div class="form-group"><label for="fhPvDosis">Presentación / dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><select class="form-select" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><select class="form-select" id="fhPvVia"><option value="">Seleccionar…</option><option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option></select></div></div>
+        <div class="nx-formulario"><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvFarmaco">Fármaco principal / validado</label><div class="autocomplete-wrapper"><input type="text" id="fhPvFarmaco" class="nx-campo__control" placeholder="Buscar por marca, principio activo, presentación o código..." autocomplete="off"><div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvDosis">Presentación / dosis</label><input class="nx-campo__control" id="fhPvDosis"></div><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvPauta">Pauta</label><select class="nx-campo__control" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="nx-campo__control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvVia">Vía</label><select class="nx-campo__control" id="fhPvVia"><option value="">Seleccionar…</option><option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option></select></div></div>
         <div class="resumen-datos" id="fhPvTratamientoGrid"></div>
     </section>
 <section class="nx-tarjeta"><header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo">Registro de primera visita</h2></header>
-    <div class="form-grid form-grid--align-end"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / inicio / primera dispensación o administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option value="">No informado</option><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option value="">No informado</option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
-    <small class="form-hint">Fecha canónica única del circuito de Primera Visita.</small>
-    <div class="form-actions"><a class="nx-boton nx-boton--secundario" href="https://ramonmorillo.github.io/hub-estratificacionCMO/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Acceso a Estratificación SEFH</a></div>
-    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option value="">No informado</option><option>No</option><option>Sí</option></select></div></div>
+    <div class="nx-formulario nx-formulario--alinear-abajo"><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvFecha">Fecha primera visita / inicio / primera dispensación o administración</label><input type="date" class="nx-campo__control" id="fhPvFecha" aria-describedby="fhPvFechaAyuda"></div><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="nx-campo__control" id="fhPvInduccionRealizada"><option value="">No informado</option><option>Sí</option><option>No</option></select></div><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvEstratificacion">Estratificación</label><select class="nx-campo__control" id="fhPvEstratificacion"><option value="">No informado</option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <p class="nx-campo__ayuda" id="fhPvFechaAyuda">Fecha canónica única del circuito de Primera Visita.</p>
+    <div class="nx-acciones"><a class="nx-boton nx-boton--secundario" href="https://ramonmorillo.github.io/hub-estratificacionCMO/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Acceso a Estratificación SEFH</a></div>
+    <div class="nx-formulario"><div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvProms">PROMs basales</label><select class="nx-campo__control" id="fhPvProms"><option value="">No informado</option><option>No</option><option>Sí</option></select></div></div>
 <div id="fhPvPromsExpanded" class="hidden">
     <h3 class="nx-tarjeta__titulo">PROMs — DLQI y EVA basal</h3>
     <div class="proms-block" id="fhPvDlqiBlock">
@@ -120,16 +120,16 @@
     </div>
     <div class="proms-block" id="fhPvEvaBlock">
         <p class="proms-block__subtitle">EVA — Escala Visual Analógica (marque la intensidad en una escala de 0 a 10)</p>
-        <div class="form-grid eva-grid">
-            <div class="form-group eva-group">
-                <label for="fhPvEvaDolorRange">EVA Dolor</label>
+        <div class="nx-formulario eva-grid">
+            <div class="nx-campo eva-group">
+                <label class="nx-campo__etiqueta" for="fhPvEvaDolorRange">EVA Dolor</label>
                 <div class="eva-input-row">
                     <input type="range" id="fhPvEvaDolorRange" min="0" max="10" value="0" class="eva-range">
                     <span class="eva-value" id="fhPvEvaDolorValue">0</span>
                 </div>
             </div>
-            <div class="form-group eva-group">
-                <label for="fhPvEvaPruritoRange">EVA Prurito</label>
+            <div class="nx-campo eva-group">
+                <label class="nx-campo__etiqueta" for="fhPvEvaPruritoRange">EVA Prurito</label>
                 <div class="eva-input-row">
                     <input type="range" id="fhPvEvaPruritoRange" min="0" max="10" value="0" class="eva-range">
                     <span class="eva-value" id="fhPvEvaPruritoValue">0</span>
@@ -138,9 +138,9 @@
         </div>
     </div>
 </div>
-    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="form-textarea" id="fhPvNotas" rows="4"></textarea></div></div>
-    <div class="form-actions"><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="nx-boton nx-boton--secundario hidden" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
-    <div class="form-actions" data-export-version="v2"><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
+    <div class="nx-campo"><label class="nx-campo__etiqueta" for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="nx-campo__control" id="fhPvNotas" rows="4"></textarea></div>
+    <div class="nx-acciones"><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="nx-boton nx-boton--secundario hidden" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+    <div class="nx-acciones" data-export-version="v2"><button type="button" class="nx-boton nx-boton--secundario" id="fhPvExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
     <p class="search-card__hint">Prepara una copia de los datos para demostrar futuras integraciones. Esta acción no envía información a otros sistemas ni la guarda automáticamente. Uso exclusivo con datos sintéticos.</p>
     <p id="fhPvExportV2Status" role="status" aria-live="polite"></p>
 </section>
@@ -160,6 +160,6 @@
     <script src="modules/hubTools.js?v=20260306l"></script>
     <script src="modules/cimaSearch.js?v=20261112c"></script>
     <script src="scripts/farmacia_drug_autocomplete.js?v=20261112c"></script>
-    <script src="scripts/farmacia_primera_visita.js?v=20260930-pv001-r1-train30"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20261123-t9"></script>
         </body>
         </html>

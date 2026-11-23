@@ -79,11 +79,11 @@ async function assertParallelUi({ button, status, v1 }) {
   const v2 = page.locator(button);
   await v2.waitFor({ state: 'visible' });
   assert.equal((await v2.textContent()).replace(/\s+/g, ' ').trim(), 'Copiar datos estructurados (demo)');
-  assert.equal(await v2.evaluate(element => element.closest('.form-actions')?.getAttribute('data-export-version')), 'v2');
+  assert.equal(await v2.evaluate(element => element.closest('.nx-acciones, .form-actions')?.getAttribute('data-export-version')), 'v2');
   for (const selector of v1) {
     const control = page.locator(selector);
     assert.equal(await control.count(), 1, `${selector} remains present`);
-    assert.notEqual(await control.evaluate(element => element.closest('.form-actions')?.getAttribute('data-export-version')), 'v2', `${selector} remains separate from v2`);
+    assert.notEqual(await control.evaluate(element => element.closest('.nx-acciones, .form-actions')?.getAttribute('data-export-version')), 'v2', `${selector} remains separate from v2`);
   }
   assert.equal(await page.locator(status).getAttribute('role'), 'status');
   assert.equal(await page.locator(status).getAttribute('aria-live'), 'polite');
