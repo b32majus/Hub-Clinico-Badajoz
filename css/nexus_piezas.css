@@ -895,6 +895,7 @@
 
   .nx-shell__extra {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--nx-espacio-3);
   }
 
