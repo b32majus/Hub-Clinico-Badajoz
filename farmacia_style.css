@@ -947,7 +947,8 @@
 .cip-search-wrap {
     position: relative;
 }
-.cip-search-wrap .form-control {
+.cip-search-wrap .form-control,
+.cip-search-wrap .nx-campo__control {
     padding-left: 36px;
     padding-right: 40px;
 }

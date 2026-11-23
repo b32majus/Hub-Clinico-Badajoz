@@ -249,7 +249,7 @@
             }) || null;
         }
         if (!label && control.closest) {
-            var group = control.closest(".form-group");
+            var group = control.closest(".nx-campo, .form-group");
             if (group) label = group.querySelector("label");
         }
         return text(label ? label.textContent : "");

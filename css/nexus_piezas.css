@@ -251,10 +251,16 @@
     min-inline-size: 0;
   }
 
+  /* Un campo cabe en menos ancho que una tarjeta: 3/4 de su mínimo (unos 220 px, como los formularios de antes) */
   .nx-formulario {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--nx-ancho-tarjeta-min)), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--nx-ancho-tarjeta-min) * 0.75)), 1fr));
     gap: var(--nx-espacio-4) var(--nx-espacio-5);
+  }
+
+  /* Fila de campos con etiquetas de distinto largo: los controles quedan a la misma altura */
+  .nx-formulario--alinear-abajo {
+    align-items: end;
   }
 
   /* ---------- Tabla ---------- */

@@ -895,7 +895,7 @@
         icon.setAttribute('aria-hidden', 'true');
         div.appendChild(icon);
         div.appendChild(document.createTextNode(' ' + msg));
-        var fg = cipInput.closest('.form-group');
+        var fg = cipInput.closest('.nx-campo');
         if (fg) fg.insertAdjacentElement('afterend', div);
     }
 

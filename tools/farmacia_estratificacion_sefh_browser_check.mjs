@@ -92,7 +92,7 @@ function assertSameBox(actual, expected, label) {
 }
 
 async function assertSefhAccess(page, scopeSelector) {
-  const link = page.locator(`${scopeSelector} a.btn`, { hasText: BUTTON_TEXT });
+  const link = page.locator(`${scopeSelector} :is(a.nx-boton, a.btn)`, { hasText: BUTTON_TEXT });
   assert.equal(await link.count(), 1, `exactly one "${BUTTON_TEXT}" access in scope`);
   assert.equal(await link.getAttribute('href'), SEFH_URL, 'href points exactly to the SEFH tool');
   assert.equal(await link.getAttribute('target'), '_blank', 'opens in a new tab');
@@ -108,7 +108,7 @@ try {
   await pv.page.goto(new URL(`farmacia_primera_visita.html?cip=${INITIAL_CIP}`, BASE_URL).href, { waitUntil: 'domcontentloaded' });
   await pv.page.waitForFunction(() => window.FarmaciaPrimeraVisita);
 
-  const rowSelector = 'section:has(h2.nx-tarjeta__titulo:text("Registro de primera visita")) .form-grid--align-end';
+  const rowSelector = 'section:has(h2.nx-tarjeta__titulo:text("Registro de primera visita")) .nx-formulario--alinear-abajo';
   const pvRow = pv.page.locator(rowSelector);
   assert.equal(await pvRow.count(), 1, 'exactly one aligned first-visit row');
 
@@ -120,7 +120,7 @@ try {
   assertSameBox(induccionBox, expected, 'induccion control vs fecha control');
   assertSameBox(estratBox, expected, 'estratificacion control vs fecha control');
 
-  const pvHint = pv.page.locator('small.form-hint', { hasText: 'Fecha canónica única' });
+  const pvHint = pv.page.locator('p.nx-campo__ayuda', { hasText: 'Fecha canónica única' });
   assert.equal(await pvHint.count(), 1, 'the fecha hint stays present exactly once');
 
   // The three selects keep working through supported interaction.
@@ -156,9 +156,9 @@ try {
 
   const evoHeading = seg.page.locator('h2.nx-tarjeta__titulo', { hasText: 'Evolución farmacoterapéutica' });
   assert.equal(await evoHeading.count(), 1, '"Evolución farmacoterapéutica" block is present');
-  const evoSection = seg.page.locator('section.dashboard-card', { has: evoHeading });
+  const evoSection = seg.page.locator('section:is(.nx-tarjeta, .dashboard-card)', { has: evoHeading });
 
-  const segLink = evoSection.locator('a.btn', { hasText: BUTTON_TEXT });
+  const segLink = evoSection.locator(':is(a.nx-boton, a.btn)', { hasText: BUTTON_TEXT });
   assert.equal(await segLink.count(), 1, 'exactly one SEFH access in the evolución block');
   assert.equal(await segLink.getAttribute('href'), SEFH_URL, 'seguimiento href points exactly to the SEFH tool');
   assert.equal(await segLink.getAttribute('target'), '_blank', 'seguimiento access opens in a new tab');
