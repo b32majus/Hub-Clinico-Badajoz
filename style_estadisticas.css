@@ -97,13 +97,6 @@
     overflow-x: hidden;
 }
 
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0 0 var(--spacing-sm) 0;
-}
-
 /* === TARJETAS BASE === */
 .dashboard-card {
     background-color: var(--color-card);
@@ -179,43 +172,20 @@
     transform: translateY(0);
 }
 
-.btn-secondary,
-.button.secondary-button {
+.btn-secondary{
     background-color: var(--color-secondary-light);
     color: var(--color-secondary);
     border: 1px solid var(--color-border);
 }
 
-.btn-secondary:hover:not(:disabled),
-.button.secondary-button:hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled){
     background-color: var(--color-border);
     color: var(--color-text);
-}
-
-.btn-ghost {
-    background-color: transparent;
-    color: var(--color-secondary);
-}
-
-.btn-ghost:hover:not(:disabled) {
-    background-color: var(--color-secondary-light);
-}
-
-.btn-icon {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: var(--radius-md);
 }
 
 .btn-sm {
     padding: 6px 12px;
     font-size: 13px;
-}
-
-.btn-lg {
-    padding: 12px 24px;
-    font-size: 15px;
 }
 
 /* === PANEL DE FILTROS === */
@@ -1037,7 +1007,6 @@
     gap: var(--spacing-xs);
 }
 
-
 #pageNumbers {
     display: inline-flex;
     align-items: center;
@@ -1083,55 +1052,14 @@
 }
 
 /* === ESTADOS DE CARGA === */
-.loading-overlay {
-    position: absolute;
-    inset: 0;
-    background: color-mix(in srgb, var(--nx-color-superficie) 90%, transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    z-index: 10;
-}
-
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--color-border);
-    border-top-color: var(--color-primary);
-    border-radius: var(--radius-full);
-    animation: spin 0.8s linear infinite;
-}
 
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-.skeleton {
-    background: linear-gradient(90deg, var(--color-border-light) 25%, var(--color-background) 50%, var(--color-border-light) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: var(--radius-sm);
-}
-
 @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
-}
-
-.skeleton-text {
-    height: 16px;
-    margin-bottom: var(--spacing-sm);
-}
-
-.skeleton-title {
-    height: 24px;
-    width: 60%;
-    margin-bottom: var(--spacing-md);
-}
-
-.skeleton-chart {
-    height: 200px;
 }
 
 /* === ESTADO VACÍO === */
@@ -1142,25 +1070,6 @@
     justify-content: center;
     padding: var(--spacing-2xl);
     text-align: center;
-}
-
-.empty-state-icon {
-    font-size: 3rem;
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-md);
-}
-
-.empty-state-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: var(--spacing-sm);
-}
-
-.empty-state-description {
-    font-size: 14px;
-    color: var(--color-text-muted);
-    max-width: 300px;
 }
 
 /* === RESPONSIVE === */
@@ -1283,10 +1192,6 @@
     .filter-tab {
         padding: var(--spacing-sm);
         min-width: 44px;
-    }
-
-    .page-title {
-        font-size: 1.25rem;
     }
 
     .kpi-card {

@@ -5,11 +5,7 @@
 
 :root {
     --primary-blue: var(--nx-color-modulo);
-    --success-green: var(--nx-color-ok);
-    --warning-yellow: var(--nx-color-aviso);
-    --danger-red: var(--nx-color-error);
     --text-muted: var(--nx-color-texto-suave);
-    --text-dark: var(--nx-color-texto);
 }
 
 * {
@@ -50,56 +46,7 @@ body:has(.nx-marco) {
     padding: 25px 30px;
 }
 
-.form-header {
-    text-align: center;
-    margin-bottom: 30px;
-    position: relative;
-    padding-top: 10px;
-}
-
-.form-header h1 {
-    font-size: 2.2em;
-    color: var(--nx-color-texto);
-    margin: 0;
-    font-weight: 700;
-}
-
-.form-header h1 .highlight {
-    color: var(--nx-color-modulo-texto);
-}
-
-.form-header .subtitle {
-    font-size: 1.05em;
-    color: var(--nx-color-texto-suave);
-    margin-top: 8px;
-}
-
 /* Botón de volver al hub */
-.back-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background: linear-gradient(135deg, var(--nx-color-principal) 0%, var(--nx-color-principal) 100%);
-    color: var(--nx-color-sobre-principal);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 0.85em;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-info) 30%, transparent);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 1000;
-}
-
-.back-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px color-mix(in srgb, var(--nx-color-info) 40%, transparent);
-    background: linear-gradient(135deg, var(--nx-color-principal-hover) 0%, var(--nx-color-principal-hover) 100%);
-}
 
 /* Sección de Datos del Paciente */
 .patient-info-section {
@@ -634,9 +581,6 @@ body:has(.nx-marco) {
 }
 
 /* Tratamientos */
-.treatments-section {
-    margin-top: 30px;
-}
 
 #tratamientosPreviosContainer {
     margin-top: 15px;
@@ -655,27 +599,6 @@ body:has(.nx-marco) {
     margin-bottom: 0;
     color: var(--nx-color-texto-suave);
     font-family: 'Inter', sans-serif;
-}
-
-.treatment-item .remove-btn {
-    background-color: var(--nx-color-error);
-    color: var(--nx-color-sobre-principal);
-    border: none;
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
-    font-size: 1.2em;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    flex-shrink: 0;
-}
-
-.treatment-item .remove-btn:hover {
-    background-color: var(--nx-color-error);
-    transform: scale(1.05);
 }
 
 .add-btn {
@@ -1413,12 +1336,6 @@ body:has(.nx-marco) {
         flex-direction: column;
         align-items: stretch;
     }
-
-    .back-btn {
-        position: static;
-        margin-bottom: 15px;
-        width: fit-content;
-    }
 }
 
 @media (max-width: 576px) {
@@ -1428,10 +1345,6 @@ body:has(.nx-marco) {
 
     .form-container {
         padding: 20px;
-    }
-
-    .form-header h1 {
-        font-size: 1.8em;
     }
 
     .collapsible-header {
@@ -2042,18 +1955,9 @@ body:has(.nx-marco) {
     transform: translateY(-2px);
 }
 
-.mda-criterio-cumplido {
-    background: var(--nx-color-ok-fondo) !important;
-    border-color: var(--nx-color-ok) !important;
-}
-
 .mda-criterio-icon {
     font-size: 1.2em;
     color: var(--nx-color-texto-suave);
-}
-
-.mda-criterio-cumplido .mda-criterio-icon {
-    color: var(--nx-color-ok);
 }
 
 .mda-criterio-text {
@@ -2071,11 +1975,6 @@ body:has(.nx-marco) {
     font-size: 0.95em;
     min-width: 45px;
     text-align: center;
-}
-
-.mda-criterio-cumplido .mda-criterio-valor {
-    background: var(--nx-color-ok);
-    color: var(--nx-color-sobre-principal);
 }
 
 .mda-criterio-status {
@@ -2328,34 +2227,10 @@ body:has(.nx-marco) {
     margin-bottom: 15px;
 }
 
-.lei-point-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px;
-    background: var(--nx-color-superficie);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.lei-point-item:hover {
-    background: var(--nx-color-info-fondo);
-    transform: translateX(5px);
-}
-
 .lei-point {
     width: 20px;
     height: 20px;
     cursor: pointer;
-}
-
-.lei-point-label {
-    font-size: 0.9em;
-    color: var(--nx-color-texto-suave);
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
 }
 
 .lei-resultado-box {
@@ -2406,26 +2281,6 @@ body:has(.nx-marco) {
     color: var(--nx-color-aviso);
 }
 
-.psoriasis-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.psoriasis-grid .form-group label {
-    color: var(--nx-color-aviso);
-    font-weight: 600;
-}
-
-.psoriasis-grid input {
-    border-color: var(--nx-color-aviso-borde);
-}
-
-.psoriasis-grid input:focus {
-    border-color: var(--nx-color-aviso);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-aviso) 10%, transparent);
-}
-
 /* ========================================
    RESPONSIVE: ÍNDICES DE ACTIVIDAD
    ======================================== */
@@ -2450,11 +2305,6 @@ body:has(.nx-marco) {
     .lei-grid {
         grid-template-columns: 1fr;
         gap: 12px;
-    }
-
-    .psoriasis-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
     }
 }
 
@@ -2530,11 +2380,6 @@ body:has(.nx-marco) {
     .lei-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 18px 35px;
-    }
-
-    .psoriasis-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
     }
 
     .haq-categories {
