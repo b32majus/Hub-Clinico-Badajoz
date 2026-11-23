@@ -374,12 +374,11 @@
             ['stats-kpi-card--aviso', 'fa-clock', 'Validación pendiente explícita', values.pending]
         ];
         cards.forEach(function (data) {
-            var card = el('div', 'stats-kpi-card ' + data[0]);
-            var iconWrap = el('div', 'stats-kpi-icon');
-            iconWrap.appendChild(icon(data[1]));
-            card.appendChild(iconWrap);
-            card.appendChild(el('div', 'stats-kpi-label', data[2]));
-            card.appendChild(el('div', 'stats-kpi-value', String(data[3])));
+            // Pieza nx-cifra (DESIGN.md §4): nombre arriba, número grande; sin icono ni color.
+            // stats-kpi-* se quedan solo como ganchos de los checks.
+            var card = el('div', 'nx-cifra stats-kpi-card');
+            card.appendChild(el('p', 'nx-cifra__etiqueta stats-kpi-label', data[2]));
+            card.appendChild(el('p', 'nx-cifra__valor stats-kpi-value', String(data[3])));
             container.appendChild(card);
         });
         setText('notifyBadge', String(values.pending));
