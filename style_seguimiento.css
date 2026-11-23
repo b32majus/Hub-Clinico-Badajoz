@@ -156,12 +156,6 @@
     margin-top: 15px;
 }
 
-.conditional-field-visible {
-    display: block !important;
-    margin-top: 15px;
-    animation: slideDown 0.3s ease-out;
-}
-
 /* Animaciones adicionales para secciones colapsables */
 @keyframes fadeIn {
     from {
@@ -311,18 +305,9 @@
     transform: translateY(-2px);
 }
 
-.mda-criterio-cumplido {
-    background: var(--nx-color-ok-fondo) !important;
-    border-color: var(--nx-color-ok) !important;
-}
-
 .mda-criterio-icon {
     font-size: 1.2em;
     color: var(--nx-color-texto-suave);
-}
-
-.mda-criterio-cumplido .mda-criterio-icon {
-    color: var(--nx-color-ok);
 }
 
 .mda-criterio-text {
@@ -340,11 +325,6 @@
     font-size: 0.95em;
     min-width: 45px;
     text-align: center;
-}
-
-.mda-criterio-cumplido .mda-criterio-valor {
-    background: var(--nx-color-ok);
-    color: var(--nx-color-sobre-principal);
 }
 
 .mda-criterio-status {
@@ -597,34 +577,10 @@
     margin-bottom: 15px;
 }
 
-.lei-point-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px;
-    background: var(--nx-color-superficie);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.lei-point-item:hover {
-    background: var(--nx-color-info-fondo);
-    transform: translateX(5px);
-}
-
 .lei-point {
     width: 20px;
     height: 20px;
     cursor: pointer;
-}
-
-.lei-point-label {
-    font-size: 0.9em;
-    color: var(--nx-color-texto-suave);
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
 }
 
 .lei-resultado-box {
@@ -675,26 +631,6 @@
     color: var(--nx-color-aviso);
 }
 
-.psoriasis-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.psoriasis-grid .form-group label {
-    color: var(--nx-color-aviso);
-    font-weight: 600;
-}
-
-.psoriasis-grid input {
-    border-color: var(--nx-color-aviso-borde);
-}
-
-.psoriasis-grid input:focus {
-    border-color: var(--nx-color-aviso);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-aviso) 10%, transparent);
-}
-
 /* ========================================
    RESPONSIVE ADJUSTMENTS FOR APs COMPONENTS
    ======================================== */
@@ -728,11 +664,6 @@
     .lei-grid {
         grid-template-columns: 1fr;
         gap: 12px;
-    }
-
-    .psoriasis-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
     }
 }
 
@@ -830,10 +761,6 @@
     }
 
     /* Psoriasis: mantener 2 columnas pero con más espacio */
-    .psoriasis-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
-    }
 
     /* HAQ: mostrar 2 categorías por fila */
     .haq-categories {
@@ -843,9 +770,6 @@
     }
 
     /* Aumentar tamaños de fuente para desktop */
-    .form-header h1 {
-        font-size: 2em;
-    }
 
     :is(.section-title, .seccion-titulo) {
         font-size: 1.7em;
@@ -901,12 +825,6 @@
     display: flex;
     flex-direction: column;
     gap: 30px;
-}
-
-.lei-psoriasis-wrapper {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
 }
 
 /* ========================================

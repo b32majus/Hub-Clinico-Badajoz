@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HOJAS = ['style.css', 'farmacia_style.css', 'style_primera_visita.css', 'style_seguimiento.css',
-    'style_dashboard.css', 'style_estadisticas.css', 'style_manage.css'];
+    'style_dashboard.css', 'style_estadisticas.css'];  // style_manage.css se quitó en el tramo 7 (vacía)
 const HTML_CON_STYLE = ['farmacia_primera_visita.html', 'farmacia_seguimiento.html'];
 const NOMBRES = 'white|black|red|green|blue|gray|grey|orange|yellow|purple|teal|navy|silver|gold|pink';
 const LITERAL = new RegExp(`#[0-9a-f]{3,8}\\b|\\b(?:rgba?|hsla?)\\(|(?<![-\\w])(?:${NOMBRES})(?![-\\w])`, 'i');

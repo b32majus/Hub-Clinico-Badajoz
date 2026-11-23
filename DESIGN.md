@@ -34,7 +34,7 @@ Grises: `--nx-color-texto-suave` `#5a6272` (6,1) para texto secundario; `--nx-co
 
 ### Aplicar la paleta a las pantallas antiguas (tramo 6, aprobado por Sil con capturas, 21-11)
 
-Las 7 hojas antiguas (`style.css`, `farmacia_style.css`, `style_primera_visita.css`, `style_seguimiento.css`, `style_dashboard.css`, `style_estadisticas.css`, `style_manage.css`) y los `<style>` de `farmacia_primera_visita.html` y `farmacia_seguimiento.html` ya no escriben colores: cada uno pasó a la variable de su papel (unos 2.200 cambios, con la herramienta `bin/paleta_mapear.py` de la carpeta de trabajo). Reglas:
+Las 7 hojas antiguas (`style.css`, `farmacia_style.css`, `style_primera_visita.css`, `style_seguimiento.css`, `style_dashboard.css`, `style_estadisticas.css`, `style_manage.css`, quitada en el tramo 7 porque quedó vacía) y los `<style>` de `farmacia_primera_visita.html` y `farmacia_seguimiento.html` ya no escriben colores: cada uno pasó a la variable de su papel (unos 2.200 cambios, con la herramienta `bin/paleta_mapear.py` de la carpeta de trabajo). Reglas:
 
 | Antes | Ahora |
 |---|---|
