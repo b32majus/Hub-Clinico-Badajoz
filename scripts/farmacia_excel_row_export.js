@@ -345,7 +345,7 @@
     if (!el) {
       el = document.createElement('div');
       el.id = 'fhExcelRowExportToast';
-      el.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#2F5496;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;z-index:10000;max-width:400px;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:opacity 0.3s;';
+      el.style.cssText = 'position:fixed;bottom:20px;right:20px;background:var(--nx-color-modulo);color:var(--nx-color-superficie);padding:12px 20px;border-radius:8px;font-size:14px;z-index:10000;max-width:400px;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:opacity 0.3s;';
       document.body.appendChild(el);
     }
     el.textContent = msg;

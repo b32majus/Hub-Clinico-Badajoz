@@ -1483,10 +1483,10 @@
     // estado marcado; tratamiento neutro sin marcar.
     function applyEaSuspectChipState(label, checkbox) {
         if (checkbox.checked) {
-            applyEaStyle(label, { border: '1px solid #008777', background: '#E6F4F1' });
-            applyEaStyle(checkbox, { accentColor: '#008777' });
+            applyEaStyle(label, { border: '1px solid var(--nx-color-farmacia)', background: 'var(--nx-color-farmacia-suave)' });
+            applyEaStyle(checkbox, { accentColor: 'var(--nx-color-farmacia)' });
         } else {
-            applyEaStyle(label, { border: '1px solid #E2E8F0', background: '#FBFDFD' });
+            applyEaStyle(label, { border: '1px solid var(--nx-color-borde)', background: 'var(--nx-color-superficie)' });
             applyEaStyle(checkbox, { accentColor: '' });
         }
     }
@@ -1531,7 +1531,7 @@
             if (candidate.missing) labelText += ' · fuente no disponible';
             else if (candidate.historicCategory) labelText += ' — ' + candidate.historicCategory;
             var label = createElement('label', 'ea-suspect-option');
-            applyEaStyle(label, { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 10px', background: '#FBFDFD' });
+            applyEaStyle(label, { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid var(--nx-color-borde)', borderRadius: '8px', padding: '6px 10px', background: 'var(--nx-color-superficie)' });
             var checkbox = createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = candidate.id;
@@ -2805,7 +2805,7 @@
     function buildFollowupPriorEpisode(episode) {
         var item = createElement('div', 'ea-t01-prior-episode');
         item.setAttribute('data-episode-id', String(episode && episode.episode_id || ''));
-        applyEaStyle(item, { border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 12px', marginBottom: '8px', background: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' });
+        applyEaStyle(item, { border: '1px solid var(--nx-color-borde)', borderRadius: '10px', padding: '10px 12px', marginBottom: '8px', background: 'var(--nx-color-superficie)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' });
         var textGroup = createElement('div');
         applyEaStyle(textGroup, { flex: '1 1 auto', minWidth: '0' });
         textGroup.appendChild(createElement('div', 'card-title card-title--tight', String(episode.description || '')));
@@ -2873,7 +2873,7 @@
 
     function buildEaCard(event, index) {
         var card = createElement('div', 'ea-t01-card');
-        applyEaStyle(card, { border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px 14px', marginBottom: '10px', background: '#FFFFFF' });
+        applyEaStyle(card, { border: '1px solid var(--nx-color-borde)', borderRadius: '10px', padding: '12px 14px', marginBottom: '10px', background: 'var(--nx-color-superficie)' });
         card.setAttribute('data-episode-id', event.episode_id);
         card.setAttribute('data-ea-status', event.status);
 
