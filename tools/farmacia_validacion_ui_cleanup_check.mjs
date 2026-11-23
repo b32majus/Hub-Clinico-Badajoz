@@ -65,10 +65,10 @@ check(/fhValExcelExportBtn["'][\s\S]{0,120}addEventListener\(["']click["']/.test
 check(elementById('btnValidateRequestedSame').includes('Validar tratamiento solicitado sin cambios'), 'Copia solicitado→validado usa el texto operativo exacto');
 check(/id=["']fhValidatedTreatmentRelation["'][\s\S]*value=["']same_as_requested["'][\s\S]*value=["']modified_from_requested["'][\s\S]*value=["']no_treatment_validated["']/.test(html), 'Relación validada ofrece los tres valores canónicos');
 check(elementById('fhValidatedTreatmentRelation').includes('<option value="no_treatment_validated">No se valida tratamiento</option>'), 'No tratamiento validado usa el texto exacto');
-check(html.includes('<label for="fhValPendingReason">Motivo / información pendiente</label>'), 'Motivo pendiente usa la etiqueta exacta y separada');
+check(html.includes('<label class="nx-campo__etiqueta" for="fhValPendingReason">Motivo / información pendiente</label>'), 'Motivo pendiente usa la etiqueta exacta y separada');
 const denialReasonRow = elementById('fhValMotivoRow');
 check(tagById('fhValMotivo') !== '', 'Motivo de denegación conserva fhValMotivo');
-check(denialReasonRow.includes('<label for="fhValMotivo">Motivo de denegación</label>'), 'Motivo de denegación conserva la etiqueta exacta');
+check(denialReasonRow.includes('<label class="nx-campo__etiqueta" for="fhValMotivo">Motivo de denegación</label>'), 'Motivo de denegación conserva la etiqueta exacta');
 check(!/\brequired\b/i.test(denialReasonRow), 'Motivo de denegación no se presenta como obligatorio');
 check(html.includes('Selección de catálogo con propuesta regulatoria editable por Farmacia') && !html.includes('Precargado desde catalogo'), 'Badge describe selección/propuesta editable sin afirmar precarga');
 check(!js.includes('function updateValidadoSummary'), 'No existe precarga automática de tratamiento validado');

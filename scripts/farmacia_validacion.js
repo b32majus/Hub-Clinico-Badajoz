@@ -198,7 +198,7 @@
     }
 
     function buildSelect(id, className, options, value) {
-        var select = createEl("select", className || "form-select");
+        var select = createEl("select", className || "nx-campo__control");
         if (id) select.id = id;
         options.forEach(function (option) {
             var opt = document.createElement("option");
@@ -1794,7 +1794,7 @@
         warning.appendChild(p1);
         warning.appendChild(createEl("p", "local-drug-modal-explainer", "Esta opción crea una solicitud local especial pendiente de revisión por Farmacia. No modifica CIMA ni el catálogo oficial. En esta demo solo genera un registro temporal para continuar la validación."));
         body.appendChild(warning);
-        var formGrid = createEl("div", "form-grid");
+        var formGrid = createEl("div", "nx-formulario");
         [
             { id: "localDrugDisplayName", label: "Nombre / display name" },
             { id: "localDrugPrincipio", label: "Principio activo" },
@@ -1802,10 +1802,10 @@
             { id: "localDrugVia", label: "Vía" },
             { id: "localDrugTipoSituacion", label: "Tipo situación" }
         ].forEach(function (field) {
-            var fg = createEl("div", "form-group");
+            var fg = createEl("div", "nx-campo");
             var label = createEl("label", "", field.label);
             label.setAttribute("for", field.id);
-            var input = createEl("input", "form-control");
+            var input = createEl("input", "nx-campo__control");
             input.type = "text";
             input.id = field.id;
             fg.appendChild(label);
@@ -1813,10 +1813,10 @@
             formGrid.appendChild(fg);
         });
         body.appendChild(formGrid);
-        var obsGroup = createEl("div", "form-group form-group--full");
+        var obsGroup = createEl("div", "nx-campo");
         var obsLabel = createEl("label", "", "Observaciones");
         obsLabel.setAttribute("for", "localDrugObservaciones");
-        var obsTextarea = createEl("textarea", "form-textarea");
+        var obsTextarea = createEl("textarea", "nx-campo__control");
         obsTextarea.id = "localDrugObservaciones";
         obsTextarea.rows = 2;
         obsGroup.appendChild(obsLabel);
@@ -1906,7 +1906,7 @@
     }
 
     function buildOtherDrugField(labelText, control) {
-        var wrap = createEl("div", "form-group");
+        var wrap = createEl("div", "nx-campo");
         var label = createEl("label", "", labelText);
         wrap.appendChild(label);
         wrap.appendChild(control);
@@ -1927,8 +1927,8 @@
         header.appendChild(removeButton);
         card.appendChild(header);
 
-        var grid = createEl("div", "form-grid other-drug-card__grid");
-        var relationSelect = buildSelect("", "form-select", [{ value: "", label: "Seleccionar…" }].concat(RELATION_OPTIONS.map(function (value) { return { value: value, label: value }; })), drug.relationType);
+        var grid = createEl("div", "nx-formulario nx-formulario--estirar other-drug-card__grid");
+        var relationSelect = buildSelect("", "nx-campo__control", [{ value: "", label: "Seleccionar…" }].concat(RELATION_OPTIONS.map(function (value) { return { value: value, label: value }; })), drug.relationType);
         relationSelect.addEventListener("change", function () { updateOtherDrugField(drug.uid, "relationType", this.value); });
         grid.appendChild(buildOtherDrugField("Tipo de relación", relationSelect));
 
@@ -1941,20 +1941,20 @@
             { key: "fechaFin", label: "Fecha fin", type: "date" },
             { key: "motivo", label: "Motivo/contexto", type: "text" }
         ].forEach(function (field) {
-            var input = createEl("input", "form-control");
+            var input = createEl("input", "nx-campo__control");
             input.type = field.type;
             input.value = drug[field.key] || "";
             input.addEventListener("input", function () { updateOtherDrugField(drug.uid, field.key, this.value); });
             grid.appendChild(buildOtherDrugField(field.label, input));
         });
 
-        var viaSelect = buildSelect("", "form-select", VIA_OPTIONS.map(function (v) {
+        var viaSelect = buildSelect("", "nx-campo__control", VIA_OPTIONS.map(function (v) {
             return { value: v, label: v || "Seleccionar…" };
         }), mapViaToSelect(drug.via, null));
         viaSelect.addEventListener("change", function () { updateOtherDrugField(drug.uid, "via", this.value); });
         grid.appendChild(buildOtherDrugField("Vía", viaSelect));
 
-        var eaSelect = buildSelect("", "form-select", EA_SUSPECT_OPTIONS, drug.sospechosoEa);
+        var eaSelect = buildSelect("", "nx-campo__control", EA_SUSPECT_OPTIONS, drug.sospechosoEa);
         eaSelect.addEventListener("change", function () { updateOtherDrugField(drug.uid, "sospechosoEa", this.value); });
         grid.appendChild(buildOtherDrugField("Sospechoso de EA", eaSelect));
 

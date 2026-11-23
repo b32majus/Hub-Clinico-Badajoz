@@ -263,6 +263,8 @@
     gap: var(--nx-espacio-4) var(--nx-espacio-5);
   }
 
+  /* Pocos campos por fila: se reparten todo el ancho en vez de dejar columnas vacías */
+  .nx-formulario--estirar { grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--nx-ancho-tarjeta-min) * 0.75)), 1fr)); }
   /* Fila de campos con etiquetas de distinto largo: los controles quedan a la misma altura */
   .nx-formulario--alinear-abajo {
     align-items: end;
