@@ -118,3 +118,4 @@ Estados: **VIGENTE**, **SUSTITUIDA** (con por qué), **HISTÓRICA** (contexto de
 ## Cómo mantenerlo
 
 Al tomar una decisión, añadir una línea aquí en la misma PR que la implementa. Si una decisión sustituye a otra, marcar la antigua `SUSTITUIDA por …` en lugar de borrarla.
+| 23-11 | #956 (H-28, limpieza): se borran de `farmacia_style.css` las 22 reglas `.form-*` (126 líneas) que ya no usa ninguna página ni script de Farmacia raíz. La copia de `previews/caceres-fh/` conserva su propio CSS. Nuevo check estático `farmacia_style_sin_form_check`. Capturas antes/después de 7 páginas de Farmacia sin cambios visibles. | Quedaban sin uso tras pasar las tres pantallas a `nx-campo`. |

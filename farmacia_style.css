@@ -138,33 +138,6 @@
     color: var(--nx-color-modulo-texto);
     background: var(--nx-color-modulo-suave);
 }
-
-.form-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-}
-
-.form-control,
-.form-select,
-.form-textarea {
-    width: 100%;
-    padding: 11px 13px;
-    border-radius: 10px;
-    border: 1.5px solid var(--nx-color-tenue);
-    background: var(--nx-color-fondo);
-    color: var(--nx-color-texto);
-    font: inherit;
-}
-.form-control:focus,
-.form-select:focus,
-.form-textarea:focus {
-    outline: none;
-    border-color: var(--nx-color-principal);
-    background: var(--nx-color-superficie);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 10%, transparent);
-}
 .search-card__hint { margin: 10px 0 0; color: var(--nx-color-texto-suave); font-size: 0.82rem; }
 
 .btn {
@@ -230,31 +203,6 @@
 .status-badge--validated { background: var(--nx-color-ok-fondo); color: var(--nx-color-ok); border: 1px solid color-mix(in srgb, var(--nx-color-ok) 25%, transparent); }
 .status-badge--denied { background: var(--nx-color-error-fondo); color: var(--nx-color-error); border: 1px solid var(--nx-color-error-borde); }
 .status-badge--followup { background: var(--nx-color-modulo-suave); color: var(--nx-color-modulo-texto); border: 1px solid var(--nx-color-modulo-borde); }
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-    margin-bottom: 16px;
-}
-.form-grid--full { grid-template-columns: 1fr; }
-.form-grid--align-end { align-items: end; }
-.form-hint {
-    display: block;
-    margin: -10px 0 16px;
-    color: var(--nx-color-texto-suave);
-    font-size: 0.82rem;
-}
-.form-group label,
-.form-label {
-    display: block;
-    margin-bottom: 6px;
-    color: var(--nx-color-texto-suave);
-    font-size: 0.77rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
 .required { color: var(--nx-color-error); }
 .warning-box { padding: 12px 14px; border-radius: 12px; background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); border: 1px solid var(--nx-color-aviso-borde); }
 
@@ -430,7 +378,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
+}
 
 /* --- Session professional block (WO farmacia v0.1) --- */
 
@@ -654,20 +602,11 @@
     font-size: 0.9em;
     line-height: 1.5;
 }
-.local-drug-modal-body .form-grid {
-    margin-bottom: 12px;
-}
 .local-drug-modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     padding: 0 24px 20px;
-}
-
-/* --- Form group full width (used in modal) --- */
-.form-group--full {
-    grid-column: 1 / -1;
-    margin-bottom: 14px;
 }
 
 @media (max-width: 768px) {
@@ -678,14 +617,6 @@
     .autocomplete-dropdown {
         max-height: 260px;
     }
-}
-
-/* --- Campos readonly: aspecto precargado (ítem 7) --- */
-.form-control[readonly] {
-    background: var(--nx-color-modulo-suave);
-    border-color: var(--nx-color-modulo-borde);
-    cursor: default;
-    color: var(--nx-color-texto);
 }
 
 /* --- Guard: sin paciente seleccionado (Fix 2) --- */
@@ -756,11 +687,6 @@
     border-top: 1px solid var(--nx-color-borde);
 }
 
-/* Form-actions separados del bloque anterior */
-.dashboard-card .form-actions {
-    margin-top: 24px;
-}
-
 /* Farmacéutico responsable: separación clara del bloque anterior */
 
 /* Checklist chips: sin desbordamiento de texto */
@@ -777,16 +703,8 @@
     .checklist-visual {
         gap: 6px;
     }
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
     .info-grid {
         grid-template-columns: 1fr;
-    }
-    .form-actions {
-        flex-direction: column;
-        align-items: stretch;
     }
 }
 
@@ -906,7 +824,6 @@
 .cip-search-wrap {
     position: relative;
 }
-.cip-search-wrap .form-control,
 .cip-search-wrap .nx-campo__control {
     padding-left: 36px;
     padding-right: 40px;
@@ -1829,7 +1746,6 @@
 .seg-line-card__meta { color: var(--nx-color-texto-suave); font-size: 0.82rem; }
 .seg-line-selection__selector { max-width: 420px; margin: 12px 0 0; }
 .seg-line-selection__editors { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-.seg-line-selection__editors .form-group { flex: 1 1 260px; }
 .seg-line-selection__dispensed { max-width: 260px; margin: 12px 0 0; }
 .seg-line-cards__empty { margin: 0; color: var(--nx-color-texto-suave); font-size: 0.85rem; }
 
@@ -2495,25 +2411,6 @@
     align-items: center;
 }
 
-.longitudinal-controls .form-select {
-    width: auto;
-    min-width: 180px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: 1.5px solid var(--nx-color-tenue);
-    background: var(--nx-color-fondo);
-    color: var(--nx-color-texto);
-    font: inherit;
-    font-size: 0.85rem;
-}
-
-.longitudinal-controls .form-select:focus {
-    outline: none;
-    border-color: var(--nx-color-principal);
-    background: var(--nx-color-superficie);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-principal) 10%, transparent);
-}
-
 /* --- Data series (clinical / PROM chips) --- */
 
 @media (max-width: 768px) {
@@ -2525,11 +2422,6 @@
     .longitudinal-controls {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .longitudinal-controls .form-select {
-        min-width: 100%;
-        width: 100%;
     }
 
     #longitudinal-chart-container {
@@ -3889,10 +3781,6 @@
     margin-top: 16px;
 }
 
-.info-grid + .form-grid {
-    margin-top: 24px;
-}
-
 .notice-box.notice-box--info {
     display: flex;
     gap: 10px;
@@ -4126,12 +4014,6 @@
     line-height: 1.35;
 }
 
-.causality-question .form-select {
-    flex: 0 0 180px;
-    max-width: 220px;
-    padding: 8px 10px;
-}
-
 .causality-chip-group {
     display: flex;
     gap: 0.5rem;
@@ -4172,12 +4054,6 @@
 
     .causality-question label {
         min-width: auto;
-    }
-
-    .causality-question .form-select {
-        flex: 1 1 auto;
-        max-width: 100%;
-        width: 100%;
     }
 
     .causality-result-grid--top {
