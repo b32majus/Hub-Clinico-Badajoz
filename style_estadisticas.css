@@ -153,22 +153,19 @@
     border-radius: var(--radius-md);
 }
 
-.btn-primary,
-.button.primary-button {
+.btn-primary {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
     color: var(--nx-color-sobre-principal);
     box-shadow: 0 2px 4px color-mix(in srgb, var(--nx-color-info) 30%, transparent);
 }
 
-.btn-primary:hover:not(:disabled),
-.button.primary-button:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--nx-color-principal-hover) 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px color-mix(in srgb, var(--nx-color-info) 40%, transparent);
 }
 
-.btn-primary:active,
-.button.primary-button:active {
+.btn-primary:active {
     transform: translateY(0);
 }
 
@@ -380,51 +377,6 @@
 }
 
 /* === TABS DE FILTROS === */
-.filter-tabs {
-    display: flex;
-    gap: var(--spacing-xs);
-    padding: 0 var(--spacing-lg);
-    margin-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--color-border);
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.filter-tabs::-webkit-scrollbar {
-    display: none;
-}
-
-.filter-tab {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--color-text-muted);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    white-space: nowrap;
-    position: relative;
-}
-
-.filter-tab i {
-    font-size: 1rem;
-}
-
-.filter-tab:hover {
-    color: var(--color-text);
-    background: var(--color-secondary-light);
-}
-
-.filter-tab.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-}
-
 .filter-tab-badge {
     display: inline-flex;
     align-items: center;
@@ -439,20 +391,11 @@
     border-radius: var(--radius-full);
 }
 
-.filter-tab:not(.active) .filter-tab-badge {
+.filter-tab[aria-selected="false"] .filter-tab-badge {
     background: var(--color-secondary);
 }
 
 /* === CONTENIDO DE FILTROS === */
-.filter-tab-content {
-    display: none;
-    animation: fadeIn 0.3s ease;
-}
-
-.filter-tab-content.active {
-    display: block;
-}
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -495,7 +438,7 @@
     margin-bottom: 0;
 }
 
-.filter-group label {
+.filter-group:not(.nx-campo) label {
     display: block;
     font-size: 13px;
     font-weight: 500;
@@ -691,91 +634,6 @@
     padding-top: var(--spacing-lg);
     margin-top: var(--spacing-md);
     border-top: 1px solid var(--color-border-light);
-}
-
-/* === PANEL DE KPIs === */
-.dashboard-kpis-panel {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-md);
-}
-
-.kpi-card {
-    background-color: var(--color-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    padding: var(--spacing-lg);
-    text-align: center;
-    border: 1px solid var(--color-border-light);
-    transition: all var(--transition-normal);
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-}
-
-.kpi-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    margin: 0 auto var(--spacing-md);
-    background: var(--color-secondary-light);
-    border-radius: var(--radius-lg);
-    font-size: 1.25rem;
-    color: var(--color-secondary);
-}
-
-.kpi-card--success .kpi-icon { background: var(--color-remission-light); color: var(--color-remission); }
-.kpi-card--warning .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
-.kpi-card--danger .kpi-icon { background: var(--color-high-activity-light); color: var(--color-high-activity); }
-.kpi-card--info .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
-.kpi-card--purple .kpi-icon { background: var(--nx-color-superficie-suave); color: var(--nx-color-reuma-texto); }
-
-.kpi-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.kpi-value {
-    display: block;
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: var(--color-text);
-    line-height: 1.2;
-}
-
-.kpi-trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: var(--spacing-sm);
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.kpi-trend--up {
-    background: var(--color-remission-light);
-    color: var(--color-remission-dark);
-}
-
-.kpi-trend--down {
-    background: var(--color-high-activity-light);
-    color: var(--color-high-activity-dark);
-}
-
-.kpi-trend--neutral {
-    background: var(--color-secondary-light);
-    color: var(--color-secondary);
 }
 
 /* === MÉTRICAS ADICIONALES POR PATOLOGÍA === */
@@ -1078,10 +936,6 @@
         grid-template-columns: 1fr;
     }
 
-    .filter-tabs {
-        padding: 0 var(--spacing-md);
-    }
-
     .filters-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -1090,10 +944,6 @@
 @media (max-width: 768px) {
     .main-content.dashboard-poblacional {
         padding: var(--spacing-md);
-    }
-
-    .dashboard-kpis-panel {
-        grid-template-columns: repeat(2, 1fr);
     }
 
     .table-header {
@@ -1122,28 +972,6 @@
     .filters-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
-    }
-
-    .filter-tabs {
-        flex-wrap: wrap;
-        padding: var(--spacing-sm);
-        gap: var(--spacing-xs);
-    }
-
-    .filter-tab {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: 13px;
-        flex: 1 1 auto;
-        min-width: 80px;
-        justify-content: center;
-    }
-
-    .filter-tab span:not(.filter-tab-badge) {
-        display: none;
-    }
-
-    .filter-tab i {
-        margin: 0;
     }
 
     .collapsible-header.active + .collapsible-content {
@@ -1175,34 +1003,11 @@
 }
 
 @media (max-width: 480px) {
-    .dashboard-kpis-panel {
-        grid-template-columns: 1fr;
-    }
-
-    .kpi-value {
-        font-size: 1.75rem;
-    }
-
     .pagination-controls {
         flex-wrap: wrap;
         justify-content: center;
     }
 
-    /* Tabs solo iconos en móvil pequeño */
-    .filter-tab {
-        padding: var(--spacing-sm);
-        min-width: 44px;
-    }
-
-    .kpi-card {
-        padding: var(--spacing-md);
-    }
-
-    .kpi-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
 }
 
 /* Estados de la tabla de cohorte (antes con style= en el JS; H-24) */
