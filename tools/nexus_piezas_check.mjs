@@ -20,7 +20,7 @@ const MUESTRA_CSS = 'muestra/muestra.css';
 const MUESTRAS = [MUESTRA, 'muestra/nexus_shell_farmacia.html', 'muestra/nexus_shell_reuma.html'];
 const FILES = [PIEZAS, ...MUESTRAS, MUESTRA_CSS, 'muestra/muestra.js', 'modules/nexus/piezas/nx-pestanas.js',
     'modules/nexus/piezas/nx-shell.js', 'modules/nexus/menus.js', 'modules/nexus/version.js'];
-const PUNTOS = ['64em', '48em', '36em'];
+const PUNTOS = ['64em', '40em', '36em'];
 const BLOQUES = ['nx-pagina', 'nx-solo-lector', 'nx-boton', 'nx-acciones', 'nx-campo', 'nx-casilla', 'nx-buscador',
     'nx-formulario', 'nx-tabla-marco', 'nx-tabla', 'nx-pestanas', 'nx-rejilla', 'nx-tarjeta', 'nx-datos', 'nx-etiqueta',
     'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell', 'nx-profesional', 'nx-cabecera',
@@ -91,7 +91,7 @@ await test('S4 toda variable que se usa existe en css/nexus_tokens.css (o la def
     assert.deepEqual([...new Set(faltan)], []);
 });
 
-await test('S5 solo los tres puntos de cambio (64em, 48em, 36em) y de escritorio a menos (max-width)', async () => {
+await test('S5 solo los tres puntos de cambio (64em, 40em, 36em) y de escritorio a menos (max-width)', async () => {
     const malos = [];
     for (const f of [PIEZAS, MUESTRA_CSS]) {
         for (const m of sinComentarios(read(f)).matchAll(/@media\s*([^{]+)\{/g)) {

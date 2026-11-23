@@ -983,7 +983,7 @@
     }
   }
 
-  @media (max-width: 48em) {
+  @media (max-width: 40em) {
     .nx-marco {
       grid-template-columns: minmax(0, 1fr);
     }
