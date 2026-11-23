@@ -283,7 +283,7 @@ try {
         assert.deepEqual(r, { marca: true, contorno: true });
     });
 
-    await test('B10 sin desplazamiento lateral a 1024/768/576/360; por debajo de 48em la barra va arriba y no se queda fija', async () => {
+    await test('B10 sin desplazamiento lateral a 1024/768/576/360; por debajo de 40em la barra va arriba y no se queda fija', async () => {
         for (const modulo of Object.keys(MUESTRAS)) {
             for (const ancho of [1024, 768, 576, 360]) {
                 await page.setViewportSize({ width: ancho, height: 800 });
@@ -298,7 +298,7 @@ try {
                     };
                 });
                 assert.equal(r.desborde, 0, `${modulo} ${ancho}px desborda`);
-                if (ancho <= 768) assert.deepEqual([r.arriba, r.posicion], [true, 'static'], `${modulo} ${ancho}px`);
+                if (ancho <= 576) assert.deepEqual([r.arriba, r.posicion], [true, 'static'], `${modulo} ${ancho}px`);
                 else assert.equal(r.posicion, 'sticky', `${modulo} ${ancho}px`);
                 if (ancho === 1024) await captura(`${modulo}-1024`);
                 if (ancho === 360) {
