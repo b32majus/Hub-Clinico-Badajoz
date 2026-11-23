@@ -51,3 +51,25 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 **H-27 (tanda 4c, 22-11).** Textos en inglés que aún pueden verse y no se han mirado a fondo: `primera_visita.html` (200 KB) y las carpetas `muestra/` y `artifacts/`. **Cerrado en la tanda 4f** (inventario hecho; ver DECISIONES). Revisados también los `modules/*.js` de primer nivel y los scripts de Primera visita y Seguimiento; sin revisar aún `modules/nexus/`, `modules/home/` y `modules/platform/`.
 
 **H-28 (tanda 5c, 22-11).** *(23-11: cifras, filtros rápidos, `h1` de Informes y bloques de gráficos (a `nx-tarjeta`) resueltos; Primera visita, Seguimiento y Validación a `nx-campo` resueltos; casillas a `nx-casilla`. Reglas `form-*` sin uso de `farmacia_style.css` borradas (23-11).)* Estadísticas de Farmacia: cifras, filtros rápidos y gráficos siguen con clases propias `stats-*` pintadas por el JS; pasarlas a `nx-cifra`/`nx-campo` exige tocar `farmacia_estadisticas.js` y ~15 checks de navegador. Los formularios de Farmacia (Primera visita, Seguimiento, Validación) conservan `form-group`/`form-control` en vez de `nx-campo`. Además, en la vista Informes la pantalla no tiene `h1` visible (la cabecera se oculta con `stats-population-only`).
+
+## Repaso de deuda (23-11, tras cerrar H-28)
+
+Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews/`, `docs/` ni `vendor/`). Orden = orden propuesto para cerrar.
+
+| Hallazgo | Estado hoy | Evidencia | Tamaño |
+|---|---|---|---|
+| H-17 | cerrado | 0 `style=` con color en el HTML raíz (solo `display:none`) | - |
+| H-23 | cerrado (tanda 4c) | chips en español; el repaso lo marcó «parcial» por error | - |
+| H-28 | cerrado | solo quedan las clases `stats-*` como enganche de los checks | - |
+| H-25, H-22, H-24, H-27 | cerrados en este documento; no reverificados | - | - |
+| H-10 | abierto | `index.html` y `nexus_home.html` sin `<nx-shell>` (0); casilla abierta del tramo 5 | S |
+| H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
+| H-02, H-03, H-19 | abiertos | `main-content` en 30 sitios (24 ficheros); `style.css` sin `@layer`; fondo degradado de `.main-content` activo | M |
+| H-15 | parcial | hex en `farmacia_seguimiento.js` (6), `treatmentEventsManager.js` (5), `mockDashboardData.js` (5), `dataManager.js` (4), `farmacia_excel_row_export.js` (1) | M |
+| H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
+| H-20 | abierto | `pending-validation*` 35, `status-badge` 20, `dashboard-card` 9, `prebio-chip` 7 | L |
+| H-26 | parcial | `display:none` en línea: `primera_visita` 42, `seguimiento` 30; CSS de formularios sin `@layer` | L |
+| H-01 | abierto | `VERSION_SITIO = '0.6.0'` en `modules/nexus/version.js` (versión única del sitio, «aparte» de #956) | M |
+| H-08 | no revisado | `previews/caceres-fh` (barra vieja) | - |
+
+Otros pendientes de #956: paso a módulos ES y móvil de Farmacia (despriorizado el 23-11).
