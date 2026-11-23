@@ -68,7 +68,7 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
 | H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
 | H-20 | abierto | `pending-validation*` 35, `status-badge` 20, `dashboard-card` 9, `prebio-chip` 7 | L |
-| H-26 | parcial | `display:none` en línea: `primera_visita` 42, `seguimiento` 30; CSS de formularios sin `@layer` | L |
+| H-26 | parcial (23-11) | Primera visita a `nx-campo` hecha (tramo 1/2). Falta `seguimiento.html` (280 controles) y borrar CSS `form-*` sin uso + `@layer` (con H-02/03/19). Los `display:none` en línea se dejan por decisión (estado de `formController.js`). | L |
 | H-01 | abierto | `VERSION_SITIO = '0.6.0'` en `modules/nexus/version.js` (versión única del sitio, «aparte» de #956) | M |
 | H-08 | no revisado | `previews/caceres-fh` (barra vieja) | - |
 

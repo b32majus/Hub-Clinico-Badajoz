@@ -295,6 +295,7 @@ body:has(.nx-marco) {
    Se mantiene width:100% para adaptarse a contenedores estrechos y se acota el
    ancho máximo para evitar el ancho excesivo en pantallas grandes. */
 .form-group input[type="date"],
+.nx-campo input[type="date"],
 .plan-date-input,
 .plan-date-input-improved {
     max-width: 200px;
