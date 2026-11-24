@@ -3,12 +3,12 @@
   "modules": [
     {
       "moduleId": "farmacia",
-      "release": "0.6.0",
+      "release": "4.0.0",
       "readiness": "demonstrated"
     },
     {
       "moduleId": "reuma",
-      "release": "0.6.0",
+      "release": "4.0.0",
       "readiness": "demonstrated"
     }
   ]
