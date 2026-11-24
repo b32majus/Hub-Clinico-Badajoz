@@ -1080,11 +1080,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Event Listeners: Navigation Links ---
-    document.querySelectorAll('[data-nav-link]').forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            attemptNavigation(link.getAttribute('href'));
-        });
+    // Escucha en el documento: los enlaces de <nx-shell> pueden pintarse después de
+    // DOMContentLoaded (módulo async; los scripts van con defer, DESIGN.md §3).
+    document.addEventListener('click', function(event) {
+        var link = event.target && event.target.closest ? event.target.closest('[data-nav-link]') : null;
+        if (!link) return;
+        event.preventDefault();
+        attemptNavigation(link.getAttribute('href'));
     });
 
     // --- Event Listeners: CSV/Database Loading (bot\u00f3n de carga manual en reuma_index.html) ---

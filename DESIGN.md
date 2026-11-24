@@ -69,6 +69,7 @@ Fuera de este tramo (tramo 7): los colores que pone el JS (gráficos de Chart.js
 - Accesibilidad WCAG 2.1 AA: foco visible, teclado, contraste y nunca solo color (R8).
 - Nada se carga desde fuera: letra, iconos y gráficos van en `vendor/` (R2).
 - Ningún script clásico en `<head>`: van al final del `<body>`, en su orden (en `<head>` bloquean el pintado de toda la página, barra incluida; Reuma Inicio tardaba 1,5 s frente a 0,45 s de Farmacia, Sil 21-11). Lo comprueba `nexus_shell_paginas_check` P9.
+- **Todo `<script src>` lleva `defer` (o `type="module"`), sin excepción** (24-11). La política de seguridad va en `<meta http-equiv="Content-Security-Policy">` y, con ella, Chrome deja de pedir los scripts por adelantado: sin `defer` se bajan de uno en uno y con red lenta la carga pasó de ~2 s a 6-10 s en casi todas las pantallas (entró con #959 el 21-11 y nadie lo midió). Nada de scripts escritos en el HTML salvo el que solo espera a `DOMContentLoaded`: llévalo a un fichero con `defer`. Con `defer`, `DOMContentLoaded` puede llegar antes de que `<nx-shell>` pinte la barra: el código que toca elementos de la barra escucha en el documento (`closest`) o espera a `customElements.whenDefined('nx-shell')`, nunca `querySelectorAll` al cargar. Lo comprueba `nexus_scripts_paralelo_check` (en `verify:nexus`). Cualquier cambio en cómo se cargan las páginas se mide antes de subir con red lenta (150 ms) contra la versión anterior.
 
 ## 4. Catálogo de piezas
 
