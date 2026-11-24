@@ -1,4 +1,4 @@
-@layer nx.tokens, nx.base, nx.piezas, modulo;
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 
 /* Maquetación propia de la página de muestra (capa modulo). Solo var(--nx-*). */
 @layer modulo {

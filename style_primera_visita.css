@@ -1,4 +1,4 @@
-@layer nx.tokens, nx.base, nx.piezas, modulo;
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 @layer modulo {
 /* ========================================
    ARCHIVO CSS CONSOLIDADO PARA PRIMERA VISITA

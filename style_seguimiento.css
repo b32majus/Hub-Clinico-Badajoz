@@ -3,7 +3,7 @@
    Combina: style_seguimiento_espa.css + elementos específicos de style_premium.css + optimizaciones profesionales
    ======================================== */
 
-@layer nx.tokens, nx.base, nx.piezas, modulo;
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 /* Importar estilos base consolidados de primera visita */
 @import url('style_primera_visita.css');
 

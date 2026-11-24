@@ -9,7 +9,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const V = '20261122-t7f'; // tramo 7: anchos de nx-cifra y nx-solicitud
 const TOKENS = 'css/nexus_tokens.css';
 const BASE = 'css/nexus_base.css';
-const LAYERS = '@layer nx.tokens, nx.base, nx.piezas, modulo;';
+const LAYERS = '@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;';
 const CLINICAL_TOKEN_RE = /\bCIP\b|\bNHC\b|paciente|patient|workbook|cohorte|cohort\b|historia_cl|datos_clinicos|tratamiento|treatment/i;
 
 const results = [];

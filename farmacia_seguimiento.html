@@ -7,7 +7,7 @@
     <meta name="fh-build-id" content="fh-cima-contextless-selection-p0-20260730">
     <title>Hub Clínico — Seguimiento Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css?v=6.0.0-beta3">
+    <style>@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo; @import url("vendor/fontawesome/css/all.min.css?v=6.0.0-beta3") layer(nx.vendor);</style>
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261122-t7f">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261122-t7f">
     <link rel="stylesheet" href="css/nexus_piezas.css?v=20261124-t1">
@@ -17,8 +17,9 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261124-t5">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261123-t7e">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261124-h03">
     <style>
+    @layer modulo {
     /* T01 #795 (C-088 VIS-01): tratamiento de insignias del segmento EA según
        el máster G0 v0.4 aprobado (píldora encajonada). Solo alcanza a la
        insignia de recuento EA y a la insignia de la sección EA. */
@@ -133,6 +134,7 @@
         background: var(--nx-color-superficie-suave);
         color: var(--nx-color-texto-suave);
         cursor: not-allowed;
+    }
     }
     </style>
 </head>

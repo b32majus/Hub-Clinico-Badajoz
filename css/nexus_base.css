@@ -5,7 +5,7 @@
  * el reset y la tipografía comunes llegan cuando cada pantalla se migre.
  */
 
-@layer nx.tokens, nx.base, nx.piezas, modulo;
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 
 @layer nx.base {
   /* Foco visible al navegar con teclado (R8) */
