@@ -299,7 +299,7 @@ try {
   assert.match(await child.locator('#chart-evolucion-content').innerText(), /Último PROM registrado/);
   assert.match(await child.locator('#chart-evolucion-content').innerText(), /PROM-CERO[\s\S]*PROM-FALSO/, 'PROM chart includes all latest-act instruments');
   assert.doesNotMatch(await child.locator('#chart-evolucion-content').innerText(), /PROM-HISTÓRICO/, 'PROM chart excludes historical instruments');
-  assert.match(await child.locator('#chart-tratamiento-content').innerText(), /schedule_change[\s\S]*suspension/, 'movement chart retains explicit changes and structured suspension');
+  assert.match(await child.locator('#chart-tratamiento-content').innerText(), /Cambio de pauta[\s\S]*Suspensión/, 'movement chart retains explicit changes and structured suspension');
   assert.doesNotMatch(await child.locator('#chart-tratamiento-content').innerText(), /no_change_recorded/, 'movement chart excludes explicit absence of change');
   // D3c-2 (#867): EA en Estadísticas sale del modelo nuevo; este libro 152 no
   // tiene filas 166, así que todos sus pacientes son «No registrado» (≠ sin EA).
