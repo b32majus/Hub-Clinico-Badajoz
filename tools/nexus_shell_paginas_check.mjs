@@ -61,7 +61,7 @@ test('P3 marco nuevo: .nx-marco con <nx-shell> y <main class="nx-marco__contenid
         const main = src.match(/<main\b[^>]*>/);
         if (!main || /\bmain-content\b/.test(main[0]) || !/\bnx-marco__contenido\b/.test(main[0])) malas.push(`${p}: <main> sin nx-marco__contenido o con la clase antigua main-content`);
         // Solo las pantallas ya migradas (tramo 7) llevan nx-pagina; las demás aún no (las reconoce su nx-cabecera, ver nexus_piezas_check S13).
-        if (/<body\b[^>]*class="[^"]*\bnx-pagina\b/.test(src) && !/<header class="nx-cabecera">/.test(src)) malas.push(`${p}: <body> con nx-pagina (cambiaría box-sizing y tipografía de la pantalla antigua)`);
+        if (/<body\b[^>]*class="[^"]*\bnx-pagina\b/.test(src) && !/<header class="nx-cabecera"[ >]/.test(src)) malas.push(`${p}: <body> con nx-pagina (cambiaría box-sizing y tipografía de la pantalla antigua)`);
     }
     vacio(malas, 'main.nx-marco__contenido lo leen 9 scripts de Farmacia y 4 checks');
 });

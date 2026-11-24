@@ -131,7 +131,7 @@ assert.match(pacienteSource, /FarmaciaAdherencePresentation\.adherenceDisplayTex
 assert.doesNotMatch(pacienteSource, /explicitText\(patient\.adherencia\)/,
   'dashboard paciente no longer stringifies patient.adherencia generically');
 
-const scriptTag = /<script src="scripts\/farmacia_adherence_presentation\.js\?[^"]*"><\/script>/;
+const scriptTag = /<script type="module" src="scripts\/farmacia_adherence_presentation\.js\?[^"]*"><\/script>/;
 for (const [name, html, dashboardScript] of [
   ['longitudinal', longitudinalHtml, 'farmacia_dashboard_longitudinal.js'],
   ['paciente', pacienteHtml, 'farmacia_dashboard_paciente.js']

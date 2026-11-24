@@ -86,6 +86,7 @@ try {
         await page.keyboard.type('secuk', { delay: 40 });
         const item = page.locator('#fhPvAutocompleteDropdown .autocomplete-item').first();
         await item.waitFor({ state: 'visible', timeout: 5000 });
+        await item.scrollIntoViewIfNeeded();
         const box = await item.boundingBox();
         await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
         await page.mouse.down();
