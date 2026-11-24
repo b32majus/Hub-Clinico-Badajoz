@@ -114,6 +114,34 @@
         select.value = 'No';
     }
 
+    // La lista va con posición fija, colocada bajo el campo: así no la recorta
+    // ninguna tarjeta ni sección plegable que la contenga (overflow: hidden).
+    // Si abajo no cabe y arriba sí, se abre hacia arriba.
+    var todos = [];
+    function placeList(state) {
+        var list = state.list;
+        if (list.hidden || !state.wrapper) return;
+        var box = state.wrapper.getBoundingClientRect();
+        var alto = Math.min(list.scrollHeight || 240, 240);
+        var abajo = window.innerHeight - box.bottom - 8;
+        list.style.left = box.left + 'px';
+        list.style.width = box.width + 'px';
+        list.style.right = 'auto';
+        if (abajo < alto && box.top - 8 > abajo) {
+            list.style.top = 'auto';
+            list.style.bottom = (window.innerHeight - box.top + 4) + 'px';
+            list.style.maxHeight = Math.min(240, box.top - 12) + 'px';
+        } else {
+            list.style.bottom = 'auto';
+            list.style.top = (box.bottom + 4) + 'px';
+            list.style.maxHeight = Math.min(240, Math.max(abajo, 120)) + 'px';
+        }
+    }
+
+    function placeOpenLists() {
+        for (var i = 0; i < todos.length; i++) placeList(todos[i]);
+    }
+
     function closeList(state) {
         state.list.textContent = '';
         state.list.hidden = true;
@@ -171,6 +199,7 @@
             state.list.appendChild(item);
         });
         state.list.hidden = false;
+        placeList(state);
         state.input.setAttribute('aria-expanded', 'true');
     }
 
@@ -185,6 +214,7 @@
         item.addEventListener('click', function () { clearSelection(state); });
         state.list.appendChild(item);
         state.list.hidden = false;
+        placeList(state);
         state.input.setAttribute('aria-expanded', 'true');
     }
 
@@ -347,8 +377,9 @@
         wrapper.appendChild(notice);
         wrapper.appendChild(select);
 
-        var state = { select: select, input: input, list: list, notice: notice, results: [], activeIndex: -1, requestSeq: 0, debounceTimer: null };
+        var state = { wrapper: wrapper, select: select, input: input, list: list, notice: notice, results: [], activeIndex: -1, requestSeq: 0, debounceTimer: null };
         select.__drugAutocompleteState = state;
+        todos.push(state);
 
         ensureDefaultOption(select);
         bindEvents(state);
@@ -365,6 +396,9 @@
     }
 
     document.addEventListener('hubcatalog:changed', refreshAll);
+    // Reposicionar al desplazar (también dentro de secciones con scroll) o redimensionar.
+    window.addEventListener('scroll', placeOpenLists, true);
+    window.addEventListener('resize', placeOpenLists);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { initDrugAutocomplete(document); });

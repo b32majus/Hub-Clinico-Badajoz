@@ -5,7 +5,7 @@
 
 @layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 /* Importar estilos base consolidados de primera visita */
-@import url('style_primera_visita.css');
+@import url('style_primera_visita.css?v=20261124-des');
 
 @layer modulo {
 /* ========================================
@@ -1267,7 +1267,7 @@
 }
 
 .drug-autocomplete__list {
-    position: absolute;
+    position: fixed;
     z-index: 60;
     top: calc(100% + 4px);
     left: 0;
