@@ -16,8 +16,8 @@
     <link rel="modulepreload" href="modules/nexus/version.js">
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
-    <link rel="stylesheet" href="style.css?v=20261124-t1">
-    <link rel="stylesheet" href="style_seguimiento.css?v=20261123-t7c">
+    <link rel="stylesheet" href="style.css?v=20261124-t2">
+    <link rel="stylesheet" href="style_seguimiento.css?v=20261124-t2">
 </head>
 
 <body class="nx-pagina">
@@ -56,43 +56,43 @@
                     <h2 class="seccion-titulo">Datos del paciente</h2>
                     <div class="patient-prebiologic-badge" id="prebiologicBadgeContainer" style="display:none;"></div>
                     <div class="patient-fields">
-                        <div class="form-group">
-                            <label for="idPaciente">CIP:</label>
-                            <input type="text" id="idPaciente" placeholder="Ingrese CIP del paciente">
+                        <div class="nx-campo">
+                            <label for="idPaciente" class="nx-campo__etiqueta">CIP:</label>
+                            <input type="text" id="idPaciente" placeholder="Ingrese CIP del paciente" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="nombrePaciente">Nombre y Apellidos:</label>
-                            <input type="text" id="nombrePaciente" readonly>
+                        <div class="nx-campo">
+                            <label for="nombrePaciente" class="nx-campo__etiqueta">Nombre y Apellidos:</label>
+                            <input type="text" id="nombrePaciente" readonly class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="fechaVisita">Fecha de la Visita:</label>
-                            <input type="date" id="fechaVisita">
+                        <div class="nx-campo">
+                            <label for="fechaVisita" class="nx-campo__etiqueta">Fecha de la Visita:</label>
+                            <input type="date" id="fechaVisita" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="sexoPaciente">Sexo:</label>
-                            <select id="sexoPaciente">
+                        <div class="nx-campo">
+                            <label for="sexoPaciente" class="nx-campo__etiqueta">Sexo:</label>
+                            <select id="sexoPaciente" class="nx-campo__control">
                                 <option value="">Seleccionar</option>
                                 <option value="Hombre">Hombre</option>
                                 <option value="Mujer">Mujer</option>
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="fechaInicioTratamiento">Fecha de Inicio de Tratamiento:</label>
-                            <input type="date" id="fechaInicioTratamiento" readonly>
+                        <div class="nx-campo">
+                            <label for="fechaInicioTratamiento" class="nx-campo__etiqueta">Fecha de Inicio de Tratamiento:</label>
+                            <input type="date" id="fechaInicioTratamiento" readonly class="nx-campo__control">
                         </div>
-                        <div class="form-group form-group-full-width">
-                            <label for="tratamientoActual">Tratamiento Actual:</label>
-                            <input type="text" id="tratamientoActual" readonly>
+                        <div class="nx-campo form-group-full-width">
+                            <label for="tratamientoActual" class="nx-campo__etiqueta">Tratamiento Actual:</label>
+                            <input type="text" id="tratamientoActual" readonly class="nx-campo__control">
                         </div>
                     </div>
 
                     <div class="diagnostic-section">
                         <h3 class="diagnostic-title"><i class="fas fa-notes-medical"></i> Diagnóstico</h3>
                         <div class="diagnostic-fields">
-                            <div class="form-group">
-                                <label for="diagnosticoPrimario">Diagnóstico Primario:</label>
-                                <select id="diagnosticoPrimario">
+                            <div class="nx-campo">
+                                <label for="diagnosticoPrimario" class="nx-campo__etiqueta">Diagnóstico Primario:</label>
+                                <select id="diagnosticoPrimario" class="nx-campo__control">
                                     <option value="">Seleccionar patología...</option>
                                     <option value="espa">Espondiloartritis Axial (EspA)</option>
                                     <option value="aps">Artritis Psoriásica (APs)</option>
@@ -101,10 +101,10 @@
                                     <option value="sjogren">Síndrome de Sjögren</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label for="diagnosticoSecundario">Diagnóstico Secundario:</label>
+                            <div class="nx-campo">
+                                <label for="diagnosticoSecundario" class="nx-campo__etiqueta">Diagnóstico Secundario:</label>
                                 <input type="text" id="diagnosticoSecundario"
-                                    placeholder="Opcional - Especificar otros diagnósticos">
+                  placeholder="Opcional - Especificar otros diagnósticos" class="nx-campo__control">
                             </div>
                         </div>
 
@@ -201,34 +201,34 @@
                     </button>
                     <div class="collapsible-content">
                         <h3>Constantes Vitales</h3>
-                        <div class="form-group-grid constantes-grid">
-                            <div class="form-group">
-                                <label for="peso">Peso (kg):</label>
-                                <input type="number" id="peso" min="0" step="0.1">
+                        <div class="nx-formulario constantes-grid">
+                            <div class="nx-campo">
+                                <label for="peso" class="nx-campo__etiqueta">Peso (kg):</label>
+                                <input type="number" id="peso" min="0" step="0.1" class="nx-campo__control">
                             </div>
-                            <div class="form-group">
-                                <label for="talla">Talla (cm):</label>
-                                <input type="number" id="talla" min="0" step="0.1">
+                            <div class="nx-campo">
+                                <label for="talla" class="nx-campo__etiqueta">Talla (cm):</label>
+                                <input type="number" id="talla" min="0" step="0.1" class="nx-campo__control">
                             </div>
-                            <div class="form-group">
-                                <label for="imc">IMC:</label>
-                                <input type="text" id="imc" readonly class="readonly-input">
+                            <div class="nx-campo">
+                                <label for="imc" class="nx-campo__etiqueta">IMC:</label>
+                                <input type="text" id="imc" readonly class="readonly-input nx-campo__control">
                             </div>
-                            <div class="form-group">
-                                <label for="ta">Tensión Arterial (mmHg):</label>
-                                <input type="text" id="ta" placeholder="Sistólica/Diastólica">
+                            <div class="nx-campo">
+                                <label for="ta" class="nx-campo__etiqueta">Tensión Arterial (mmHg):</label>
+                                <input type="text" id="ta" placeholder="Sistólica/Diastólica" class="nx-campo__control">
                             </div>
                         </div>
 
                         <h3>Síntomas Reportados</h3>
-                        <div class="form-group-grid sintomas-grid">
-                            <div class="form-group">
-                                <label for="rigidezMatutinaMin">Rigidez Matutina (min):</label>
-                                <input type="number" id="rigidezMatutinaMin" min="0">
+                        <div class="nx-formulario sintomas-grid">
+                            <div class="nx-campo">
+                                <label for="rigidezMatutinaMin" class="nx-campo__etiqueta">Rigidez Matutina (min):</label>
+                                <input type="number" id="rigidezMatutinaMin" min="0" class="nx-campo__control">
                             </div>
-                            <div class="form-group">
-                                <label for="evaFatiga">EVA Fatiga (0-10):</label>
-                                <input type="number" id="evaFatiga" min="0" max="10" step="0.1">
+                            <div class="nx-campo">
+                                <label for="evaFatiga" class="nx-campo__etiqueta">EVA Fatiga (0-10):</label>
+                                <input type="number" id="evaFatiga" min="0" max="10" step="0.1" class="nx-campo__control">
                             </div>
                         </div>
                         <div class="manifestaciones-comorbilidades-container">
@@ -239,8 +239,8 @@
                                     <button type="button" class="toggle-btn" data-value="psoriasis">Psoriasis</button>
                                     <button type="button" class="toggle-btn" data-value="digestiva">EII</button>
                                 </div>
-                                <div class="form-group-checkbox form-group-checkbox--top-spaced">
-                                    <label><input type="checkbox" id="sinCambiosManifestaciones"> Sin cambios</label>
+                                <div class="form-group-checkbox--top-spaced">
+                                    <label class="nx-casilla"><input type="checkbox" id="sinCambiosManifestaciones"> Sin cambios</label>
                                 </div>
                             </div>
 
@@ -258,8 +258,8 @@
                                     <button type="button" class="toggle-btn"
                                         data-value="osteoporosis">Osteoporosis</button>
                                 </div>
-                                <div class="form-group-checkbox form-group-checkbox--top-spaced">
-                                    <label><input type="checkbox" id="sinCambiosComorbilidades"> Sin cambios</label>
+                                <div class="form-group-checkbox--top-spaced">
+                                    <label class="nx-casilla"><input type="checkbox" id="sinCambiosComorbilidades"> Sin cambios</label>
                                 </div>
                             </div>
                         </div>
@@ -606,11 +606,11 @@
                                 <button id="clearHomunculusBtn" class="add-btn clear-btn"><i class="fas fa-eraser"></i>
                                     Borrar Marcas</button>
 
-                                <div class="form-group dolor-periferico-description">
-                                    <label for="descripcionDolorPeriferico">Descripción del Dolor Articular
+                                <div class="nx-campo dolor-periferico-description">
+                                    <label for="descripcionDolorPeriferico" class="nx-campo__etiqueta">Descripción del Dolor Articular
                                         Periférico:</label>
                                     <textarea id="descripcionDolorPeriferico" rows="3"
-                                        placeholder="Describir características del dolor (ritmo: inflamatorio/mecánico/mixto, intensidad, factores agravantes/atenuantes, etc.)"></textarea>
+                    placeholder="Describir características del dolor (ritmo: inflamatorio/mecánico/mixto, intensidad, factores agravantes/atenuantes, etc.)" class="nx-campo__control"></textarea>
                                 </div>
 
                                 <!-- Leyenda de Numeración de Dedos -->
@@ -635,37 +635,37 @@
                                     style="display: none;"><i class="fas fa-info-circle"></i> Solo si presenta clínica
                                     axial</p>
                                 <h5 class="metrologia-subtitle">Columna Lumbar</h5>
-                                <div class="form-group">
-                                    <label for="schober">Schöber (cm):</label>
-                                    <input type="number" id="schober" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="schober" class="nx-campo__etiqueta">Schöber (cm):</label>
+                                    <input type="number" id="schober" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="distanciaIntermaleolar">Distancia Intermaleolar (cm):</label>
-                                    <input type="number" id="distanciaIntermaleolar" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="distanciaIntermaleolar" class="nx-campo__etiqueta">Distancia Intermaleolar (cm):</label>
+                                    <input type="number" id="distanciaIntermaleolar" step="0.1" class="nx-campo__control">
                                 </div>
 
                                 <h5 class="metrologia-subtitle">Columna Cervical</h5>
-                                <div class="form-group">
-                                    <label for="rotacionCervical">Rotación Cervical Activa (º):</label>
-                                    <input type="number" id="rotacionCervical">
+                                <div class="nx-campo">
+                                    <label for="rotacionCervical" class="nx-campo__etiqueta">Rotación Cervical Activa (º):</label>
+                                    <input type="number" id="rotacionCervical" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="flexionCervical">Flexión Cervical (Mentón-Esternón, cm):</label>
-                                    <input type="number" id="flexionCervical" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="flexionCervical" class="nx-campo__etiqueta">Flexión Cervical (Mentón-Esternón, cm):</label>
+                                    <input type="number" id="flexionCervical" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="distanciaOP">Distancia Occipucio-Pared (cm):</label>
-                                    <input type="number" id="distanciaOP" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="distanciaOP" class="nx-campo__etiqueta">Distancia Occipucio-Pared (cm):</label>
+                                    <input type="number" id="distanciaOP" step="0.1" class="nx-campo__control">
                                 </div>
 
                                 <h5 class="metrologia-subtitle">Columna Dorsal</h5>
-                                <div class="form-group">
-                                    <label for="distanciaTP">Distancia Trago-Pared (cm):</label>
-                                    <input type="number" id="distanciaTP" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="distanciaTP" class="nx-campo__etiqueta">Distancia Trago-Pared (cm):</label>
+                                    <input type="number" id="distanciaTP" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="expansionToracica">Expansión Torácica (cm):</label>
-                                    <input type="number" id="expansionToracica" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="expansionToracica" class="nx-campo__etiqueta">Expansión Torácica (cm):</label>
+                                    <input type="number" id="expansionToracica" step="0.1" class="nx-campo__control">
                                 </div>
                             </div>
 
@@ -677,51 +677,51 @@
                             </h3>
                             <div class="entesitis-section espa-only" id="entesitisSection" style="display: none;">
                                 <div class="entesitis-grid">
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="aquiles-der"> Aquiles
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="aquiles-der"> Aquiles
                                             Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="aquiles-izq"> Aquiles
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="aquiles-izq"> Aquiles
                                             Izquierdo</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="fascia-der"> Fascia
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="fascia-der"> Fascia
                                             Plantar Derecha</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="fascia-izq"> Fascia
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="fascia-izq"> Fascia
                                             Plantar Izquierda</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="epicondilo-lat-der">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="epicondilo-lat-der">
                                             Epicondilo Lateral Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="epicondilo-lat-izq">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="epicondilo-lat-izq">
                                             Epicondilo Lateral Izquierdo</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="epicondilo-med-der">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="epicondilo-med-der">
                                             Epicondilo Medial Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="epicondilo-med-izq">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="epicondilo-med-izq">
                                             Epicondilo Medial Izquierdo</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="trocanter-der"> Trocanter
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="trocanter-der"> Trocanter
                                             Mayor Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" name="entesitis" value="trocanter-izq"> Trocanter
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" name="entesitis" value="trocanter-izq"> Trocanter
                                             Mayor Izquierdo</label>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="otrasEntesitis">Otras Localizaciones de Entesitis:</label>
+                                <div class="nx-campo">
+                                    <label for="otrasEntesitis" class="nx-campo__etiqueta">Otras Localizaciones de Entesitis:</label>
                                     <textarea id="otrasEntesitis" rows="2"
-                                        placeholder="Especificar otras localizaciones de entesitis..."></textarea>
+                    placeholder="Especificar otras localizaciones de entesitis..." class="nx-campo__control"></textarea>
                                 </div>
                             </div>
 
@@ -732,28 +732,28 @@
                                     sensibilidad a la palpación. Score 0-6.</p>
 
                                 <div class="lei-grid">
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" class="lei-point" data-site="epicondilo-lat-der">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" class="lei-point" data-site="epicondilo-lat-der">
                                             Epicondilo Lateral Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" class="lei-point" data-site="epicondilo-lat-izq">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" class="lei-point" data-site="epicondilo-lat-izq">
                                             Epicondilo Lateral Izquierdo</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" class="lei-point" data-site="condilo-med-der">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" class="lei-point" data-site="condilo-med-der">
                                             Condilo Femoral Medial Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" class="lei-point" data-site="condilo-med-izq">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" class="lei-point" data-site="condilo-med-izq">
                                             Condilo Femoral Medial Izquierdo</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" class="lei-point" data-site="aquiles-der">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" class="lei-point" data-site="aquiles-der">
                                             Inserción Tendón Aquiles Derecho</label>
                                     </div>
-                                    <div class="form-group-checkbox">
-                                        <label><input type="checkbox" class="lei-point" data-site="aquiles-izq">
+                                    <div>
+                                        <label class="nx-casilla"><input type="checkbox" class="lei-point" data-site="aquiles-izq">
                                             Inserción Tendón Aquiles Izquierdo</label>
                                     </div>
                                 </div>
@@ -772,23 +772,23 @@
                                 <p class="info-note"><i class="fas fa-info-circle"></i> Para MDA se requiere PASI ≤ 1 o
                                     BSA ≤ 3%</p>
 
-                                <div class="form-group-grid">
-                                    <div class="form-group">
-                                        <label for="pasiValue">PASI Score (0-72):</label>
+                                <div class="nx-formulario">
+                                    <div class="nx-campo">
+                                        <label for="pasiValue" class="nx-campo__etiqueta">PASI Score (0-72):</label>
                                         <input type="number" id="pasiValue" min="0" max="72" step="0.1"
-                                            placeholder="Opcional">
+                      placeholder="Opcional" class="nx-campo__control">
                                     </div>
-                                    <div class="form-group">
-                                        <label for="bsaValue">BSA - Body Surface Area (%):</label>
+                                    <div class="nx-campo">
+                                        <label for="bsaValue" class="nx-campo__etiqueta">BSA - Body Surface Area (%):</label>
                                         <input type="number" id="bsaValue" min="0" max="100" step="1"
-                                            placeholder="Opcional">
+                      placeholder="Opcional" class="nx-campo__control">
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="descripcionPsoriasis">Descripción de Afectación Cutánea:</label>
+                                <div class="nx-campo">
+                                    <label for="descripcionPsoriasis" class="nx-campo__etiqueta">Descripción de Afectación Cutánea:</label>
                                     <textarea id="descripcionPsoriasis" rows="3"
-                                        placeholder="Describir localización, tipo de lesiones, y severidad..."></textarea>
+                    placeholder="Describir localización, tipo de lesiones, y severidad..." class="nx-campo__control"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -803,47 +803,47 @@
                     <div class="collapsible-content">
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-flask"></i> Analítica Sanguínea</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="pcrValue">PCR:</label>
-                                    <input type="number" id="pcrValue" min="0" step="0.1">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="pcrValue" class="nx-campo__etiqueta">PCR:</label>
+                                    <input type="number" id="pcrValue" min="0" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="pcrUnit">Unidad PCR:</label>
-                                    <select id="pcrUnit" class="pcr-unit-select" aria-describedby="pcrUnitHelp">
+                                <div class="nx-campo">
+                                    <label for="pcrUnit" class="nx-campo__etiqueta">Unidad PCR:</label>
+                                    <select id="pcrUnit" class="pcr-unit-select nx-campo__control" aria-describedby="pcrUnitHelp">
                                         <option value="" selected>Selecciona la unidad</option>
                                         <option value="mg/L">mg/L</option>
                                         <option value="mg/dL">mg/dL</option>
                                     </select>
                                     <small id="pcrUnitHelp">Selecciona la unidad indicada en la analítica. Si no consta, el cálculo con PCR queda pendiente</small>
                                 </div>
-                                <div class="form-group">
-                                    <label for="vsgValue">VSG (mm/h):</label>
-                                    <input type="number" id="vsgValue" min="0" step="1">
+                                <div class="nx-campo">
+                                    <label for="vsgValue" class="nx-campo__etiqueta">VSG (mm/h):</label>
+                                    <input type="number" id="vsgValue" min="0" step="1" class="nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="otrosHallazgosAnalitica">Otros Hallazgos (Analítica):</label>
+                            <div class="nx-campo">
+                                <label for="otrosHallazgosAnalitica" class="nx-campo__etiqueta">Otros Hallazgos (Analítica):</label>
                                 <textarea id="otrosHallazgosAnalitica" rows="3"
-                                    placeholder="Describir otros hallazgos relevantes..."></textarea>
+                  placeholder="Describir otros hallazgos relevantes..." class="nx-campo__control"></textarea>
                             </div>
                         </div>
 
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-x-ray"></i> Radiografía</h5>
-                            <div class="form-group">
-                                <label for="hallazgosRadiografia">Hallazgos Radiográficos:</label>
+                            <div class="nx-campo">
+                                <label for="hallazgosRadiografia" class="nx-campo__etiqueta">Hallazgos Radiográficos:</label>
                                 <textarea id="hallazgosRadiografia" rows="4"
-                                    placeholder="Describir hallazgos radiográficos..."></textarea>
+                  placeholder="Describir hallazgos radiográficos..." class="nx-campo__control"></textarea>
                             </div>
                         </div>
 
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-magnet"></i> RMN (Resonancia Magnética Nuclear)</h5>
-                            <div class="form-group">
-                                <label for="hallazgosRMN">Hallazgos RMN:</label>
+                            <div class="nx-campo">
+                                <label for="hallazgosRMN" class="nx-campo__etiqueta">Hallazgos RMN:</label>
                                 <textarea id="hallazgosRMN" rows="4"
-                                    placeholder="Describir hallazgos en RMN..."></textarea>
+                  placeholder="Describir hallazgos en RMN..." class="nx-campo__control"></textarea>
                             </div>
                         </div>
                     </div>
@@ -863,33 +863,33 @@
                         <!-- Rigidez Matutina -->
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-sun"></i> Rigidez Matutina</h5>
-                            <div class="form-group">
-                                <label for="rigidezMatutinaARSeg">Duración de la rigidez matutina (minutos):</label>
-                                <input type="number" id="rigidezMatutinaARSeg" min="0" max="1440" placeholder="Minutos de rigidez">
+                            <div class="nx-campo">
+                                <label for="rigidezMatutinaARSeg" class="nx-campo__etiqueta">Duración de la rigidez matutina (minutos):</label>
+                                <input type="number" id="rigidezMatutinaARSeg" min="0" max="1440" placeholder="Minutos de rigidez" class="nx-campo__control">
                             </div>
                         </div>
 
                         <!-- Nódulos reumatoideos -->
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-circle"></i> Nódulos Reumatoideos</h5>
-                            <div class="form-group-checkbox">
-                                <label><input type="checkbox" id="nodulosReumatoideosSeg"> Presencia de nódulos reumatoideos</label>
+                            <div>
+                                <label class="nx-casilla"><input type="checkbox" id="nodulosReumatoideosSeg"> Presencia de nódulos reumatoideos</label>
                             </div>
-                            <div class="form-group pv-campo-extra" id="nodulosLocalizacionSeg" style="display:none;">
-                                <label for="nodulosLocalizacionTextoSeg">Localización:</label>
-                                <input type="text" id="nodulosLocalizacionTextoSeg" placeholder="Codos, manos, tendón de Aquiles...">
+                            <div class="nx-campo pv-campo-extra" id="nodulosLocalizacionSeg" style="display:none;">
+                                <label for="nodulosLocalizacionTextoSeg" class="nx-campo__etiqueta">Localización:</label>
+                                <input type="text" id="nodulosLocalizacionTextoSeg" placeholder="Codos, manos, tendón de Aquiles..." class="nx-campo__control">
                             </div>
                         </div>
 
                         <!-- Erosiones radiológicas -->
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-x-ray"></i> Erosiones Radiológicas</h5>
-                            <div class="form-group-checkbox">
-                                <label><input type="checkbox" id="erosionesRadiologicasSeg"> Presencia de erosiones radiológicas</label>
+                            <div>
+                                <label class="nx-casilla"><input type="checkbox" id="erosionesRadiologicasSeg"> Presencia de erosiones radiológicas</label>
                             </div>
-                            <div class="form-group pv-campo-extra" id="erosionesDescripcionSeg" style="display:none;">
-                                <label for="erosionesDescripcionTextoSeg">Descripción:</label>
-                                <textarea id="erosionesDescripcionTextoSeg" rows="2" placeholder="Localización y grado de erosiones..."></textarea>
+                            <div class="nx-campo pv-campo-extra" id="erosionesDescripcionSeg" style="display:none;">
+                                <label for="erosionesDescripcionTextoSeg" class="nx-campo__etiqueta">Descripción:</label>
+                                <textarea id="erosionesDescripcionTextoSeg" rows="2" placeholder="Localización y grado de erosiones..." class="nx-campo__control"></textarea>
                             </div>
                         </div>
 
@@ -897,20 +897,20 @@
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-lungs"></i> Manifestaciones Extraarticulares</h5>
                             <div class="two-col-grid">
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="pulmonar-niu"> Enf. Pulmonar Intersticial (NIU)</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="pulmonar-nine"> Enf. Pulmonar (NINE)</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="nodulos-pulmonares"> Nódulos pulmonares</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="derrame-pleural"> Derrame pleural</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="epiescleritis"> Epiescleritis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="escleritis"> Escleritis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="queratitis"> Queratitis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="vasculitis"> Vasculitis reumatoide</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="anemia"> Anemia de enf. crónica</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="felty"> Síndrome de Felty</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="neuropatia"> Neuropatía periférica</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="mielopatia-cervical"> Mielopatía cervical</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="pericarditis"> Pericarditis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="amiloidosis"> Amiloidosis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="pulmonar-niu"> Enf. Pulmonar Intersticial (NIU)</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="pulmonar-nine"> Enf. Pulmonar (NINE)</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="nodulos-pulmonares"> Nódulos pulmonares</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="derrame-pleural"> Derrame pleural</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="epiescleritis"> Epiescleritis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="escleritis"> Escleritis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="queratitis"> Queratitis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="vasculitis"> Vasculitis reumatoide</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="anemia"> Anemia de enf. crónica</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="felty"> Síndrome de Felty</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="neuropatia"> Neuropatía periférica</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="mielopatia-cervical"> Mielopatía cervical</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="pericarditis"> Pericarditis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" class="extraarticular-ar-seg" data-tipo="amiloidosis"> Amiloidosis</label></div>
                             </div>
                         </div>
 
@@ -918,8 +918,8 @@
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-tint-slash"></i> Síndrome de Sjögren Secundario</h5>
                             <div class="two-col-grid">
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sequedadOcularSeg"> Sequedad ocular (xeroftalmia)</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sequedadOralSeg"> Sequedad oral (xerostomía)</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sequedadOcularSeg"> Sequedad ocular (xeroftalmia)</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sequedadOralSeg"> Sequedad oral (xerostomía)</label></div>
                             </div>
                         </div>
                     </div>
@@ -935,53 +935,53 @@
                         <!-- EVAs y Dolor Nocturno (usados por múltiples índices) -->
                         <div class="indices-apartado">
                             <h5><i class="fas fa-tachometer-alt"></i> Escalas Visuales Análogas (EVA)</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="evaGlobal">EVA Global del Paciente (0-10):</label>
-                                    <input type="number" id="evaGlobal" min="0" max="10" step="0.1">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="evaGlobal" class="nx-campo__etiqueta">EVA Global del Paciente (0-10):</label>
+                                    <input type="number" id="evaGlobal" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="evaDolor">EVA Dolor (0-10):</label>
-                                    <input type="number" id="evaDolor" min="0" max="10" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="evaDolor" class="nx-campo__etiqueta">EVA Dolor (0-10):</label>
+                                    <input type="number" id="evaDolor" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group-checkbox">
-                                <label><input type="checkbox" id="dolorNocturno"> Dolor Nocturno</label>
+                            <div>
+                                <label class="nx-casilla"><input type="checkbox" id="dolorNocturno"> Dolor Nocturno</label>
                             </div>
                         </div>
 
                         <div class="indices-apartado espa-only" id="basdaiSection" style="display: none;">
                             <h5><i class="fas fa-calculator"></i> BASDAI (Bath Ankylosing Spondylitis Disease Activity
                                 Index)</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="basdaiP1">P1: Fatiga (0-10):</label>
-                                    <input type="number" id="basdaiP1" min="0" max="10" step="0.1">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="basdaiP1" class="nx-campo__etiqueta">P1: Fatiga (0-10):</label>
+                                    <input type="number" id="basdaiP1" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="basdaiP2">P2: Dolor Axial (0-10):</label>
-                                    <input type="number" id="basdaiP2" min="0" max="10" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="basdaiP2" class="nx-campo__etiqueta">P2: Dolor Axial (0-10):</label>
+                                    <input type="number" id="basdaiP2" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="basdaiP3">P3: Dolor Articular Periférico (0-10):</label>
-                                    <input type="number" id="basdaiP3" min="0" max="10" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="basdaiP3" class="nx-campo__etiqueta">P3: Dolor Articular Periférico (0-10):</label>
+                                    <input type="number" id="basdaiP3" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="basdaiP4">P4: Dolor Entesítico (0-10):</label>
-                                    <input type="number" id="basdaiP4" min="0" max="10" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="basdaiP4" class="nx-campo__etiqueta">P4: Dolor Entesítico (0-10):</label>
+                                    <input type="number" id="basdaiP4" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="basdaiP5">P5: Rigidez Matutina - Nivel (0-10):</label>
-                                    <input type="number" id="basdaiP5" min="0" max="10" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="basdaiP5" class="nx-campo__etiqueta">P5: Rigidez Matutina - Nivel (0-10):</label>
+                                    <input type="number" id="basdaiP5" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="basdaiP6">P6: Rigidez Matutina - Duración (horas):</label>
-                                    <input type="number" id="basdaiP6" min="0" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="basdaiP6" class="nx-campo__etiqueta">P6: Rigidez Matutina - Duración (horas):</label>
+                                    <input type="number" id="basdaiP6" min="0" step="0.1" class="nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="basdaiResult">Resultado BASDAI:</label>
-                                <input type="text" id="basdaiResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="basdaiResult" class="nx-campo__etiqueta">Resultado BASDAI:</label>
+                                <input type="text" id="basdaiResult" readonly class="indice-resultado nx-campo__control">
                                 <span id="basdaiCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -989,35 +989,35 @@
                         <div class="indices-apartado espa-only" id="asdasSection" style="display: none;">
                             <h5><i class="fas fa-heartbeat"></i> ASDAS-CRP (Ankylosing Spondylitis Disease Activity
                                 Score)</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="asdasDolorEspalda">Dolor de Espalda (EVA 0-10):</label>
-                                    <input type="number" id="asdasDolorEspalda" min="0" max="10" step="0.1">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="asdasDolorEspalda" class="nx-campo__etiqueta">Dolor de Espalda (EVA 0-10):</label>
+                                    <input type="number" id="asdasDolorEspalda" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="asdasDuracionRigidez">Duración Rigidez Matutina (EVA 0-10):</label>
-                                    <input type="number" id="asdasDuracionRigidez" min="0" max="10" step="0.1">
+                                <div class="nx-campo">
+                                    <label for="asdasDuracionRigidez" class="nx-campo__etiqueta">Duración Rigidez Matutina (EVA 0-10):</label>
+                                    <input type="number" id="asdasDuracionRigidez" min="0" max="10" step="0.1" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="asdasEvaGlobal">EVA Global del Paciente (0-10):</label>
-                                    <input type="number" id="asdasEvaGlobal" min="0" max="10" step="0.1" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="asdasEvaGlobal" class="nx-campo__etiqueta">EVA Global del Paciente (0-10):</label>
+                                    <input type="number" id="asdasEvaGlobal" min="0" max="10" step="0.1" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="asdasNAD">NAD (Articulaciones Dolorosas):</label>
-                                    <input type="number" id="asdasNAD" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="asdasNAD" class="nx-campo__etiqueta">NAD (Articulaciones Dolorosas):</label>
+                                    <input type="number" id="asdasNAD" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="asdasNAT">NAT (Articulaciones Tumefactas):</label>
-                                    <input type="number" id="asdasNAT" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="asdasNAT" class="nx-campo__etiqueta">NAT (Articulaciones Tumefactas):</label>
+                                    <input type="number" id="asdasNAT" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="asdasPCR">PCR <span id="asdasPcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
-                                    <input type="number" id="asdasPCR" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="asdasPCR" class="nx-campo__etiqueta">PCR <span id="asdasPcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
+                                    <input type="number" id="asdasPCR" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="asdasCrpResult">Resultado ASDAS-CRP:</label>
-                                <input type="text" id="asdasCrpResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="asdasCrpResult" class="nx-campo__etiqueta">Resultado ASDAS-CRP:</label>
+                                <input type="text" id="asdasCrpResult" readonly class="indice-resultado nx-campo__control">
                                 <span id="asdasCrpCategoria" class="indice-categoria"></span>
                                 <div id="asdasPcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
@@ -1027,15 +1027,15 @@
                             <h5><i class="fas fa-heartbeat"></i> ASDAS-ESR (con VSG)</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> Utiliza los mismos parámetros que
                                 ASDAS-CRP, pero con VSG en lugar de PCR.</p>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="asdasVSG">VSG (mm/h):</label>
-                                    <input type="number" id="asdasVSG" readonly class="asdas-readonly-input">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="asdasVSG" class="nx-campo__etiqueta">VSG (mm/h):</label>
+                                    <input type="number" id="asdasVSG" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="asdasEsrResult">Resultado ASDAS-ESR:</label>
-                                <input type="text" id="asdasEsrResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="asdasEsrResult" class="nx-campo__etiqueta">Resultado ASDAS-ESR:</label>
+                                <input type="text" id="asdasEsrResult" readonly class="indice-resultado nx-campo__control">
                                 <span id="asdasEsrCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1045,31 +1045,31 @@
                             <h5><i class="fas fa-calculator"></i> DAS28-CRP (con PCR)</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> 0.56×√TJC28 + 0.28×√SJC28 +
                                 0.36×ln(CRP+1) + 0.014×VAS + 0.96</p>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="das28NAD">NAD28:</label>
-                                    <input type="number" id="das28NAD" readonly class="asdas-readonly-input">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="das28NAD" class="nx-campo__etiqueta">NAD28:</label>
+                                    <input type="number" id="das28NAD" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="das28NAT">NAT28:</label>
-                                    <input type="number" id="das28NAT" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="das28NAT" class="nx-campo__etiqueta">NAT28:</label>
+                                    <input type="number" id="das28NAT" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="das28PCR">PCR <span id="das28PcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
-                                    <input type="number" id="das28PCR" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="das28PCR" class="nx-campo__etiqueta">PCR <span id="das28PcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
+                                    <input type="number" id="das28PCR" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="das28EVA">EVA Global:</label>
-                                    <input type="number" id="das28EVA" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="das28EVA" class="nx-campo__etiqueta">EVA Global:</label>
+                                    <input type="number" id="das28EVA" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="das28CrpResult">Resultado DAS28-CRP:</label>
-                                <input type="text" id="das28CrpResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="das28CrpResult" class="nx-campo__etiqueta">Resultado DAS28-CRP:</label>
+                                <input type="text" id="das28CrpResult" readonly class="indice-resultado nx-campo__control">
                                 <div id="das28PcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
-                            <div class="form-group">
-                                <label>Categoría:</label>
+                            <div class="nx-campo">
+                                <label class="nx-campo__etiqueta">Categoría:</label>
                                 <span id="das28CrpCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1077,18 +1077,18 @@
                         <!-- DAS28-ESR (AR) -->
                         <div class="indices-apartado ar-only" id="das28EsrSection" style="display: none;">
                             <h5><i class="fas fa-calculator"></i> DAS28-ESR (con VSG)</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="das28VSG">VSG (mm/h):</label>
-                                    <input type="number" id="das28VSG" readonly class="asdas-readonly-input">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="das28VSG" class="nx-campo__etiqueta">VSG (mm/h):</label>
+                                    <input type="number" id="das28VSG" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="das28EsrResult">Resultado DAS28-ESR:</label>
-                                <input type="text" id="das28EsrResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="das28EsrResult" class="nx-campo__etiqueta">Resultado DAS28-ESR:</label>
+                                <input type="text" id="das28EsrResult" readonly class="indice-resultado nx-campo__control">
                             </div>
-                            <div class="form-group">
-                                <label>Categoría:</label>
+                            <div class="nx-campo">
+                                <label class="nx-campo__etiqueta">Categoría:</label>
                                 <span id="das28EsrCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1096,21 +1096,21 @@
                         <!-- EVA Médico (AR) -->
                         <div class="indices-apartado ar-only" id="evaMedicoSection" style="display: none;">
                             <h5><i class="fas fa-user-md"></i> EVA Médico</h5>
-                            <div class="form-group">
-                                <label for="evaMedico">EVA Médico (0-10):</label>
-                                <input type="number" id="evaMedico" min="0" max="10" step="0.1" placeholder="0-10">
+                            <div class="nx-campo">
+                                <label for="evaMedico" class="nx-campo__etiqueta">EVA Médico (0-10):</label>
+                                <input type="number" id="evaMedico" min="0" max="10" step="0.1" placeholder="0-10" class="nx-campo__control">
                             </div>
                         </div>
 
                         <!-- CDAI (AR) -->
                         <div class="indices-apartado ar-only" id="cdaiSection" style="display: none;">
                             <h5><i class="fas fa-chart-bar"></i> CDAI</h5>
-                            <div class="form-group">
-                                <label for="cdaiResult">Resultado CDAI:</label>
-                                <input type="text" id="cdaiResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="cdaiResult" class="nx-campo__etiqueta">Resultado CDAI:</label>
+                                <input type="text" id="cdaiResult" readonly class="indice-resultado nx-campo__control">
                             </div>
-                            <div class="form-group">
-                                <label>Categoría:</label>
+                            <div class="nx-campo">
+                                <label class="nx-campo__etiqueta">Categoría:</label>
                                 <span id="cdaiCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1120,13 +1120,13 @@
                             <h5><i class="fas fa-chart-bar"></i> SDAI</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> Espera PCR en mg/dL; conversión
                                 automática desde la unidad de origen si procede.</p>
-                            <div class="form-group">
-                                <label for="sdaiResult">Resultado SDAI:</label>
-                                <input type="text" id="sdaiResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="sdaiResult" class="nx-campo__etiqueta">Resultado SDAI:</label>
+                                <input type="text" id="sdaiResult" readonly class="indice-resultado nx-campo__control">
                                 <div id="sdaiPcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
-                            <div class="form-group">
-                                <label>Categoría:</label>
+                            <div class="nx-campo">
+                                <label class="nx-campo__etiqueta">Categoría:</label>
                                 <span id="sdaiCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1145,104 +1145,104 @@
                                     <!-- Categoría 1: Vestirse y Arreglarse -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">1. Vestirse y Arreglarse</label>
-                                        <select class="haq-score" data-category="1">
+                                        <select class="haq-score nx-campo__control" data-category="1">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="1"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 2: Levantarse -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">2. Levantarse</label>
-                                        <select class="haq-score" data-category="2">
+                                        <select class="haq-score nx-campo__control" data-category="2">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="2"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 3: Comer -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">3. Comer</label>
-                                        <select class="haq-score" data-category="3">
+                                        <select class="haq-score nx-campo__control" data-category="3">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="3"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 4: Caminar -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">4. Caminar</label>
-                                        <select class="haq-score" data-category="4">
+                                        <select class="haq-score nx-campo__control" data-category="4">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="4"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 5: Higiene -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">5. Higiene Personal</label>
-                                        <select class="haq-score" data-category="5">
+                                        <select class="haq-score nx-campo__control" data-category="5">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="5"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 6: Alcanzar -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">6. Alcanzar Objetos</label>
-                                        <select class="haq-score" data-category="6">
+                                        <select class="haq-score nx-campo__control" data-category="6">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="6"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 7: Agarrar -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">7. Agarrar y Abrir Objetos</label>
-                                        <select class="haq-score" data-category="7">
+                                        <select class="haq-score nx-campo__control" data-category="7">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="7"> Usa ayudas o asistencia</label>
                                     </div>
 
                                     <!-- Categoría 8: Actividades -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">8. Actividades Cotidianas</label>
-                                        <select class="haq-score" data-category="8">
+                                        <select class="haq-score nx-campo__control" data-category="8">
                                             <option value="0">Sin dificultad (0)</option>
                                             <option value="1">Con alguna dificultad (1)</option>
                                             <option value="2">Con mucha dificultad (2)</option>
                                             <option value="3">Incapaz de hacer (3)</option>
                                         </select>
-                                        <label class="haq-aids"><input type="checkbox" class="haq-aid"
+                                        <label class="haq-aids nx-casilla"><input type="checkbox" class="haq-aid"
                                                 data-category="8"> Usa ayudas o asistencia</label>
                                     </div>
                                 </div>
@@ -1262,31 +1262,31 @@
                             <p class="info-note"><i class="fas fa-info-circle"></i> Espera PCR en mg/dL; si la unidad
                                 de origen difiere, la conversión se muestra junto al resultado y el valor fuente se
                                 preserva.</p>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="dapsaNAD68">NAD68:</label>
-                                    <input type="number" id="dapsaNAD68" readonly class="asdas-readonly-input">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="dapsaNAD68" class="nx-campo__etiqueta">NAD68:</label>
+                                    <input type="number" id="dapsaNAD68" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="dapsaNAT66">NAT66:</label>
-                                    <input type="number" id="dapsaNAT66" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="dapsaNAT66" class="nx-campo__etiqueta">NAT66:</label>
+                                    <input type="number" id="dapsaNAT66" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="dapsaEvaDolorPaciente">EVA Dolor paciente (0-10):</label>
-                                    <input type="number" id="dapsaEvaDolorPaciente" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="dapsaEvaDolorPaciente" class="nx-campo__etiqueta">EVA Dolor paciente (0-10):</label>
+                                    <input type="number" id="dapsaEvaDolorPaciente" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="dapsaEvaGlobalPaciente">EVA Global paciente (0-10):</label>
-                                    <input type="number" id="dapsaEvaGlobalPaciente" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="dapsaEvaGlobalPaciente" class="nx-campo__etiqueta">EVA Global paciente (0-10):</label>
+                                    <input type="number" id="dapsaEvaGlobalPaciente" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="dapsaPCR">PCR <span id="dapsaPcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
-                                    <input type="number" id="dapsaPCR" readonly class="asdas-readonly-input">
+                                <div class="nx-campo">
+                                    <label for="dapsaPCR" class="nx-campo__etiqueta">PCR <span id="dapsaPcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
+                                    <input type="number" id="dapsaPCR" readonly class="asdas-readonly-input nx-campo__control">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="dapsaResult">Resultado DAPSA:</label>
-                                <input type="text" id="dapsaResult" readonly class="indice-resultado">
+                            <div class="nx-campo">
+                                <label for="dapsaResult" class="nx-campo__etiqueta">Resultado DAPSA:</label>
+                                <input type="text" id="dapsaResult" readonly class="indice-resultado nx-campo__control">
                                 <div class="dapsa-categoria-feedback">
                                     <span class="dapsa-categoria-prefix">Categoría:</span>
                                     <span id="dapsaCategoria" class="indice-categoria dapsa-categoria" role="status" aria-live="polite"></span>
@@ -1380,7 +1380,7 @@
                                 <div class="mdhaq-item">
                                     <label>a. ¿Vestirse solo/a, incluyendo abrocharse botones y atarse los
                                         zapatos</label>
-                                    <select class="mdhaq-select" id="mdhaqA">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqA">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1389,7 +1389,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>b. ¿Acostarse y levantarse de la cama</label>
-                                    <select class="mdhaq-select" id="mdhaqB">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqB">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1398,7 +1398,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>c. ¿Levantar un vaso o taza llena hasta la boca</label>
-                                    <select class="mdhaq-select" id="mdhaqC">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqC">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1407,7 +1407,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>d. ¿Caminar en terreno llano en exteriores</label>
-                                    <select class="mdhaq-select" id="mdhaqD">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqD">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1416,7 +1416,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>e. ¿Lavarse y secarse todo el cuerpo</label>
-                                    <select class="mdhaq-select" id="mdhaqE">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqE">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1425,7 +1425,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>f. ¿Agacharse a recoger ropa del suelo</label>
-                                    <select class="mdhaq-select" id="mdhaqF">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqF">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1434,7 +1434,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>g. ¿Abrir y cerrar grifos</label>
-                                    <select class="mdhaq-select" id="mdhaqG">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqG">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1443,7 +1443,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>h. ¿Entrar y salir de un coche, autobús, tren o avión</label>
-                                    <select class="mdhaq-select" id="mdhaqH">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqH">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1452,7 +1452,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>i. ¿Caminar 3 km si lo desea</label>
-                                    <select class="mdhaq-select" id="mdhaqI">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqI">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1461,7 +1461,7 @@
                                 </div>
                                 <div class="mdhaq-item">
                                     <label>j. ¿Participar en deportes y juegos como desee</label>
-                                    <select class="mdhaq-select" id="mdhaqJ">
+                                    <select class="mdhaq-select nx-campo__control" id="mdhaqJ">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -1519,50 +1519,50 @@
                             <!-- Peso 8 -->
                             <h6 class="pv-peso-titulo">Peso 8</h6>
                             <div class="two-col-grid">
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiSeizure" class="sledai-item"> Convulsiones</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPsychosis" class="sledai-item"> Psicosis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiOrganicBrainSyndrome" class="sledai-item"> Síndrome orgánico cerebral</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiVisualDisturbance" class="sledai-item"> Alteración visual</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiCranialNerveDisorder" class="sledai-item"> Alteración pares craneales</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiLupusHeadache" class="sledai-item"> Cefalea lúpica</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiCVA" class="sledai-item"> Accidente cerebrovascular</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiVasculitis" class="sledai-item"> Vasculitis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiSeizure" class="sledai-item"> Convulsiones</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiPsychosis" class="sledai-item"> Psicosis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiOrganicBrainSyndrome" class="sledai-item"> Síndrome orgánico cerebral</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiVisualDisturbance" class="sledai-item"> Alteración visual</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiCranialNerveDisorder" class="sledai-item"> Alteración pares craneales</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiLupusHeadache" class="sledai-item"> Cefalea lúpica</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiCVA" class="sledai-item"> Accidente cerebrovascular</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiVasculitis" class="sledai-item"> Vasculitis</label></div>
                             </div>
 
                             <!-- Peso 4 -->
                             <h6 class="pv-peso-titulo">Peso 4</h6>
                             <div class="two-col-grid">
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiArthritis" class="sledai-item"> Artritis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiMyositis" class="sledai-item"> Miositis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiUrinaryCasts" class="sledai-item"> Cilindros urinarios</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiHematuria" class="sledai-item"> Hematuria</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiProteinuria" class="sledai-item"> Proteinuria</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPyuria" class="sledai-item"> Piuria</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiArthritis" class="sledai-item"> Artritis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiMyositis" class="sledai-item"> Miositis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiUrinaryCasts" class="sledai-item"> Cilindros urinarios</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiHematuria" class="sledai-item"> Hematuria</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiProteinuria" class="sledai-item"> Proteinuria</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiPyuria" class="sledai-item"> Piuria</label></div>
                             </div>
 
                             <!-- Peso 2 -->
                             <h6 class="pv-peso-titulo">Peso 2</h6>
                             <div class="two-col-grid">
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiRash" class="sledai-item"> Rash / exantema</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiAlopecia" class="sledai-item"> Alopecia</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiMucosalUlcers" class="sledai-item"> Úlceras mucosas</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPleurisy" class="sledai-item"> Pleuritis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPericarditis" class="sledai-item"> Pericarditis</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiLowComplement" class="sledai-item"> Complemento bajo</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiIncreasedDNABinding" class="sledai-item"> Anti-DNA elevado</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiRash" class="sledai-item"> Rash / exantema</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiAlopecia" class="sledai-item"> Alopecia</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiMucosalUlcers" class="sledai-item"> Úlceras mucosas</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiPleurisy" class="sledai-item"> Pleuritis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiPericarditis" class="sledai-item"> Pericarditis</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiLowComplement" class="sledai-item"> Complemento bajo</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiIncreasedDNABinding" class="sledai-item"> Anti-DNA elevado</label></div>
                             </div>
 
                             <!-- Peso 1 -->
                             <h6 class="pv-peso-titulo">Peso 1</h6>
                             <div class="two-col-grid">
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiFever" class="sledai-item"> Fiebre</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiThrombocytopenia" class="sledai-item"> Trombocitopenia</label></div>
-                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiLeukopenia" class="sledai-item"> Leucopenia</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiFever" class="sledai-item"> Fiebre</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiThrombocytopenia" class="sledai-item"> Trombocitopenia</label></div>
+                                <div><label class="nx-casilla"><input type="checkbox" id="sledaiLeukopenia" class="sledai-item"> Leucopenia</label></div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="sledai2kResult">SLEDAI-2K Resultado:</label>
-                                <input type="text" id="sledai2kResult" readonly class="indice-resultado" placeholder="Calculado automáticamente">
+                            <div class="nx-campo">
+                                <label for="sledai2kResult" class="nx-campo__etiqueta">SLEDAI-2K Resultado:</label>
+                                <input type="text" id="sledai2kResult" readonly class="indice-resultado nx-campo__control" placeholder="Calculado automáticamente">
                             </div>
                         </div>
 
@@ -1570,73 +1570,73 @@
                         <div class="indices-apartado">
                             <h5><i class="fas fa-clipboard-check"></i> SLICC/ACR Damage Index (SDI)</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> Daño acumulado desde el diagnóstico, no actividad actual. Introduzca el subtotal por dominio (0 = sin daño en ese dominio).</p>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="sliccOcular">Ocular (0-2):</label>
-                                    <input type="number" id="sliccOcular" min="0" max="2" step="1" class="slicc-domain" placeholder="0">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="sliccOcular" class="nx-campo__etiqueta">Ocular (0-2):</label>
+                                    <input type="number" id="sliccOcular" min="0" max="2" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccNeuropsychiatric">Neuropsiquiátrico (0-6):</label>
-                                    <input type="number" id="sliccNeuropsychiatric" min="0" max="6" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccNeuropsychiatric" class="nx-campo__etiqueta">Neuropsiquiátrico (0-6):</label>
+                                    <input type="number" id="sliccNeuropsychiatric" min="0" max="6" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccRenal">Renal (0-3):</label>
-                                    <input type="number" id="sliccRenal" min="0" max="3" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccRenal" class="nx-campo__etiqueta">Renal (0-3):</label>
+                                    <input type="number" id="sliccRenal" min="0" max="3" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccPulmonary">Pulmonar (0-5):</label>
-                                    <input type="number" id="sliccPulmonary" min="0" max="5" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccPulmonary" class="nx-campo__etiqueta">Pulmonar (0-5):</label>
+                                    <input type="number" id="sliccPulmonary" min="0" max="5" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccCardiovascular">Cardiovascular (0-6):</label>
-                                    <input type="number" id="sliccCardiovascular" min="0" max="6" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccCardiovascular" class="nx-campo__etiqueta">Cardiovascular (0-6):</label>
+                                    <input type="number" id="sliccCardiovascular" min="0" max="6" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccPeripheralVascular">Vascular Periférico (0-5):</label>
-                                    <input type="number" id="sliccPeripheralVascular" min="0" max="5" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccPeripheralVascular" class="nx-campo__etiqueta">Vascular Periférico (0-5):</label>
+                                    <input type="number" id="sliccPeripheralVascular" min="0" max="5" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccGastrointestinal">Gastrointestinal (0-6):</label>
-                                    <input type="number" id="sliccGastrointestinal" min="0" max="6" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccGastrointestinal" class="nx-campo__etiqueta">Gastrointestinal (0-6):</label>
+                                    <input type="number" id="sliccGastrointestinal" min="0" max="6" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccMusculoskeletal">Musculoesquelético (0-7):</label>
-                                    <input type="number" id="sliccMusculoskeletal" min="0" max="7" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccMusculoskeletal" class="nx-campo__etiqueta">Musculoesquelético (0-7):</label>
+                                    <input type="number" id="sliccMusculoskeletal" min="0" max="7" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccSkin">Piel (0-3):</label>
-                                    <input type="number" id="sliccSkin" min="0" max="3" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccSkin" class="nx-campo__etiqueta">Piel (0-3):</label>
+                                    <input type="number" id="sliccSkin" min="0" max="3" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccEndocrineDiabetes">Endocrino / Diabetes (0-1):</label>
-                                    <input type="number" id="sliccEndocrineDiabetes" min="0" max="1" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccEndocrineDiabetes" class="nx-campo__etiqueta">Endocrino / Diabetes (0-1):</label>
+                                    <input type="number" id="sliccEndocrineDiabetes" min="0" max="1" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccGonadal">Gonadal (0-1):</label>
-                                    <input type="number" id="sliccGonadal" min="0" max="1" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccGonadal" class="nx-campo__etiqueta">Gonadal (0-1):</label>
+                                    <input type="number" id="sliccGonadal" min="0" max="1" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
-                                <div class="form-group">
-                                    <label for="sliccMalignancy">Malignidad (0-2):</label>
-                                    <input type="number" id="sliccMalignancy" min="0" max="2" step="1" class="slicc-domain" placeholder="0">
+                                <div class="nx-campo">
+                                    <label for="sliccMalignancy" class="nx-campo__etiqueta">Malignidad (0-2):</label>
+                                    <input type="number" id="sliccMalignancy" min="0" max="2" step="1" class="slicc-domain nx-campo__control" placeholder="0">
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="sliccAcrSdi">SLICC/ACR SDI Resultado:</label>
-                                <input type="text" id="sliccAcrSdi" readonly class="indice-resultado" placeholder="Calculado automáticamente">
+                            <div class="nx-campo">
+                                <label for="sliccAcrSdi" class="nx-campo__etiqueta">SLICC/ACR SDI Resultado:</label>
+                                <input type="text" id="sliccAcrSdi" readonly class="indice-resultado nx-campo__control" placeholder="Calculado automáticamente">
                             </div>
                         </div>
 
                         <!-- Complementarios LES -->
                         <div class="indices-apartado">
                             <h5><i class="fas fa-notes-medical"></i> Datos Clínicos Complementarios</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="dosisPrednisona">Prednisona (mg/día):</label>
-                                    <input type="number" id="dosisPrednisona" step="0.5" min="0" placeholder="Dosis diaria">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="dosisPrednisona" class="nx-campo__etiqueta">Prednisona (mg/día):</label>
+                                    <input type="number" id="dosisPrednisona" step="0.5" min="0" placeholder="Dosis diaria" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="broteActual">Brote actual:</label>
-                                    <select id="broteActual">
+                                <div class="nx-campo">
+                                    <label for="broteActual" class="nx-campo__etiqueta">Brote actual:</label>
+                                    <select id="broteActual" class="nx-campo__control">
                                         <option value="">-- Seleccionar --</option>
                                         <option value="No">No</option>
                                         <option value="Sí leve">Sí leve</option>
@@ -1645,18 +1645,18 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group" id="tipoBroteGroup" style="display: none;">
-                                <label for="tipoBrote">Tipo de brote:</label>
-                                <input type="text" id="tipoBrote" placeholder="Describir tipo de brote">
+                            <div class="nx-campo" id="tipoBroteGroup" style="display: none;">
+                                <label for="tipoBrote" class="nx-campo__etiqueta">Tipo de brote:</label>
+                                <input type="text" id="tipoBrote" placeholder="Describir tipo de brote" class="nx-campo__control">
                             </div>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="actividadGlobalMedico">Actividad global médico (0-10):</label>
-                                    <input type="number" id="actividadGlobalMedico" step="0.1" min="0" max="10" placeholder="Valoración médico">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="actividadGlobalMedico" class="nx-campo__etiqueta">Actividad global médico (0-10):</label>
+                                    <input type="number" id="actividadGlobalMedico" step="0.1" min="0" max="10" placeholder="Valoración médico" class="nx-campo__control">
                                 </div>
-                                <div class="form-group">
-                                    <label for="actividadGlobalPaciente">Actividad global paciente (0-10):</label>
-                                    <input type="number" id="actividadGlobalPaciente" step="0.1" min="0" max="10" placeholder="Valoración paciente">
+                                <div class="nx-campo">
+                                    <label for="actividadGlobalPaciente" class="nx-campo__etiqueta">Actividad global paciente (0-10):</label>
+                                    <input type="number" id="actividadGlobalPaciente" step="0.1" min="0" max="10" placeholder="Valoración paciente" class="nx-campo__control">
                                 </div>
                             </div>
                         </div>
@@ -1672,20 +1672,20 @@
                     </button>
                     <div class="collapsible-content">
                         <div class="manifestations-grid">
-                            <label class="toggle-label"><input type="checkbox" id="lesCutaneo"> Cutáneo</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesArticular"> Articular</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesRenal"> Renal</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesNeurologico"> Neurológico</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesHematologico"> Hematológico</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesSeroso"> Seroso</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesCardiopulmonar"> Cardiopulmonar</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesVascular"> Vascular</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesOcular"> Ocular</label>
-                            <label class="toggle-label"><input type="checkbox" id="lesOtros"> Otros</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesCutaneo"> Cutáneo</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesArticular"> Articular</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesRenal"> Renal</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesNeurologico"> Neurológico</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesHematologico"> Hematológico</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesSeroso"> Seroso</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesCardiopulmonar"> Cardiopulmonar</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesVascular"> Vascular</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesOcular"> Ocular</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="lesOtros"> Otros</label>
                         </div>
-                        <div class="form-group">
-                            <label for="lesManifestacionesDescripcion"><i class="fas fa-pen"></i> Descripción:</label>
-                            <textarea id="lesManifestacionesDescripcion" rows="3" placeholder="Describir manifestaciones clínicas"></textarea>
+                        <div class="nx-campo">
+                            <label for="lesManifestacionesDescripcion" class="nx-campo__etiqueta"><i class="fas fa-pen"></i> Descripción:</label>
+                            <textarea id="lesManifestacionesDescripcion" rows="3" placeholder="Describir manifestaciones clínicas" class="nx-campo__control"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1697,61 +1697,61 @@
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <div class="form-group">
-                            <label for="anaLes"><i class="fas fa-vial"></i> ANA:</label>
-                            <input type="text" id="anaLes" placeholder="Título y patrón ANA">
+                        <div class="nx-campo">
+                            <label for="anaLes" class="nx-campo__etiqueta"><i class="fas fa-vial"></i> ANA:</label>
+                            <input type="text" id="anaLes" placeholder="Título y patrón ANA" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="antiDnaLes"><i class="fas fa-dna"></i> Anti-DNA:</label>
-                            <input type="text" id="antiDnaLes" placeholder="Resultado anti-DNA">
+                        <div class="nx-campo">
+                            <label for="antiDnaLes" class="nx-campo__etiqueta"><i class="fas fa-dna"></i> Anti-DNA:</label>
+                            <input type="text" id="antiDnaLes" placeholder="Resultado anti-DNA" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="antiSmLes"><i class="fas fa-dna"></i> Anti-Sm:</label>
-                            <input type="text" id="antiSmLes" placeholder="Resultado anti-Sm">
+                        <div class="nx-campo">
+                            <label for="antiSmLes" class="nx-campo__etiqueta"><i class="fas fa-dna"></i> Anti-Sm:</label>
+                            <input type="text" id="antiSmLes" placeholder="Resultado anti-Sm" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="antiRoLes"><i class="fas fa-dna"></i> Anti-Ro:</label>
-                            <input type="text" id="antiRoLes" placeholder="Resultado anti-Ro">
+                        <div class="nx-campo">
+                            <label for="antiRoLes" class="nx-campo__etiqueta"><i class="fas fa-dna"></i> Anti-Ro:</label>
+                            <input type="text" id="antiRoLes" placeholder="Resultado anti-Ro" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="antiLaLes"><i class="fas fa-dna"></i> Anti-La:</label>
-                            <input type="text" id="antiLaLes" placeholder="Resultado anti-La">
+                        <div class="nx-campo">
+                            <label for="antiLaLes" class="nx-campo__etiqueta"><i class="fas fa-dna"></i> Anti-La:</label>
+                            <input type="text" id="antiLaLes" placeholder="Resultado anti-La" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="complementoC3"><i class="fas fa-tint"></i> C3:</label>
-                            <input type="number" id="complementoC3" step="0.1" placeholder="Nivel C3">
+                        <div class="nx-campo">
+                            <label for="complementoC3" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> C3:</label>
+                            <input type="number" id="complementoC3" step="0.1" placeholder="Nivel C3" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="complementoC4"><i class="fas fa-tint"></i> C4:</label>
-                            <input type="number" id="complementoC4" step="0.1" placeholder="Nivel C4">
+                        <div class="nx-campo">
+                            <label for="complementoC4" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> C4:</label>
+                            <input type="number" id="complementoC4" step="0.1" placeholder="Nivel C4" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="proteinuriaLes"><i class="fas fa-tint"></i> Proteinuria:</label>
-                            <input type="text" id="proteinuriaLes" placeholder="Proteinuria (mg/24h o ratio)">
+                        <div class="nx-campo">
+                            <label for="proteinuriaLes" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> Proteinuria:</label>
+                            <input type="text" id="proteinuriaLes" placeholder="Proteinuria (mg/24h o ratio)" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="sedimentoUrinarioLes"><i class="fas fa-microscope"></i> Sedimento urinario:</label>
-                            <textarea id="sedimentoUrinarioLes" rows="2" placeholder="Descripción del sedimento urinario"></textarea>
+                        <div class="nx-campo">
+                            <label for="sedimentoUrinarioLes" class="nx-campo__etiqueta"><i class="fas fa-microscope"></i> Sedimento urinario:</label>
+                            <textarea id="sedimentoUrinarioLes" rows="2" placeholder="Descripción del sedimento urinario" class="nx-campo__control"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="creatininaLes"><i class="fas fa-tint"></i> Creatinina:</label>
-                            <input type="number" id="creatininaLes" step="0.01" placeholder="Creatinina mg/dL">
+                        <div class="nx-campo">
+                            <label for="creatininaLes" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> Creatinina:</label>
+                            <input type="number" id="creatininaLes" step="0.01" placeholder="Creatinina mg/dL" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="pcrLes"><i class="fas fa-flask"></i> PCR (mg/L):</label>
-                            <input type="number" id="pcrLes" step="0.01" placeholder="PCR mg/L">
+                        <div class="nx-campo">
+                            <label for="pcrLes" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> PCR (mg/L):</label>
+                            <input type="number" id="pcrLes" step="0.01" placeholder="PCR mg/L" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="vsgLes"><i class="fas fa-flask"></i> VSG:</label>
-                            <input type="number" id="vsgLes" step="0.1" placeholder="VSG mm/h">
+                        <div class="nx-campo">
+                            <label for="vsgLes" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> VSG:</label>
+                            <input type="number" id="vsgLes" step="0.1" placeholder="VSG mm/h" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="hemogramaAlteracionesLes"><i class="fas fa-flask"></i> Hemograma (alteraciones):</label>
-                            <textarea id="hemogramaAlteracionesLes" rows="2" placeholder="Alteraciones relevantes del hemograma"></textarea>
+                        <div class="nx-campo">
+                            <label for="hemogramaAlteracionesLes" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> Hemograma (alteraciones):</label>
+                            <textarea id="hemogramaAlteracionesLes" rows="2" placeholder="Alteraciones relevantes del hemograma" class="nx-campo__control"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="otrosHallazgosAnaliticaLes"><i class="fas fa-flask"></i> Otros hallazgos:</label>
-                            <textarea id="otrosHallazgosAnaliticaLes" rows="2" placeholder="Otros hallazgos analíticos relevantes"></textarea>
+                        <div class="nx-campo">
+                            <label for="otrosHallazgosAnaliticaLes" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> Otros hallazgos:</label>
+                            <textarea id="otrosHallazgosAnaliticaLes" rows="2" placeholder="Otros hallazgos analíticos relevantes" class="nx-campo__control"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1763,21 +1763,21 @@
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <div class="form-group">
-                            <label for="evaDolorLes"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
-                            <input type="number" id="evaDolorLes" step="0.1" min="0" max="10" placeholder="Dolor">
+                        <div class="nx-campo">
+                            <label for="evaDolorLes" class="nx-campo__etiqueta"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolorLes" step="0.1" min="0" max="10" placeholder="Dolor" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="evaFatigaLes"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
-                            <input type="number" id="evaFatigaLes" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        <div class="nx-campo">
+                            <label for="evaFatigaLes" class="nx-campo__etiqueta"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
+                            <input type="number" id="evaFatigaLes" step="0.1" min="0" max="10" placeholder="Fatiga" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="evaGlobalLes"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
-                            <input type="number" id="evaGlobalLes" step="0.1" min="0" max="10" placeholder="Valoración global">
+                        <div class="nx-campo">
+                            <label for="evaGlobalLes" class="nx-campo__etiqueta"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
+                            <input type="number" id="evaGlobalLes" step="0.1" min="0" max="10" placeholder="Valoración global" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="calidadVidaComentarioLes"><i class="fas fa-comment-dots"></i> Calidad de vida / Comentario:</label>
-                            <textarea id="calidadVidaComentarioLes" rows="3" placeholder="Impacto en calidad de vida"></textarea>
+                        <div class="nx-campo">
+                            <label for="calidadVidaComentarioLes" class="nx-campo__etiqueta"><i class="fas fa-comment-dots"></i> Calidad de vida / Comentario:</label>
+                            <textarea id="calidadVidaComentarioLes" rows="3" placeholder="Impacto en calidad de vida" class="nx-campo__control"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1795,30 +1795,30 @@
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <div class="form-group">
-                            <label for="esspriSequedad"><i class="fas fa-tint"></i> ESSPRI — Sequedad (0-10):</label>
-                            <input type="number" id="esspriSequedad" step="0.1" min="0" max="10" placeholder="Sequedad">
+                        <div class="nx-campo">
+                            <label for="esspriSequedad" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> ESSPRI — Sequedad (0-10):</label>
+                            <input type="number" id="esspriSequedad" step="0.1" min="0" max="10" placeholder="Sequedad" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="esspriFatiga"><i class="fas fa-battery-quarter"></i> ESSPRI — Fatiga (0-10):</label>
-                            <input type="number" id="esspriFatiga" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        <div class="nx-campo">
+                            <label for="esspriFatiga" class="nx-campo__etiqueta"><i class="fas fa-battery-quarter"></i> ESSPRI — Fatiga (0-10):</label>
+                            <input type="number" id="esspriFatiga" step="0.1" min="0" max="10" placeholder="Fatiga" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="esspriDolor"><i class="fas fa-hand-holding-heart"></i> ESSPRI — Dolor (0-10):</label>
-                            <input type="number" id="esspriDolor" step="0.1" min="0" max="10" placeholder="Dolor">
+                        <div class="nx-campo">
+                            <label for="esspriDolor" class="nx-campo__etiqueta"><i class="fas fa-hand-holding-heart"></i> ESSPRI — Dolor (0-10):</label>
+                            <input type="number" id="esspriDolor" step="0.1" min="0" max="10" placeholder="Dolor" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="esspriResult"><i class="fas fa-calculator"></i> ESSPRI Result (media):</label>
-                            <input type="text" id="esspriResult" readonly placeholder="Calculado automáticamente">
+                        <div class="nx-campo">
+                            <label for="esspriResult" class="nx-campo__etiqueta"><i class="fas fa-calculator"></i> ESSPRI Result (media):</label>
+                            <input type="text" id="esspriResult" readonly placeholder="Calculado automáticamente" class="nx-campo__control">
                         </div>
                         <!-- ESSDAI: 12 dominios ponderados 0-3 -->
                         <div class="indices-apartado">
                             <h5><i class="fas fa-clipboard-list"></i> ESSDAI (Activity Index)</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> Implementación operativa inicial; la definición exacta de cada nivel debe validarse clínicamente con la guía ESSDAI. Niveles: 0=Sin actividad, 1=Baja, 2=Moderada, 3=Alta.</p>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="essdaiConstitutional">Constitucional (peso 3):</label>
-                                    <select id="essdaiConstitutional" class="essdai-domain">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="essdaiConstitutional" class="nx-campo__etiqueta">Constitucional (peso 3):</label>
+                                    <select id="essdaiConstitutional" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1826,9 +1826,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiLymphadenopathy">Linfadenopatía (peso 4):</label>
-                                    <select id="essdaiLymphadenopathy" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiLymphadenopathy" class="nx-campo__etiqueta">Linfadenopatía (peso 4):</label>
+                                    <select id="essdaiLymphadenopathy" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1836,9 +1836,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiGlandular">Glandular (peso 2):</label>
-                                    <select id="essdaiGlandular" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiGlandular" class="nx-campo__etiqueta">Glandular (peso 2):</label>
+                                    <select id="essdaiGlandular" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1846,9 +1846,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiArticular">Articular (peso 2):</label>
-                                    <select id="essdaiArticular" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiArticular" class="nx-campo__etiqueta">Articular (peso 2):</label>
+                                    <select id="essdaiArticular" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1856,9 +1856,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiCutaneous">Cutáneo (peso 3):</label>
-                                    <select id="essdaiCutaneous" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiCutaneous" class="nx-campo__etiqueta">Cutáneo (peso 3):</label>
+                                    <select id="essdaiCutaneous" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1866,9 +1866,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiPulmonary">Pulmonar (peso 5):</label>
-                                    <select id="essdaiPulmonary" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiPulmonary" class="nx-campo__etiqueta">Pulmonar (peso 5):</label>
+                                    <select id="essdaiPulmonary" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1876,9 +1876,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiRenal">Renal (peso 5):</label>
-                                    <select id="essdaiRenal" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiRenal" class="nx-campo__etiqueta">Renal (peso 5):</label>
+                                    <select id="essdaiRenal" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1886,9 +1886,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiMuscular">Muscular (peso 6):</label>
-                                    <select id="essdaiMuscular" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiMuscular" class="nx-campo__etiqueta">Muscular (peso 6):</label>
+                                    <select id="essdaiMuscular" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1896,9 +1896,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiPeripheralNervousSystem">SN Periférico (peso 5):</label>
-                                    <select id="essdaiPeripheralNervousSystem" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiPeripheralNervousSystem" class="nx-campo__etiqueta">SN Periférico (peso 5):</label>
+                                    <select id="essdaiPeripheralNervousSystem" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1906,9 +1906,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiCentralNervousSystem">SN Central (peso 5):</label>
-                                    <select id="essdaiCentralNervousSystem" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiCentralNervousSystem" class="nx-campo__etiqueta">SN Central (peso 5):</label>
+                                    <select id="essdaiCentralNervousSystem" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1916,9 +1916,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiHematological">Hematológico (peso 2):</label>
-                                    <select id="essdaiHematological" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiHematological" class="nx-campo__etiqueta">Hematológico (peso 2):</label>
+                                    <select id="essdaiHematological" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1926,9 +1926,9 @@
                                         <option value="3">3 — Alta</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="essdaiBiological">Biológico (peso 1):</label>
-                                    <select id="essdaiBiological" class="essdai-domain">
+                                <div class="nx-campo">
+                                    <label for="essdaiBiological" class="nx-campo__etiqueta">Biológico (peso 1):</label>
+                                    <select id="essdaiBiological" class="essdai-domain nx-campo__control">
                                         <option value="">--</option>
                                         <option value="0">0 — Sin actividad</option>
                                         <option value="1">1 — Baja</option>
@@ -1937,30 +1937,30 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="essdaiResult">ESSDAI Resultado:</label>
-                                <input type="text" id="essdaiResult" readonly class="indice-resultado" placeholder="Calculado automáticamente">
+                            <div class="nx-campo">
+                                <label for="essdaiResult" class="nx-campo__etiqueta">ESSDAI Resultado:</label>
+                                <input type="text" id="essdaiResult" readonly class="indice-resultado nx-campo__control" placeholder="Calculado automáticamente">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="evaSequedadOral"><i class="fas fa-tint"></i> EVA Sequedad oral (0-10):</label>
-                            <input type="number" id="evaSequedadOral" step="0.1" min="0" max="10" placeholder="Sequedad oral">
+                        <div class="nx-campo">
+                            <label for="evaSequedadOral" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> EVA Sequedad oral (0-10):</label>
+                            <input type="number" id="evaSequedadOral" step="0.1" min="0" max="10" placeholder="Sequedad oral" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="evaSequedadOcular"><i class="fas fa-eye"></i> EVA Sequedad ocular (0-10):</label>
-                            <input type="number" id="evaSequedadOcular" step="0.1" min="0" max="10" placeholder="Sequedad ocular">
+                        <div class="nx-campo">
+                            <label for="evaSequedadOcular" class="nx-campo__etiqueta"><i class="fas fa-eye"></i> EVA Sequedad ocular (0-10):</label>
+                            <input type="number" id="evaSequedadOcular" step="0.1" min="0" max="10" placeholder="Sequedad ocular" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="evaFatigaSjogren"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
-                            <input type="number" id="evaFatigaSjogren" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        <div class="nx-campo">
+                            <label for="evaFatigaSjogren" class="nx-campo__etiqueta"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
+                            <input type="number" id="evaFatigaSjogren" step="0.1" min="0" max="10" placeholder="Fatiga" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="evaDolorSjogren"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
-                            <input type="number" id="evaDolorSjogren" step="0.1" min="0" max="10" placeholder="Dolor">
+                        <div class="nx-campo">
+                            <label for="evaDolorSjogren" class="nx-campo__etiqueta"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolorSjogren" step="0.1" min="0" max="10" placeholder="Dolor" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="evaGlobalSjogren"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
-                            <input type="number" id="evaGlobalSjogren" step="0.1" min="0" max="10" placeholder="Valoración global">
+                        <div class="nx-campo">
+                            <label for="evaGlobalSjogren" class="nx-campo__etiqueta"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
+                            <input type="number" id="evaGlobalSjogren" step="0.1" min="0" max="10" placeholder="Valoración global" class="nx-campo__control">
                         </div>
                     </div>
                 </div>
@@ -1973,20 +1973,20 @@
                     </button>
                     <div class="collapsible-content">
                         <div class="manifestations-grid">
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenOcular"> Ocular</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenOral"> Oral</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenGlandular"> Glandular</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenArticular"> Articular</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenCutaneo"> Cutáneo</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenPulmonar"> Pulmonar</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenRenal"> Renal</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenNeurologico"> Neurológico</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenHematologico"> Hematológico</label>
-                            <label class="toggle-label"><input type="checkbox" id="sjogrenLinfomaRiesgo"> Riesgo linfoma</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenOcular"> Ocular</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenOral"> Oral</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenGlandular"> Glandular</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenArticular"> Articular</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenCutaneo"> Cutáneo</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenPulmonar"> Pulmonar</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenRenal"> Renal</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenNeurologico"> Neurológico</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenHematologico"> Hematológico</label>
+                            <label class="toggle-label nx-casilla"><input type="checkbox" id="sjogrenLinfomaRiesgo"> Riesgo linfoma</label>
                         </div>
-                        <div class="form-group">
-                            <label for="sjogrenManifestacionesDescripcion"><i class="fas fa-pen"></i> Descripción:</label>
-                            <textarea id="sjogrenManifestacionesDescripcion" rows="3" placeholder="Describir manifestaciones clínicas"></textarea>
+                        <div class="nx-campo">
+                            <label for="sjogrenManifestacionesDescripcion" class="nx-campo__etiqueta"><i class="fas fa-pen"></i> Descripción:</label>
+                            <textarea id="sjogrenManifestacionesDescripcion" rows="3" placeholder="Describir manifestaciones clínicas" class="nx-campo__control"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1998,69 +1998,69 @@
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <div class="form-group">
-                            <label for="anaSjogren"><i class="fas fa-vial"></i> ANA:</label>
-                            <input type="text" id="anaSjogren" placeholder="Título y patrón ANA">
+                        <div class="nx-campo">
+                            <label for="anaSjogren" class="nx-campo__etiqueta"><i class="fas fa-vial"></i> ANA:</label>
+                            <input type="text" id="anaSjogren" placeholder="Título y patrón ANA" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="frSjogren"><i class="fas fa-vial"></i> FR:</label>
-                            <input type="text" id="frSjogren" placeholder="Factor Reumatoide">
+                        <div class="nx-campo">
+                            <label for="frSjogren" class="nx-campo__etiqueta"><i class="fas fa-vial"></i> FR:</label>
+                            <input type="text" id="frSjogren" placeholder="Factor Reumatoide" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="antiRoSjogren"><i class="fas fa-dna"></i> Anti-Ro:</label>
-                            <input type="text" id="antiRoSjogren" placeholder="Resultado anti-Ro">
+                        <div class="nx-campo">
+                            <label for="antiRoSjogren" class="nx-campo__etiqueta"><i class="fas fa-dna"></i> Anti-Ro:</label>
+                            <input type="text" id="antiRoSjogren" placeholder="Resultado anti-Ro" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="antiLaSjogren"><i class="fas fa-dna"></i> Anti-La:</label>
-                            <input type="text" id="antiLaSjogren" placeholder="Resultado anti-La">
+                        <div class="nx-campo">
+                            <label for="antiLaSjogren" class="nx-campo__etiqueta"><i class="fas fa-dna"></i> Anti-La:</label>
+                            <input type="text" id="antiLaSjogren" placeholder="Resultado anti-La" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="complementoC3Sjogren"><i class="fas fa-tint"></i> C3:</label>
-                            <input type="number" id="complementoC3Sjogren" step="0.1" placeholder="Nivel C3">
+                        <div class="nx-campo">
+                            <label for="complementoC3Sjogren" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> C3:</label>
+                            <input type="number" id="complementoC3Sjogren" step="0.1" placeholder="Nivel C3" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="complementoC4Sjogren"><i class="fas fa-tint"></i> C4:</label>
-                            <input type="number" id="complementoC4Sjogren" step="0.1" placeholder="Nivel C4">
+                        <div class="nx-campo">
+                            <label for="complementoC4Sjogren" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> C4:</label>
+                            <input type="number" id="complementoC4Sjogren" step="0.1" placeholder="Nivel C4" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="crioglobulinasSjogren"><i class="fas fa-vial"></i> Crioglobulinas:</label>
-                            <input type="text" id="crioglobulinasSjogren" placeholder="Resultado crioglobulinas">
+                        <div class="nx-campo">
+                            <label for="crioglobulinasSjogren" class="nx-campo__etiqueta"><i class="fas fa-vial"></i> Crioglobulinas:</label>
+                            <input type="text" id="crioglobulinasSjogren" placeholder="Resultado crioglobulinas" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="proteinogramaSjogren"><i class="fas fa-vial"></i> Proteinograma:</label>
-                            <input type="text" id="proteinogramaSjogren" placeholder="Resultado proteinograma">
+                        <div class="nx-campo">
+                            <label for="proteinogramaSjogren" class="nx-campo__etiqueta"><i class="fas fa-vial"></i> Proteinograma:</label>
+                            <input type="text" id="proteinogramaSjogren" placeholder="Resultado proteinograma" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="biopsiaGlandulaSalival"><i class="fas fa-microscope"></i> Biopsia glándula salival:</label>
-                            <textarea id="biopsiaGlandulaSalival" rows="2" placeholder="Resultado biopsia glándula salival"></textarea>
+                        <div class="nx-campo">
+                            <label for="biopsiaGlandulaSalival" class="nx-campo__etiqueta"><i class="fas fa-microscope"></i> Biopsia glándula salival:</label>
+                            <textarea id="biopsiaGlandulaSalival" rows="2" placeholder="Resultado biopsia glándula salival" class="nx-campo__control"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="testSchirmer"><i class="fas fa-eye"></i> Test Schirmer:</label>
-                            <input type="text" id="testSchirmer" placeholder="Resultado test Schirmer">
+                        <div class="nx-campo">
+                            <label for="testSchirmer" class="nx-campo__etiqueta"><i class="fas fa-eye"></i> Test Schirmer:</label>
+                            <input type="text" id="testSchirmer" placeholder="Resultado test Schirmer" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="tincionOcular"><i class="fas fa-eye"></i> Tinción ocular:</label>
-                            <input type="text" id="tincionOcular" placeholder="Resultado tinción ocular">
+                        <div class="nx-campo">
+                            <label for="tincionOcular" class="nx-campo__etiqueta"><i class="fas fa-eye"></i> Tinción ocular:</label>
+                            <input type="text" id="tincionOcular" placeholder="Resultado tinción ocular" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="flujoSalival"><i class="fas fa-tint"></i> Flujo salival:</label>
-                            <input type="text" id="flujoSalival" placeholder="Resultado flujo salival">
+                        <div class="nx-campo">
+                            <label for="flujoSalival" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> Flujo salival:</label>
+                            <input type="text" id="flujoSalival" placeholder="Resultado flujo salival" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="ecografiaGlandular"><i class="fas fa-ultrasound"></i> Ecografía glandular:</label>
-                            <textarea id="ecografiaGlandular" rows="2" placeholder="Resultado ecografía glandular"></textarea>
+                        <div class="nx-campo">
+                            <label for="ecografiaGlandular" class="nx-campo__etiqueta"><i class="fas fa-ultrasound"></i> Ecografía glandular:</label>
+                            <textarea id="ecografiaGlandular" rows="2" placeholder="Resultado ecografía glandular" class="nx-campo__control"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="pcrSjogren"><i class="fas fa-flask"></i> PCR (mg/L):</label>
-                            <input type="number" id="pcrSjogren" step="0.01" placeholder="PCR mg/L">
+                        <div class="nx-campo">
+                            <label for="pcrSjogren" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> PCR (mg/L):</label>
+                            <input type="number" id="pcrSjogren" step="0.01" placeholder="PCR mg/L" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="vsgSjogren"><i class="fas fa-flask"></i> VSG:</label>
-                            <input type="number" id="vsgSjogren" step="0.1" placeholder="VSG mm/h">
+                        <div class="nx-campo">
+                            <label for="vsgSjogren" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> VSG:</label>
+                            <input type="number" id="vsgSjogren" step="0.1" placeholder="VSG mm/h" class="nx-campo__control">
                         </div>
-                        <div class="form-group">
-                            <label for="otrosHallazgosAnaliticaSjogren"><i class="fas fa-flask"></i> Otros hallazgos:</label>
-                            <textarea id="otrosHallazgosAnaliticaSjogren" rows="2" placeholder="Otros hallazgos analíticos relevantes"></textarea>
+                        <div class="nx-campo">
+                            <label for="otrosHallazgosAnaliticaSjogren" class="nx-campo__etiqueta"><i class="fas fa-flask"></i> Otros hallazgos:</label>
+                            <textarea id="otrosHallazgosAnaliticaSjogren" rows="2" placeholder="Otros hallazgos analíticos relevantes" class="nx-campo__control"></textarea>
                         </div>
                     </div>
                 </div>
@@ -2072,9 +2072,9 @@
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <div class="form-group">
-                            <label for="tratSintomaticoSequedad"><i class="fas fa-tint"></i> Tratamiento sintomático sequedad:</label>
-                            <select id="tratSintomaticoSequedad">
+                        <div class="nx-campo">
+                            <label for="tratSintomaticoSequedad" class="nx-campo__etiqueta"><i class="fas fa-tint"></i> Tratamiento sintomático sequedad:</label>
+                            <select id="tratSintomaticoSequedad" class="nx-campo__control">
                                 <option value="">-- Seleccionar --</option>
                                 <option value="No">No</option>
                                 <option value="Lágrimas artificiales">Lágrimas artificiales</option>
@@ -2083,11 +2083,11 @@
                                 <option value="Cevimelina">Cevimelina</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <input type="text" id="tratSintomaticoSequedadDosis" class="treatment-dose-input treatment-dose-input--debajo" placeholder="Dosis / frecuencia">
+                            <input type="text" id="tratSintomaticoSequedadDosis" class="treatment-dose-input treatment-dose-input--debajo nx-campo__control" placeholder="Dosis / frecuencia">
                         </div>
-                        <div class="form-group">
-                            <label for="tratInmunomodulador"><i class="fas fa-shield-virus"></i> Inmunomodulador:</label>
-                            <select id="tratInmunomodulador">
+                        <div class="nx-campo">
+                            <label for="tratInmunomodulador" class="nx-campo__etiqueta"><i class="fas fa-shield-virus"></i> Inmunomodulador:</label>
+                            <select id="tratInmunomodulador" class="nx-campo__control">
                                 <option value="">-- Seleccionar --</option>
                                 <option value="No">No</option>
                                 <option value="Hidroxicloroquina">Hidroxicloroquina</option>
@@ -2097,7 +2097,7 @@
                                 <option value="Ciclofosfamida">Ciclofosfamida</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <input type="text" id="tratInmunomoduladorDosis" class="treatment-dose-input treatment-dose-input--debajo" placeholder="Dosis / frecuencia">
+                            <input type="text" id="tratInmunomoduladorDosis" class="treatment-dose-input treatment-dose-input--debajo nx-campo__control" placeholder="Dosis / frecuencia">
                         </div>
                     </div>
                 </div>
@@ -2129,9 +2129,9 @@
 
                         <!-- Contenido para CONTINUAR TRATAMIENTO (visible por defecto) -->
                         <div id="continuarTratamientoContent" class="treatment-content-section">
-                            <div class="form-group">
-                                <label for="adherencia">Adherencia:</label>
-                                <select id="adherencia">
+                            <div class="nx-campo">
+                                <label for="adherencia" class="nx-campo__etiqueta">Adherencia:</label>
+                                <select id="adherencia" class="nx-campo__control">
                                     <option value="">Seleccionar</option>
                                     <option value="buena">Buena</option>
                                     <option value="regular">Regular</option>
@@ -2139,29 +2139,29 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
-                                <label for="ajusteTerapeutico">Ajuste Terapéutico:</label>
+                            <div class="nx-campo">
+                                <label for="ajusteTerapeutico" class="nx-campo__etiqueta">Ajuste Terapéutico:</label>
                                 <textarea id="ajusteTerapeutico" rows="4"
-                                    placeholder="Describir ajustes en dosis, frecuencia u otros aspectos del tratamiento actual..."></textarea>
+                  placeholder="Describir ajustes en dosis, frecuencia u otros aspectos del tratamiento actual..." class="nx-campo__control"></textarea>
                             </div>
                         </div>
 
                         <!-- Contenido para CAMBIAR TRATAMIENTO (oculto por defecto) -->
                         <div id="cambioTratamientoContent" class="treatment-content-section conditional-field-hidden">
-                            <div class="form-group">
-                                <label for="motivoCambio">Motivo del Cambio:</label>
+                            <div class="nx-campo">
+                                <label for="motivoCambio" class="nx-campo__etiqueta">Motivo del Cambio:</label>
                                 <textarea id="motivoCambio" rows="3"
-                                    placeholder="Describir el motivo del cambio de tratamiento..."></textarea>
+                  placeholder="Describir el motivo del cambio de tratamiento..." class="nx-campo__control"></textarea>
                             </div>
 
-                            <div class="form-group-checkbox">
-                                <label><input type="checkbox" id="efectosAdversos"> Efectos Adversos</label>
+                            <div>
+                                <label class="nx-casilla"><input type="checkbox" id="efectosAdversos"> Efectos Adversos</label>
                             </div>
                             <div id="descripcionEfectosContainer" class="conditional-field-hidden">
-                                <div class="form-group">
-                                    <label for="descripcionEfectos">Descripción de Efectos Adversos:</label>
+                                <div class="nx-campo">
+                                    <label for="descripcionEfectos" class="nx-campo__etiqueta">Descripción de Efectos Adversos:</label>
                                     <textarea id="descripcionEfectos" rows="3"
-                                        placeholder="Describir los efectos adversos..."></textarea>
+                    placeholder="Describir los efectos adversos..." class="nx-campo__control"></textarea>
                                 </div>
                             </div>
 
@@ -2170,13 +2170,13 @@
                                     <div class="treatment-line">
                                         <div class="treatment-label">Tratamientos sistémicos</div>
                                         <div class="treatment-controls">
-                                            <select id="cambioSistemicoSelect" class="treatment-select" data-drug-autocomplete="true" data-drug-category="Sistemicos" data-no-custom-select="true">
+                                            <select id="cambioSistemicoSelect" class="treatment-select nx-campo__control" data-drug-autocomplete="true" data-drug-category="Sistemicos" data-no-custom-select="true">
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
-                                            <input type="text" id="cambioSistemicoDose" class="treatment-dose-input"
-                                                placeholder="Dosis" disabled>
-                                            <select id="cambioSistemicoPauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
-                                            <input type="text" id="cambioSistemicoPautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
+                                            <input type="text" id="cambioSistemicoDose" class="treatment-dose-input nx-campo__control"
+                        placeholder="Dosis" disabled>
+                                            <select id="cambioSistemicoPauta" class="treatment-pauta-select nx-campo__control" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                            <input type="text" id="cambioSistemicoPautaOtro" class="treatment-pauta-otro nx-campo__control" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                             <button type="button" class="add-treatment-line-btn"
                                                 data-type="cambio-sistemico" title="Añadir otro"><i
                                                     class="fas fa-plus-circle"></i></button>
@@ -2187,13 +2187,13 @@
                                     <div class="treatment-line">
                                         <div class="treatment-label">FAMEs</div>
                                         <div class="treatment-controls">
-                                            <select id="cambioFameSelect" class="treatment-select" data-drug-autocomplete="true" data-drug-category="FAMEs" data-no-custom-select="true">
+                                            <select id="cambioFameSelect" class="treatment-select nx-campo__control" data-drug-autocomplete="true" data-drug-category="FAMEs" data-no-custom-select="true">
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
-                                            <input type="text" id="cambioFameDose" class="treatment-dose-input"
-                                                placeholder="Dosis" disabled>
-                                            <select id="cambioFamePauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
-                                            <input type="text" id="cambioFamePautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
+                                            <input type="text" id="cambioFameDose" class="treatment-dose-input nx-campo__control"
+                        placeholder="Dosis" disabled>
+                                            <select id="cambioFamePauta" class="treatment-pauta-select nx-campo__control" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                            <input type="text" id="cambioFamePautaOtro" class="treatment-pauta-otro nx-campo__control" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                             <button type="button" class="add-treatment-line-btn" data-type="cambio-fame"
                                                 title="Añadir otro"><i class="fas fa-plus-circle"></i></button>
                                         </div>
@@ -2203,13 +2203,13 @@
                                     <div class="treatment-line">
                                         <div class="treatment-label">Biológicos</div>
                                         <div class="treatment-controls">
-                                            <select id="cambioBiologicoSelect" class="treatment-select" data-drug-autocomplete="true" data-drug-category="Biologicos" data-no-custom-select="true">
+                                            <select id="cambioBiologicoSelect" class="treatment-select nx-campo__control" data-drug-autocomplete="true" data-drug-category="Biologicos" data-no-custom-select="true">
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
-                                            <input type="text" id="cambioBiologicoDose" class="treatment-dose-input"
-                                                placeholder="Dosis" disabled>
-                                            <select id="cambioBiologicoPauta" class="treatment-pauta-select" data-no-custom-select="true" aria-label="Pauta" disabled></select>
-                                            <input type="text" id="cambioBiologicoPautaOtro" class="treatment-pauta-otro" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
+                                            <input type="text" id="cambioBiologicoDose" class="treatment-dose-input nx-campo__control"
+                        placeholder="Dosis" disabled>
+                                            <select id="cambioBiologicoPauta" class="treatment-pauta-select nx-campo__control" data-no-custom-select="true" aria-label="Pauta" disabled></select>
+                                            <input type="text" id="cambioBiologicoPautaOtro" class="treatment-pauta-otro nx-campo__control" placeholder="Otra pauta" aria-label="Otra pauta" hidden>
                                             <button type="button" class="add-treatment-line-btn"
                                                 data-type="cambio-biologico" title="Añadir otro"><i
                                                     class="fas fa-plus-circle"></i></button>
@@ -2223,7 +2223,7 @@
                         <!-- Campos comunes a ambas opciones -->
                         <div class="plan-next-review-card">
                             <label for="fechaProximaRevision">Fecha próxima revisión</label>
-                            <input type="date" id="fechaProximaRevision" class="plan-date-input">
+                            <input type="date" id="fechaProximaRevision" class="plan-date-input nx-campo__control">
                         </div>
                     </div>
                 </div>
@@ -2238,19 +2238,19 @@
 
                         <div class="indices-apartado">
                             <h5><i class="fas fa-clipboard-check"></i> Estado por bloques</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="estadoPrebiologicoAnalitica">Analítica</label>
-                                    <select id="estadoPrebiologicoAnalitica">
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="estadoPrebiologicoAnalitica" class="nx-campo__etiqueta">Analítica</label>
+                                    <select id="estadoPrebiologicoAnalitica" class="nx-campo__control">
                                         <option value="">-- Sin estado --</option>
                                         <option value="NO_SOLICITADA">NO_SOLICITADA</option>
                                         <option value="SOLICITADA_PENDIENTE">SOLICITADA_PENDIENTE</option>
                                         <option value="OK">OK</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="estadoPrebiologicoMedicinaPreventiva">Medicina Preventiva</label>
-                                    <select id="estadoPrebiologicoMedicinaPreventiva">
+                                <div class="nx-campo">
+                                    <label for="estadoPrebiologicoMedicinaPreventiva" class="nx-campo__etiqueta">Medicina Preventiva</label>
+                                    <select id="estadoPrebiologicoMedicinaPreventiva" class="nx-campo__control">
                                         <option value="">-- Sin estado --</option>
                                         <option value="NO_SOLICITADA">NO_SOLICITADA</option>
                                         <option value="SOLICITADA_PENDIENTE">SOLICITADA_PENDIENTE</option>
@@ -2262,10 +2262,10 @@
 
                         <div class="indices-apartado">
                             <h5><i class="fas fa-comment-medical"></i> Observaciones</h5>
-                            <div class="form-group-grid">
-                                <div class="form-group">
-                                    <label for="observacionesPrebiologico">Observaciones prebiológico</label>
-                                    <textarea id="observacionesPrebiologico" rows="3" placeholder="Observaciones globales del bloque prebiológico"></textarea>
+                            <div class="nx-formulario">
+                                <div class="nx-campo">
+                                    <label for="observacionesPrebiologico" class="nx-campo__etiqueta">Observaciones prebiológico</label>
+                                    <textarea id="observacionesPrebiologico" rows="3" placeholder="Observaciones globales del bloque prebiológico" class="nx-campo__control"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -2278,15 +2278,15 @@
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <div class="form-group">
-                            <label for="comentariosAdicionales">Observaciones y Comentarios:</label>
+                        <div class="nx-campo">
+                            <label for="comentariosAdicionales" class="nx-campo__etiqueta">Observaciones y Comentarios:</label>
                             <textarea id="comentariosAdicionales" rows="6"
-                                placeholder="Espacio para anotaciones clínicas adicionales, observaciones relevantes, evolución del paciente, o cualquier información complementaria..."></textarea>
+                placeholder="Espacio para anotaciones clínicas adicionales, observaciones relevantes, evolución del paciente, o cualquier información complementaria..." class="nx-campo__control"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-actions">
+                <div class="nx-acciones">
                     <button id="btnExportarTXT" class="action-btn primary-btn"><i class="fas fa-file-alt"></i> Convertir
                         TXT (Historia Clínica)</button>
                     <button id="btnEstructurarCSV" class="action-btn success-btn"><i class="fas fa-file-csv"></i>
