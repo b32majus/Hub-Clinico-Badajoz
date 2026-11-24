@@ -64,7 +64,8 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-25, H-22, H-24, H-27 | cerrados en este documento; no reverificados | - | - |
 | H-10 | cerrado por decisión (23-11) | la Home no lleva `<nx-shell>`: Sil no quiere barra lateral en ella | - |
 | H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
-| H-02, H-03, H-19 | abiertos (H-03 parcial 24-11) | `main-content` en 30 sitios; fondo degradado de `.main-content` activo. Hecho: `style.css` y las hojas de Reuma ya van en `@layer modulo`; falta la capa en `farmacia_style.css` y las hojas de dashboard/estadísticas | M |
+| H-02, H-03 | abiertos | `main-content` en 30 sitios (9 scripts de Farmacia lo buscan; se renombra a un selector propio sin cambio visual). H-03: falta la capa en `farmacia_style.css` y las hojas de dashboard/estadísticas | M |
+| H-19 | cerrado (24-11) | Sin degradado en el fondo de `.main-content`: fondo liso (el de la página). Visto bueno de Sil | S |
 | H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
 | H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
 | H-20 | abierto | `pending-validation*` 35, `status-badge` 20, `dashboard-card` 9, `prebio-chip` 7 | L |
