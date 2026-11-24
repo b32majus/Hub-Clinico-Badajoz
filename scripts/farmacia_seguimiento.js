@@ -2452,7 +2452,7 @@
         { value: 'si', label: 'Resuelto' }
     ];
     var EA_SEVERITY_OPTIONS = ['Leve', 'Moderado', 'Grave', 'Requiere suspensión / derivación'];
-    var EA_EVOLUTION_BADGE_CLASS = { no_consta: '', en_seguimiento: 'status-badge--followup', no: '', si: 'status-badge--validated' };
+    var EA_EVOLUTION_BADGE_CLASS = { no_consta: '', en_seguimiento: 'nx-etiqueta--info status-badge--followup', no: '', si: 'nx-etiqueta--ok status-badge--validated' };
     var EA_EPISODE_SEQ = 0;
     var EA_OBSERVATION_SEQ = 0;
 
@@ -2879,7 +2879,7 @@
 
         var header = createElement('div');
         applyEaStyle(header, { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' });
-        header.appendChild(createElement('span', 'status-badge', String(index + 1)));
+        header.appendChild(createElement('span', 'nx-etiqueta status-badge', String(index + 1)));
         var textGroup = createElement('div');
         applyEaStyle(textGroup, { flex: '1 1 auto', minWidth: '0' });
         var title = createElement('div', 'card-title card-title--tight', eaCardTitle(event));
@@ -2887,7 +2887,7 @@
         textGroup.appendChild(title);
         textGroup.appendChild(subtitle);
         header.appendChild(textGroup);
-        var badge = createElement('span', 'status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : ''), eaCardBadgeText(event));
+        var badge = createElement('span', 'nx-etiqueta status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : ''), eaCardBadgeText(event));
         header.appendChild(badge);
         var toggleButton = createElement('button', 'btn btn-sm btn-outline', event.expanded ? 'Ocultar' : 'Revisar');
         toggleButton.type = 'button';
@@ -2921,7 +2921,7 @@
             else if (event.status === 'draft' && String(event.description).trim() !== '') event.status = 'incorporated';
             title.textContent = eaCardTitle(event);
             badge.textContent = eaCardBadgeText(event);
-            badge.className = 'status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : '');
+            badge.className = 'nx-etiqueta status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : '');
             discardButton.textContent = event.status === 'incorporated' ? 'Descartar' : 'Descartar borrador';
             card.setAttribute('data-ea-status', event.status);
             updateEaSummary();

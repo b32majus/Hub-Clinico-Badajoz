@@ -193,18 +193,6 @@
 .info-field__value,
 .dato-resumen__valor { display: block; color: var(--nx-color-texto); font-weight: 700; font-size: 1.05rem; line-height: 1.45; }
 
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 800;
-}
-.status-badge--pending { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); border: 1px solid var(--nx-color-aviso-borde); }
-.status-badge--validated { background: var(--nx-color-ok-fondo); color: var(--nx-color-ok); border: 1px solid color-mix(in srgb, var(--nx-color-ok) 25%, transparent); }
-.status-badge--denied { background: var(--nx-color-error-fondo); color: var(--nx-color-error); border: 1px solid var(--nx-color-error-borde); }
-.status-badge--followup { background: var(--nx-color-modulo-suave); color: var(--nx-color-modulo-texto); border: 1px solid var(--nx-color-modulo-borde); }
 .required { color: var(--nx-color-error); }
 .warning-box { padding: 12px 14px; border-radius: 12px; background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); border: 1px solid var(--nx-color-aviso-borde); }
 
@@ -380,7 +368,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
+}
 
 /* --- Session professional block (WO farmacia v0.1) --- */
 
@@ -3822,21 +3810,6 @@
 /* WO8.1c.7/8 — Enfermería grid y headers (cards reusan pending-validation-card) */
 
 /* Status badge variants for Enfermería cards */
-.status-badge--ok {
-    background: var(--nx-color-ok-fondo);
-    color: var(--nx-color-ok);
-    border-color: var(--nx-color-ok-borde);
-}
-.status-badge--blocked {
-    background: var(--nx-color-error-fondo);
-    color: var(--nx-color-error);
-    border-color: var(--nx-color-error-borde);
-}
-.status-badge--vigilance {
-    background: var(--nx-color-aviso-fondo);
-    color: var(--nx-color-aviso);
-    border-color: var(--nx-color-aviso-borde);
-}
 
 /* Enfermería group header */
 .enfermeria-group__header {
@@ -4194,20 +4167,7 @@
    WO Prebiológico — status indicators & chips
    ============================================================ */
 
-.status-complete { color: var(--nx-color-ok); background: var(--nx-color-ok-fondo); border: 1px solid var(--nx-color-ok-borde); }
-.status-pending { color: var(--nx-color-aviso); background: var(--nx-color-aviso-fondo); border: 1px solid var(--nx-color-aviso-borde); }
-.status-unknown { color: var(--nx-color-texto-suave); background: var(--nx-color-superficie-suave); border: 1px solid var(--nx-color-borde); }
-.status-alert { color: var(--nx-color-error); background: var(--nx-color-error-fondo); border: 1px solid var(--nx-color-error-borde); }
-.status-not_applicable { color: var(--nx-color-texto-suave); background: var(--nx-color-fondo); border: 1px solid var(--nx-color-borde); }
 
-/* Color-coded prebio chips — variants for status-* classes used by getEnfermeriaBadges */
-.status-completo { background: var(--nx-color-ok-fondo); color: var(--nx-color-ok); border: 1px solid var(--nx-color-ok-borde); }
-.status-pendiente { background: var(--nx-color-aviso-fondo); color: var(--nx-color-aviso); border: 1px solid var(--nx-color-aviso-borde); }
-.status-bloqueo { background: var(--nx-color-error-fondo); color: var(--nx-color-error); border: 1px solid var(--nx-color-error-borde); }
-.status-alerta { background: var(--nx-color-error-fondo); color: var(--nx-color-error); border: 1px solid var(--nx-color-error-borde); }
-.status-no_aplica { background: var(--nx-color-superficie-suave); color: var(--nx-color-texto-suave); border: 1px solid var(--nx-color-borde); }
-.status-no_informado { background: var(--nx-color-superficie-suave); color: var(--nx-color-texto-suave); border: 1px solid var(--nx-color-borde); }
-.prebio-chip--more { background: var(--nx-color-superficie-suave); color: var(--nx-color-texto-suave); border: 1px solid var(--nx-color-borde); }
 
 /* WO8.1c.10 — Enfermería prebiológico detail panel (expand/colapsar) */
 .enfermeria-detail-panel {
