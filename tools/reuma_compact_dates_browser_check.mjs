@@ -81,7 +81,7 @@ if (!/<input\b[^>]*\bid="fechaInicioTratamiento"[^>]*\breadonly\b/.test(segHtml)
 // style_seguimiento.css) and must not touch text/number/textarea/select.
 const baseCss = fs.readFileSync(path.join(ROOT, 'style_primera_visita.css'), 'utf8');
 const segCss = fs.readFileSync(path.join(ROOT, 'style_seguimiento.css'), 'utf8');
-const compactRule = /\.form-group\s+input\[type="date"\][^{]*\{[^}]*max-width\s*:/s;
+const compactRule = /\.nx-campo\s+input\[type="date"\][^{]*\{[^}]*max-width\s*:/s;
 if (!compactRule.test(baseCss) && !compactRule.test(segCss)) staticFindings.push('date-scoped max-width rule not found');
 if (!/\.plan-date-input\b/.test(baseCss)) staticFindings.push('.plan-date-input rule missing');
 

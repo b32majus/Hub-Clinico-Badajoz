@@ -1,3 +1,5 @@
+@layer nx.tokens, nx.base, nx.piezas, modulo;
+@layer modulo {
 /* ========================================
    ARCHIVO CSS CONSOLIDADO PARA PRIMERA VISITA
    Combina: style_form_espa.css + elementos relevantes de style_premium.css + optimizaciones profesionales
@@ -262,62 +264,15 @@ body:has(.nx-marco) {
 }
 
 /* Grupos de Formulario y Campos */
-.form-group {
-    margin-bottom: 14px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 500;
-    margin-bottom: 5px;
-    color: var(--nx-color-texto-suave);
-    font-size: 0.9em;
-}
-
-.form-group input[type="text"],
-.form-group input[type="date"],
-.form-group input[type="number"],
-.form-group textarea,
-.form-group select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--nx-color-tenue);
-    border-radius: 8px;
-    font-size: 0.9em;
-    font-family: 'Inter', sans-serif;
-    color: var(--nx-color-texto-suave);
-    box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: var(--nx-color-superficie);
-}
 
 /* T1 #610: campos fecha compactos y contenidos (Primera Visita / Seguimiento).
    Se mantiene width:100% para adaptarse a contenedores estrechos y se acota el
    ancho máximo para evitar el ancho excesivo en pantallas grandes. */
-.form-group input[type="date"],
+
 .nx-campo input[type="date"],
 .plan-date-input,
 .plan-date-input-improved {
     max-width: 200px;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    border-color: var(--nx-color-principal);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-color-info) 20%, transparent);
-    outline: none;
-}
-
-.form-group select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23495057%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.1%2C4.1-9.3%2C6.1-14.5%2C6.1c-5.2%2C0-10.4-2-14.5-6.1L5.4%2C114.7C1.3%2C110.6-0.7%2C105.4-0.7%2C100.2c0-5.2%2C2-10.4%2C6.1-14.5c8.2-8.2%2C22-8.2%2C30.2%2C0L144.7%2C188l108.8-108.8c8.2-8.2%2C22-8.2%2C30.2%2C0c4.1%2C4.1%2C6.1%2C9.3%2C6.1%2C14.5C293.1%2C105.4%2C291%2C110.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 12px;
-    padding-right: 35px;
 }
 
 .readonly-input {
@@ -349,62 +304,6 @@ body:has(.nx-marco) {
 }
 
 /* Custom Checkbox Styles */
-.form-group-checkbox {
-    margin-bottom: 15px;
-}
-
-.form-group-checkbox label {
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    font-weight: 400;
-    margin-bottom: 0;
-    font-size: 1em;
-    user-select: none;
-}
-
-.form-group-checkbox input[type="checkbox"] {
-    -webkit-appearance: none;
-    appearance: none;
-    background-color: var(--nx-color-superficie);
-    margin: 0;
-    font: inherit;
-    color: currentColor;
-    width: 1.4em;
-    height: 1.4em;
-    border: 1px solid var(--nx-color-tenue);
-    border-radius: 6px;
-    transform: translateY(-0.075em);
-    display: grid;
-    place-content: center;
-    margin-right: 0.8em;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.form-group-checkbox input[type="checkbox"]:hover {
-    border-color: var(--nx-color-modulo-texto);
-}
-
-.form-group-checkbox input[type="checkbox"]::before {
-    content: "";
-    width: 0.7em;
-    height: 0.7em;
-    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-    transform: scale(0);
-    transition: 120ms transform ease-in-out;
-    box-shadow: inset 1em 1em var(--nx-color-principal);
-    background-color: var(--nx-color-modulo-texto);
-    border-radius: 1px;
-}
-
-.form-group-checkbox input[type="checkbox"]:checked {
-    border-color: var(--nx-color-principal);
-    background-color: var(--nx-color-info-fondo);
-}
-
-.form-group-checkbox input[type="checkbox"]:checked::before {
-    transform: scale(1);
-}
 
 /* Toggle Buttons */
 .form-group-toggle-buttons {
@@ -623,16 +522,6 @@ body:has(.nx-marco) {
 }
 
 /* Constantes Vitales - Grid */
-.form-group-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.form-group-grid .form-group {
-    margin-bottom: 0;
-}
 
 /* Anamnesis Group Container - Para campos agrupados */
 .anamnesis-group-container {
@@ -644,10 +533,6 @@ body:has(.nx-marco) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
-}
-
-.anamnesis-group-container .form-group {
-    margin-bottom: 0;
 }
 
 @media (max-width: 768px) {
@@ -1229,22 +1114,10 @@ body:has(.nx-marco) {
 }
 
 /* Comentarios adicionales */
-.form-group textarea {
-    min-height: 60px;
-    resize: vertical;
-}
+
 
 /* Botones de Acción Final */
-.form-actions {
-    margin-top: 35px;
-    padding-top: 25px;
-    border-top: 1px solid var(--nx-color-borde);
-    text-align: center;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-}
+
 
 .action-btn {
     padding: 10px 20px;
@@ -2513,4 +2386,5 @@ body:has(.nx-marco) {
 /* tramo 7: el nombre de la patología dentro del título del catálogo */
 .nx-cabecera__titulo .highlight {
     color: var(--nx-color-modulo-texto);
+}
 }
