@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const V = '20261122-t7f'; // tramo 7: anchos de nx-cifra y nx-solicitud
+const V = '20261124-col'; // 24-11: paleta de gráficos, actividad y homúnculo
 const TOKENS = 'css/nexus_tokens.css';
 const BASE = 'css/nexus_base.css';
 const LAYERS = '@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;';

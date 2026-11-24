@@ -8,7 +8,7 @@
     <title>Visita de Seguimiento - Hub Clínico Reumatológico</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <style>@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo; @import url("vendor/fontawesome/css/all.min.css?v=6.0.0-beta3") layer(nx.vendor);</style>
-    <link rel="stylesheet" href="css/nexus_tokens.css?v=20261122-t7f">
+    <link rel="stylesheet" href="css/nexus_tokens.css?v=20261124-col">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261122-t7f">
     <link rel="stylesheet" href="css/nexus_piezas.css?v=20261124-t1">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
@@ -17,7 +17,7 @@
     <link rel="modulepreload" href="modules/nexus/avisos.js">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-aviso.js">
     <link rel="stylesheet" href="style.css?v=20261124-t5">
-    <link rel="stylesheet" href="style_seguimiento.css?v=20261124-t3">
+    <link rel="stylesheet" href="style_seguimiento.css?v=20261124-col">
 </head>
 
 <body class="nx-pagina">
@@ -281,11 +281,11 @@
                                         <defs>
                                             <pattern id="legendDoublePattern" patternUnits="userSpaceOnUse" width="8"
                                                 height="8" patternTransform="rotate(45)">
-                                                <rect x="0" y="0" width="4" height="8" fill="var(--nx-color-aviso)" />
-                                                <rect x="4" y="0" width="4" height="8" fill="var(--nx-color-error)" />
+                                                <rect x="0" y="0" width="4" height="8" fill="var(--nx-color-nad)" />
+                                                <rect x="4" y="0" width="4" height="8" fill="var(--nx-color-nat)" />
                                             </pattern>
                                         </defs>
-                                        <circle cx="12" cy="12" r="10" fill="url(#legendDoublePattern)" stroke="var(--nx-color-aviso)"
+                                        <circle cx="12" cy="12" r="10" fill="url(#legendDoublePattern)" stroke="var(--nx-color-nat)"
                                             stroke-width="2.5" />
                                     </svg>
                                     <span id="doubleMarkCount">0</span> articulación(es) con dolor E inflamación
@@ -304,8 +304,8 @@
                                         <defs>
                                             <pattern id="doubleMarkPattern" patternUnits="userSpaceOnUse" width="8"
                                                 height="8" patternTransform="rotate(45)">
-                                                <rect x="0" y="0" width="4" height="8" fill="var(--nx-color-aviso)" />
-                                                <rect x="4" y="0" width="4" height="8" fill="var(--nx-color-error)" />
+                                                <rect x="0" y="0" width="4" height="8" fill="var(--nx-color-nad)" />
+                                                <rect x="4" y="0" width="4" height="8" fill="var(--nx-color-nat)" />
                                             </pattern>
                                         </defs>
 
@@ -2305,14 +2305,14 @@
 
     <!-- MÓDULOS HUBTOOLS - ORDEN CRTICO: hubTools.js PRIMERO -->
     <script src="modules/hubTools.js?v=20260306l"></script>
-    <script src="modules/utils.js?v=20261122-t7l"></script>
+    <script src="modules/utils.js?v=20261124-col"></script>
     <script src="modules/reumaCurrentPatient.js?v=20261114a"></script>
     <script src="modules/customSelect.js?v=20260307a"></script>
     <script src="modules/fieldNormalizer.js?v=20260306l"></script>
     <script src="modules/mockPatients.js?v=20260306l"></script>
     <script src="modules/scoreCalculators.js?v=20261122-t7l"></script>
     <script src="modules/homunculus.js?v=20260306l"></script>
-    <script src="modules/dataManager.js?v=20261123-t12"></script>
+    <script src="modules/dataManager.js?v=20261124-col"></script>
     <script src="modules/exportManager.js?v=20261114c"></script>
     <script src="modules/reuma_export_boundary.js?v=20260928a"></script>
     <script src="modules/reuma_act_contract.js?v=20260929a"></script>

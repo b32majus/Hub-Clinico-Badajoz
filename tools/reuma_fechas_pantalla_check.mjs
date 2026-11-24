@@ -78,8 +78,8 @@ try {
 }
 
 // Caché de los scripts tocados.
-ok(/scripts\/script_dashboard\.js\?v=20261122-t7p/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar script_dashboard.js?v=20261122-t7p');
-ok(/scripts\/script_estadisticas\.js\?v=20261123-t7r/.test(rd('estadisticas.html')), 'caché: estadisticas.html debe cargar script_estadisticas.js?v=20261123-t7r');
+ok(/scripts\/script_dashboard\.js\?v=20261124-col/.test(rd('dashboard_paciente.html')), 'caché: dashboard_paciente.html debe cargar script_dashboard.js?v=20261124-col');
+ok(/scripts\/script_estadisticas\.js\?v=20261124-col/.test(rd('estadisticas.html')), 'caché: estadisticas.html debe cargar script_estadisticas.js?v=20261124-col');
 
 if (fails.length) {
   console.error('FAIL reuma_fechas_pantalla_check (' + fails.length + ')');

@@ -1767,10 +1767,8 @@ function generateRealChartData(patients, filters = {}) {
 
     let treatmentLabels = sortedTreatments.map(t => t[0]);
     let treatmentValues = sortedTreatments.map(t => t[1]);
-    let treatmentColors = sortedTreatments.map((_, i) => {
-        const opacity = 1 - (i * 0.08);
-        return `rgba(99, 102, 241, ${Math.max(0.3, opacity)})`;
-    });
+    // Una sola serie: un solo color (la intensidad no depende del puesto en la lista).
+    let treatmentColors = sortedTreatments.map(() => nxColor('serie-1'));
 
     if (!treatmentLabels.length) {
         treatmentLabels = ['Sin datos'];
@@ -1819,10 +1817,7 @@ function generateRealChartData(patients, filters = {}) {
         ? comorbiditySorted.map(item => item[1])
         : [0];
 
-    const comorbidityColors = comorbiditySorted.map((_, i) => {
-        const opacity = 1 - (i * 0.1);
-        return `rgba(139, 92, 246, ${Math.max(0.3, opacity)})`;
-    });
+    const comorbidityColors = comorbiditySorted.map(() => nxColor('serie-3'));
 
     console.log('?? Comorbidity counts:', comorbidityLabels.length, 'comorbilidades');
 
@@ -1891,7 +1886,7 @@ function generateRealChartData(patients, filters = {}) {
             labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'],
             datasets: [{
                 data: [activityCounts.remission, activityCounts.low, activityCounts.moderate, activityCounts.high],
-                backgroundColor: [nxColor('ok'), nxColor('info'), nxColor('aviso'), nxColor('error')]
+                backgroundColor: [nxColor('actividad-1'), nxColor('actividad-2'), nxColor('actividad-3'), nxColor('actividad-4')]
             }],
             activityLabel: activityLabel
         },
@@ -2046,7 +2041,7 @@ function getPoblationalData(filters = {}) {
             avgBasdai: 0
         },
         chartData: {
-            activity: { labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: [nxColor('ok'), nxColor('info'), nxColor('aviso'), nxColor('error')] }] },
+            activity: { labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: [nxColor('actividad-1'), nxColor('actividad-2'), nxColor('actividad-3'), nxColor('actividad-4')] }] },
             treatment: { labels: [], datasets: [{ data: [], backgroundColor: nxColor('serie-1') }] },
             comorbidity: { labels: [], datasets: [{ data: [] }] },
             correlation: { datasets: [] }

@@ -124,8 +124,9 @@ function calcularIMC() {
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
     const isWarning = tipo === 'warning';
-    const background = tipo === 'success' ? 'var(--nx-color-ok)' : isWarning ? 'var(--nx-color-aviso)' : 'var(--nx-color-error)';
-    const foreground = 'var(--nx-color-superficie)';
+    const background = tipo === 'success' ? 'var(--nx-color-ok)' : isWarning ? 'var(--nx-color-aviso-fondo)' : 'var(--nx-color-error)';
+    const foreground = isWarning ? 'var(--nx-color-aviso)' : 'var(--nx-color-superficie)';
+    const borde = isWarning ? 'var(--nx-color-aviso-borde)' : 'transparent';
     const durationMs = isWarning ? 10000 : tipo === 'error' ? 6000 : 3000;
     const notif = document.createElement('div');
     notif.style.cssText = `
@@ -134,6 +135,7 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         right: 20px;
         background: ${background};
         color: ${foreground};
+        border: 1px solid ${borde};
         padding: 15px 25px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
