@@ -1013,8 +1013,8 @@
 }
 
 .badge-en-curso {
-    background-color: var(--nx-color-aviso);
-    color: var(--nx-color-texto);
+    background-color: var(--nx-color-aviso-fondo);
+    color: var(--nx-color-aviso);
 }
 
 .badge-no-apto {

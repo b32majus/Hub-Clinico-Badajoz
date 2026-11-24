@@ -119,13 +119,23 @@
     --nx-color-reuma-suave: #fce7f3;
     --nx-color-derma-suave: #fdebe8;
 
-    /* Tramo 7: series de gráficos (categorías sin significado clínico; ni verde, ni ámbar, ni rojo) */
-    --nx-color-serie-1: #1d5fa8;            /* 6,5 sobre blanco */
-    --nx-color-serie-2: #7c4dbd;            /* 5,8 */
-    --nx-color-serie-3: #008777;            /* 4,4 */
-    --nx-color-serie-4: #c2185b;            /* 5,9 */
-    --nx-color-serie-5: #475569;            /* 7,6 */
-    --nx-color-serie-6: #8d6e63;            /* 4,6 */
+    /* Series de gráficos (24-11, Sil): paleta tipo Nature ajustada, común a todas las patologías.
+       Validada: daltonismo entre series vecinas >= 8, visión normal >= 15. Orden fijo, nunca rotar. */
+    --nx-color-serie-1: #34509a;            /* azul marino */
+    --nx-color-serie-2: #e64b35;            /* rojo coral */
+    --nx-color-serie-3: #00a087;            /* verde azulado */
+    --nx-color-serie-4: #d4a017;            /* mostaza: 2,4 sobre blanco, siempre con leyenda */
+    --nx-color-serie-5: #8a63b0;            /* violeta */
+    --nx-color-serie-6: #3a9fc7;            /* azul cielo */
+    /* Actividad de la enfermedad en gráficos (viridis sin el amarillo): Remisión → Alta, se lee en gris */
+    --nx-color-actividad-1: #4ac16d;        /* Remisión */
+    --nx-color-actividad-2: #1f9e89;        /* Baja */
+    --nx-color-actividad-3: #31688e;        /* Moderada */
+    --nx-color-actividad-4: #440154;        /* Alta */
+    /* Homúnculo: dolor, tumefacción y dactilitis; separados también con daltonismo e impresos en gris */
+    --nx-color-nad: #e69a28;                /* con texto oscuro encima (6,7) */
+    --nx-color-nat: #1f5fa3;                /* con texto blanco encima (6,5) */
+    --nx-color-dactilitis: #17806f;         /* con texto blanco encima */
     --nx-color-serie-sin-dato: var(--nx-color-tenue); /* «No registrado»: siempre gris */
     --nx-ancho-cifra-min: 10rem;            /* ancho mínimo de una nx-cifra en su fila */
     --nx-ancho-dato-min: 16rem;             /* ancho mínimo de una columna de datos en nx-solicitud */

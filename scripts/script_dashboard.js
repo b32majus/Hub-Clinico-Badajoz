@@ -43,10 +43,10 @@ function nxColor(nombre, alfa) {
 
 // Colores consistentes con el sistema de diseño (tokens --nx-*)
 const COLORS = {
-    remission: nxColor('ok'),
-    lowActivity: nxColor('info'),
-    moderate: nxColor('aviso'),
-    highActivity: nxColor('error'),
+    remission: nxColor('actividad-1'),
+    lowActivity: nxColor('actividad-2'),
+    moderate: nxColor('actividad-3'),
+    highActivity: nxColor('actividad-4'),
     biologic: nxColor('serie-2'),
     primary: nxColor('serie-1'),
     secondary: nxColor('texto-suave')
@@ -1876,13 +1876,13 @@ function prepareChartData(primaryMetric, secondaryMetric = null) {
         datasets.push({
             label: getMetricLabel(secondaryMetric),
             data: secondaryValues,
-            borderColor: COLORS.highActivity,
-            backgroundColor: nxColor('error', 0.1),
+            borderColor: nxColor('serie-3'),
+            backgroundColor: nxColor('serie-3', 0.1),
             fill: false,
             tension: 0.3,
             pointRadius: 5,
             pointHoverRadius: 7,
-            pointBackgroundColor: COLORS.highActivity,
+            pointBackgroundColor: nxColor('serie-3'),
             yAxisID: 'y1'
         });
     }

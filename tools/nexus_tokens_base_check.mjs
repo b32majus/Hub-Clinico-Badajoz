@@ -6,7 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const V = '20261122-t7f'; // tramo 7: anchos de nx-cifra y nx-solicitud
+const V = '20261124-col'; // 24-11: paleta de gráficos, actividad y homúnculo (tokens)
+const VB = '20261122-t7f'; // base: sin cambios desde el tramo 7
 const TOKENS = 'css/nexus_tokens.css';
 const BASE = 'css/nexus_base.css';
 const LAYERS = '@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;';
@@ -58,7 +59,7 @@ for (const page of pages) {
   const html = read(page);
   const links = [...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/g)].map((m) => (m[0].match(/href="([^"]+)"/) || [])[1]);
   const iT = links.indexOf(`${TOKENS}?v=${V}`);
-  const iB = links.indexOf(`${BASE}?v=${V}`);
+  const iB = links.indexOf(`${BASE}?v=${VB}`);
   // Bibliotecas de terceros (CDN o vendor/, tramo 2) van antes; los CSS propios, después.
   const isThirdParty = (h) => /^https?:/.test(h) || h.startsWith('vendor/');
   const firstLocal = links.findIndex((h) => !isThirdParty(h) && !h.startsWith('css/nexus_'));

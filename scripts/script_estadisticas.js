@@ -31,16 +31,16 @@ function nxColor(nombre, alfa) {
 }
 
 // === PALETA DE COLORES UNIFICADA ===
-// Estado clínico: colores de estado (el dato significa eso). Tratamientos: serie
+// Actividad: escala ordenada (viridis), no los colores de estado de la app. Tratamientos: serie
 // de categorías. «Otros» = gris de «sin dato».
 const COLORS = {
-    remission: nxColor('ok'),
-    lowActivity: nxColor('info'),
-    moderate: nxColor('aviso'),
-    highActivity: nxColor('error'),
-    biologic: nxColor('serie-2'),
-    fame: nxColor('serie-3'),
-    systemic: nxColor('serie-4'),
+    remission: nxColor('actividad-1'),
+    lowActivity: nxColor('actividad-2'),
+    moderate: nxColor('actividad-3'),
+    highActivity: nxColor('actividad-4'),
+    biologic: nxColor('serie-1'),
+    fame: nxColor('serie-2'),
+    systemic: nxColor('serie-3'),
     other: nxColor('serie-sin-dato'),
     primary: nxColor('serie-1'),
     secondary: nxColor('texto-suave'),
@@ -1009,12 +1009,9 @@ function renderComorbidityBarChart(canvasId, data) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
     if (!ctx) return;
 
-    // Gradiente de color para las barras
+    // Una sola serie: un solo color, sin degradado por puesto.
     const dataLength = data?.labels?.length || 4;
-    const colors = Array(dataLength).fill(COLORS.primary).map((c, i) => {
-        const opacity = 1 - (i * 0.1);
-        return nxColor('serie-1', Math.max(0.4, opacity));
-    });
+    const colors = data?.datasets?.[0]?.backgroundColor || Array(dataLength).fill(nxColor('serie-3'));
 
     chartInstances[canvasId] = new Chart(ctx, {
         type: 'bar',
@@ -1024,7 +1021,7 @@ function renderComorbidityBarChart(canvasId, data) {
                 label: 'Pacientes',
                 data: data?.datasets?.[0]?.data || [40, 35, 28, 22],
                 backgroundColor: colors,
-                borderColor: COLORS.primary,
+                borderColor: colors,
                 borderWidth: 1,
                 borderRadius: 6,
                 borderSkipped: false

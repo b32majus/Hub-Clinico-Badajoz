@@ -367,9 +367,9 @@
     text-align: center;
     font-size: 1.1em;
     font-weight: 700;
-    color: var(--nx-color-sobre-principal);
-    background: linear-gradient(135deg, var(--nx-color-aviso) 0%, var(--nx-color-aviso) 100%);
-    box-shadow: 0 4px 15px color-mix(in srgb, var(--nx-color-aviso) 30%, transparent);
+    color: var(--nx-color-texto);
+    background: var(--nx-color-fondo);
+    border: 1px solid var(--nx-color-borde);
     transition: all 0.3s ease;
 }
 

@@ -194,9 +194,9 @@ body:has(.nx-marco) {
 }
 
 .badge-unknown.active {
-    background: var(--nx-color-aviso);
-    border-color: var(--nx-color-aviso);
-    color: var(--nx-color-sobre-principal);
+    background: var(--nx-color-aviso-fondo);
+    border-color: var(--nx-color-aviso-borde);
+    color: var(--nx-color-aviso);
 }
 
 /* Secciones Colapsables */
@@ -613,18 +613,18 @@ body:has(.nx-marco) {
 }
 
 .score-label.score-nad {
-    color: var(--nx-color-aviso);
-    background-color: var(--nx-color-aviso-fondo);
+    color: var(--nx-color-texto);
+    background-color: color-mix(in srgb, var(--nx-color-nad) 22%, var(--nx-color-superficie));
 }
 
 .score-label.score-nat {
-    color: var(--nx-color-error);
-    background-color: var(--nx-color-error-fondo);
+    color: var(--nx-color-nat);
+    background-color: color-mix(in srgb, var(--nx-color-nat) 12%, var(--nx-color-superficie));
 }
 
 .score-label.score-dactilitis {
-    color: var(--nx-color-ok);
-    background-color: var(--nx-color-ok-fondo);
+    color: var(--nx-color-dactilitis);
+    background-color: color-mix(in srgb, var(--nx-color-dactilitis) 12%, var(--nx-color-superficie));
 }
 
 .homunculus-controls {
@@ -655,22 +655,22 @@ body:has(.nx-marco) {
 
 .homunculus-mode-btn.mode-nad.active,
 .homunculus-mode-btn.mode-nad:hover {
-    background-color: var(--nx-color-aviso);
+    background-color: var(--nx-color-nad);
     color: var(--nx-color-texto);
-    border-color: var(--nx-color-aviso);
+    border-color: var(--nx-color-nad);
 }
 
 .homunculus-mode-btn.mode-nat.active,
 .homunculus-mode-btn.mode-nat:hover {
-    background-color: var(--nx-color-error);
-    border-color: var(--nx-color-error);
+    background-color: var(--nx-color-nat);
+    border-color: var(--nx-color-nat);
     color: var(--nx-color-sobre-principal);
 }
 
 .homunculus-mode-btn.mode-dactilitis.active,
 .homunculus-mode-btn.mode-dactilitis:hover {
-    background-color: var(--nx-color-ok);
-    border-color: var(--nx-color-ok);
+    background-color: var(--nx-color-dactilitis);
+    border-color: var(--nx-color-dactilitis);
     color: var(--nx-color-sobre-principal);
 }
 
@@ -714,28 +714,28 @@ body:has(.nx-marco) {
 }
 
 .body-region.marked-nad {
-    fill: var(--nx-color-aviso);
-    stroke: var(--nx-color-aviso);
+    fill: var(--nx-color-nad);
+    stroke: var(--nx-color-nad);
     stroke-width: 2.5;
 }
 
 .body-region.marked-nat {
-    fill: var(--nx-color-error);
-    stroke: var(--nx-color-error);
+    fill: var(--nx-color-nat);
+    stroke: var(--nx-color-nat);
     stroke-width: 2.5;
 }
 
 .body-region.marked-dactilitis {
-    fill: var(--nx-color-ok);
-    stroke: var(--nx-color-ok);
+    fill: var(--nx-color-dactilitis);
+    stroke: var(--nx-color-dactilitis);
     stroke-width: 2.5;
 }
 
 .body-region.double-marked-nad-nat {
     fill: url(#doubleMarkPattern) !important;
-    stroke: var(--nx-color-aviso);
+    stroke: var(--nx-color-nat);
     stroke-width: 3;
-    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--nx-color-error) 50%, transparent));
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--nx-color-nat) 40%, transparent));
 }
 
 .clear-btn {
@@ -1150,22 +1150,17 @@ body:has(.nx-marco) {
     background-color: var(--nx-color-info);
 }
 
-.success-btn {
-    background-color: var(--nx-color-ok);
-    color: var(--nx-color-sobre-principal);
-}
-
-.success-btn:hover {
-    background-color: var(--nx-color-ok);
-}
-
+/* «Estructurar CSV» y «Nuevo Paciente»: acciones secundarias (24-11, Sil: botones sin verde ni ámbar) */
+.success-btn,
 .warning-btn {
-    background-color: var(--nx-color-aviso);
+    background-color: var(--nx-color-superficie);
     color: var(--nx-color-texto);
+    border: 1px solid var(--nx-color-tenue);
 }
 
+.success-btn:hover,
 .warning-btn:hover {
-    background-color: var(--nx-color-aviso);
+    background-color: var(--nx-color-fondo);
 }
 
 /* Responsive */
