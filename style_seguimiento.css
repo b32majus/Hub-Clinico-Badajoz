@@ -3,9 +3,11 @@
    Combina: style_seguimiento_espa.css + elementos específicos de style_premium.css + optimizaciones profesionales
    ======================================== */
 
+@layer nx.tokens, nx.base, nx.piezas, modulo;
 /* Importar estilos base consolidados de primera visita */
 @import url('style_primera_visita.css');
 
+@layer modulo {
 /* ========================================
    ESTILOS ESPECÍFICOS PARA SEGUIMIENTO
    ======================================== */
@@ -749,10 +751,7 @@
     }
 
     /* Grids de formulario: 3 columnas en desktop */
-    .form-group-grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 20px;
-    }
+    
 
     /* LEI: 3 columnas para compactar */
     .lei-grid {
@@ -784,9 +783,7 @@
         font-size: 1.25em;
     }
 
-    .form-group label {
-        font-size: 1em;
-    }
+    
 
     /* Optimizar espaciado de secciones */
     .collapsible-section {
@@ -804,16 +801,9 @@
     }
 
     /* Metrología: 2 columnas para medidas */
-    .metrologia-container .form-group {
-        display: inline-block;
-        width: calc(50% - 15px);
-        margin-right: 30px;
-        vertical-align: top;
-    }
+    
 
-    .metrologia-container .form-group:nth-child(even) {
-        margin-right: 0;
-    }
+    
 }
 
 /* ========================================
@@ -851,15 +841,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 10px 20px;
     margin-bottom: 20px;
-}
-
-.entesitis-grid .form-group-checkbox {
-    margin: 0;
-}
-
-.entesitis-grid .form-group-checkbox label {
-    font-size: 0.9em;
-    font-weight: 500;
 }
 
 /* ========================================
@@ -1341,4 +1322,5 @@
 /* tramo 7: el nombre de la patología dentro del título del catálogo */
 .nx-cabecera__titulo .highlight {
     color: var(--nx-color-modulo-texto);
+}
 }

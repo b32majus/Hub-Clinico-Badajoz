@@ -64,11 +64,11 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-25, H-22, H-24, H-27 | cerrados en este documento; no reverificados | - | - |
 | H-10 | cerrado por decisión (23-11) | la Home no lleva `<nx-shell>`: Sil no quiere barra lateral en ella | - |
 | H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
-| H-02, H-03, H-19 | abiertos | `main-content` en 30 sitios (24 ficheros); `style.css` sin `@layer`; fondo degradado de `.main-content` activo | M |
+| H-02, H-03, H-19 | abiertos (H-03 parcial 24-11) | `main-content` en 30 sitios; fondo degradado de `.main-content` activo. Hecho: `style.css` y las hojas de Reuma ya van en `@layer modulo`; falta la capa en `farmacia_style.css` y las hojas de dashboard/estadísticas | M |
 | H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
 | H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
 | H-20 | abierto | `pending-validation*` 35, `status-badge` 20, `dashboard-card` 9, `prebio-chip` 7 | L |
-| H-26 | parcial (24-11) | Primera visita (#1004) y `seguimiento.html` a `nx-campo` hechos (2/2). Falta borrar CSS `form-*` sin uso + `@layer` (con H-02/03/19). Los `display:none` en línea se dejan por decisión (estado de `formController.js`). | L |
+| H-26 | cerrado (24-11) | Primera visita (#1004), Seguimiento (#1006) a `nx-campo`; CSS `.form-*` sin uso borrado y hojas de Reuma en `@layer modulo`. Los `display:none` en línea se dejan por decisión (estado de `formController.js`). | L |
 | H-01 | abierto | `VERSION_SITIO = '0.6.0'` en `modules/nexus/version.js` (versión única del sitio, «aparte» de #956) | M |
 | H-08 | no revisado | `previews/caceres-fh` (barra vieja) | - |
 

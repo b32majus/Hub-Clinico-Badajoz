@@ -1,5 +1,7 @@
+@layer nx.tokens, nx.base, nx.piezas, modulo;
 @import url('vendor/inter/inter.css');
 
+@layer modulo {
 :root {
     --primary-blue: var(--nx-color-modulo);
     --text-muted: var(--nx-color-texto-suave);
@@ -478,38 +480,6 @@ body {
 .treatment-value {
     font-weight: 600;
     color: var(--nx-color-modulo-texto);
-}
-
-.form-actions .action-btn {
-    padding: 16px 22px;
-    border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--nx-color-tenue) 18%, transparent);
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    box-shadow: 0 18px 32px color-mix(in srgb, var(--nx-color-texto) 10%, transparent);
-}
-
-.form-actions .action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 22px 36px color-mix(in srgb, var(--nx-color-texto) 14%, transparent);
-    opacity: 1;
-}
-
-.form-actions .primary-btn {
-    background: linear-gradient(135deg, var(--nx-color-texto), var(--nx-color-principal));
-    color: var(--nx-color-sobre-principal);
-}
-
-.form-actions .success-btn {
-    background: linear-gradient(135deg, var(--nx-color-fondo), var(--nx-color-superficie-suave));
-    color: var(--nx-color-texto);
-    border-color: color-mix(in srgb, var(--nx-color-tenue) 8%, transparent);
-}
-
-.form-actions .warning-btn {
-    background: var(--nx-color-superficie);
-    color: var(--nx-color-texto);
-    border-color: color-mix(in srgb, var(--nx-color-tenue) 8%, transparent);
 }
 
 @media (max-width: 900px) {
@@ -1504,4 +1474,5 @@ body {
     margin: 4px 0 0;
     font-size: 0.78rem;
     color: var(--nx-color-aviso);
+}
 }
