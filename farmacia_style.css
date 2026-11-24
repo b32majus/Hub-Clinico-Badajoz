@@ -1,3 +1,5 @@
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
+@layer modulo {
 /* Farmacia Hospitalaria v0.1 — estilos del módulo.
    Extiende style.css y reutiliza paleta SES: --ses-green #008777. */
 
@@ -378,7 +380,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-}
+}
 
 /* --- Session professional block (WO farmacia v0.1) --- */
 
@@ -5179,4 +5181,5 @@ main.farmacia-informes-mode .informes-section {
     .informes-detail-scroll-hint {
         display: block;
     }
+}
 }

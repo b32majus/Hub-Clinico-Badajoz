@@ -6,7 +6,7 @@
  * Regla: fuera de este fichero no se escriben colores ni medidas a mano.
  */
 
-@layer nx.tokens, nx.base, nx.piezas, modulo;
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 
 @layer nx.tokens {
   :root {

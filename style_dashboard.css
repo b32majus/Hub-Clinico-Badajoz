@@ -1,3 +1,5 @@
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
+@layer modulo {
 /* ============================================
    DASHBOARD DE PACIENTE INDIVIDUAL - PREMIUM
    Hub Clínico Reumatología v2.0
@@ -1048,4 +1050,5 @@
 /* tramo 7: las tarjetas del catálogo no ensanchan la rejilla en móvil (la vieja lo evitaba con overflow:hidden) */
 .dashboard-grid > .nx-tarjeta {
     min-width: 0;
+}
 }

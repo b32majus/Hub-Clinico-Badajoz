@@ -1,3 +1,5 @@
+@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
+@layer modulo {
 /* ============================================
    ESTADÍSTICAS DEL SERVICIO - DASHBOARD PREMIUM
    Hub Clínico Reumatología v2.0
@@ -1015,3 +1017,4 @@
 .empty-state__icono { font-size: 2rem; margin-bottom: 10px; display: block; color: var(--nx-color-tenue); }
 .empty-state__icono--error, .empty-state__texto--error { color: var(--nx-color-error); }
 .empty-state__texto { color: var(--nx-color-texto-suave); }
+}

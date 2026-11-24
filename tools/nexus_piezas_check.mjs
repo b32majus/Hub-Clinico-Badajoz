@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const LAYERS = '@layer nx.tokens, nx.base, nx.piezas, modulo;';
+const LAYERS = '@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;';
 const PIEZAS = 'css/nexus_piezas.css';
 const MUESTRA = 'muestra/nexus_piezas.html';
 const MUESTRA_CSS = 'muestra/muestra.css';
