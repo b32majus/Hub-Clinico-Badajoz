@@ -61,6 +61,17 @@
 
     // Estados del prebiológico (claves internas en inglés) → texto en español para el chip. La clase CSS sigue siendo status-<clave>.
     var ESTADO_PREBIO_ES = { complete: 'completo', pending: 'pendiente', missing: 'falta', unknown: 'no informado', not_applicable: 'no aplica', alert: 'alerta' };
+    // #956 H-04: el color del estado lo da la variante de `nx-etiqueta`;
+    // las clases `status-*` / `status-badge--*` quedan solo como enganche.
+    var ETIQUETA_VARIANTE = {
+        complete: 'ok', completo: 'ok', ok: 'ok',
+        pending: 'aviso', pendiente: 'aviso', vigilance: 'aviso',
+        alert: 'error', alerta: 'error', bloqueo: 'error', blocked: 'error'
+    };
+    function etiquetaVariante(estado) {
+        var v = ETIQUETA_VARIANTE[estado];
+        return v ? 'nx-etiqueta--' + v : '';
+    }
     var QUEUE_TITLE = 'Solicitudes pendientes';
     var QUEUE_EMPTY_TEXT = 'No hay solicitudes pendientes.';
 
@@ -277,7 +288,7 @@
                 for (var i = 0; i < shown.length; i++) {
                     var item = shown[i];
                     var chip = document.createElement('span');
-                    chip.className = 'nx-etiqueta prebio-chip status-' + item.status;
+                    chip.className = 'nx-etiqueta ' + etiquetaVariante(item.status) + ' prebio-chip status-' + item.status;
                     chip.textContent = item.label + ': ' + (ESTADO_PREBIO_ES[item.status] || item.status);
                     if (item.detail) {
                         chip.setAttribute('title', item.detail);
@@ -440,7 +451,8 @@
                     ? { cls: 'blocked', text: ENFERMERIA_GROUP_LABELS.conflicto }
                     : null;
         var badge = document.createElement('span');
-        badge.className = 'nx-etiqueta status-badge--' + (resolvedBadge ? resolvedBadge.cls : (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending'));
+        var badgeCls = resolvedBadge ? resolvedBadge.cls : (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending');
+        badge.className = 'nx-etiqueta ' + etiquetaVariante(badgeCls) + ' status-badge--' + badgeCls;
         badge.textContent = resolvedBadge ? resolvedBadge.text : (groupKey === 'sin_clasificar'
             ? ENFERMERIA_GROUP_LABELS.sin_clasificar
             : (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—'));
@@ -479,7 +491,7 @@
             badgesContainer.className = 'pending-validation-card__prebio-chips nx-solicitud__chips';
             for (var bi = 0; bi < badges.length; bi++) {
                 var chip = document.createElement('span');
-                chip.className = 'nx-etiqueta prebio-chip status-' + badges[bi].status;
+                chip.className = 'nx-etiqueta ' + etiquetaVariante(badges[bi].status) + ' prebio-chip status-' + badges[bi].status;
                 chip.textContent = badges[bi].label + ': ' + badges[bi].display;
                 badgesContainer.appendChild(chip);
             }
@@ -529,7 +541,7 @@
         titleWrap.appendChild(title);
         titleWrap.appendChild(subtitle);
         var badge = document.createElement('span');
-        badge.className = 'nx-etiqueta status-badge--pending';
+        badge.className = 'nx-etiqueta nx-etiqueta--aviso status-badge--pending';
         badge.textContent = 'Pendiente de validación';
         header.appendChild(titleWrap);
         header.appendChild(badge);

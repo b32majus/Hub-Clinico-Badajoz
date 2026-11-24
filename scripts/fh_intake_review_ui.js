@@ -237,7 +237,7 @@ function renderSource(unit, association, confirmed, rerender, selectedPatient) {
   article.dataset.fhSourceName = key;
 
   const heading = element('div', 'fh-intake-source__heading');
-  heading.append(element('h3', '', label), element('span', 'status-badge', unit?.parser?.unit_state || unit?.kind || 'UNRECOGNIZED'));
+  heading.append(element('h3', '', label), element('span', 'nx-etiqueta status-badge', unit?.parser?.unit_state || unit?.kind || 'UNRECOGNIZED'));
   article.appendChild(heading);
   const gate = element('p', 'fh-intake-gate');
   gate.append('Asociación: ', element('strong', '', association.state), ' · ', association.reason);
@@ -698,7 +698,7 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
         ? [proposalValue.code, proposalValue.label].filter(Boolean).join(' · ')
         : '';
       if (!resolved.writable) {
-        heading.append(element('span', 'status-badge', STATE_NO_PROPOSAL));
+        heading.append(element('span', 'nx-etiqueta status-badge', STATE_NO_PROPOSAL));
         row.appendChild(heading);
         row.appendChild(element('p', 'fh-intake-decision__note',
           `Programa SES no aplicable: ${resolved.reason}. No se escribe ningún valor.`));
@@ -720,7 +720,7 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
       const badges = manualEdit
         ? [STATE_MANUALLY_EDITED_AFTER_APPLY, STATE_PROTECTED_EXISTING]
         : [state];
-      for (const badge of badges) heading.append(element('span', 'status-badge', badge));
+      for (const badge of badges) heading.append(element('span', 'nx-etiqueta status-badge', badge));
       row.appendChild(heading);
       const meta = element('p', 'fh-intake-decision__meta');
       meta.append(
@@ -853,7 +853,7 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
   // A manual edit after apply is surfaced as its own lifecycle badge alongside
   // the underlying D16 PROTECTED_EXISTING state, so the row states both facts.
   const badges = manualEdit ? [STATE_MANUALLY_EDITED_AFTER_APPLY, STATE_PROTECTED_EXISTING] : [state];
-  for (const badge of badges) heading.append(element('span', 'status-badge', badge));
+  for (const badge of badges) heading.append(element('span', 'nx-etiqueta status-badge', badge));
   row.appendChild(heading);
   const meta = element('p', 'fh-intake-decision__meta');
   meta.append(

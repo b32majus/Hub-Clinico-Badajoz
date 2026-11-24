@@ -63,13 +63,13 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-28 | cerrado | solo quedan las clases `stats-*` como enganche de los checks | - |
 | H-25, H-22, H-24, H-27 | cerrados en este documento; no reverificados | - | - |
 | H-10 | cerrado por decisión (23-11) | la Home no lleva `<nx-shell>`: Sil no quiere barra lateral en ella | - |
-| H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
+| H-04 | cerrado (24-11) | sin pieza `nx-estado`: el estado es `nx-etiqueta`; los colores de la barra (`db-status-indicator`, `catalog-sidebar-*`) ya son tokens (su sitio es H-07) | — |
 | H-02 | cerrado | `main-content` renombrado a `nx-marco__contenido` | — |
 | H-03 | cerrado | todas las hojas de módulo en `@layer modulo`; Font Awesome en `nx.vendor` | — |
 | H-19 | cerrado (24-11) | Sin degradado en el fondo de `.main-content`: fondo liso (el de la página). Visto bueno de Sil | S |
 | H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
 | H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
-| H-20 | abierto | `pending-validation*` 35, `status-badge` 20, `dashboard-card` 9, `prebio-chip` 7 | L |
+| H-20 | cerrado (24-11) | insignias del JS de Farmacia a `nx-etiqueta`; `pending-validation*`, `status-badge*`, `prebio-chip` quedan como enganche de checks sin estilo propio; `dashboard-card` ya era `nx-tarjeta` | — |
 | H-26 | cerrado (24-11) | Primera visita (#1004), Seguimiento (#1006) a `nx-campo`; CSS `.form-*` sin uso borrado y hojas de Reuma en `@layer modulo`. Los `display:none` en línea se dejan por decisión (estado de `formController.js`). | L |
 | H-01 | abierto | `VERSION_SITIO = '0.6.0'` en `modules/nexus/version.js` (versión única del sitio, «aparte» de #956) | M |
 | H-08 | no revisado | `previews/caceres-fh` (barra vieja) | - |

@@ -957,7 +957,7 @@
         F.setText('patientGender', '\u2014');
         var badge = document.getElementById('patientStatusBadge');
         if (badge) {
-            badge.className = 'status-badge status-badge--pending';
+            badge.className = 'nx-etiqueta nx-etiqueta--aviso status-badge status-badge--pending';
             badge.textContent = 'CIP no encontrado';
         }
         var summaryGrid = document.getElementById('dashboardSummaryGrid');

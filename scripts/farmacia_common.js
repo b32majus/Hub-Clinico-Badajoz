@@ -1807,10 +1807,10 @@
     const DEMO_SESSION_NOTE = 'Demo — los datos se almacenan en memoria de sesión.';
 
     function statusClass(status) {
-        if (status === STATES.VALIDATED) return 'status-badge status-badge--validated';
-        if (status === STATES.FOLLOWUP) return 'status-badge status-badge--followup';
-        if (status === STATES.DENIED) return 'status-badge status-badge--denied';
-        return 'status-badge status-badge--pending';
+        if (status === STATES.VALIDATED) return 'nx-etiqueta nx-etiqueta--ok status-badge status-badge--validated';
+        if (status === STATES.FOLLOWUP) return 'nx-etiqueta nx-etiqueta--info status-badge status-badge--followup';
+        if (status === STATES.DENIED) return 'nx-etiqueta nx-etiqueta--error status-badge status-badge--denied';
+        return 'nx-etiqueta nx-etiqueta--aviso status-badge status-badge--pending';
     }
 
     function downloadFile(name, content, mimeType) {
