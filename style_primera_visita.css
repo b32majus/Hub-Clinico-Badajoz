@@ -2326,7 +2326,7 @@ body:has(.nx-marco) {
 }
 
 .drug-autocomplete__list {
-    position: absolute;
+    position: fixed;
     z-index: 60;
     top: calc(100% + 4px);
     left: 0;
