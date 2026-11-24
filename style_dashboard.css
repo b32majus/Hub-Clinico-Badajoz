@@ -86,7 +86,7 @@
 }
 
 /* === LAYOUT PRINCIPAL === */
-.main-content.dashboard-paciente {
+.nx-marco__contenido.dashboard-paciente {
     padding: var(--spacing-xl);
     display: flex;
     flex-direction: column;
@@ -912,7 +912,7 @@
 }
 
 @media (max-width: 768px) {
-    .main-content.dashboard-paciente {
+    .nx-marco__contenido.dashboard-paciente {
         padding: var(--spacing-md);
     }
 

@@ -1569,7 +1569,7 @@
             });
         })();
         var runtime = window.FarmaciaPatientFlowRuntime;
-        var draftScope = document.querySelector('main.main-content');
+        var draftScope = document.querySelector('main.nx-marco__contenido');
         if (runtime && draftScope) {
             runtime.restorePageDraft('primera_visita', draftScope);
             syncFirstVisitVisualState();

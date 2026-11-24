@@ -498,7 +498,7 @@ return;
  *   - the verbatim canonical code/label into the adjudicated normal-form
  *     controls fhDermaSesProgramCode / fhDermaSesProgramLabel.
  * The three writes fire input+change so the existing page-draft binder
- * (bindPageDraft on main.main-content) persists them under the existing
+ * (bindPageDraft on main.nx-marco__contenido) persists them under the existing
  * draft contract (the controls are id-bearing draft-eligible inputs).
  * @param {{code:string,label:string,visible:string}} resolved coherent pair
  */

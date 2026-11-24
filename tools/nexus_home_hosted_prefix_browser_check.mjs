@@ -425,7 +425,7 @@ try {
     }, null, { timeout: 30000 });
     await page.locator('#informes-view-btn').click();
     await page.waitForFunction(() =>
-      document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+      document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
 
     // --- Cosentyx Q4 (default latest fixture period) ---
     await page.locator('#informes-drug-select').selectOption('cosentyx');

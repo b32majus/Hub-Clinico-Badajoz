@@ -38,8 +38,8 @@ body:has(.nx-marco) {
     margin: 0 auto;
 }
 
-/* Cuando está dentro de main-content (con sidebar) */
-.main-content .form-container {
+/* cuando está dentro de nx-marco__contenido (con sidebar) */
+.nx-marco__contenido .form-container {
     max-width: 100%;
     margin: 0;
     border-radius: 0;

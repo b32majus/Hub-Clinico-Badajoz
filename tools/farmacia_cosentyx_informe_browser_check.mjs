@@ -594,7 +594,7 @@ try {
 
     /* Enter Informes through the supported switcher: neutral landing. */
     await page.locator('#informes-view-btn').click();
-    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#informes-section').isVisible(), 'Informes visible after supported switch');
     assert.ok(!(await page.locator('#kpi-section').isVisible()), 'population analysis hidden inside Informes');
     await assertNeutral(page);
@@ -872,21 +872,21 @@ try {
 
     /* View switching preserves the confirmed report + selection + focus. */
     await page.locator('#population-view-btn').click();
-    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => !document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#kpi-section').isVisible(), 'population analysis restored');
     assert.equal(await page.locator('#population-view-btn').getAttribute('aria-pressed'), 'true');
     assert.equal(await page.locator('#informes-view-btn').getAttribute('aria-pressed'), 'false');
     await page.locator('#informes-view-btn').click();
-    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.equal(await page.locator('#informes-drug-select').inputValue(), 'cosentyx', 'drug selection preserved across views');
     assert.equal(await page.locator('#informes-report-select').inputValue(), 'cosentyx', 'type selection preserved across views');
     assert.equal(await page.locator('#informes-quarter-select').inputValue(), '2026-Q2', 'period selection preserved across views');
     await assertQuarterView(page, '2026-Q2');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-view-btn', 'keyboard focus preserved across views');
     await page.locator('#population-view-btn').click();
-    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => !document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     await page.locator('#informes-view-btn').click();
-    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     await assertQuarterView(page, '2026-Q2');
     /* Disclose the six-column detail so the viewports measure the widest
      * composed state (internal table scroll, never page scroll). */
@@ -972,7 +972,7 @@ try {
 
     /* Return to the population analysis through the supported switcher. */
     await page.locator('#population-view-btn').click();
-    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => !document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#kpi-section').isVisible(), 'population analysis restored');
     assert.ok(!(await page.locator('#informes-section').isVisible()), 'Informes hidden again');
 
@@ -993,10 +993,10 @@ try {
     /* Population quick filters never govern reports: the confirmed Cosentyx
      * report is unchanged while the population filter is active. */
     await page.locator('#informes-view-btn').click();
-    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     await assertQuarterView(page, '2026-Q2');
     await page.locator('#population-view-btn').click();
-    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => !document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     const csvPromise = page.waitForEvent('download');
     await page.locator('#exportReportBtn').click();
     const csvDownload = await csvPromise;

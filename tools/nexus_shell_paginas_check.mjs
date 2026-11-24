@@ -53,17 +53,17 @@ test('P2 ninguna página conserva restos de la barra vieja (.sidebar, .hub-shell
     vacio(malas);
 });
 
-test('P3 marco nuevo: .nx-marco con <nx-shell> y <main class="main-content nx-marco__contenido">', () => {
+test('P3 marco nuevo: .nx-marco con <nx-shell> y <main class="nx-marco__contenido">', () => {
     const malas = [];
     for (const [p] of PAGINAS) {
         const src = html(p);
         if (!/<div\b[^>]*class="[^"]*\bnx-marco\b/.test(src)) malas.push(`${p}: sin .nx-marco`);
         const main = src.match(/<main\b[^>]*>/);
-        if (!main || !/\bmain-content\b/.test(main[0]) || !/\bnx-marco__contenido\b/.test(main[0])) malas.push(`${p}: <main> sin main-content + nx-marco__contenido`);
+        if (!main || /\bmain-content\b/.test(main[0]) || !/\bnx-marco__contenido\b/.test(main[0])) malas.push(`${p}: <main> sin nx-marco__contenido o con la clase antigua main-content`);
         // Solo las pantallas ya migradas (tramo 7) llevan nx-pagina; las demás aún no (las reconoce su nx-cabecera, ver nexus_piezas_check S13).
         if (/<body\b[^>]*class="[^"]*\bnx-pagina\b/.test(src) && !/<header class="nx-cabecera">/.test(src)) malas.push(`${p}: <body> con nx-pagina (cambiaría box-sizing y tipografía de la pantalla antigua)`);
     }
-    vacio(malas, 'main.main-content lo leen 9 scripts de Farmacia y 4 checks: se conserva');
+    vacio(malas, 'main.nx-marco__contenido lo leen 9 scripts de Farmacia y 4 checks');
 });
 
 test('P4 cada página carga nexus_piezas.css y el módulo nx-shell', () => {

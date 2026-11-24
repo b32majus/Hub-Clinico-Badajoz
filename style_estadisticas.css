@@ -86,7 +86,7 @@
 }
 
 /* === LAYOUT PRINCIPAL === */
-.main-content.dashboard-poblacional {
+.nx-marco__contenido.dashboard-poblacional {
     padding: var(--spacing-xl);
     display: flex;
     flex-direction: column;
@@ -942,7 +942,7 @@
 }
 
 @media (max-width: 768px) {
-    .main-content.dashboard-poblacional {
+    .nx-marco__contenido.dashboard-poblacional {
         padding: var(--spacing-md);
     }
 

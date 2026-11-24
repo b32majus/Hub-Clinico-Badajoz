@@ -5,7 +5,7 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 ## Tramo 5 (colocar `<nx-shell>`)
 
 - **H-01 · Versión del sitio.** `modules/nexus/version.js` vale `0.6.0` por ser el `release` de `module-readiness.json`, que se ha usado como versión de la plataforma entera aunque en origen fue la versión de Farmacia en Cáceres. Sil (21-11): enrasar todo a una versión basal «Nexus 4» y partir de ahí. Falta decidir la numeración y cambiar `module-readiness.json`, `version.js` y el check S12 a la vez.
-- **H-02 · `main.main-content`.** Nueve scripts de Farmacia (borrador de página, ledger, modo informes) y cuatro checks buscan `main.main-content`. Se conserva la clase en `<main>` junto a `nx-marco__contenido`. Refactor: un selector estable propio (`[data-nx-contenido]`) y quitar `main-content`.
+- **H-02 · `main.main-content`. CERRADO 24-11.** La clase `main-content` ya no existe en las 17 páginas; scripts, checks y hojas usan `nx-marco__contenido`. `previews/caceres-fh/` conserva la suya.
 - **H-03 · `style.css` por capas.** Las reglas sin capa (`.main-content` con su relleno 48px 56px, fondo degradado y `min-height: 100vh`, y la regla de `body`) ganan a `@layer nx.piezas`. Son restos del CSS viejo; al migrar cada pantalla (tramo 7) hay que pasarlas a piezas del catálogo o a la capa `modulo`.
 - **H-04 · Colores sueltos.** *(Colores resueltos en el tramo 6: ya son `var(--nx-*)`; queda decidir si pasan a una pieza `nx-estado`.)* `.db-status-indicator*` (style.css) y `.catalog-sidebar-*` (farmacia_style.css) usan colores en hexadecimal, no `var(--nx-*)`. Funcionan sobre la barra clara pero hay que pasarlos a tokens y, quizá, a una pieza `nx-estado`.
 - **H-05 · Variables y reglas sin uso.** *(Resuelto: las cuatro citadas en el tramo 6; el resto, 387 reglas, en el tramo 7 con `bin/quitar_css_sin_uso.py`, 23-11. Sin tocar `previews/`.)* `--sidebar-bg`, `--sidebar-bg-gradient`, `--sidebar-width` en `style.css` ya no se usan; `.profile-badge` en `farmacia_style.css` tampoco; `.search-*`, `.nav-*` ya se quitaron. `bin/css_sin_uso.py` puede ayudar a una pasada general.
@@ -28,7 +28,7 @@ Cosas que han salido al colocar las piezas comunes en las pantallas existentes y
 ## Tramo 7 (pantalla a pantalla)
 
 - **H-18 · Estado del catálogo dentro de la pantalla.** `farmacia_common.js` da a todo `[data-catalog-status]` el aspecto de la barra (`catalog-sidebar-status`), también al que está en el contenido (Inicio de Farmacia). En las pantallas migradas se marca con `data-catalog-solo-texto` y solo se escribe el texto; al migrar Inicio, hacer lo mismo.
-- **H-19 · Degradado de fondo del contenido.** Las pantallas migradas siguen con el fondo degradado de `.main-content` (regla sin capa de `style.css`, H-03), porque los scripts de Farmacia buscan `main.main-content` (H-02). Se quita al resolver H-02/H-03.
+- **H-19 · Degradado de fondo del contenido. CERRADO 24-11** (#1008).
 
 **H-20 (tanda 2a, 21-11).** Actividad del servicio e Inicio de Farmacia pintan sus tarjetas desde JS con clases viejas (`pending-validation-card`, `dashboard-card`, `prebio-chip`, `status-badge`), compartidas y con 7 checks atados. Marco migrado; las tarjetas piden una pieza «solicitud pendiente» y migrar JS y checks a la vez (tanda 3).
 
@@ -64,7 +64,8 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-25, H-22, H-24, H-27 | cerrados en este documento; no reverificados | - | - |
 | H-10 | cerrado por decisión (23-11) | la Home no lleva `<nx-shell>`: Sil no quiere barra lateral en ella | - |
 | H-04 | parcial | colores ya con `var(--nx-*)`; falta decidir la pieza `nx-estado` | S |
-| H-02, H-03 | abiertos | `main-content` en 30 sitios (9 scripts de Farmacia lo buscan; se renombra a un selector propio sin cambio visual). H-03: falta la capa en `farmacia_style.css` y las hojas de dashboard/estadísticas | M |
+| H-02 | cerrado | `main-content` renombrado a `nx-marco__contenido` | — |
+| H-03 | abierto | falta la capa en `farmacia_style.css` y las hojas de dashboard/estadísticas | M |
 | H-19 | cerrado (24-11) | Sin degradado en el fondo de `.main-content`: fondo liso (el de la página). Visto bueno de Sil | S |
 | H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
 | H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
