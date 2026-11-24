@@ -68,10 +68,10 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 | H-03 | cerrado | todas las hojas de módulo en `@layer modulo`; Font Awesome en `nx.vendor` | — |
 | H-19 | cerrado (24-11) | Sin degradado en el fondo de `.main-content`: fondo liso (el de la página). Visto bueno de Sil | S |
 | H-15 | cerrado (23-11) | `farmacia_seguimiento.js`, `treatmentEventsManager.js`, `dataManager.js` y `farmacia_excel_row_export.js` ya usan tokens. Queda `modules/mockDashboardData.js` con hex, pero ningún HTML ni JS lo carga (código muerto; borrarlo es decisión aparte) | - |
-| H-21 | parcial | `session-gate` en `reuma_index.html` (4); falta unificar el nombre de marca (no confirmado) | M |
+| H-21 | cerrado (24-11) | acceso con `nx-tarjeta` + `nx-cabecera`, marca ReumaNEXus; el Inicio conserva `home-*` por decisión de Sil | — |
 | H-20 | cerrado (24-11) | insignias del JS de Farmacia a `nx-etiqueta`; `pending-validation*`, `status-badge*`, `prebio-chip` quedan como enganche de checks sin estilo propio; `dashboard-card` ya era `nx-tarjeta` | — |
 | H-26 | cerrado (24-11) | Primera visita (#1004), Seguimiento (#1006) a `nx-campo`; CSS `.form-*` sin uso borrado y hojas de Reuma en `@layer modulo`. Los `display:none` en línea se dejan por decisión (estado de `formController.js`). | L |
-| H-01 | abierto | `VERSION_SITIO = '0.6.0'` en `modules/nexus/version.js` (versión única del sitio, «aparte» de #956) | M |
+| H-01 | cerrado (24-11) | versión única `4.0.0` («Nexus 4») en `version.js` y en el `release` de `module-readiness.json` | — |
 | H-08 | no revisado | `previews/caceres-fh` (barra vieja) | - |
 
 Otros pendientes de #956: paso a módulos ES y móvil de Farmacia (despriorizado el 23-11).

@@ -181,7 +181,7 @@ try {
             { titulo: 'Otros módulos', enlaces: ['../farmacia_index.html'] },
         ]);
         assert.equal(await page.locator('nx-shell .nx-shell__modulo').textContent(), 'Reumatología');
-        assert.deepEqual(await page.locator('nx-shell .nx-shell__version span').allTextContents(), ['Entorno de demostración', 'Versión 0.6.0']);
+        assert.deepEqual(await page.locator('nx-shell .nx-shell__version span').allTextContents(), ['Entorno de demostración', 'Versión 4.0.0']);
     });
 
     await test('B4 «Otros módulos» sale solo del perfil: desactivado, no disponible, ruta rara o sin manifiesto → no aparece', async () => {
@@ -203,7 +203,7 @@ try {
         await conManifiesto((route) => route.fulfill({ status: 404, body: '' }));
         await abrir('farmacia');
         assert.deepEqual((await menu()).map((s) => s.titulo), ['Farmacia', 'Gestión'], 'sin manifiesto');
-        assert.deepEqual(await page.locator('nx-shell .nx-shell__version span').allTextContents(), ['Versión 0.6.0'], 'sin manifiesto: solo la versión');
+        assert.deepEqual(await page.locator('nx-shell .nx-shell__version span').allTextContents(), ['Versión 4.0.0'], 'sin manifiesto: solo la versión');
         await conManifiesto(null);
         broken.length = 0;
     });
