@@ -709,7 +709,7 @@
     }
 
     function setMode(showInformes) {
-        var main = document.querySelector('main.main-content');
+        var main = document.querySelector('main.nx-marco__contenido');
         if (main) main.classList.toggle('farmacia-informes-mode', showInformes);
         var populationButton = document.getElementById('population-view-btn');
         var informesButton = document.getElementById('informes-view-btn');

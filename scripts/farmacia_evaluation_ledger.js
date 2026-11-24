@@ -256,7 +256,7 @@
     }
 
     function captureFormState(root) {
-        var scope = root || document.querySelector("main.main-content") || document;
+        var scope = root || document.querySelector("main.nx-marco__contenido") || document;
         var controls = Array.from(scope.querySelectorAll("input, select, textarea")).filter(function (control) {
             var type = String(control.type || "").toLowerCase();
             return controlKey(control) && type !== "file" && type !== "button" && type !== "submit" && type !== "reset" && !control.closest("[data-ledger-ignore]");
@@ -465,7 +465,7 @@
     }
 
     function ensureFeedbackArea(config) {
-        var main = document.querySelector("main.main-content");
+        var main = document.querySelector("main.nx-marco__contenido");
         if (!main) return null;
         var existing = document.getElementById("fhEvaluationLedgerFeedback");
         if (existing) return existing;
@@ -497,7 +497,7 @@
     }
 
     function buildCurrentEvent(config) {
-        var main = document.querySelector("main.main-content");
+        var main = document.querySelector("main.nx-marco__contenido");
         var cipPair = valueAndLabel(config.cip);
         var patientId = patientIdForCip(cipPair.value);
         if (!patientId) throw new Error("No se ha conservado el acto local porque no hay un CIP disponible.");
@@ -561,7 +561,7 @@
         restoredEvent = event;
         activeSourceEventId = event.source_event_id;
         activePatientId = event.patient_id;
-        return restoreFormState(event.payload && event.payload.form_state, document.querySelector("main.main-content")).then(function () {
+        return restoreFormState(event.payload && event.payload.form_state, document.querySelector("main.nx-marco__contenido")).then(function () {
             restoreDomainState(event);
             replaceEventIdInUrl(event);
             setStatus(status, restoredMessage || "Acto local restaurado. Revise los datos antes de volver a exportar.", "success");
@@ -590,7 +590,7 @@
 
     function initPreviousActPrompt(config) {
         if (new URLSearchParams(location.search).has("ledger_event_id")) return;
-        var main = document.querySelector("main.main-content");
+        var main = document.querySelector("main.nx-marco__contenido");
         var feedback = document.getElementById("fhEvaluationLedgerFeedback");
         if (!main || !feedback) return;
         var promptedEventId = "";

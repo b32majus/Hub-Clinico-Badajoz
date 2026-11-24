@@ -86,7 +86,7 @@ function runIndex(patient = null) {
     body,
     addEventListener(type, listener) { if (type === 'DOMContentLoaded') domReady.push(listener); },
     getElementById(id) { return ids[id] || (ids[id] = element(id)); },
-    querySelector(selector) { return selector === 'main.main-content' ? element('main') : null; },
+    querySelector(selector) { return selector === 'main.nx-marco__contenido' ? element('main') : null; },
     querySelectorAll() { return []; },
     createElement(tag) { const el = element(tag); el.tagName = tag.toUpperCase(); return el; },
     createTextNode(text) { return { textContent: text }; }

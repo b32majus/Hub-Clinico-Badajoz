@@ -491,7 +491,7 @@
 
         var guidedPanel = document.getElementById('guidedIntakePanel');
         if (guidedPanel) guidedPanel.classList.add('hidden');
-        var mainEl = document.querySelector('main.main-content');
+        var mainEl = document.querySelector('main.nx-marco__contenido');
         if (mainEl) mainEl.classList.remove('fh-intake-active');
         var trigger = document.getElementById('fhSearchBtn');
         mount.open(trigger);
@@ -503,7 +503,7 @@
         }
         F.setText('guidedCip', cip);
         document.getElementById('guidedIntakePanel').classList.remove('hidden');
-        var mainEl = document.querySelector('main.main-content');
+        var mainEl = document.querySelector('main.nx-marco__contenido');
         if (mainEl) mainEl.classList.add('fh-intake-active');
     }
 
@@ -662,7 +662,7 @@
         });
         document.getElementById('fhAltaCancelar').addEventListener('click', function () {
             document.getElementById('guidedIntakePanel').classList.add('hidden');
-            var mainEl = document.querySelector('main.main-content');
+            var mainEl = document.querySelector('main.nx-marco__contenido');
             if (mainEl) mainEl.classList.remove('fh-intake-active');
         });
         document.getElementById('fhAltaAcceder').addEventListener('click', function (event) {

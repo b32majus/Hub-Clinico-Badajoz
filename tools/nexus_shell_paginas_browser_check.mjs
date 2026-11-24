@@ -106,14 +106,14 @@ try {
                 const caja = terminar ? terminar.getBoundingClientRect() : null;
                 return { actuales, faltan, enlaces: shell.querySelectorAll('a.nx-shell__enlace[data-nav-link]').length,
                     terminarVisible: !!caja && caja.bottom <= window.innerHeight && caja.top >= 0,
-                    main: !!document.querySelector('main.main-content.nx-marco__contenido'), cols: getComputedStyle(document.querySelector('.nx-marco')).gridTemplateColumns.split(' ').length,
+                    main: !!document.querySelector('main.nx-marco__contenido'), cols: getComputedStyle(document.querySelector('.nx-marco')).gridTemplateColumns.split(' ').length,
                     desborde: document.documentElement.scrollWidth - document.documentElement.clientWidth };
             }, { ids: IDS, extra: modulo === 'farmacia' ? IDS_FARM : [] });
             if (r.faltan.length) problemas.push(`${p}: faltan ${r.faltan.join(',')}`);
             if (r.enlaces < 5) problemas.push(`${p}: ${r.enlaces} enlaces`);
             if (SIN_MENU.has(p) ? r.actuales.length !== 0 : (r.actuales.length !== 1 || r.actuales[0] !== p + '.html')) problemas.push(`${p}: aria-current=${r.actuales}`);
             if (!r.terminarVisible) problemas.push(`${p}: Terminar fuera de la vista a 900 px`);
-            if (!r.main) problemas.push(`${p}: sin main.main-content.nx-marco__contenido`);
+            if (!r.main) problemas.push(`${p}: sin main.nx-marco__contenido`);
             if (r.cols !== 2) problemas.push(`${p}: marco en ${r.cols} columnas a 1440`);
             if (r.desborde > 0) problemas.push(`${p}: desborde ${r.desborde}px a 1440`);
             await page.setViewportSize({ width: 360, height: 800 });

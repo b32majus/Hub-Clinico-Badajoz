@@ -377,7 +377,7 @@ try {
 
     /* Enter Informes through the supported switcher: neutral landing. */
     await page.locator('#informes-view-btn').click();
-    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#informes-section').isVisible(), 'Informes visible after supported switch');
     assert.ok(!(await page.locator('#kpi-section').isVisible()), 'population analysis hidden inside Informes');
     await assertNeutral(page);
@@ -696,9 +696,9 @@ try {
 
     /* View switching preserves the confirmed report + selection + focus. */
     await page.locator('#population-view-btn').click();
-    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => !document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     await page.locator('#informes-view-btn').click();
-    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.equal(await page.locator('#informes-drug-select').inputValue(), 'cosentyx');
     assert.equal(await page.locator('#informes-report-select').inputValue(), 'cosentyx');
     assert.equal(await page.locator('#informes-quarter-select').inputValue(), '2026-Q2');
@@ -720,7 +720,7 @@ try {
 
     /* Return to the population analysis through the supported switcher. */
     await page.locator('#population-view-btn').click();
-    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.waitForFunction(() => !document.querySelector('main.nx-marco__contenido').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#kpi-section').isVisible(), 'population analysis restored');
     assert.ok(!(await page.locator('#informes-section').isVisible()), 'Informes hidden again');
 
