@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261125-ayuda">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261122-t7f">
     <link rel="stylesheet" href="css/nexus_piezas.css?v=20261125-ayuda">
+    <link rel="stylesheet" href="css/nexus_paletas.css?v=20261125-pal">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
     <link rel="modulepreload" href="modules/nexus/menus.js">
     <link rel="modulepreload" href="modules/nexus/version.js">
@@ -63,6 +64,15 @@
                         <h1 class="nx-cabecera__titulo">Estadísticas del servicio</h1>
                         <p class="nx-cabecera__texto stats-population-only">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
                         <p class="nx-cabecera__texto stats-population-only" id="executive-summary"><strong id="summary-pacientes">0</strong> pacientes · <strong id="summary-servicios">0</strong> servicios · <strong id="summary-patologias">0</strong> patologías · <strong id="summary-farmacos">0</strong> fármacos · <strong id="summary-ea">0</strong> con EA</p>
+                    </div>
+                    <div class="nx-campo nx-cabecera__paleta">
+                        <label class="nx-campo__etiqueta" for="selectorPaleta">Colores de los gráficos</label>
+                        <select class="nx-campo__control" id="selectorPaleta">
+                            <option value="nature">Nature (por defecto)</option>
+                            <option value="okabe">Okabe-Ito (daltonismo)</option>
+                            <option value="apagada">Apagada (Tol)</option>
+                            <option value="viridis">Viridis</option>
+                        </select>
                     </div>
                 </header>
                 <div class="nx-acciones stats-population-only">
@@ -355,6 +365,7 @@
             </section>
         </main>
     </div>
+    <script src="modules/paletaGraficos.js?v=20261125-pal" defer></script>
     <script type="module" src="scripts/farmacia_pautas_catalog.js?v=20261125-xl"></script>
     <script type="module" src="scripts/farmacia_common.js?v=20261125-cip"></script>
     <script type="module" src="scripts/farmacia_statistics_cohort.js?v=20260806-raw-statistics-r1"></script>

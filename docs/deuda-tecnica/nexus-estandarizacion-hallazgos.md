@@ -76,4 +76,4 @@ Cruzado con el código de `gh/nexus-v4` (recuentos con `git grep`, sin `previews
 
 Otros pendientes de #956: paso a módulos ES y móvil de Farmacia (despriorizado el 23-11).
 
-Mejora valorada con Sil (24-11, no prioritaria): en Estadísticas, un selector de paleta (2-3 paletas ya validadas, p. ej. Nature, Lancet, gris para imprimir) recordado en cada ordenador. Sin selector libre de color por serie. Las paletas salen de `--nx-color-serie-*` y `--nx-color-actividad-*`.
+Mejora valorada con Sil (24-11), HECHA el 25-11 (#1028): en Estadísticas, un selector de paleta (cuatro paletas: Nature, Okabe-Ito, Apagada y Viridis; sin grises) recordado en cada ordenador. Sin selector libre de color por serie. Las paletas salen de `--nx-color-serie-*` y `--nx-color-actividad-*`.
