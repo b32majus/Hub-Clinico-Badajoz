@@ -1108,11 +1108,12 @@
             if (!success) { return; }
             populatePatientSelect();
 
-            // Leer CIP del contexto (#714 tramo 1: el puntero de sessionStorage
-            // manda; la query solo es respaldo de direcciones antiguas)
-            var ctx = window.FarmaciaDemo && typeof window.FarmaciaDemo.getQueryContext === 'function' ? window.FarmaciaDemo.getQueryContext() : null;
-            var urlParams = new URLSearchParams(window.location.search);
-            var cipParam = (ctx && ctx.cip) || urlParams.get("cip");
+            // Leer CIP (#714 tramo 1): el runtime acepta y limpia un ?cip= antiguo y deja
+            // el paciente actual en sessionStorage (puntero); F5 pregunta como en las demás.
+            var flowRuntime = window.FarmaciaPatientFlowRuntime;
+            if (flowRuntime && typeof flowRuntime.bootstrap === 'function') flowRuntime.bootstrap();
+            var pointerNow = window.FarmaciaPatientPointer ? window.FarmaciaPatientPointer.read() : null;
+            var cipParam = (pointerNow && pointerNow.cip) || null;
             var initialCip = cipParam || (dataset && dataset.pacientes && dataset.pacientes.length > 0 ? dataset.pacientes[0].cip : null);
 
             if (initialCip && patientSel) {
