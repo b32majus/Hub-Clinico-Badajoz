@@ -205,9 +205,15 @@ async function openAncestorCollapsibles(page, selector) {
         let el = document.querySelector(sel);
         while (el) {
             if (el.tagName === 'DETAILS' && !el.open) el.open = true;
+            // #956 (25-11): una sección cerrada ya no coloca su contenido; se abre con su cabecera.
+            if (el.classList && el.classList.contains('collapsible-content')) {
+                const h = el.previousElementSibling;
+                if (h && h.classList.contains('collapsible-header') && !h.classList.contains('active')) h.click();
+            }
             el = el.parentElement;
         }
     }, selector);
+    await page.waitForTimeout(650);
 }
 
 async function fillPrimera(page, { cip }) {

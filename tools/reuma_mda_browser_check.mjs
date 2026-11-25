@@ -249,6 +249,8 @@ for (const pagePath of ['primera_visita.html', 'seguimiento.html']) {
       // --- regression: DAPSA still computes under APs ----------------------
       await fill(page, '#evaDolor', '2');
       await fill(page, '#evaGlobal', '4');
+      // #956 (25-11): una sección cerrada ya no coloca su contenido; hay que abrirla como haría el usuario.
+      await openCollapsibles(page, '#pcrValue');
       await fill(page, '#pcrValue', '30');
       await page.selectOption('#pcrUnit', 'mg/L');
       await page.waitForTimeout(150);

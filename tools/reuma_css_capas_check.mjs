@@ -14,7 +14,7 @@ for (const h of ['style.css', 'style_primera_visita.css', 'style_seguimiento.css
   ok(llaves === 0, h + ': llaves descuadradas (' + llaves + ')');
 }
 const seg = fs.readFileSync(root + 'style_seguimiento.css', 'utf8');
-ok(/@import url\('style_primera_visita\.css'\);/.test(seg), 'style_seguimiento.css debe importar style_primera_visita.css sin layer() (esa hoja ya trae su capa)');
+ok(/@import url\('style_primera_visita\.css(\?v=[^']*)?'\);/.test(seg), 'style_seguimiento.css debe importar style_primera_visita.css sin layer() (esa hoja ya trae su capa)');
 for (const h of ['farmacia_seguimiento.html', 'farmacia_primera_visita.html']) {
   const html = fs.readFileSync(root + h, 'utf8');
   for (const m of html.matchAll(/<style>([\s\S]*?)<\/style>/g)) if (!/^\s*@layer nx\.vendor/.test(m[1])) ok(/^\s*(\/\*[\s\S]*?\*\/\s*)*@layer modulo\s*\{/.test(m[1]), h + ': <style> en línea sin @layer modulo');

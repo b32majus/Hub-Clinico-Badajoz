@@ -204,7 +204,8 @@ async function runPage(label, pagePath) {
     await page.goto(`${baseUrl}/${pagePath}`, { waitUntil: 'domcontentloaded' });
     await page.selectOption('#diagnosticoPrimario', 'espa');
     await page.waitForTimeout(300);
-    for (const sel of ['#evaGlobal', '#asdasCrpResult', '#basdaiP3', '.homunculus-svg-wrapper']) {
+    // #956 (25-11): una sección cerrada ya no coloca su contenido; hay que abrirla como haría el usuario.
+    for (const sel of ['#evaGlobal', '#asdasCrpResult', '#basdaiP3', '.homunculus-svg-wrapper', '#pcrValue']) {
       const visible = await openAncestorCollapsibles(page, sel);
       if (!visible) throw new Error(`no fue posible hacer visible ${sel} mediante interacción soportada`);
     }

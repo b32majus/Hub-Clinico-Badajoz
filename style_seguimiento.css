@@ -5,7 +5,7 @@
 
 @layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo;
 /* Importar estilos base consolidados de primera visita */
-@import url('style_primera_visita.css?v=20261124-des');
+@import url('style_primera_visita.css?v=20261125-sec');
 
 @layer modulo {
 /* ========================================
@@ -183,7 +183,7 @@
 
 /* Mejorar transición de secciones colapsables */
 .collapsible-content {
-    transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out;
+    transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out, content-visibility 0.4s allow-discrete;
     opacity: 0;
     overflow: hidden;
 }
