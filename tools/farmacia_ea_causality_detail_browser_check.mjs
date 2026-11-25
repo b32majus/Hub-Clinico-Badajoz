@@ -137,7 +137,7 @@ async function loadWorkbookAndSearch() {
 
 async function openFromSearch(buttonText, urlPattern) {
     await loadWorkbookAndSearch();
-    const action = page.locator(`a[href*="cip=${P1.cip}"]`, { hasText: buttonText }).first();
+    const action = page.locator(`a[data-fh-cip="${P1.cip}"]`, { hasText: buttonText }).first();
     await action.waitFor({ state: 'visible', timeout: 10000 });
     await action.click();
     await page.waitForURL(urlPattern, { timeout: 10000 });

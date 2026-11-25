@@ -196,6 +196,24 @@
             };
         }
 
+        /* Reanudación sin datos en la dirección (#714 tramo 1): lee el
+           envelope almacenado y lo deja pendiente de decisión, sin exigir el
+           handoff técnico de la URL. */
+        function resume() {
+            active = null;
+            pending = null;
+            var stored = readStored();
+            if (!stored) return empty('not_found_or_invalid');
+            pending = stored;
+            return {
+                status: 'pending_resume_decision',
+                identifier: clone(stored.identifier),
+                patient_id: stored.patient_id,
+                generation: stored.generation,
+                dirty: stored.dirty
+            };
+        }
+
         function resolveResume(decision) {
             if (decision === 'restart') {
                 purge();
@@ -267,6 +285,7 @@
 
         return Object.freeze({
             bootstrap: bootstrap,
+            resume: resume,
             resolveResume: resolveResume,
             replacePatient: replacePatient,
             updateCurrent: updateCurrent,

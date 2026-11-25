@@ -328,7 +328,7 @@
                 if (Object.prototype.hasOwnProperty.call(extraContext, key)) context[key] = extraContext[key];
             }
         }
-        link.href = F.makeContextUrl('farmacia_validacion.html', context);
+        F.setPatientLink(link, 'farmacia_validacion.html', context);
         F.appendIconText(link, 'fa-check-double', 'Abrir validación');
         return link;
     }

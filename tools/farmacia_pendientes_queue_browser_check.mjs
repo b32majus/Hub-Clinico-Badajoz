@@ -288,12 +288,26 @@ async function queueCards(page) {
     // Supported interaction: open Validación through the card link.
     const validar = page.locator('#actividadPendientesPanel a[data-enf-action="validar"]').first();
     await validar.waitFor({ timeout: 10000 });
+    // #714: el enlace de validación ya no lleva cip en el href; lleva el
+    // contexto técnico (servicio/entrada) y el CIP en data-fh-cip, que el
+    // clic pasa al puntero de sessionStorage.
+    const patientKeys = ['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia'];
     const href = await validar.getAttribute('href');
-    assert.ok(href && href.startsWith('farmacia_validacion.html?') && href.includes('cip='),
+    const hrefParams = new URLSearchParams((href || '').split('#')[0].split('?')[1] || '');
+    assert.ok(href && href.startsWith('farmacia_validacion.html?'),
       `validación link carries the supported context: ${href}`);
+    assert.deepEqual(patientKeys.filter((key) => hrefParams.has(key)), [], `validación link patient keys: ${href}`);
+    const linkCip = (await validar.getAttribute('data-fh-cip')) || '';
+    assert.ok(linkCip.trim(), `validación link carries data-fh-cip: ${href}`);
     await Promise.all([page.waitForLoadState('domcontentloaded'), validar.click()]);
-    assert.ok(page.url().includes('farmacia_validacion.html?') && page.url().includes('cip='),
+    assert.ok(page.url().includes('farmacia_validacion.html?'),
       `supported navigation reaches Validación with context: ${page.url()}`);
+    const landedParams = new URL(page.url()).searchParams;
+    assert.deepEqual(patientKeys.filter((key) => landedParams.has(key)), [], `URL without patient keys: ${page.url()}`);
+    await page.waitForFunction((cip) => {
+      const F = window.FarmaciaDemo;
+      return !!F && typeof F.getQueryContext === 'function' && F.getQueryContext().cip === cip;
+    }, linkCip, { timeout: 15000 });
     assertNoPageFailure(pageErrors, consoleErrors);
     ok('supported import flows into the single queue with expand and validación navigation');
   } catch (error) {

@@ -117,7 +117,7 @@ function location(search = '') {
   return { href: `http://local/farmacia_index.html${search}`, pathname: '/farmacia_index.html', search, hash: '' };
 }
 
-function harness(sharedStorage = storage(), search = '', confirm = () => true, dataPort = port()) {
+function harness(sharedStorage = storage(), search = '', confirm = () => true, dataPort = port(), navigationType = null) {
   const loc = location(search);
   const history = {
     replaceState(_state, _title, url) {
@@ -135,7 +135,10 @@ function harness(sharedStorage = storage(), search = '', confirm = () => true, d
     location: loc,
     history,
     confirm,
-    crypto: { randomUUID: () => `generation-${Math.random().toString(16).slice(2)}` }
+    crypto: { randomUUID: () => `generation-${Math.random().toString(16).slice(2)}` },
+    // #714: el tipo de navegación real ya no se deduce de un marcador en la URL;
+    // en node se fija con navigationType.
+    ...(navigationType ? { navigationType } : {})
   });
   return { runtime, storage: sharedStorage, location: loc };
 }
@@ -397,13 +400,18 @@ test('denied and absent validation states are not collapsed to pending', () => {
   records['patient-c'].validation.validation_result = 'validated';
 });
 
-test('internal navigation auto-continues and removes its transient marker', () => {
+// #714: la navegación interna ya no lleva marcador ni claves de paciente en la
+// URL; reanuda por sessionStorage y el tipo de navegación 'navigate' no pregunta.
+test('internal navigation auto-continues without patient keys in the URL', () => {
   const selected = harness();
   selected.runtime.selectByCip('CIP-A');
   const url = selected.runtime.makeContextUrl('farmacia_dashboard_paciente.html', { entrada: 'dashboard' });
   const search = new URL(url, 'http://local/').search;
+  const patientKeys = ['cip', 'id', 'patient_id', 'identifier_system', 'generation', runtimeModule.NAV_MARKER, 'patologia'];
+  const params = new URLSearchParams(search);
+  assert.equal(patientKeys.filter((key) => params.has(key)).length, 0, `URL ${JSON.stringify(search)}`);
   let confirmations = 0;
-  const reloaded = harness(selected.storage, search, () => { confirmations += 1; return false; });
+  const reloaded = harness(selected.storage, search, () => { confirmations += 1; return false; }, undefined, () => 'navigate');
   assert.equal(reloaded.runtime.bootstrap().status, 'active');
   assert.equal(confirmations, 0);
   assert.equal(new URLSearchParams(reloaded.location.search).has(runtimeModule.NAV_MARKER), false);

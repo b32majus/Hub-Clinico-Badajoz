@@ -332,8 +332,14 @@ try {
   assert.doesNotMatch(await page.locator('body').innerText(), /farmacia_raw/);
   await assertNoRetiredUi();
 
+  // #714: el enlace longitudinal ya no lleva generation (ni ninguna clave de
+  // paciente) en el href; la generation vive en el envelope de sessionStorage.
   const longitudinalHref = await page.locator('#longitudinalStandaloneLink').getAttribute('href');
-  assert(longitudinalHref && longitudinalHref.includes('generation='));
+  const hrefParams = new URLSearchParams((longitudinalHref || '').split('#')[0].split('?')[1] || '');
+  assert(['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia']
+    .every(key => !hrefParams.has(key)), `longitudinal href ${JSON.stringify(longitudinalHref)}`);
+  const envelopeGeneration = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)).generation, SESSION_KEY);
+  assert(envelopeGeneration, 'envelope generation in sessionStorage');
   await page.goto(new URL(longitudinalHref, page.url()).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(cip => document.querySelector('#longitudinalPatientSelect')?.value === cip, CIP_A);
   const longitudinalSummary = await page.locator('#longitudinalPatientSummary').innerText();
@@ -406,8 +412,13 @@ try {
   await assertNoRetiredUi();
 
   await clickLink('Inicio Farmacia');
-  await page.locator('#fhQuickViewOverlay:not(.hidden)').waitFor();
-  await page.locator('button[data-fh-qv-close]').click();
+  // #714: volver a Inicio con un paciente puesto ya no abre la ficha rápida
+  // (el aviso de búsqueda es de un solo uso); el paciente sigue en la memoria
+  // de la pestaña. 
+  await page.waitForTimeout(800);
+  assert.equal(await page.locator('#fhQuickViewOverlay:not(.hidden)').count(), 0, 'returning to Inicio does not reopen the quick view');
+  const pointerAfterReturn = await page.evaluate(() => JSON.parse(sessionStorage.getItem('promueve.fh.currentPatientPointer.v1') || 'null'));
+  assert.equal(pointerAfterReturn && pointerAfterReturn.cip, CIP_A, 'returning to Inicio keeps the current patient in the pointer');
   await upload('#inputExcelEnfermeria', 'enfermeria-sintetica-a.xlsx', nurseBuffer);
   await page.waitForFunction(() => window.FarmaciaDataImports?.getState('enfermeria')?.rows?.length === 2);
   assert.match(await page.locator('#estadoCargaEnfermeria').textContent(), /Excel Enfermería cargado/);
@@ -458,8 +469,14 @@ try {
   assert.equal(await multiPromCard.count(), 1, 'the PROM repeated across event rows is rendered once');
   assert.match(await multiPromCard.innerText(), /RAW_PROM_MULTI[\s\S]*false[\s\S]*2026-08-08/);
 
+  // #714: igual que arriba, el href de B no lleva claves de paciente; la
+  // generation nueva de B está en el envelope de sessionStorage.
   const longitudinalBHref = await page.locator('#longitudinalStandaloneLink').getAttribute('href');
-  assert(longitudinalBHref && longitudinalBHref.includes('generation='));
+  const hrefBParams = new URLSearchParams((longitudinalBHref || '').split('#')[0].split('?')[1] || '');
+  assert(['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia']
+    .every(key => !hrefBParams.has(key)), `longitudinal href B ${JSON.stringify(longitudinalBHref)}`);
+  const envelopeGenerationB = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)).generation, SESSION_KEY);
+  assert(envelopeGenerationB, 'envelope generation B in sessionStorage');
   await page.goto(new URL(longitudinalBHref, page.url()).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(cip => document.querySelector('#longitudinalPatientSelect')?.value === cip, CIP_B);
   const activeLongitudinalLine = page.locator('#longitudinalTreatmentTimeline .info-field').filter({ hasText: 'Activo RAW B1' });

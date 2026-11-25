@@ -1,6 +1,62 @@
 'use strict';
 
 (function () {
+    /* #714 tramo 1: puntero del paciente actual de Farmacia en
+       sessionStorage (como Reuma). Ninguna dirección ni enlace lleva cip,
+       id, patient_id, identifier_system, generation, fh_session ni
+       patologia. Solo datos sintéticos; nunca localStorage. */
+    window.FarmaciaPatientPointer = Object.freeze((function () {
+        var KEY = 'promueve.fh.currentPatientPointer.v1';
+
+        function storage() {
+            try {
+                if (typeof sessionStorage === 'undefined' || !sessionStorage) return null;
+                return sessionStorage;
+            } catch (problem) {
+                return null;
+            }
+        }
+
+        function write(value) {
+            var store = storage();
+            var source = value || {};
+            var cip = typeof source.cip === 'string' ? source.cip.trim() : '';
+            var patologia = typeof source.patologia === 'string' ? source.patologia : '';
+            if (!store || !cip) return;
+            try {
+                store.setItem(KEY, JSON.stringify({ cip: cip, patologia: patologia || '' }));
+            } catch (problem) {
+                /* sessionStorage puede fallar: sin puntero, fail closed. */
+            }
+        }
+
+        function read() {
+            var store = storage();
+            if (!store) return null;
+            try {
+                var raw = store.getItem(KEY);
+                if (raw === null) return null;
+                var value = JSON.parse(raw);
+                if (!value || typeof value !== 'object' || typeof value.cip !== 'string' || !value.cip.trim()) return null;
+                return { cip: value.cip.trim(), patologia: typeof value.patologia === 'string' ? value.patologia : '' };
+            } catch (problem) {
+                return null;
+            }
+        }
+
+        function clear() {
+            var store = storage();
+            if (!store) return;
+            try {
+                store.removeItem(KEY);
+            } catch (problem) {
+                /* noop */
+            }
+        }
+
+        return { KEY: KEY, read: read, write: write, clear: clear };
+    })());
+
     const qs = (selector, scope = document) => scope.querySelector(selector);
     const qsa = (selector, scope = document) => Array.from(scope.querySelectorAll(selector));
 
@@ -1686,7 +1742,10 @@
         var runtime = window.FarmaciaPatientFlowRuntime;
         var runtimePatient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
         var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
-        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
+        /* #714 tramo 1: tras el runtime, el puntero de sessionStorage puede
+           llevar el paciente cuando la dirección ya está limpia. */
+        var pointerNow = window.FarmaciaPatientPointer ? window.FarmaciaPatientPointer.read() : null;
+        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (pointerNow && pointerNow.cip) || (runtimePatient && runtimePatient.cip) || '')).trim();
         var hasExplicitCip = !!cip;
         var sid = restarted ? '' : String(params.get('solicitud_id') || '').trim();
         var patient = null;
@@ -1708,7 +1767,7 @@
             solicitud_id: sid,
             servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
             servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
-            patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
+            patologia: restarted ? '' : (params.get('patologia') || (pointerNow && pointerNow.cip === cip ? pointerNow.patologia : '') || (patientFound ? patient.patologia : '') || ''),
             entrada: restarted ? '' : (params.get('entrada') || ''),
             patient: patient,
             hasExplicitCip: hasExplicitCip,
@@ -1733,10 +1792,9 @@
             }
             return runtimeUrl;
         }
+        /* #714 tramo 1: sin runtime tampoco viaja el paciente en la URL. */
         const params = new URLSearchParams();
-        if (context.cip) params.set('cip', context.cip);
         if (context.servicio) params.set('servicio', context.servicio);
-        if (context.patologia) params.set('patologia', context.patologia);
         if (context.entrada) params.set('entrada', context.entrada);
         if (context.solicitud_id) params.set('solicitud_id', context.solicitud_id);
         const query = params.toString();
@@ -1870,13 +1928,85 @@
         if (firstCard) firstCard.parentNode.insertBefore(banner, firstCard);
     }
 
+    /* #714 tramo 1: enlaces hacia pantallas de paciente. La URL lleva solo
+       contexto técnico (servicio/entrada/solicitud_id); el paciente viaja en
+       el puntero de sessionStorage (data-fh-cip en el enlace + clic). */
+    function setPatientLink(link, base, context) {
+        if (!link) return;
+        var values = context || {};
+        link.href = makeContextUrl(base, values);
+        var cip = values.cip ? String(values.cip).trim() : '';
+        if (cip) {
+            link.setAttribute('data-fh-cip', cip);
+            link.setAttribute('data-fh-patologia', values.patologia || '');
+        } else {
+            link.removeAttribute('data-fh-cip');
+            link.removeAttribute('data-fh-patologia');
+        }
+    }
+
+    /* Aviso de un solo uso: la búsqueda lateral pide a Inicio que abra la
+       ficha rápida del paciente buscado (#714 tramo 1). */
+    var PENDING_SEARCH_KEY = 'promueve.fh.pendingSearch.v1';
+    function consumePendingSearch() {
+        try {
+            var pendingSearch = sessionStorage.getItem(PENDING_SEARCH_KEY) === '1';
+            sessionStorage.removeItem(PENDING_SEARCH_KEY);
+            return pendingSearch;
+        } catch (problem) {
+            return false;
+        }
+    }
+
+    function goToPatient(base, context, extraParams) {
+        var values = context || {};
+        if (window.FarmaciaPatientPointer && values.cip) {
+            window.FarmaciaPatientPointer.write({ cip: String(values.cip).trim(), patologia: values.patologia || '' });
+        }
+        var url = makeContextUrl(base, values);
+        if (extraParams && typeof extraParams === 'object') {
+            var extra = new URLSearchParams();
+            Object.keys(extraParams).forEach(function (key) {
+                if (extraParams[key] !== undefined && extraParams[key] !== null && extraParams[key] !== '') extra.set(key, extraParams[key]);
+            });
+            var query = extra.toString();
+            if (query) url += (url.indexOf('?') === -1 ? '?' : '&') + query;
+        }
+        window.location.href = url;
+    }
+
+    /* Un único listener de clic delegado (captura): un enlace con
+       data-fh-cip fija el puntero ANTES de navegar. Con modificadores (pestaña
+       nueva) no escribe nada. */
+    (function bindPatientPointerListener() {
+        if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+        document.addEventListener('click', function (event) {
+            try {
+                if (!event || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                var target = event.target;
+                if (!target || typeof target.closest !== 'function') return;
+                var link = target.closest('a[data-fh-cip]');
+                if (!link || !window.FarmaciaPatientPointer) return;
+                window.FarmaciaPatientPointer.write({
+                    cip: link.getAttribute('data-fh-cip') || '',
+                    patologia: link.getAttribute('data-fh-patologia') || ''
+                });
+            } catch (problem) {
+                /* noop */
+            }
+        }, true);
+    })();
+
     function initSidebarSearch() {
         const input = qs('#patientSearch');
         if (!input) return;
         input.addEventListener('keydown', event => {
             if (event.key !== 'Enter') return;
             const cip = input.value.trim();
-            if (cip) window.location.href = makeContextUrl('farmacia_index.html', { cip });
+            if (cip) {
+                try { sessionStorage.setItem(PENDING_SEARCH_KEY, '1'); } catch (problem) { /* sin aviso: Inicio no abre la ficha */ }
+                goToPatient('farmacia_index.html', { cip: cip });
+            }
         });
         const clearBtn = qs('#clearPatientSearch');
         if (clearBtn) {
@@ -3142,7 +3272,10 @@
         var runtime = window.FarmaciaPatientFlowRuntime;
         var runtimePatient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
         var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
-        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
+        /* #714 tramo 1: tras el runtime, el puntero de sessionStorage puede
+           llevar el paciente cuando la dirección ya está limpia. */
+        var pointerNow = window.FarmaciaPatientPointer ? window.FarmaciaPatientPointer.read() : null;
+        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (pointerNow && pointerNow.cip) || (runtimePatient && runtimePatient.cip) || '')).trim();
         var hasExplicitCip = !!cip;
         var sid = restarted ? '' : String(params.get('solicitud_id') || '').trim();
         var resolved = { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null };
@@ -3172,7 +3305,7 @@
             solicitud_id: sid,
             servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
             servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
-            patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
+            patologia: restarted ? '' : (params.get('patologia') || (pointerNow && pointerNow.cip === cip ? pointerNow.patologia : '') || (patientFound ? patient.patologia : '') || ''),
             entrada: restarted ? '' : (params.get('entrada') || ''),
             patient: patient,
             hasExplicitCip: hasExplicitCip,
@@ -3212,6 +3345,9 @@
         readPatientByCipSync,
         loadLongitudinalDemoDataset,
         makeContextUrl,
+        setPatientLink,
+        goToPatient,
+        consumePendingSearch,
         setText,
         setValue,
         clearChildren,

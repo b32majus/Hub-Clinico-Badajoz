@@ -1143,13 +1143,20 @@
             link.removeAttribute('href');
             return;
         }
+        /* #714 tramo 1: ni cip ni patologia en la URL; el paciente va en el
+           puntero de sessionStorage y se fija con data-fh-cip en el enlace. */
         var params = [];
         var cip = selectedCip();
         var patologia = selectedPatologia();
-        if (cip && cip !== 'CIP-DEMO-FH-XXX') params.push('cip=' + encodeURIComponent(cip));
         params.push('servicio=' + encodeURIComponent(serviceSlugFromMode(isManualOrigin() ? currentManualService() : modoActual)));
-        if (patologia && patologia !== '—') params.push('patologia=' + encodeURIComponent(patologia));
         params.push('entrada=' + encodeURIComponent('seguimiento'));
+        if (cip && cip !== 'CIP-DEMO-FH-XXX') {
+            link.setAttribute('data-fh-cip', cip);
+            link.setAttribute('data-fh-patologia', patologia && patologia !== '—' ? patologia : '');
+        } else {
+            link.removeAttribute('data-fh-cip');
+            link.removeAttribute('data-fh-patologia');
+        }
         link.href = 'farmacia_seguimiento.html' + (params.length ? ('?' + params.join('&')) : '');
     }
 

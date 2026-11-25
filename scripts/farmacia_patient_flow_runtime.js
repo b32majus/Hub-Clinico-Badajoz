@@ -20,6 +20,14 @@
         'neurologic_disorder_status', 'neoplasia_history_or_risk_status'
     ];
 
+    /* #714 tramo 1: claves técnicas del paciente que ya NO viajan en la
+       dirección de Farmacia. El paciente actual va en sessionStorage. */
+    var PATIENT_KEYS = ['cip', 'id', 'patient_id', 'identifier_system', 'generation', NAV_MARKER, 'patologia'];
+
+    function pointer() {
+        return root.FarmaciaPatientPointer || null;
+    }
+
     function own(object, key) {
         return Object.prototype.hasOwnProperty.call(object || {}, key);
     }
@@ -412,12 +420,12 @@
             historyObject.replaceState(null, '', (locationObject.pathname || '') + (query ? '?' + query : '') + (locationObject.hash || ''));
         }
 
-        function removeTechnicalContext(removePatientContext) {
+        /* #714 tramo 1: solo se retiran las claves del paciente (y nada
+           más). servicio, entrada, destino, solicitud_id y ledger_event_id
+           se quedan en la dirección. */
+        function removeTechnicalContext() {
             var params = paramsFromLocation();
-            params.delete(NAV_MARKER);
-            if (removePatientContext) {
-                ['cip', 'servicio', 'patologia', 'entrada', 'patient_id', 'identifier_system', 'generation'].forEach(function (key) { params.delete(key); });
-            }
+            PATIENT_KEYS.forEach(function (key) { params.delete(key); });
             replaceParams(params);
         }
 
@@ -431,39 +439,95 @@
             };
         }
 
+        /* #714 tramo 1: tipo de navegación real. Solo una recarga (o un
+           tipo desconocido) pregunta «continuar o empezar de cero». */
+        function navigationType() {
+            try {
+                if (settings.navigationType && typeof settings.navigationType === 'function') {
+                    return settings.navigationType();
+                }
+                if (typeof performance !== 'undefined' && performance && typeof performance.getEntriesByType === 'function') {
+                    var entries = performance.getEntriesByType('navigation');
+                    if (entries && entries[0]) return entries[0].type || '';
+                }
+                return '';
+            } catch (problem) {
+                return '';
+            }
+        }
+
         function bootstrap() {
             if (bootstrapped) return activeEnvelope ? { status: 'active', envelope: clone(activeEnvelope) } : { status: 'empty' };
             bootstrapped = true;
             var params = paramsFromLocation();
-            var handoff = handoffFromParams(params);
-            if (!handoff.generation || !handoff.patient_id || !handoff.identifier.identifier_system || !handoff.identifier.identifier_value) {
-                session.bootstrap({});
+            var legacyCip = (params.get('cip') || params.get('id') || '').trim();
+            var legacyPatologia = params.get('patologia') || '';
+            var pointerModule = pointer();
+            var resumeResult = typeof session.resume === 'function' ? session.resume() : null;
+            var stored = resumeResult && resumeResult.status === 'pending_resume_decision' ? resumeResult : null;
+            var currentPointer = pointerModule ? pointerModule.read() : null;
+
+            /* Dirección antigua con el paciente en la URL: se acepta una vez,
+               se fija el puntero y se limpia la dirección sin preguntar nada. */
+            if (legacyCip) {
+                if (stored && String(stored.identifier.identifier_value || '').trim().toUpperCase() !== legacyCip.toUpperCase()) {
+                    session.resolveResume('restart');
+                    stored = null;
+                }
+                if (pointerModule) pointerModule.write({ cip: legacyCip, patologia: legacyPatologia });
+                if (stored) {
+                    var continued = session.resolveResume('continue');
+                    activeEnvelope = continued.envelope;
+                    resolutionStatus = 'continued';
+                    removeTechnicalContext();
+                    return continued;
+                }
                 activeEnvelope = null;
                 resolutionStatus = 'empty';
+                removeTechnicalContext();
                 return { status: 'empty' };
             }
-            var result = session.bootstrap(handoff);
-            if (result.status !== 'pending_resume_decision') {
-                activeEnvelope = null;
-                resolutionStatus = 'invalid';
-                removeTechnicalContext(true);
-                return result;
+
+            /* Puntero y envelope en desacuerdo: el puntero manda (se pulsó un
+               enlace a otro paciente) y el envelope anterior se descarta. */
+            if (stored && currentPointer && String(currentPointer.cip || '').trim().toUpperCase()
+                !== String(stored.identifier.identifier_value || '').trim().toUpperCase()) {
+                session.resolveResume('restart');
+                stored = null;
             }
-            var continueSession = params.get(NAV_MARKER) === '1';
+
+            if (!stored && !currentPointer) {
+                activeEnvelope = null;
+                resolutionStatus = 'empty';
+                removeTechnicalContext();
+                return { status: 'empty' };
+            }
+
+            var navigation = navigationType();
+            var continueSession = navigation !== 'reload' && navigation !== '';
             if (!continueSession) {
                 continueSession = confirmResume('Hay un paciente actual en esta sesión. Aceptar para continuar o Cancelar para empezar de cero.');
             }
-            result = session.resolveResume(continueSession ? 'continue' : 'restart');
+
             if (continueSession) {
-                activeEnvelope = result.envelope;
+                if (stored) {
+                    var active = session.resolveResume('continue');
+                    activeEnvelope = active.envelope;
+                    if (!currentPointer && pointerModule) {
+                        pointerModule.write({ cip: activeEnvelope.identifier.identifier_value, patologia: '' });
+                    }
+                    stored = active;
+                }
                 resolutionStatus = 'continued';
-                removeTechnicalContext(false);
             } else {
+                if (stored) session.resolveResume('restart');
+                if (pointerModule) pointerModule.clear();
                 activeEnvelope = null;
                 resolutionStatus = 'restarted';
-                removeTechnicalContext(true);
+                stored = null;
             }
-            return result;
+            removeTechnicalContext();
+            return stored || { status: 'empty' };
         }
 
         function currentEnvelope() {
@@ -554,13 +618,20 @@
             activeEnvelope = result.envelope;
             bootstrapped = true;
             resolutionStatus = 'selected';
-            var params = paramsFromLocation();
-            params.set('cip', identifier.identifier_value);
-            params.set('patient_id', patientId);
-            params.set('identifier_system', identifier.identifier_system);
-            params.set('generation', input.generation);
-            params.delete(NAV_MARKER);
-            replaceParams(params);
+            /* #714 tramo 1: el paciente seleccionado va al puntero de
+               sessionStorage, nunca a la dirección. */
+            var pointerModule = pointer();
+            if (pointerModule) {
+                var previousPointer = pointerModule.read();
+                var samePointerCip = previousPointer && previousPointer.cip
+                    && String(previousPointer.cip).trim().toUpperCase()
+                        === String(identifier.identifier_value || '').trim().toUpperCase();
+                pointerModule.write({
+                    cip: identifier.identifier_value,
+                    patologia: samePointerCip ? (previousPointer.patologia || '') : ''
+                });
+            }
+            removeTechnicalContext();
             return { patient: clone(patient), envelope: clone(activeEnvelope), previousCip: previousCip };
         }
 
@@ -731,37 +802,45 @@
             return clone(updated);
         }
 
+        /* #714 tramo 1: la URL de contexto ya no transporta datos del
+           paciente; solo servicio y entrada (solicitud_id lo re-añade
+           farmacia_common.js en su frontera N4). */
         function contextUrl(base, context) {
             var params = new URLSearchParams();
             var values = context || {};
-            ['cip', 'servicio', 'patologia', 'entrada'].forEach(function (key) {
+            ['servicio', 'entrada'].forEach(function (key) {
                 if (present(values[key])) params.set(key, values[key]);
             });
-            var envelope = currentEnvelope();
-            if (envelope) {
-                params.set('cip', envelope.identifier.identifier_value);
-                params.set('patient_id', envelope.patient_id);
-                params.set('identifier_system', envelope.identifier.identifier_system);
-                params.set('generation', envelope.generation);
-                params.set(NAV_MARKER, '1');
-            }
             var query = params.toString();
             return query ? base + '?' + query : base;
         }
 
+        /* #714 tramo 1: reescribe los enlaces entre pantallas de paciente
+           quitando SOLO las claves del paciente y conservando los demás
+           parámetros (solicitud_id, destino, servicio, entrada...). */
         function decorateLinks(scope) {
-            if (!currentEnvelope() || !scope || typeof scope.querySelectorAll !== 'function') return;
+            if (!scope || typeof scope.querySelectorAll !== 'function') return;
             Array.prototype.forEach.call(scope.querySelectorAll('a[href]'), function (link) {
                 var rawHref = link.getAttribute('href') || '';
                 var page = rawHref.split(/[?#]/)[0].split('/').pop();
                 if (PATIENT_PAGES.indexOf(page) === -1) return;
-                var parsed = new URL(rawHref, locationObject.href);
-                link.href = contextUrl(page, {
-                    cip: parsed.searchParams.get('cip'),
-                    servicio: parsed.searchParams.get('servicio'),
-                    patologia: parsed.searchParams.get('patologia'),
-                    entrada: parsed.searchParams.get('entrada')
-                });
+                var parsed;
+                try {
+                    parsed = new URL(rawHref, locationObject.href);
+                } catch (problem) {
+                    return;
+                }
+                var params = new URLSearchParams(parsed.search);
+                // Un enlace antiguo a OTRO paciente conserva su CIP en data-fh-cip
+                // (el clic lo pasa al puntero) en vez de perderlo.
+                var linkCip = (params.get('cip') || params.get('id') || '').trim();
+                if (linkCip && !link.hasAttribute('data-fh-cip')) {
+                    link.setAttribute('data-fh-cip', linkCip);
+                    link.setAttribute('data-fh-patologia', params.get('patologia') || '');
+                }
+                PATIENT_KEYS.forEach(function (key) { params.delete(key); });
+                var query = params.toString();
+                link.setAttribute('href', page + (query ? '?' + query : '') + (parsed.hash || ''));
             });
         }
 
@@ -783,7 +862,7 @@
             markCurrentClean: markCurrentClean,
             makeContextUrl: contextUrl,
             decorateLinks: decorateLinks,
-            clear: function () { session.clear(); activeEnvelope = null; bootstrapped = true; resolutionStatus = 'restarted'; removeTechnicalContext(true); return { status: 'empty' }; }
+            clear: function () { session.clear(); if (pointer()) pointer().clear(); activeEnvelope = null; bootstrapped = true; resolutionStatus = 'restarted'; removeTechnicalContext(true); return { status: 'empty' }; }
         });
     }
 

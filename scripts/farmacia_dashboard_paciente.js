@@ -1044,12 +1044,12 @@
 
         const actionBtns = document.querySelectorAll('.patient-header-actions a');
         if (actionBtns[0]) {
-            actionBtns[0].href = F.makeContextUrl('farmacia_seguimiento.html', {
+            F.setPatientLink(actionBtns[0], 'farmacia_seguimiento.html', {
                 cip: patient.cip, servicio: patient.servicioSlug, patologia: patient.patologia, entrada: 'seguimiento'
             });
         }
         if (actionBtns[1]) {
-            actionBtns[1].href = F.makeContextUrl('farmacia_validacion.html', {
+            F.setPatientLink(actionBtns[1], 'farmacia_validacion.html', {
                 cip: patient.cip, servicio: patient.servicioSlug, patologia: patient.patologia, entrada: 'validacion'
             });
         }
@@ -1057,7 +1057,7 @@
         // Actualizar enlaces de navegación con CIP actual
         var navSeg = document.getElementById("navToSeguimiento");
         if (navSeg && patient.cip) {
-            navSeg.href = F.makeContextUrl('farmacia_seguimiento.html', { cip: patient.cip, entrada: 'seguimiento' });
+            F.setPatientLink(navSeg, 'farmacia_seguimiento.html', { cip: patient.cip, entrada: 'seguimiento' });
         }
 
         renderLongitudinalForCip(patient.cip);
@@ -1201,7 +1201,7 @@
                 && currentCtxPatient.cip === cip;
             if (rawPatient) {
                 section.classList.remove('hidden');
-                if (standaloneLink) standaloneLink.href = F.makeContextUrl('farmacia_dashboard_longitudinal.html', { cip: cip });
+                if (standaloneLink) F.setPatientLink(standaloneLink, 'farmacia_dashboard_longitudinal.html', { cip: cip });
                 if (chartContainer) F.clearChildren(chartContainer);
                 if (noDataEl) noDataEl.classList.remove('hidden');
                 if (legendEl) legendEl.classList.add('hidden');
@@ -1214,7 +1214,7 @@
         section.classList.remove('hidden');
         // Actualizar enlace "Vista completa" con CIP actual
         if (standaloneLink) {
-            standaloneLink.href = F.makeContextUrl('farmacia_dashboard_longitudinal.html', { cip: cip });
+            F.setPatientLink(standaloneLink, 'farmacia_dashboard_longitudinal.html', { cip: cip });
         }
         if (noDataEl) noDataEl.classList.add('hidden');
         if (demoNoteEl) demoNoteEl.classList.remove('hidden');

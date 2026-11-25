@@ -5747,12 +5747,12 @@
         const ctxNav = demoCtx;
         if (ctxNav.cip) {
             var navDash = document.getElementById("navToDashboardPaciente");
-            if (navDash) navDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
+            if (navDash) F.setPatientLink(navDash, 'farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
 
             // La barra <nx-shell> se monta al cargar su módulo (async): esperar a que exista.
             customElements.whenDefined('nx-shell').then(function () {
                 var sidebarDash = document.querySelector('a.nx-shell__enlace[href*="farmacia_dashboard_paciente.html"]');
-                if (sidebarDash) sidebarDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
+                if (sidebarDash) F.setPatientLink(sidebarDash, 'farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
             });
         }
 

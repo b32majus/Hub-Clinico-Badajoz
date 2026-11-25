@@ -337,16 +337,22 @@ await test('2. the stored envelope carries identity, projection and populated ex
     assert.equal(envelope.dirty, false);
 });
 
-await test('3. the URL carries cip, patient_id, identifier_system and generation and drops the nav marker', () => {
-    const { runtime, location } = makeHarness({ search: `?${runtimeModule.NAV_MARKER}=1` });
+// #714: la URL ya no transporta datos del paciente (ni marcador de navegación);
+// cip, patient_id, identifier_system y generation viven en el envelope de
+// sessionStorage. La URL se limpia sin preguntar nada.
+await test('3. the URL carries no patient keys and the stored envelope carries cip, patient_id, identifier_system and generation', () => {
+    const { runtime, location, storage } = makeHarness({ search: `?${runtimeModule.NAV_MARKER}=1` });
     const result = runtime.commitExplicitSelection(explicitIdentifier('A'), 'patient-a');
     assert.equal(result.status, 'active');
     const params = new URLSearchParams(location.search);
-    assert.equal(params.get('cip'), 'CIP-A');
-    assert.equal(params.get('patient_id'), 'patient-a');
-    assert.equal(params.get('identifier_system'), IDENTIFIER_SYSTEM);
-    assert.equal(params.get('generation'), result.envelope.generation, 'URL generation equals the stored envelope generation');
-    assert.equal(params.has(runtimeModule.NAV_MARKER), false, 'the navigation marker is removed');
+    const patientKeys = ['cip', 'id', 'patient_id', 'identifier_system', 'generation', runtimeModule.NAV_MARKER, 'fh_session', 'patologia'];
+    assert.deepEqual(patientKeys.filter((key) => params.has(key)), [], `URL ${JSON.stringify(location.search)}`);
+    const envelope = storedEnvelope(storage);
+    assert.ok(envelope, 'an envelope must be stored');
+    assert.equal(envelope.identifier.identifier_value, 'CIP-A', 'the stored envelope carries the cip');
+    assert.equal(envelope.identifier.identifier_system, IDENTIFIER_SYSTEM, 'the stored envelope carries the identifier system');
+    assert.equal(envelope.patient_id, 'patient-a', 'the stored envelope carries the patient id');
+    assert.equal(envelope.generation, result.envelope.generation, 'the stored envelope generation matches');
 });
 
 await test('4. a patient change purges the previous residue before writing and returns previousCip', () => {

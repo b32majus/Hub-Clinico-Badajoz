@@ -115,7 +115,7 @@ async function openSeguimientoForP1() {
     }, null, { timeout: 10000 });
     await page.fill('#fhCipInput', P1.cip);
     await page.click('#fhSearchBtn');
-    const action = page.locator(`a.btn-primary[href*="cip=${P1.cip}"]`, { hasText: 'Seguimiento' }).first();
+    const action = page.locator(`a.btn-primary[data-fh-cip="${P1.cip}"]`, { hasText: 'Seguimiento' }).first();
     await action.waitFor({ state: 'visible', timeout: 10000 });
     await action.click();
     await page.waitForURL(/farmacia_seguimiento\.html/, { timeout: 10000 });

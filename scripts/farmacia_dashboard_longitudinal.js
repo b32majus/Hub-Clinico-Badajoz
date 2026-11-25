@@ -1108,9 +1108,11 @@
             if (!success) { return; }
             populatePatientSelect();
 
-            // Leer CIP de query param para preseleccionar
+            // Leer CIP del contexto (#714 tramo 1: el puntero de sessionStorage
+            // manda; la query solo es respaldo de direcciones antiguas)
+            var ctx = window.FarmaciaDemo && typeof window.FarmaciaDemo.getQueryContext === 'function' ? window.FarmaciaDemo.getQueryContext() : null;
             var urlParams = new URLSearchParams(window.location.search);
-            var cipParam = urlParams.get("cip");
+            var cipParam = (ctx && ctx.cip) || urlParams.get("cip");
             var initialCip = cipParam || (dataset && dataset.pacientes && dataset.pacientes.length > 0 ? dataset.pacientes[0].cip : null);
 
             if (initialCip && patientSel) {
