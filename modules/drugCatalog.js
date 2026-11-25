@@ -219,6 +219,7 @@
             var detail = getState();
             document.dispatchEvent(new CustomEvent('hubcatalog:changed', { detail: detail }));
         }
+        notifyLoad();
     }
 
     function setState(nextState, message, nextDrugs, nextCounts) {
@@ -352,8 +353,37 @@
         document.head.appendChild(script);
     }
 
+    // Carga perezosa (#956, decisión de Sil 25-11): NADA se descarga al
+    // entrar en una pantalla. `ensureLoaded()` pide el Excel una sola vez por
+    // página y devuelve una promesa que SIEMPRE se resuelve (nunca rechaza)
+    // con `getState()` al terminar la carga, bien o mal ('loaded', 'missing'
+    // o 'error'). Si ya está cargada se resuelve enseguida; si hay una carga
+    // en curso (o un intento anterior fallido: no se reintenta en esta
+    // página) devuelve SIEMPRE la misma promesa.
+    var loadPromise = null;
+    var loadResolve = null;
+
+    function notifyLoad() {
+        if (!loadResolve) return;
+        if (state !== 'loaded' && state !== 'missing' && state !== 'error') return;
+        var resolve = loadResolve;
+        loadResolve = null;
+        resolve(getState());
+    }
+
+    function ensureLoaded() {
+        if (state === 'loaded') return Promise.resolve(getState());
+        if (loadPromise) return loadPromise;
+        loadPromise = new Promise(function (resolve) { loadResolve = resolve; });
+        startLoad();
+        return loadPromise;
+    }
+
     function autoLoad() {
-        if (state === 'loaded' || state === 'loading') return;
+        ensureLoaded();
+    }
+
+    function startLoad() {
         setState('loading', 'Catálogo farmacológico: cargando…');
         ensureXLSX(function () {
             if (typeof fetch !== 'function') {
@@ -422,14 +452,11 @@
         getState: getState,
         isLoaded: isLoaded,
         isUnavailable: isUnavailable,
-        autoLoad: autoLoad
+        autoLoad: autoLoad,
+        ensureLoaded: ensureLoaded
     };
 
-    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function () { autoLoad(); });
-        } else {
-            autoLoad();
-        }
-    }
+    // Sin arranque automático (#956): el Excel se lee solo cuando alguien
+    // llama a `ensureLoaded()` (hoy, el respaldo de `HubTools.cimaSearch`
+    // cuando la AEMPS no responde).
 })();

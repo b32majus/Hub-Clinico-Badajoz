@@ -1499,7 +1499,14 @@
             loaded: Boolean(C && C.loaded) && !applyingCatalogSelection,
             search: function (query) {
                 return selectableCatalogResults(C.search(query));
-            }
+            },
+            // Carga perezosa (#956): el widget puede pedir el respaldo
+            // completo cuando la AEMPS no responde.
+            // Solo si el catálogo sabe cargarlo; si no, el buscador pinta como antes.
+            nivel: C ? C.nivel : "nada",
+            cargarRespaldo: C && typeof C.cargarRespaldo === "function"
+                ? function () { return C.cargarRespaldo(); }
+                : undefined
         };
     }
 

@@ -42,6 +42,32 @@
     var TIMEOUT_MS = 4000;
     var MAX_RESULTS = 15;
     var MIN_QUERY = 2;
+    // Estado de CIMA en la sesión (decisión de Sil 25-11, #956 carga):
+    // 'directo' (buscador en uso) o 'respaldo' (la AEMPS no respondió y el
+    // catálogo local está en uso). Se recuerda en sessionStorage y se anuncia
+    // en 'nexus:cima-estado' para que cada pantalla pinte el aviso verdadero.
+    var ESTADO_KEY = 'nexusCimaEstado';
+
+    function marcarEstado(estado) {
+        try {
+            sessionStorage.setItem(ESTADO_KEY, estado);
+        } catch (error) {
+            // Sin almacenamiento disponible la búsqueda sigue igual.
+        }
+        if (typeof document !== 'undefined' && typeof document.dispatchEvent === 'function') {
+            document.dispatchEvent(new CustomEvent('nexus:cima-estado', { detail: { estado: estado } }));
+        }
+    }
+
+    function estado() {
+        try {
+            var guardado = sessionStorage.getItem(ESTADO_KEY);
+            if (guardado === 'directo' || guardado === 'respaldo') return guardado;
+        } catch (error) {
+            // Sin lectura de almacenamiento: por defecto, CIMA en directo.
+        }
+        return 'directo';
+    }
 
     /**
      * One AEMPS request with its own AbortController and timeout. Never
@@ -134,19 +160,32 @@
     }
 
     /**
-     * Local fallback when BOTH AEMPS requests failed. Uses the published
-     * catalogue only when it is actually loaded; its unscoped
-     * `search(query)` form (one argument) is the sanctioned fallback path.
+     * Local fallback when BOTH AEMPS requests failed. Lazy (#956 carga):
+     * nothing is downloaded on page load; the published catalogue is fetched
+     * ONLY here, once per page, through `HubTools.catalog.ensureLoaded()`.
+     * Returns a promise resolving `{ source: 'local', results }` when the
+     * catalogue ends up loaded (its unscoped `search(query)` form, one
+     * argument, is the sanctioned fallback path) or `{ source: 'none',
+     * results: [] }` otherwise. Any error degrades to 'none'; the promise
+     * never rejects.
      */
     function localFallback(q) {
-        try {
-            if (HubTools.catalog && typeof HubTools.catalog.isLoaded === 'function' && HubTools.catalog.isLoaded()) {
-                return { source: 'local', results: HubTools.catalog.search(q) };
-            }
-        } catch (error) {
-            // Any fallback error ends with no options invented below.
+        var catalog = HubTools.catalog;
+        if (!catalog || typeof catalog.ensureLoaded !== 'function') {
+            return Promise.resolve({ source: 'none', results: [] });
         }
-        return { source: 'none', results: [] };
+        try {
+            return Promise.resolve(catalog.ensureLoaded()).then(function () {
+                if (typeof catalog.isLoaded === 'function' && catalog.isLoaded()) {
+                    return { source: 'local', results: catalog.search(q) };
+                }
+                return { source: 'none', results: [] };
+            }).catch(function () {
+                return { source: 'none', results: [] };
+            });
+        } catch (error) {
+            return Promise.resolve({ source: 'none', results: [] });
+        }
     }
 
     /**
@@ -166,14 +205,17 @@
         return Promise.all([requestOnce(nombreUrl), requestOnce(practivUrl)])
             .then(function (outcomes) {
                 if (outcomes[0].valid || outcomes[1].valid) {
+                    marcarEstado('directo');
                     return {
                         source: 'aemps',
                         results: unionRows(outcomes[0].rows || [], outcomes[1].rows || [])
                     };
                 }
+                marcarEstado('respaldo');
                 return localFallback(q);
             })
             .catch(function () {
+                marcarEstado('respaldo');
                 return localFallback(q);
             });
     }
@@ -195,14 +237,17 @@
         return Promise.all([requestOnce(nombreUrl), requestOnce(practivUrl)])
             .then(function (outcomes) {
                 if (outcomes[0].valid || outcomes[1].valid) {
+                    marcarEstado('directo');
                     return {
                         source: 'aemps',
                         results: unionRows(outcomes[0].rows || [], outcomes[1].rows || [], toPresentationRow)
                     };
                 }
+                marcarEstado('respaldo');
                 return { source: 'none', results: [] };
             })
             .catch(function () {
+                marcarEstado('respaldo');
                 return { source: 'none', results: [] };
             });
     }
@@ -210,6 +255,7 @@
     HubTools.cimaSearch = {
         search: search,
         searchPresentations: searchPresentations,
+        estado: estado,
         ENDPOINT: ENDPOINT,
         TIMEOUT_MS: TIMEOUT_MS,
         MAX_RESULTS: MAX_RESULTS,
