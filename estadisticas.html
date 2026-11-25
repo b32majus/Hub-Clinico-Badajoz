@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/nexus_tokens.css?v=20261125-ayuda">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261122-t7f">
     <link rel="stylesheet" href="css/nexus_piezas.css?v=20261125-ayuda">
+    <link rel="stylesheet" href="css/nexus_paletas.css?v=20261125-pal">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
     <link rel="modulepreload" href="modules/nexus/menus.js">
     <link rel="modulepreload" href="modules/nexus/version.js">
@@ -50,6 +51,15 @@
                     <p class="nx-cabecera__ruta">Reumatología · Gestión</p>
                     <h1 class="nx-cabecera__titulo">Estadísticas del servicio</h1>
                     <p class="nx-cabecera__texto">Cohorte de pacientes con los filtros aplicados. Datos sintéticos de demostración.</p>
+                </div>
+                <div class="nx-campo nx-cabecera__paleta">
+                    <label class="nx-campo__etiqueta" for="selectorPaleta">Colores de los gráficos</label>
+                    <select class="nx-campo__control" id="selectorPaleta">
+                        <option value="nature">Nature (por defecto)</option>
+                        <option value="okabe">Okabe-Ito (daltonismo)</option>
+                        <option value="apagada">Apagada (Tol)</option>
+                        <option value="viridis">Viridis</option>
+                    </select>
                 </div>
             </header>
 
@@ -431,6 +441,7 @@
     </div>
 
     <!-- Librerías aquí y no en <head>: allí bloqueaban el pintado (Sil 21-11). -->
+    <script src="modules/paletaGraficos.js?v=20261125-pal" defer></script>
     <script src="modules/cargadorExcel.js?v=20261125-xl" defer></script>
     <script src="vendor/chartjs/chart.umd.min.js?v=4.4.0" defer></script>
     <script src="vendor/chartjs/chartjs-plugin-annotation.min.js?v=3.0.1" defer></script>
@@ -442,13 +453,13 @@
     <script src="modules/scoreCalculators.js?v=20261122-t7l" defer></script>
     <script src="modules/homunculus.js?v=20260306l" defer></script>
     <script src="modules/exportManager.js?v=20261114c" defer></script>
-    <script src="modules/formController.js?v=20261122-t7l" defer></script>
+    <script src="modules/formController.js?v=20261125-pcr" defer></script>
     <script src="modules/dataManager.js?v=20261125-xl" defer></script>
 
     <!-- Scripts globales y coordinadores -->
     <script src="script.js?v=20261124-par" defer></script>
     <script src="scripts/reuma_population_read_port.js?v=20261112d" defer></script>
-    <script src="scripts/script_estadisticas.js?v=20261124-col" defer></script>
+    <script src="scripts/script_estadisticas.js?v=20261125-pal" defer></script>
 </body>
 
 </html>

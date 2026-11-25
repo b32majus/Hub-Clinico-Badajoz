@@ -33,18 +33,19 @@ function nxColor(nombre, alfa) {
 // === PALETA DE COLORES UNIFICADA ===
 // Actividad: escala ordenada (viridis), no los colores de estado de la app. Tratamientos: serie
 // de categorías. «Otros» = gris de «sin dato».
+// Con getters: se leen al dibujar, así un cambio de paleta (#1028) llega a los gráficos nuevos.
 const COLORS = {
-    remission: nxColor('actividad-1'),
-    lowActivity: nxColor('actividad-2'),
-    moderate: nxColor('actividad-3'),
-    highActivity: nxColor('actividad-4'),
-    biologic: nxColor('serie-1'),
-    fame: nxColor('serie-2'),
-    systemic: nxColor('serie-3'),
-    other: nxColor('serie-sin-dato'),
-    primary: nxColor('serie-1'),
-    secondary: nxColor('texto-suave'),
-    border: nxColor('borde')
+    get remission() { return nxColor('actividad-1'); },
+    get lowActivity() { return nxColor('actividad-2'); },
+    get moderate() { return nxColor('actividad-3'); },
+    get highActivity() { return nxColor('actividad-4'); },
+    get biologic() { return nxColor('serie-1'); },
+    get fame() { return nxColor('serie-2'); },
+    get systemic() { return nxColor('serie-3'); },
+    get other() { return nxColor('serie-sin-dato'); },
+    get primary() { return nxColor('serie-1'); },
+    get secondary() { return nxColor('texto-suave'); },
+    get border() { return nxColor('borde'); }
 };
 
 const applyFiltersAndRefresh = () => {
@@ -737,6 +738,12 @@ function renderPopulationFailSafe(status) {
     });
     chartInstances = {};
 }
+
+// #1028: al cambiar la paleta de los gráficos (modules/paletaGraficos.js) se vuelven a dibujar, porque
+// Chart.js guarda el color al construir el gráfico. Solo si ya hay gráficos en pantalla.
+document.addEventListener('nexus:paleta', () => {
+    if (Object.keys(chartInstances).length) updateDashboard();
+});
 
 async function updateDashboard() {
     console.log('📊 Actualizando dashboard...');

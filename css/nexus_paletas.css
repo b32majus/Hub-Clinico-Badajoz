@@ -1,0 +1,53 @@
+/*
+ * PROMueve Nexus — paletas de gráficos alternativas (#1028, valorado con Sil el 24-11 y 25-11).
+ * Solo las cargan las dos pantallas de Estadísticas. La paleta por defecto (Nature ajustada)
+ * vive en nexus_tokens.css; aquí solo se redefinen las series cuando <html> lleva
+ * data-nx-paleta="okabe", "apagada" o "viridis" (lo pone modules/paletaGraficos.js).
+ * La elección es una sola para toda la aplicación: la misma en todas las patologías y en
+ * Farmacia (Sil, 24-11), nunca una paleta por patología. La actividad (--nx-color-actividad-*,
+ * viridis) no cambia con la paleta. Orden fijo de las series.
+ * Validadas con validate_palette.js (skill dataviz), superficie #fcfcfb:
+ *   okabe:   Okabe-Ito (Nature Methods, pensada para daltonismo). Pasa banda, croma, daltonismo
+ *            (peor vecino 9,6) y visión normal (20,0). Celeste, naranja y rosa quedan entre 2,2 y 3:1: con leyenda.
+ *   apagada: Paul Tol «muted» adaptada (índigo, azul y morado aclarados u oscurecidos para entrar
+ *            en la banda). Pasa banda, croma, daltonismo (9,5) y visión normal (21,3). Ocre y azul < 3:1: con leyenda.
+ *   viridis: muestras de viridis, orden alternado (oscuro, claro, medio) para que los vecinos se
+ *            distingan (daltonismo 26,7; visión normal 27,6). Por ser viridis no cumple la banda de
+ *            luminosidad ni el croma (extremos muy oscuro y muy claro): el amarillo (serie 6) y el
+ *            verde claro (serie 4) no llegan a 3:1, llevan siempre leyenda o etiqueta directa.
+ */
+@layer nx.tokens {
+  :root[data-nx-paleta="okabe"] {
+    --nx-color-serie-1: #0072b2;            /* azul */
+    --nx-color-serie-2: #d55e00;            /* bermellón */
+    --nx-color-serie-3: #009e73;            /* verde azulado */
+    --nx-color-serie-4: #e69f00;            /* naranja */
+    --nx-color-serie-5: #cc79a7;            /* rosa */
+    --nx-color-serie-6: #56b4e9;            /* celeste */
+  }
+
+  :root[data-nx-paleta="apagada"] {
+    --nx-color-serie-1: #4b3fa8;            /* índigo */
+    --nx-color-serie-2: #cc6677;            /* rosa viejo */
+    --nx-color-serie-3: #117733;            /* verde */
+    --nx-color-serie-4: #b39a30;            /* ocre */
+    --nx-color-serie-5: #3f9dc4;            /* azul claro */
+    --nx-color-serie-6: #a23b8f;            /* ciruela */
+  }
+
+  :root[data-nx-paleta="viridis"] {
+    --nx-color-serie-1: #440154;            /* morado */
+    --nx-color-serie-2: #44bf70;            /* verde */
+    --nx-color-serie-3: #3b528b;            /* azul */
+    --nx-color-serie-4: #9bd93c;            /* verde claro */
+    --nx-color-serie-5: #21918c;            /* verde azulado */
+    --nx-color-serie-6: #e5e419;            /* amarillo */
+  }
+}
+
+@layer nx.piezas {
+  /* Selector de paleta en la cabecera de Estadísticas: un nx-campo con su select, sin pieza nueva. */
+  .nx-cabecera__paleta {
+    min-inline-size: 14rem;
+  }
+}
