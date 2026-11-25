@@ -248,8 +248,30 @@
         }
 
         /* Respaldo cuando la AEMPS no responde: catálogo de Farmacia entero
-           (CIMA + locales) con aviso en pantalla, como hasta ahora. */
+           (CIMA + locales) con aviso en pantalla, como hasta ahora. Con carga
+           perezosa (#956): el catálogo completo se lee UNA vez, solo aquí; se
+           espera `cargarRespaldo()` y antes de pintar se comprueba que sigue
+           siendo la petición viva (mismo texto y misma ronda) — si el campo
+           cambió o llegó otra petición, no se pinta nada. */
+        function pintarConRespaldo(catalog, query, notice) {
+            // Respaldo ya leído en esta página: se pinta al momento, como antes.
+            if (catalog.nivel === 'completo') {
+                paint(catalogResults(catalog, query), notice);
+                return;
+            }
+            var token = requestSeq;
+            catalog.cargarRespaldo().then(function () {
+                if (token !== requestSeq) return;
+                if (String(input.value == null ? '' : input.value).trim() !== query) return;
+                paint(catalogResults(catalog, query), notice);
+            });
+        }
+
         function paintCatalogFallback(catalog, query) {
+            if (catalog && typeof catalog.cargarRespaldo === 'function') {
+                pintarConRespaldo(catalog, query, AEMPS_FALLBACK_NOTICE);
+                return;
+            }
             paint(catalogResults(catalog, query), AEMPS_FALLBACK_NOTICE);
         }
 
@@ -314,6 +336,10 @@
             }
             if (commonSearchAvailable()) {
                 searchCommon(catalog, query);
+                return;
+            }
+            if (catalog && typeof catalog.cargarRespaldo === 'function') {
+                pintarConRespaldo(catalog, query, '');
                 return;
             }
             paint(catalogResults(catalog, query));

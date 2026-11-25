@@ -1909,6 +1909,15 @@
         var FARMACIA_DRUG_SNAPSHOT_REGISTRY_KEY = 'farmacia_drug_snapshot_registry_v2';
         var SNAPSHOT_REGISTRY_VERSION = 2;
         var CATALOG_XLSX_PATH = 'data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx';
+        // Carga perezosa (#956, decisión de Sil 25-11): al entrar solo se lee
+        // el JSON pequeño de los fármacos propios del hospital; el Excel del
+        // catálogo completo (1,6 MB) es SOLO el respaldo cuando la AEMPS no
+        // responde, y se lee una vez por pantalla.
+        var CATALOG_LOCALES_PATH = 'data/catalogos/farmacia/catalogo_locales.json';
+        var nivel = 'nada'; // 'nada' | 'locales' | 'completo'
+        var localesDisponibles = false;
+        var respaldoPromise = null;
+        var respaldoFallido = false;
         var catalogStatus = { state: 'idle', message: 'Catálogo farmacológico: pendiente de carga automática' };
 
         function updateCatalogStatusUi() {
@@ -1927,14 +1936,55 @@
                 }
             });
             var noteEl = document.getElementById('catalogSidebarNote');
-            if (noteEl && typeof cimaCount !== 'undefined' && typeof localCount !== 'undefined') {
-                noteEl.textContent = 'CIMA ' + cimaCount + ' + locales ' + localCount;
+            if (noteEl) {
+                if (nivel === 'completo') {
+                    noteEl.textContent = 'Catálogo guardado: ' + totalCount + ' fármacos';
+                } else if (estadoCima() === 'respaldo') {
+                    noteEl.textContent = 'Catálogo guardado: se lee al buscar';
+                } else if (localesDisponibles) {
+                    noteEl.textContent = '+ ' + localCount + ' fármacos propios del hospital';
+                } else {
+                    noteEl.textContent = 'Fármacos propios del hospital: no disponibles';
+                }
             }
         }
 
         function setCatalogStatus(state, message) {
             catalogStatus = { state: state, message: message };
             updateCatalogStatusUi();
+        }
+
+        // Estado de CIMA recordado en la sesión ('directo' | 'respaldo');
+        // 'directo' mientras no se sepa otra cosa. La clave la escribe
+        // modules/cimaSearch.js al buscar; algunas pantallas (p. ej. el
+        // índice de Farmacia) no cargan ese módulo, así que aquí se lee
+        // también la clave directamente para recordar el estado sin pedir
+        // nada a la AEMPS.
+        var CIMA_ESTADO_KEY = 'nexusCimaEstado';
+
+        function estadoCima() {
+            if (window.HubTools && HubTools.cimaSearch && HubTools.cimaSearch.estado) {
+                return HubTools.cimaSearch.estado();
+            }
+            try {
+                if (sessionStorage.getItem(CIMA_ESTADO_KEY) === 'respaldo') return 'respaldo';
+            } catch (error) {
+                // Sin almacenamiento: por defecto, CIMA en directo.
+            }
+            return 'directo';
+        }
+
+        // El aviso dice la verdad: si la AEMPS responde, «CIMA en directo»;
+        // si no responde, que hay respaldo (o que el respaldo falló).
+        function pintarEstado() {
+            var estado = estadoCima();
+            if (estado === 'respaldo' && respaldoFallido) {
+                setCatalogStatus('error', 'CIMA no responde y el respaldo no se pudo leer');
+            } else if (estado === 'respaldo') {
+                setCatalogStatus('missing', 'CIMA no responde: respaldo en uso');
+            } else {
+                setCatalogStatus('loaded', 'CIMA en directo');
+            }
         }
 
         function isTruthyRobust(value) {
@@ -2306,31 +2356,96 @@
         function autoLoad() {
             if (loaded || loading) return;
             loading = true;
-            setCatalogStatus('loading', 'Catálogo farmacológico: cargando automáticamente…');
-            ensureXLSX(function () {
-                fetch(CATALOG_XLSX_PATH)
+            function terminarLocales(conLocales) {
+                if (conLocales) {
+                    localesDisponibles = true;
+                } else {
+                    drugs = [];
+                    localesDisponibles = false;
+                }
+                nivel = 'locales';
+                loaded = true;
+                loading = false;
+                localCount = drugs.length;
+                cimaCount = 0;
+                totalCount = drugs.length;
+                pintarEstado();
+                document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: { totalCount: totalCount, cimaCount: cimaCount, localCount: localCount, loaded: true } }));
+            }
+            try {
+                fetch(CATALOG_LOCALES_PATH)
                     .then(function (response) {
-                        if (response.ok) return response.arrayBuffer();
+                        if (response.ok) return response.json();
                         throw new Error('fetch_failed');
                     })
-                    .then(function (arrayBuffer) {
-                        var result = loadFromExcel(arrayBuffer);
-                        setCatalogStatus('loaded', 'Catálogo CIMA cargado · ' + totalCount + ' Fx');
-                        loading = false;
-                        document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
+                    .then(function (json) {
+                        var filas = (json && Array.isArray(json.filas)) ? json.filas.map(normalizeLOCAL) : [];
+                        drugs = filas;
+                        for (var i = 0; i < drugs.length; i++) {
+                            drugs[i]._searchable = buildSearchableText(drugs[i]);
+                        }
+                        terminarLocales(true);
                     })
-                    .catch(function (error) {
-                        loading = false;
-                        setCatalogStatus('missing', 'Catálogo farmacológico: no disponible en esta demo. CIMA pendiente de integración automática real.');
-                        document.dispatchEvent(new CustomEvent('farmacia:catalog-missing', { detail: { error: error ? error.message || String(error) : 'missing' } }));
+                    .catch(function () {
+                        // Con CIMA en directo el buscador funciona aunque fallen
+                        // los propios del hospital: se entra igual.
+                        terminarLocales(false);
                     });
-            }, function (errMsg) {
-                loading = false;
-                setCatalogStatus('error', errMsg);
+            } catch (error) {
+                terminarLocales(false);
+            }
+        }
+
+        // Respaldo completo (Excel + SheetJS), SOLO cuando la AEMPS no
+        // responde: una única promesa por pantalla; nunca rechaza y resuelve
+        // true si el catálogo entero quedó cargado.
+        function cargarRespaldo() {
+            if (nivel === 'completo') return Promise.resolve(true);
+            if (respaldoFallido) return Promise.resolve(false);
+            if (respaldoPromise) return respaldoPromise;
+            respaldoPromise = new Promise(function (resolve) {
+                var fallo = function () {
+                    respaldoFallido = true;
+                    pintarEstado();
+                    resolve(false);
+                };
+                try {
+                    ensureXLSX(function () {
+                        fetch(CATALOG_XLSX_PATH)
+                            .then(function (response) {
+                                if (response.ok) return response.arrayBuffer();
+                                throw new Error('fetch_failed');
+                            })
+                            .then(function (arrayBuffer) {
+                                try {
+                                    loadFromExcelConNivel(arrayBuffer);
+                                    resolve(true);
+                                } catch (error) {
+                                    fallo();
+                                }
+                            })
+                            .catch(fallo);
+                    }, fallo);
+                } catch (error) {
+                    fallo();
+                }
             });
+            return respaldoPromise;
+        }
+
+        // Envoltorio de loadFromExcel (carga manual/respaldo): tras cargar el
+        // Excel completo el nivel sube a 'completo' y el aviso se repinta.
+        function loadFromExcelConNivel(arrayBuffer) {
+            var result = loadFromExcel(arrayBuffer);
+            nivel = 'completo';
+            pintarEstado();
+            return result;
         }
 
         function initSidebarCatalog() {
+            // Primero el estado recordado de la sesión: la pantalla muestra
+            // al entrar el aviso verdadero sin pedir nada.
+            pintarEstado();
             autoLoad();
             var btnLoad = document.getElementById('sidebarLoadCatalog');
             if (btnLoad) btnLoad.classList.add('hidden');
@@ -2338,6 +2453,8 @@
             if (fileInput) fileInput.classList.add('hidden');
             updateCatalogStatusUi();
         }
+
+        document.addEventListener('nexus:cima-estado', pintarEstado);
 
         document.addEventListener('DOMContentLoaded', function () {
             initSidebarCatalog();
@@ -2350,7 +2467,9 @@
             get cimaCount() { return cimaCount; },
             get localCount() { return localCount; },
             get selectedSnapshot() { return null; },
-            loadFromExcel: loadFromExcel,
+            get nivel() { return nivel; },
+            loadFromExcel: loadFromExcelConNivel,
+            cargarRespaldo: cargarRespaldo,
             search: search,
             selectDrug: selectDrug,
             getSnapshot: getSnapshot,

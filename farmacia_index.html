@@ -39,9 +39,9 @@
 <div class="catalog-sidebar-block catalog-sidebar-block--compact">
         <div class="catalog-sidebar-header">
             <i class="fas fa-pills"></i> Catálogo farmacológico
-            <i class="fas fa-info-circle catalog-sidebar-info" title="CIMA se carga automáticamente al abrir la demo." aria-label="CIMA se carga automáticamente al abrir la demo."></i>
+            <i class="fas fa-info-circle catalog-sidebar-info" title="Búsqueda en CIMA en directo; si no responde, se usa el catálogo guardado." aria-label="Búsqueda en CIMA en directo; si no responde, se usa el catálogo guardado."></i>
         </div>
-        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: cargando automáticamente…</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>CIMA en directo</div>
         <p class="catalog-sidebar-note" id="catalogSidebarNote">Esperando detalles…</p>
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
@@ -175,7 +175,7 @@
                         <input type="file" id="inputExcelFarmacia" class="hidden" accept=".xlsx,.xls">
                     </section>
                 </div>
-                <dl class="nx-datos"><dt>CIMA</dt><dd data-catalog-status data-catalog-solo-texto>Catálogo farmacológico: pendiente de carga automática</dd></dl>
+                <dl class="nx-datos"><dt>CIMA</dt><dd data-catalog-status data-catalog-solo-texto>CIMA en directo</dd></dl>
             </div>
         </section>
                 </main>
@@ -199,7 +199,7 @@
              <script src="scripts/farmacia_current_patient_session.js?v=20260806-patient-flow-r1" defer></script>
             <script src="scripts/farmacia_bridge_raw_ea_v21_workbook_context.js?v=20261031-ea-v1-demo" defer></script>
              <script src="scripts/farmacia_patient_flow_runtime.js?v=20260806-patient-flow-r1" defer></script>
-             <script src="scripts/farmacia_common.js?v=20261124-h04" defer></script>
+             <script src="scripts/farmacia_common.js?v=20261125-cat" defer></script>
     <script src="scripts/farmacia_statistics_cohort.js?v=20260806-raw-statistics-r1" defer></script>
     <script src="scripts/farmacia_statistics_handoff.js?v=20260806-raw-statistics-r1" defer></script>
     <script src="scripts/farmacia_prebiologico.js?v=20260614-wo4-a" defer></script>

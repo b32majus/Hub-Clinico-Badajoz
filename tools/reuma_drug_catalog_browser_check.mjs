@@ -214,6 +214,8 @@ async function awaitCatalogReady(page, selectId) {
         const select = document.getElementById(id);
         const wrapper = select ? select.closest('.drug-autocomplete') : null;
         const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
+        // Carga perezosa (#956): el catálogo ya no se lee al entrar; este check lo pide.
+        if (window.HubTools && HubTools.catalog && HubTools.catalog.ensureLoaded) HubTools.catalog.ensureLoaded();
         const loaded = !!(window.HubTools && HubTools.catalog && HubTools.catalog.isLoaded && HubTools.catalog.isLoaded());
         return !!(input && !input.disabled && loaded);
     }, selectId, { timeout: 30000 });
@@ -426,6 +428,7 @@ async function runUnavailableSuite(browser) {
             const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
             return !!(input && !input.disabled);
         }, id, { timeout: 30000 });
+        await page.evaluate(() => window.HubTools && HubTools.catalog && HubTools.catalog.ensureLoaded && HubTools.catalog.ensureLoaded());
         await page.waitForFunction(() => !!(window.HubTools && HubTools.catalog && HubTools.catalog.getState && /missing|error/.test(HubTools.catalog.getState().state)), null, { timeout: 30000 });
         await openAncestorCollapsibles(page, autocompleteInputSelector(id));
         const typed = page.locator(autocompleteInputSelector(id));

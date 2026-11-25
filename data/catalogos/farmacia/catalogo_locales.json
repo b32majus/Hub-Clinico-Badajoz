@@ -1,0 +1,52 @@
+{
+  "origen": "data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx",
+  "hoja": "CATALOGO_LOCAL_ESPECIAL",
+  "filas": [
+    {
+      "local_drug_id": "LOC-DEMO-001",
+      "display_name": "Comprimido experimental X (DEMO)",
+      "nombre_comercial_si_existe": "",
+      "principio_activo_o_molecula": "Molécula X en investigación",
+      "codigo_desarrollo": "MOL-X-001",
+      "presentacion_texto": "Comp 10mg",
+      "via": "Oral",
+      "forma_farmaceutica": "Comprimido",
+      "dosis_texto": "10 mg",
+      "tipo_situacion": "ENSAYO_CLINICO",
+      "estado_desarrollo": "EN_DESARROLLO",
+      "origen": "Protocolo local",
+      "pais_origen_si_aplica": "",
+      "requiere_validacion_fh": "SÍ",
+      "estado_validacion_fh": "PENDIENTE",
+      "fecha_alta_local": "2026-06-01",
+      "fecha_ultima_revision": "2026-06-06",
+      "responsable_revision": "[Pendiente asignar]",
+      "observaciones": "⚠️ DEMO: Ejemplo de uso compasivo para pruebas. No es un registro real.",
+      "activo_en_catalogo": "SÍ",
+      "reconciliado_con_cima_id": ""
+    },
+    {
+      "local_drug_id": "LOC-DEMO-002",
+      "display_name": "Medicamento extranjero Y (DEMO)",
+      "nombre_comercial_si_existe": "",
+      "principio_activo_o_molecula": "Fármaco Y importado",
+      "codigo_desarrollo": "EXT-Y-001",
+      "presentacion_texto": "Inyectable 50mg/ml",
+      "via": "SC",
+      "forma_farmaceutica": "Solución inyectable",
+      "dosis_texto": "50 mg/ml",
+      "tipo_situacion": "MEDICACION_EXTRANJERA",
+      "estado_desarrollo": "AUTORIZADO_USO_COMPASIVO",
+      "origen": "Importación",
+      "pais_origen_si_aplica": "Francia",
+      "requiere_validacion_fh": "SÍ",
+      "estado_validacion_fh": "VALIDADO",
+      "fecha_alta_local": "2026-05-15",
+      "fecha_ultima_revision": "2026-06-01",
+      "responsable_revision": "Dr. García (Farmacia) [DEMO]",
+      "observaciones": "⚠️ DEMO: Ejemplo de medicación extranjera para pruebas.",
+      "activo_en_catalogo": "SÍ",
+      "reconciliado_con_cima_id": ""
+    }
+  ]
+}

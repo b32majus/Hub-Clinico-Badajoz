@@ -1011,7 +1011,14 @@
         var C = getCatalog();
         return {
             loaded: Boolean(C && C.loaded),
-            search: function (query) { return C.search(query); }
+            search: function (query) { return C.search(query); },
+            nivel: C ? C.nivel : 'nada',
+            // Carga perezosa (#956): el widget puede pedir el respaldo
+            // completo cuando la AEMPS no responde.
+            // Solo si el catálogo sabe cargarlo; si no, el buscador pinta como antes.
+            cargarRespaldo: C && typeof C.cargarRespaldo === 'function'
+                ? function () { return C.cargarRespaldo(); }
+                : undefined
         };
     }
 

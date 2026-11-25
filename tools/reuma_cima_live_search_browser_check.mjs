@@ -206,7 +206,8 @@ async function noticeText() {
 
 try {
     await page.goto(base + 'primera_visita.html', { waitUntil: 'load' });
-    await page.waitForFunction(() => !!(window.HubTools && HubTools.catalog && HubTools.catalog.isLoaded && HubTools.catalog.isLoaded()), null, { timeout: 30000 });
+    // Carga perezosa (#956): el catálogo de respaldo ya no se lee al entrar.
+    await page.waitForFunction(() => !!(window.HubTools && HubTools.catalog && HubTools.catalog.ensureLoaded), null, { timeout: 30000 });
     await page.waitForSelector(inputSel, { state: 'attached', timeout: 15000 });
     await openField();
 

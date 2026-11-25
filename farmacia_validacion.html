@@ -40,9 +40,9 @@
 <div class="catalog-sidebar-block catalog-sidebar-block--compact">
         <div class="catalog-sidebar-header">
             <i class="fas fa-pills"></i> Catálogo farmacológico
-            <i class="fas fa-info-circle catalog-sidebar-info" title="CIMA se carga automáticamente al abrir la demo." aria-label="CIMA se carga automáticamente al abrir la demo."></i>
+            <i class="fas fa-info-circle catalog-sidebar-info" title="Búsqueda en CIMA en directo; si no responde, se usa el catálogo guardado." aria-label="Búsqueda en CIMA en directo; si no responde, se usa el catálogo guardado."></i>
         </div>
-        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: cargando automáticamente…</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>CIMA en directo</div>
         <p class="catalog-sidebar-note" id="catalogSidebarNote">Esperando detalles…</p>
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
@@ -579,7 +579,7 @@
             <script type="module" src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
             <script type="module" src="scripts/farmacia_current_patient_session.js?v=20260806-patient-flow-r1"></script>
             <script type="module" src="scripts/farmacia_patient_flow_runtime.js?v=20260806-patient-flow-r1"></script>
-            <script type="module" src="scripts/farmacia_common.js?v=20261124-h04"></script>
+            <script type="module" src="scripts/farmacia_common.js?v=20261125-cat"></script>
             <script type="module" src="scripts/farmacia_patient_read_contract_v2.js?v=20260806-patient-read-facade-r1"></script>
             <script type="module" src="scripts/farmacia_patient_read_facade_v2.js?v=20260806-patient-read-facade-r1"></script>
             <script type="module" src="scripts/farmacia_excel_row_export.js?v=20261123-t12"></script>
@@ -588,9 +588,9 @@
     <script type="module" src="scripts/farmacia_export_v2_validation_adapter.js?v=1.0.0-draft.1"></script>
     <script type="module" src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
     <script type="module" src="modules/hubTools.js?v=20260306l"></script>
-    <script type="module" src="modules/cimaSearch.js?v=20261112c"></script>
-    <script type="module" src="scripts/farmacia_drug_autocomplete.js?v=20261112c"></script>
-    <script type="module" src="scripts/farmacia_validacion.js?v=20261124-h02"></script>
+    <script type="module" src="modules/cimaSearch.js?v=20261125-cat"></script>
+    <script type="module" src="scripts/farmacia_drug_autocomplete.js?v=20261125-cat"></script>
+    <script type="module" src="scripts/farmacia_validacion.js?v=20261125-cat"></script>
     <script type="module" src="scripts/fh_intake_review_ui.js?v=20261124-h04"></script>
         </body>
         </html>
