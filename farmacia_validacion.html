@@ -388,6 +388,16 @@
                 <label class="nx-campo__etiqueta" for="fhValidadoPresentacion">Presentacion (opcional)</label>
                 <input type="text" class="nx-campo__control" id="fhValidadoPresentacion" placeholder="Ej. Pluma precargada 300 mg">
             </div>
+            <div class="nx-campo">
+                <label class="nx-campo__etiqueta" for="fhValidadoEnvase">Envase (código nacional)</label>
+                <select class="nx-campo__control" id="fhValidadoEnvase" aria-describedby="fhValidadoBifimedAviso" disabled>
+                    <option value="">Elige primero un fármaco de CIMA</option>
+                </select>
+                <p class="nx-campo__ayuda" id="fhValidadoBifimedAviso">Elige un fármaco de CIMA para ver sus envases y su ficha en BIFIMED.</p>
+            </div>
+        </div>
+        <div class="nx-acciones">
+            <a class="nx-boton nx-boton--secundario" id="fhValidadoBifimed" href="https://www.sanidad.gob.es/profesionales/medicamentos.do" target="_blank" rel="noopener noreferrer">Buscar en BIFIMED<span class="nx-solo-lector"> (se abre en otra pestaña)</span></a>
         </div>
         <div>
             <div class="nx-campo">
@@ -590,9 +600,9 @@
     <script type="module" src="scripts/farmacia_export_v2_validation_adapter.js?v=1.0.0-draft.1"></script>
     <script type="module" src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
     <script type="module" src="modules/hubTools.js?v=20261125-xl"></script>
-    <script type="module" src="modules/cimaSearch.js?v=20261125-cat"></script>
+    <script type="module" src="modules/cimaSearch.js?v=20261125-bif"></script>
     <script type="module" src="scripts/farmacia_drug_autocomplete.js?v=20261125-cat"></script>
-    <script type="module" src="scripts/farmacia_validacion.js?v=20261125-cat"></script>
+    <script type="module" src="scripts/farmacia_validacion.js?v=20261125-bif"></script>
     <script type="module" src="scripts/fh_intake_review_ui.js?v=20261124-h04"></script>
         </body>
         </html>

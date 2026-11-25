@@ -24,6 +24,17 @@
     var currentPatient = null;
     var otherDrugs = [];
     var otherDrugRowSeq = 0;
+    // Envase (código nacional) del tratamiento validado y enlace a BIFIMED
+    // (decisión de Sil 25-11, #954): el CN solo llega de CIMA, nunca se inventa.
+    var BIFIMED_BUSCADOR_URL = "https://www.sanidad.gob.es/profesionales/medicamentos.do";
+    var envaseRequestSeq = 0;
+    var ENVASE_AYUDA = {
+        sinFarmaco: "Elige un fármaco de CIMA para ver sus envases y su ficha en BIFIMED.",
+        cargando: "Consultando envases en CIMA…",
+        elige: "Elige el envase para ir a su ficha.",
+        ninguno: "Ningún envase comercializado en CIMA: usa el buscador general de BIFIMED.",
+        cimaFalla: "CIMA no responde: usa el buscador general de BIFIMED."
+    };
 
     var RELATION_OPTIONS = [
         'Biológico activo adicional',
@@ -1319,6 +1330,11 @@
                 nregistro: requestedSnapshot.nregistro_snapshot || ""
             }, { slot: "validacion.validado", cip: visibleCipForExport() }, { proposal_values: Object.assign({}, requestedSnapshot.proposal_values || {}) });
         }
+        if (requestedSnapshot) {
+            loadValidatedEnvases(requestedSnapshot.source_type === "CIMA" ? (requestedSnapshot.nregistro_snapshot || "") : "");
+        } else {
+            resetValidatedEnvase();
+        }
         updateValidationModuleSummaries();
         return true;
     }
@@ -1596,6 +1612,158 @@
         updateSolicitadoSummary();
     }
 
+    function bifimedFichaUrl(cn) {
+        return BIFIMED_BUSCADOR_URL + "?cn=" + encodeURIComponent(cn) + "&metodo=verDetalle";
+    }
+
+    function renderBifimedLink(cn, ayuda) {
+        var link = byId("fhValidadoBifimed");
+        var aviso = byId("fhValidadoBifimedAviso");
+        if (!link || !aviso) return;
+        link.setAttribute("href", cn ? bifimedFichaUrl(cn) : BIFIMED_BUSCADOR_URL);
+        while (link.firstChild) link.removeChild(link.firstChild);
+        link.appendChild(document.createTextNode(cn ? "Consultar financiación en BIFIMED" : "Buscar en BIFIMED"));
+        var lector = document.createElement("span");
+        lector.className = "nx-solo-lector";
+        lector.textContent = " (se abre en otra pestaña)";
+        link.appendChild(lector);
+        aviso.textContent = cn ? "Ficha oficial del envase con CN " + cn + "." : (ayuda || "");
+    }
+
+    // CIMA nombra cada envase «<nombre del medicamento>, <envase>»: se enseña
+    // solo el envase (lo que distingue una opción de otra) cuando el prefijo
+    // coincide; si no, el nombre completo.
+    function envaseLabel(nombre, nombreMedicamento) {
+        var full = String(nombre || "");
+        var prefix = String(nombreMedicamento || "").trim();
+        if (prefix && full.toUpperCase().indexOf(prefix.toUpperCase() + ", ") === 0) {
+            var rest = full.slice(prefix.length + 2).trim();
+            if (rest) return rest;
+        }
+        return full;
+    }
+
+    function setEnvaseOptions(select, placeholder, rows, nombreMedicamento) {
+        if (!select) return;
+        while (select.firstChild) select.removeChild(select.firstChild);
+        var placeholderOption = document.createElement("option");
+        placeholderOption.value = "";
+        placeholderOption.textContent = placeholder;
+        select.appendChild(placeholderOption);
+        var filas = Array.isArray(rows) ? rows : [];
+        var comercializadas = [];
+        var noComercializadas = [];
+        filas.forEach(function (row) {
+            if (!row || !row.cn) return;
+            (row.comercializado ? comercializadas : noComercializadas).push(row);
+        });
+        comercializadas.concat(noComercializadas).forEach(function (row) {
+            var option = document.createElement("option");
+            option.value = row.cn;
+            option.textContent = envaseLabel(row.nombre, nombreMedicamento) + " · CN " + row.cn
+                + (row.problemaSuministro ? " (problema de suministro)" : "")
+                + (!row.comercializado ? " (no comercializado)" : "");
+            option.title = row.nombre;
+            if (!row.comercializado) option.disabled = true;
+            select.appendChild(option);
+        });
+    }
+
+    function resetValidatedEnvase(ayuda) {
+        var select = byId("fhValidadoEnvase");
+        if (!select) return;
+        envaseRequestSeq += 1;
+        setEnvaseOptions(select, "Elige primero un fármaco de CIMA", []);
+        select.disabled = true;
+        select.removeAttribute("aria-busy");
+        renderBifimedLink("", ayuda || ENVASE_AYUDA.sinFarmaco);
+    }
+
+    function drugFromSnapshot(snapshot, cn) {
+        if (!snapshot) return null;
+        var etiquetas = snapshot.etiquetas && typeof snapshot.etiquetas === "object" ? snapshot.etiquetas : {};
+        return {
+            drug_id: snapshot.selected_drug_id || snapshot.drug_id || "",
+            source_type: snapshot.source_type || "",
+            nombre_comercial: snapshot.nombre_snapshot || snapshot.nombre_comercial || "",
+            display_name: snapshot.nombre_snapshot || snapshot.nombre_comercial || "",
+            principio_activo: snapshot.principio_activo_snapshot || "",
+            nombre_presentacion: snapshot.presentacion_snapshot || "",
+            dosis: snapshot.dosis_presentacion || "",
+            via: snapshot.via_snapshot || "",
+            codigo_nacional: cn || "",
+            nregistro: snapshot.nregistro_snapshot || "",
+            es_hospitalario: etiquetas.es_hospitalario === true,
+            biosimilar: etiquetas.biosimilar === true
+        };
+    }
+
+    function applyValidatedEnvase(cn, ayuda) {
+        var context = catalogContext("validacion.validado");
+        var snap = C && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
+        if (snap && C && typeof C.selectDrug === "function") {
+            C.selectDrug(drugFromSnapshot(snap, cn), context, { proposal_values: Object.assign({}, snap.proposal_values || {}) });
+        }
+        renderBifimedLink(cn, ayuda || ENVASE_AYUDA.elige);
+    }
+
+    function loadValidatedEnvases(nregistro) {
+        var select = byId("fhValidadoEnvase");
+        if (!select) return;
+        var registro = String(nregistro === undefined || nregistro === null ? "" : nregistro).trim();
+        var presentations = typeof HubTools !== "undefined" && HubTools.cimaSearch
+            && typeof HubTools.cimaSearch.presentations === "function" ? HubTools.cimaSearch.presentations : null;
+        if (!registro || !presentations) {
+            resetValidatedEnvase();
+            return;
+        }
+        var seq = ++envaseRequestSeq;
+        setEnvaseOptions(select, ENVASE_AYUDA.cargando, []);
+        select.disabled = true;
+        select.setAttribute("aria-busy", "true");
+        renderBifimedLink("", ENVASE_AYUDA.cargando);
+        presentations(registro).then(function (res) {
+            if (seq !== envaseRequestSeq) return;
+            select.removeAttribute("aria-busy");
+            var result = res && typeof res === "object" ? res : { source: "none", results: [] };
+            if (result.source !== "aemps") {
+                setEnvaseOptions(select, "Envases no disponibles", []);
+                select.disabled = true;
+                applyValidatedEnvase("", ENVASE_AYUDA.cimaFalla);
+                return;
+            }
+            var rows = Array.isArray(result.results) ? result.results : [];
+            var elegibles = rows.filter(function (row) { return row && row.cn && row.comercializado; });
+            var validatedSnap = C && typeof C.getSnapshot === "function" ? C.getSnapshot(catalogContext("validacion.validado")) : null;
+            setEnvaseOptions(select, "Elige el envase", rows, validatedSnap ? (validatedSnap.nombre_snapshot || "") : "");
+            select.disabled = false;
+            if (elegibles.length === 1) {
+                select.value = elegibles[0].cn;
+                applyValidatedEnvase(elegibles[0].cn);
+            } else if (elegibles.length === 0) {
+                select.value = "";
+                applyValidatedEnvase("", ENVASE_AYUDA.ninguno);
+            } else {
+                select.value = "";
+                applyValidatedEnvase("", ENVASE_AYUDA.elige);
+            }
+        });
+    }
+
+    function bindValidatedEnvase() {
+        var select = byId("fhValidadoEnvase");
+        if (!select) return;
+        resetValidatedEnvase();
+        select.addEventListener("change", function () {
+            applyValidatedEnvase(select.value, select.value ? "" : ENVASE_AYUDA.elige);
+        });
+        var farmaco = byId("fhValidadoFarmaco");
+        if (farmaco) farmaco.addEventListener("input", function () {
+            if (applyingCatalogSelection) return;
+            resetValidatedEnvase();
+        });
+    }
+
     function selectValidadoDrug(drug) {
         var farmacoEl = byId("fhValidadoFarmaco");
         var princEl = byId("fhValidadoPrincipioActivo");
@@ -1650,6 +1818,7 @@
         } finally {
             applyingCatalogSelection = false;
         }
+        loadValidatedEnvases(drug.source_type === "CIMA" ? (drug.nregistro || "") : "");
         updateValidationModuleSummaries();
     }
 
@@ -2690,6 +2859,7 @@
         byId("fhValPendingReasonRow").classList.toggle("hidden", byId("fhValEstado").value !== "pending");
         byId("fhValMotivoRow").classList.toggle("hidden", byId("fhValEstado").value !== "denied");
         bindSummaryInputs();
+        bindValidatedEnvase();
         bindCausalityEvents();
         renderOtherDrugs();
         if (C.loaded) {
