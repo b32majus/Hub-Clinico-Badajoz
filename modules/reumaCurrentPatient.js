@@ -7,8 +7,9 @@
  *   - La dirección nunca lleva el CIP: las páginas navegan por el nombre
  *     del fichero y el paciente se resuelve al cargar (resolveOnLoad).
  *   - Al cambiar de paciente se borra lo del anterior (PATIENT_BOUND_KEYS).
- *   - F5 en el panel o en Seguimiento olvida al paciente (isReload);
- *     el Excel cargado (hubClinicoDB*) NO se toca.
+ *   - F5 en el panel o en Seguimiento pregunta «continuar / empezar de
+ *     cero» (#714 tramo 2, mismo texto que Farmacia); empezar de cero
+ *     olvida al paciente. El Excel cargado (hubClinicoDB*) NO se toca.
  *   - Los enlaces antiguos con ?id= se aceptan una vez, se guardan y se
  *     limpian de la dirección.
  *
@@ -24,6 +25,8 @@
     var PATIENT_BOUND_KEYS = ['HubClinico_PrebiologicoActual'];
     var LEGACY_PREFIX = 'HubClinico_Prebiologic_';
     var URL_PATIENT_PARAMS = ['id', 'patologia'];
+    // Mismo texto que Farmacia (scripts/farmacia_patient_flow_runtime.js).
+    var RESUME_QUESTION = 'Hay un paciente actual en esta sesión. Aceptar para continuar o Cancelar para empezar de cero.';
 
     /**
      * Devuelve { id, patologia } del paciente actual o null
@@ -135,7 +138,8 @@
      * Resolución ÚNICA por carga, para el panel y Seguimiento:
      *   1. purga las claves antiguas por CIP;
      *   2. lee id/patologia de la dirección;
-     *   3. en recarga (F5) olvida al paciente y devuelve null;
+     *   3. en recarga (F5) con paciente pregunta «continuar / empezar de
+ *      cero»; empezar de cero lo olvida y devuelve null;
      *   4. con ?id= (enlace antiguo) lo acepta una vez y lo guarda;
      *   5. limpia id/patologia de la dirección si estaban;
      *   6. devuelve get().
@@ -149,8 +153,13 @@
             var hasUrlId = params.has('id');
             var urlId = (params.get('id') || '').trim();
             var urlPatologia = params.get('patologia') || '';
-            // F5, o un enlace con ?id= vacío: se olvida el paciente (nunca el anterior).
-            if (isReload() || (hasUrlId && !urlId)) {
+            // Un enlace con ?id= vacío: se olvida el paciente (nunca el anterior).
+            // F5 con paciente: se pregunta, como en Farmacia (#714 tramo 2).
+            var forget = hasUrlId && !urlId;
+            if (!forget && !urlId && isReload() && get()) {
+                forget = !window.confirm(RESUME_QUESTION);
+            }
+            if (forget) {
                 clear();
                 dropPatientParamsFromUrl(params);
                 return null;
