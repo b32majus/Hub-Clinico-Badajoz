@@ -28,6 +28,14 @@
  * entero + aviso en pantalla); una respuesta válida (aunque vacía) es
  * `{ source: 'aemps', results }`.
  *
+ * `presentations(nregistro)` (decisión de Sil 25-11, #954) es SOLO para
+ * Farmacia: pide a la AEMPS los envases de un nº de registro ya elegido
+ * (`/cima/rest/presentaciones?nregistro=`) y devuelve `{ source, results }`
+ * con filas `{ cn, nombre, comercializado, problemaSuministro }` en el orden
+ * de CIMA. SIN respaldo de catálogo y SIN tocar el estado de CIMA: cualquier
+ * fallo resuelve `{ source: 'none', results: [] }`. Nunca rechaza y nunca
+ * inventa un CN: una fila sin `cn` o sin `nombre` se descarta.
+ *
  * Namespace: HubTools.cimaSearch
  */
 (function () {
@@ -39,6 +47,7 @@
     }
 
     var ENDPOINT = 'https://cima.aemps.es/cima/rest/medicamentos';
+    var PRESENTACIONES_ENDPOINT = 'https://cima.aemps.es/cima/rest/presentaciones';
     var TIMEOUT_MS = 4000;
     var MAX_RESULTS = 15;
     var MIN_QUERY = 2;
@@ -252,9 +261,54 @@
             });
     }
 
+    function projectPresentation(row, nregistro) {
+        if (!row || typeof row !== 'object') return null;
+        var cn = row.cn === undefined || row.cn === null ? '' : String(row.cn).trim();
+        var nombre = row.nombre === undefined || row.nombre === null ? '' : String(row.nombre).trim();
+        if (!cn || !nombre) return null;
+        if (row.nregistro !== undefined && row.nregistro !== null
+                && String(row.nregistro).trim() !== nregistro) return null;
+        return {
+            cn: cn,
+            nombre: nombre,
+            comercializado: row.comerc === true,
+            problemaSuministro: row.psum === true
+        };
+    }
+
+    /**
+     * Packages (código nacional) of ONE registration number already chosen
+     * (decisión de Sil 25-11, #954). No catalogue fallback and no session
+     * state: every failure path resolves `{ source: 'none', results: [] }`.
+     * Never rejects.
+     */
+    function presentations(nregistro) {
+        var n = String(nregistro === undefined || nregistro === null ? '' : nregistro).trim();
+        if (!n) {
+            return Promise.resolve({ source: 'none', results: [] });
+        }
+        return requestOnce(PRESENTACIONES_ENDPOINT + '?nregistro=' + encodeURIComponent(n))
+            .then(function (outcome) {
+                if (!outcome.valid) {
+                    return { source: 'none', results: [] };
+                }
+                var rows = Array.isArray(outcome.rows) ? outcome.rows : [];
+                var results = [];
+                for (var i = 0; i < rows.length; i++) {
+                    var projected = projectPresentation(rows[i], n);
+                    if (projected) results.push(projected);
+                }
+                return { source: 'aemps', results: results };
+            })
+            .catch(function () {
+                return { source: 'none', results: [] };
+            });
+    }
+
     HubTools.cimaSearch = {
         search: search,
         searchPresentations: searchPresentations,
+        presentations: presentations,
         estado: estado,
         ENDPOINT: ENDPOINT,
         TIMEOUT_MS: TIMEOUT_MS,
