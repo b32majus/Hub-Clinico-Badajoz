@@ -212,7 +212,8 @@ async function runPage(browser, pagePath) {
     // --- APs: capture EVA Global = 4 -------------------------------------
     await page.selectOption('#diagnosticoPrimario', 'aps');
     await page.waitForTimeout(350);
-    for (const sel of ['#evaGlobal', '#asdasSection', '.homunculus-svg-wrapper']) {
+    // #956 (25-11): una sección cerrada ya no coloca su contenido; hay que abrirla como haría el usuario.
+    for (const sel of ['#evaGlobal', '#asdasSection', '.homunculus-svg-wrapper', '#pcrValue']) {
       const info = await openCollapsibles(page, sel);
       if (!info.hit && sel !== '#asdasSection') {
         throw new Error(`no fue posible hacer visible ${sel} mediante interacción soportada`);

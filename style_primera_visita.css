@@ -247,8 +247,16 @@ body:has(.nx-marco) {
     background-color: var(--nx-color-superficie);
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+    /* content-visibility con allow-discrete: se oculta al TERMINAR la animación de cierre. */
+    transition: max-height 0.4s ease-out, padding 0.4s ease-out, content-visibility 0.4s allow-discrete;
     border-top: 1px solid var(--nx-color-borde);
+}
+
+/* Carga (#956, 25-11): el navegador no coloca el contenido de una sección cerrada hasta abrirla
+   (al entrar en Primera visita hacía el doble de trabajo de maquetación). El JS que abre la sección
+   pone .active ANTES de medir scrollHeight, así que la altura sale bien. */
+.collapsible-header:not(.active)+.collapsible-content {
+    content-visibility: hidden;
 }
 
 .collapsible-header.active+.collapsible-content {
