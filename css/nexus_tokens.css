@@ -99,11 +99,13 @@
     --nx-ancho-pagina: 72rem;
     --nx-ancho-dialogo: 32rem;
     --nx-ancho-avisos: 28rem;
+    --nx-ancho-ayuda: 20rem;                /* texto de la ayuda emergente (nx-ayuda) */
     --nx-ancho-lectura: 70ch;
     --nx-ancho-tarjeta-min: 18rem;
     --nx-alto-tabla: 32rem;                 /* tabla con cabecera fija */
     --nx-capa-avisos: 100;
     --nx-transicion: 120ms ease-out;
+    --nx-retardo-ayuda: 250ms;              /* la ayuda sigue visible este rato al soltar el botón (dar tiempo a bajar el ratón al texto) */
     --nx-giro: 0.8s;                        /* una vuelta del aro de «cargando» */
     --nx-ancho-lateral: 16rem;              /* barra lateral <nx-shell> en escritorio */
     --nx-ancho-lateral-estrecho: 14.5rem;   /* barra lateral por debajo de 64em */

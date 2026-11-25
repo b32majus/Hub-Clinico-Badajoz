@@ -24,7 +24,7 @@ const PUNTOS = ['64em', '40em', '36em'];
 const BLOQUES = ['nx-pagina', 'nx-solo-lector', 'nx-boton', 'nx-acciones', 'nx-campo', 'nx-casilla', 'nx-buscador',
     'nx-formulario', 'nx-tabla-marco', 'nx-tabla', 'nx-pestanas', 'nx-rejilla', 'nx-tarjeta', 'nx-datos', 'nx-etiqueta',
     'nx-aviso', 'nx-avisos', 'nx-dialogo', 'nx-vacio', 'nx-marco', 'nx-shell', 'nx-profesional', 'nx-cabecera',
-    'nx-cifras', 'nx-cifra', 'nx-solicitudes', 'nx-solicitud'];
+    'nx-cifras', 'nx-cifra', 'nx-solicitudes', 'nx-solicitud', 'nx-ayuda'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 const sinComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 

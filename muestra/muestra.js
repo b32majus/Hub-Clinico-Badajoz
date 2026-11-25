@@ -1,5 +1,6 @@
 // #956 tramo 4: botones de prueba de la página de muestra. Datos inventados.
 import { avisar, confirmar } from '../modules/nexus/index.js';
+import '../modules/nexus/piezas/nx-ayuda.js';
 
 const TEXTOS = {
     error: ['No se pudo guardar el fichero. Vuelva a intentarlo.', 'Error al guardar'],

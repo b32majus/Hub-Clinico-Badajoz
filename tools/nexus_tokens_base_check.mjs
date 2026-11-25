@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const V = '20261124-col'; // 24-11: paleta de gráficos, actividad y homúnculo (tokens)
+const V = '20261125-ayuda'; // 25-11: anchura y retardo de la ayuda emergente (tokens); antes 20261124-col (paleta de gráficos, actividad y homúnculo)
 const VB = '20261122-t7f'; // base: sin cambios desde el tramo 7
 const TOKENS = 'css/nexus_tokens.css';
 const BASE = 'css/nexus_base.css';
