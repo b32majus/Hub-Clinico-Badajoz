@@ -162,10 +162,23 @@ try {
     });
 
     await test('B4 el enlace «Panel del paciente» de la barra conserva el CIP en el Seguimiento de Farmacia', async () => {
+        // #714: el enlace de la barra ya no lleva el CIP en el href; el panel
+        // recupera al paciente desde el puntero de sessionStorage.
         await page.goto(`${base}farmacia_seguimiento.html?cip=${CIP}`, { waitUntil: 'load' });
         await page.waitForFunction((cip) => {
-            const a = document.querySelector('nx-shell a.nx-shell__enlace[href*="farmacia_dashboard_paciente.html"]');
-            return !!a && a.getAttribute('href').includes('cip=' + cip);
+            const F = window.FarmaciaDemo;
+            return !!F && typeof F.getQueryContext === 'function' && F.getQueryContext().cip === cip;
+        }, CIP, { timeout: 10000 });
+        const link = page.locator('nx-shell a.nx-shell__enlace[href*="farmacia_dashboard_paciente.html"]');
+        await link.waitFor({ timeout: 10000 });
+        const href = await link.getAttribute('href');
+        const params = new URL(href, base).searchParams;
+        assert.deepEqual(['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia']
+            .filter((key) => params.has(key)), [], `href ${JSON.stringify(href)}`);
+        await Promise.all([page.waitForURL(/farmacia_dashboard_paciente\.html/, { timeout: 15000 }), link.click()]);
+        await page.waitForFunction((cip) => {
+            const F = window.FarmaciaDemo;
+            return !!F && typeof F.getQueryContext === 'function' && F.getQueryContext().cip === cip;
         }, CIP, { timeout: 10000 });
     });
 

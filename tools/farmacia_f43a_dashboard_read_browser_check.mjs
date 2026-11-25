@@ -105,9 +105,14 @@ async function dashboardScenario(label, query, expect) {
             assert.equal(badge, 'CIP no encontrado', `status badge ${JSON.stringify(badge)}`);
         }
         if (expect.navHrefContainsCip) {
+            // #714: el enlace ya no lleva el CIP en el href; comprueba que el href no
+            // lleva ninguna clave de paciente y que el CIP queda en data-fh-cip.
             const href = await page.evaluate(() => (document.getElementById('navToSeguimiento') || {}).href || '');
-            assert.ok(href.indexOf('cip=' + encodeURIComponent(expect.navHrefContainsCip)) !== -1 || href.indexOf('cip=' + expect.navHrefContainsCip) !== -1,
-                `nav href ${JSON.stringify(href)}`);
+            const params = new URL(href, base).searchParams;
+            const patientKeys = ['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia'];
+            assert.deepEqual(patientKeys.filter((key) => params.has(key)), [], `nav href ${JSON.stringify(href)}`);
+            const linkCip = await page.evaluate(() => (document.getElementById('navToSeguimiento') || {}).getAttribute('data-fh-cip') || '');
+            assert.equal(linkCip, expect.navHrefContainsCip, `nav data-fh-cip ${JSON.stringify(linkCip)}`);
         }
         if (expect.supportedInteraction) {
             await expect.supportedInteraction(page);

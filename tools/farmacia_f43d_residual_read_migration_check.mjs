@@ -251,12 +251,13 @@ function makeIndexElement(id) {
     };
 }
 
-function runIndexScenario({ initRead }) {
+function runIndexScenario({ initRead, search }) {
     const elements = {};
     const domReady = [];
     const cipReads = [];
     const alerts = [];
-    const location = { href: 'farmacia_index.html', search: '?entrada=derivacion' };
+    // #714: la búsqueda automática de Inicio solo se lanza si el CIP llegó en la dirección (antigua) o por la búsqueda lateral.
+    const location = { href: 'farmacia_index.html', search: search || '?entrada=derivacion' };
     const document = {
         body: makeIndexElement('body'),
         addEventListener(type, listener) { if (type === 'DOMContentLoaded') domReady.push(listener); },
@@ -344,7 +345,7 @@ try {
     // init restore and guarded search must behave exactly as before.
     let resolveInit = null;
     const initRead = () => new Promise((resolve) => { resolveInit = resolve; });
-    const harness = runIndexScenario({ initRead });
+    const harness = runIndexScenario({ initRead, search: '?entrada=derivacion&cip=CIP-INIT-A' });
     await harness.tick();
     resolveInit({ cip: 'CIP-INIT-A', status: 'loaded', patient: { cip: 'CIP-INIT-A', servicio: 'Reumatología', patologia: 'Artritis Reumatoide (AR)' }, hasExplicitCip: true, patientNotFound: false });
     await harness.tick();

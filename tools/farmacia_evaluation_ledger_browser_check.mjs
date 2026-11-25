@@ -125,6 +125,8 @@ await context.addInitScript(({ key, value }) => {
 }, { key: LEGACY_KEY, value: LEGACY_VALUE });
 
 const page = await context.newPage();
+// #714: F5 pregunta «continuar o empezar de cero»; aquí se continúa (el acto se destruye igual).
+page.on('dialog', (dialog) => dialog.accept());
 const consoleErrors = [];
 const pageErrors = [];
 page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });

@@ -592,12 +592,17 @@ function actionsText(cip) {
   const actions = card.querySelector('.pending-validation-card__actions');
   return actions ? actions.textContent : '';
 }
+// #714: el enlace de validación ya no lleva cip en el href; lleva el contexto
+// técnico (servicio/entrada/solicitud_id) y el CIP en data-fh-cip.
+const validarLink = enfCard.querySelector('.pending-validation-card__actions')
+  .querySelector('[data-enf-action="validar"]');
+const validarParams = new URLSearchParams((validarLink.href || '').split('?')[1] || '');
 check('ok_farmacia offers Abrir validación with the supported context params',
   actionsText('ENF-OK').indexOf('Abrir validación') !== -1
-  && enfCard.querySelector('.pending-validation-card__actions')
-    .querySelector('[data-enf-action="validar"]').href.indexOf('farmacia_validacion.html?') === 0
-  && enfCard.querySelector('.pending-validation-card__actions')
-    .querySelector('[data-enf-action="validar"]').href.indexOf('cip=ENF-OK') !== -1);
+  && validarLink.href.indexOf('farmacia_validacion.html?') === 0
+  && ['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia']
+    .every((key) => !validarParams.has(key))
+  && validarLink.getAttribute('data-fh-cip') === 'ENF-OK');
 check('general rows offer Abrir validación to farmacia_validacion.html with the CIP',
   actionsText('GEN-1').indexOf('Abrir validación') !== -1
   && generalCard.querySelector('.pending-validation-card__actions').querySelector('a')

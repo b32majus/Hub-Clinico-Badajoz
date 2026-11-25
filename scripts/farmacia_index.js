@@ -116,7 +116,7 @@
         actionDefinitions(patient).forEach(function (action) {
             var link = document.createElement('a');
             link.className = 'btn ' + action.cls;
-            link.href = F.makeContextUrl(action.href, contextFromPatient(patient, action.entrada));
+            F.setPatientLink(link, action.href, contextFromPatient(patient, action.entrada));
             F.appendIconText(link, action.icon, action.label);
             container.appendChild(link);
         });
@@ -685,13 +685,13 @@
                 return;
             }
             var currentParams = new URLSearchParams(window.location.search);
-            var url = F.makeContextUrl(destinos[punto], {
+            /* #714 tramo 1: el paciente va al puntero de sessionStorage, no a la URL. */
+            F.goToPatient(destinos[punto], {
                 cip: cip,
                 servicio: servicioLabel,
                 patologia: patologia.value,
                 entrada: currentParams.get('entrada') || punto
-            });
-            window.location.href = url + (url.indexOf('?') === -1 ? '?' : '&') + 'destino=' + encodeURIComponent(punto);
+            }, { destino: punto });
         });
     }
 
@@ -888,7 +888,7 @@
         if (groupKey === 'ok_farmacia') {
             var link = document.createElement('a');
             link.className = 'btn btn-primary';
-            link.href = F.makeContextUrl('farmacia_validacion.html', {
+            F.setPatientLink(link, 'farmacia_validacion.html', {
                 cip: patient.cip,
                 servicio: patient.servicioSlug || patient.servicio || patient.servicio_origen,
                 patologia: patient.patologia || patient.patologia_indicacion,
@@ -940,7 +940,7 @@
         // Dashboard siempre disponible
         var dashLink = document.createElement('a');
         dashLink.className = 'btn btn-secondary';
-        dashLink.href = F.makeContextUrl('farmacia_dashboard_paciente.html', {
+        F.setPatientLink(dashLink, 'farmacia_dashboard_paciente.html', {
             cip: patient.cip,
             entrada: 'dashboard'
         });
@@ -1119,8 +1119,14 @@
         // was in flight, the late response is a no-op (no input overwrite, no
         // stale search, no session/commit effect).
         var initGeneration = userSearchIntent;
+        /* #714 tramo 1: la búsqueda automática (abre la ficha rápida) solo se
+           lanza si se pidió: dirección antigua con ?cip=/?id= (se lee ANTES de
+           que el runtime la limpie) o búsqueda lateral (aviso de un solo uso en
+           sessionStorage). Volver a Inicio con un paciente puesto no la abre. */
+        var legacyParams = new URLSearchParams(window.location.search);
+        var searchRequested = !!(legacyParams.get('cip') || legacyParams.get('id')) || (typeof F.consumePendingSearch === 'function' && F.consumePendingSearch());
         F.readPatientContext().then(function (context) {
-            if (context.cip && cipInput && userSearchIntent === initGeneration) {
+            if (context.cip && searchRequested && cipInput && userSearchIntent === initGeneration) {
                 cipInput.value = context.cip;
                 search();
             }

@@ -77,8 +77,8 @@
             <header class="nx-tarjeta__cabecera"><h2 class="nx-tarjeta__titulo" id="demoCaseTitulo">Caso demo destacado: paciente FH-004</h2></header>
             <div class="nx-tarjeta__cuerpo"><p>Paciente sintético con <strong>3 biológicos</strong> (Belimumab + Rituximab), seguimiento multibiológico activo, evaluación de causalidad por efecto adverso y panel longitudinal completo.</p></div>
             <footer class="nx-tarjeta__pie demo-case-card__actions">
-                <a href="farmacia_dashboard_paciente.html?cip=CIP-DEMO-FH-004&entrada=dashboard" class="nx-boton nx-boton--principal"><i class="fas fa-user-circle" aria-hidden="true"></i> Ver panel FH-004</a>
-                <a href="farmacia_seguimiento.html?cip=CIP-DEMO-FH-004&entrada=seguimiento" class="nx-boton nx-boton--secundario"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Ir a seguimiento</a>
+                <a href="farmacia_dashboard_paciente.html?entrada=dashboard" data-fh-cip="CIP-DEMO-FH-004" class="nx-boton nx-boton--principal"><i class="fas fa-user-circle" aria-hidden="true"></i> Ver panel FH-004</a>
+                <a href="farmacia_seguimiento.html?entrada=seguimiento" data-fh-cip="CIP-DEMO-FH-004" class="nx-boton nx-boton--secundario"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Ir a seguimiento</a>
             </footer>
         </section>
         <section class="nx-tarjeta hidden" id="guidedIntakePanel" aria-labelledby="altaGuiadaTitulo">
@@ -198,16 +198,16 @@
             <script type="module" src="scripts/farmacia_bridge_v2_patient_selectors.js?v=20260805-bridge-selectors-qv-r1"></script>
             <script type="module" src="scripts/farmacia_application_data_port.js?v=20260806-patient-flow-r1"></script>
             <script type="module" src="scripts/farmacia_raw_excel_data_source.js?v=20260806-patient-flow-r1"></script>
-             <script type="module" src="scripts/farmacia_current_patient_session.js?v=20260806-patient-flow-r1"></script>
+             <script type="module" src="scripts/farmacia_current_patient_session.js?v=20261125-cip"></script>
             <script type="module" src="scripts/farmacia_bridge_raw_ea_v21_workbook_context.js?v=20261031-ea-v1-demo"></script>
-             <script type="module" src="scripts/farmacia_patient_flow_runtime.js?v=20260806-patient-flow-r1"></script>
-             <script type="module" src="scripts/farmacia_common.js?v=20261125-xl"></script>
+             <script type="module" src="scripts/farmacia_patient_flow_runtime.js?v=20261125-cip"></script>
+             <script type="module" src="scripts/farmacia_common.js?v=20261125-cip"></script>
     <script type="module" src="scripts/farmacia_statistics_cohort.js?v=20260806-raw-statistics-r1"></script>
     <script type="module" src="scripts/farmacia_statistics_handoff.js?v=20260806-raw-statistics-r1"></script>
     <script type="module" src="scripts/farmacia_prebiologico.js?v=20260614-wo4-a"></script>
     <script type="module" src="scripts/farmacia_patient_read_contract_v2.js?v=20260806-patient-read-facade-r1"></script>
     <script type="module" src="scripts/farmacia_patient_read_facade_v2.js?v=20260806-patient-read-facade-r1"></script>
-    <script type="module" src="scripts/farmacia_index.js?v=20261124-h02"></script>
+    <script type="module" src="scripts/farmacia_index.js?v=20261125-cip"></script>
     <script src="modules/cargadorExcel.js?v=20261125-xl" defer></script>
         </body>
         </html>

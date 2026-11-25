@@ -225,8 +225,15 @@ async function openLongitudinal(cip) {
   const dashboard = page.locator('#fhQvActions').getByRole('link', { name: 'Panel', exact: false });
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), dashboard.click()]);
   await page.waitForFunction(expected => document.querySelector('#patientIdBadge')?.textContent.trim() === expected, cip);
+  // #714: el enlace longitudinal ya no lleva generation en el href; la sesión
+  // del paciente vive en el envelope de sessionStorage.
   const full = page.locator('#longitudinalStandaloneLink');
-  assert.match(await full.getAttribute('href'), /generation=/, 'supported dashboard link retains the patient session');
+  const fullHref = await full.getAttribute('href');
+  const fullParams = new URLSearchParams((fullHref || '').split('#')[0].split('?')[1] || '');
+  assert(['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia']
+    .every(key => !fullParams.has(key)), `supported dashboard link carries no patient keys: ${fullHref}`);
+  assert(await page.evaluate(() => JSON.parse(sessionStorage.getItem('promueve.fh.currentPatientSession.v1') || 'null')?.generation),
+    'the patient session envelope retains the generation in sessionStorage');
   await Promise.all([page.waitForNavigation({ waitUntil: 'domcontentloaded' }), full.click()]);
   await page.waitForFunction(expected => document.querySelector('#longitudinalPatientSelect')?.value === expected, cip);
 }

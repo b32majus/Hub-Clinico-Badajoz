@@ -81,6 +81,7 @@ function runIndex(patient = null) {
     { value: 'digestivo', textContent: 'Digestivo' }
   ];
   const location = { href: 'farmacia_index.html', search: '?entrada=derivacion' };
+  const pointer = { value: null };
   const body = element('body');
   const document = {
     body,
@@ -102,8 +103,17 @@ function runIndex(patient = null) {
     readPatientByCipSync() { return patient ? { status: 'loaded', patient, source: 'legacy_coexistence', patient_id: null, errorCode: null } : { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null }; },
     getPendingValidationPatients() { return []; },
     makeContextUrl(base, context) {
-      const params = new URLSearchParams(Object.entries(context).filter(([, value]) => value));
+      /* #714: como el real, la URL nunca lleva cip ni patologia. */
+      const params = new URLSearchParams(Object.entries(context).filter(([key, value]) => value && key !== 'cip' && key !== 'patologia'));
       return `${base}?${params}`;
+    },
+    setPatientLink(link, base, context) { link.href = F.makeContextUrl(base, context); if (context.cip) link.dataFhCip = context.cip; },
+    goToPatient(base, context, extraParams) {
+      /* #714: el paciente va al puntero de sessionStorage; la URL, sin él. */
+      pointer.value = { cip: context.cip, patologia: context.patologia || '' };
+      const params = new URLSearchParams(Object.entries(context).filter(([key, value]) => value && key !== 'cip' && key !== 'patologia'));
+      Object.entries(extraParams || {}).forEach(([key, value]) => { if (value) params.set(key, value); });
+      location.href = `${base}?${params}`;
     },
     getQueryContext() { return {}; },
     getEnfermeriaVisiblePatients() { return []; },
@@ -119,7 +129,7 @@ function runIndex(patient = null) {
   vm.createContext(sandbox);
   vm.runInContext(indexSource, sandbox);
   domReady.forEach((listener) => listener());
-  return { ids, alerts, location };
+  return { ids, alerts, location, pointer };
 }
 
 function navigateUnknown(destination, service = 'reumatologia', pathology = 'Artritis Reumatoide (AR)') {
@@ -136,9 +146,10 @@ function navigateUnknown(destination, service = 'reumatologia', pathology = 'Art
 
 const pv = navigateUnknown('primera_visita');
 const pvUrl = new URL(pv.location.href, 'http://local/');
-assert(pvUrl.searchParams.get('cip') === 'CIP-NUEVO-01', 'Inicio -> Primera Visita transports typed CIP');
+assert(!pvUrl.searchParams.has('cip') && !pvUrl.searchParams.has('patologia'), '#714: la URL de Primera Visita no lleva cip ni patologia');
+assert(pv.pointer.value && pv.pointer.value.cip === 'CIP-NUEVO-01', 'Inicio -> Primera Visita transports typed CIP (puntero)');
 assert(pvUrl.searchParams.get('servicio') === 'Reumatología', 'Inicio -> Primera Visita transports canonical service label');
-assert(pvUrl.searchParams.get('patologia') === 'Artritis Reumatoide (AR)', 'Inicio -> Primera Visita transports pathology');
+assert(pv.pointer.value.patologia === 'Artritis Reumatoide (AR)', 'Inicio -> Primera Visita transports pathology (puntero)');
 assert(pvUrl.searchParams.get('entrada') === 'derivacion', 'Inicio preserves existing circuit/origin');
 assert(pvUrl.searchParams.get('destino') === 'primera_visita', 'Inicio transports explicit destination');
 
@@ -196,12 +207,12 @@ assert(pvElements.fhPvPatologia.value === 'Artritis Reumatoide (AR)', 'Primera V
 
 const seguimiento = navigateUnknown('seguimiento');
 const segUrl = new URL(seguimiento.location.href, 'http://local/');
-assert(segUrl.searchParams.get('servicio') === 'Reumatología' && segUrl.searchParams.get('patologia') === 'Artritis Reumatoide (AR)', 'Inicio -> Seguimiento transports receiver-compatible context');
+assert(segUrl.searchParams.get('servicio') === 'Reumatología' && seguimiento.pointer.value.patologia === 'Artritis Reumatoide (AR)' && !segUrl.searchParams.has('cip'), 'Inicio -> Seguimiento transports receiver-compatible context');
 assert(segUrl.searchParams.get('destino') === 'seguimiento', 'Seguimiento URL identifies destination');
 
 const validacion = navigateUnknown('validacion', 'dermatologia', 'Psoriasis');
 const valUrl = new URL(validacion.location.href, 'http://local/');
-assert(valUrl.searchParams.get('servicio') === 'Dermatología' && valUrl.searchParams.get('patologia') === 'Psoriasis', 'Inicio -> Validación transports compatible context');
+assert(valUrl.searchParams.get('servicio') === 'Dermatología' && validacion.pointer.value.patologia === 'Psoriasis' && !valUrl.searchParams.has('patologia'), 'Inicio -> Validación transports compatible context');
 assert(!['farmaco', 'dosis', 'pauta', 'tratamiento'].some((key) => valUrl.searchParams.has(key)), 'Validación URL infers no treatment fields');
 
 const incomplete = runIndex();

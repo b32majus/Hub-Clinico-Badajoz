@@ -280,11 +280,18 @@ const BROAD_ONLY_CIP = 'CIP-SINT-INICIO-001';
     const sidebar = page.locator('#patientSearch');
     await sidebar.waitFor({ timeout: 10000 });
     await sidebar.fill('CIP-DEMO-FH-001');
+    // #714: la búsqueda lateral ya no lleva el CIP en la URL; va a Inicio sin
+    // claves de paciente, el CIP queda en el puntero de sessionStorage y la
+    // ficha del buscado se abre sola.
     await Promise.all([page.waitForLoadState('domcontentloaded'), sidebar.press('Enter')]);
-    assert.ok(page.url().includes('farmacia_index.html') && page.url().includes('cip='),
-      `sidebar search navigates with CIP context: ${page.url()}`);
+    assert.ok(page.url().includes('farmacia_index.html'), `sidebar search lands on Inicio: ${page.url()}`);
+    const landedParams = new URL(page.url()).searchParams;
+    assert.deepEqual(['cip', 'id', 'patient_id', 'identifier_system', 'generation', 'fh_session', 'patologia']
+      .filter((key) => landedParams.has(key)), [], `URL without patient keys: ${page.url()}`);
+    await page.waitForFunction((cip) => (document.getElementById('fhCipInput') || {}).value === cip,
+      'CIP-DEMO-FH-001', { timeout: 15000 });
     // FH-004 demo access + import accessibility on the landed page.
-    assert.ok(await page.locator('#demoCaseFh004 a[href*="CIP-DEMO-FH-004"]').first().count() >= 1,
+    assert.ok(await page.locator('#demoCaseFh004 a[data-fh-cip="CIP-DEMO-FH-004"]').first().count() >= 1,
       'FH-004 demo access preserved');
     assert.ok(await page.locator('#btnCargarExcelEnfermeria').count() >= 1
       && await page.locator('#btnCargarExcelFarmacia').count() >= 1,

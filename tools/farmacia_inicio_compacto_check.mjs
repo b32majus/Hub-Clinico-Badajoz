@@ -164,7 +164,8 @@ check('preserve-exactly: sidebar + central search mounts intact',
   && indexHtml.indexOf('id="guidedIntakePanel"') !== -1);
 check('preserve-exactly: FH-004 demo card intact',
   indexHtml.indexOf('id="demoCaseFh004"') !== -1
-  && indexHtml.indexOf('cip=CIP-DEMO-FH-004') !== -1);
+  && indexHtml.indexOf('data-fh-cip="CIP-DEMO-FH-004"') !== -1  // #714: el paciente va en data-fh-cip, no en la URL
+  && indexHtml.indexOf('cip=CIP-DEMO-FH-004') === -1);
 check('preserve-exactly: Excel import stays accessible',
   indexHtml.indexOf('id="modCargaDatosProyecto"') !== -1
   && indexHtml.indexOf('id="btnCargarExcelEnfermeria"') !== -1
