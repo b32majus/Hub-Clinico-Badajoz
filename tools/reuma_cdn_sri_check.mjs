@@ -11,8 +11,10 @@ for (const p of REUMA) {
     if (/xlsx/.test(url)) fails.push(p + ': SheetJS por CDN (' + url + ')');
     else if (!/integrity="sha384-[A-Za-z0-9+/=]+"/.test(tag) || !/crossorigin="anonymous"/.test(tag)) fails.push(p + ': sin SRI/crossorigin (' + url + ')');
   }
-  if (/xlsx/.test(h) && !/src="vendor\/sheetjs\/xlsx\.full\.min\.js/.test(h)) fails.push(p + ': no carga vendor/sheetjs');
+  // #956 (25-11): la librería se pide al usarla, a través del cargador local.
+  if (/xlsx/i.test(h) && !/src="modules\/cargadorExcel\.js/.test(h)) fails.push(p + ': no carga el cargador local de Excel');
 }
+if (!/'vendor\/sheetjs\/xlsx\.full\.min\.js'/.test(fs.readFileSync(new URL('modules/cargadorExcel.js', root), 'utf8'))) fails.push('el cargador de Excel no pide vendor/sheetjs local');
 const v = fs.readFileSync(new URL('vendor/sheetjs/xlsx.full.min.js', root), 'utf8');
 if (!/version="0\.18\.5"/.test(v)) fails.push('vendor/sheetjs no es 0.18.5');
 if (fails.length) { console.error('FALLA:\n- ' + fails.join('\n- ')); process.exit(1); }

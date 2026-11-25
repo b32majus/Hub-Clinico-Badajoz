@@ -218,6 +218,12 @@
 
     function downloadXlsx() {
         if (!currentReport) return;
+        if (typeof window.XLSX === 'undefined' && window.NexusExcel) {
+            window.NexusExcel.cargar().then(downloadXlsx, function () {
+                window.alert('No se pudo cargar la librería de Excel. Revise la conexión y vuelva a intentarlo.');
+            });
+            return;
+        }
         if (typeof window.XLSX === 'undefined') {
             fail('SheetJS (XLSX) no está disponible. No se puede generar el Excel del informe.');
         }
@@ -511,6 +517,12 @@
 
     function downloadKisqaliXlsx() {
         if (!currentKisqaliReport) return;
+        if (typeof window.XLSX === 'undefined' && window.NexusExcel) {
+            window.NexusExcel.cargar().then(downloadKisqaliXlsx, function () {
+                window.alert('No se pudo cargar la librería de Excel. Revise la conexión y vuelva a intentarlo.');
+            });
+            return;
+        }
         if (typeof window.XLSX === 'undefined') {
             fail('SheetJS (XLSX) no está disponible. No se puede generar el Excel del informe.');
         }

@@ -448,7 +448,7 @@ test('integration source keeps Bridge in runtime memory and makes rejection stat
 test('cache busters identify the repaired reader and common scripts', () => {
     const html = fs.readFileSync(path.join(ROOT, 'farmacia_index.html'), 'utf8');
     assert(html.includes('scripts/farmacia_bridge_v2_reader.js?v=20260805-bridge-reader-r1'));
-    assert(html.includes('scripts/farmacia_common.js?v=20261125-cat'));
+    assert(html.includes('scripts/farmacia_common.js?v=20261125-xl'));
     assert(!html.includes('scripts/farmacia_common.js?v=20260614-wo6-b'));
 });
 

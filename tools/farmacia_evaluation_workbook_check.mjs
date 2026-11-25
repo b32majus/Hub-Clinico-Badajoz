@@ -162,7 +162,7 @@ assert.match(api.filename(), /^PROMueve_FH_evaluacion_ficticia_\d{4}-\d{2}-\d{2}
 
 assert.match(ledgerSource, /function controlLabel\(control\)/, 'ledger captures a visible field label');
 assert.match(ledgerSource, /label: controlLabel\(control\)/, 'captured label is stored in form state');
-assert.match(indexHtml, /vendor\/sheetjs\/xlsx\.full\.min\.js/, 'SheetJS remains available for normal Excel imports');
+assert.match(indexHtml, /modules\/cargadorExcel\.js/, 'SheetJS remains available on demand for normal Excel imports (#956)');
 assert.doesNotMatch(indexHtml, /scripts\/farmacia_evaluation_workbook\.js/, 'workbook module is not wired into normal Inicio Farmacia runtime');
 assert.doesNotMatch(workbookSource, /innerHTML/, 'workbook UI avoids innerHTML');
 

@@ -2344,6 +2344,12 @@
 
         function ensureXLSX(callback, onError) {
             if (typeof XLSX !== 'undefined') { callback(); return; }
+            if (typeof window !== 'undefined' && window.NexusExcel && typeof window.NexusExcel.cargar === 'function') {
+                window.NexusExcel.cargar().then(function () { callback(); }, function (err) {
+                    if (typeof onError === 'function') onError(err && err.message ? err.message : 'No se pudo cargar la librería de Excel.');
+                });
+                return;
+            }
             var script = document.createElement('script');
             script.src = 'vendor/sheetjs/xlsx.full.min.js';
             script.onload = callback;

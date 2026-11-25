@@ -44,7 +44,9 @@ try {
   assert.equal(await page.evaluate(() => typeof window.FarmaciaEvaluationLedger), 'undefined', 'normal Inicio does not load the ledger');
   assert.equal(await page.evaluate(() => typeof window.FarmaciaEvaluationWorkbook), 'undefined', 'normal Inicio does not load the workbook module');
   assert.equal(await page.locator('#fhEvaluationWorkbookDownload').count(), 0, 'normal Inicio has no workbook UI');
-  assert.equal(await page.evaluate(() => Boolean(window.XLSX)), true, 'SheetJS remains loaded for normal Excel imports');
+  // #956 (25-11): la librería de Excel ya no se carga al entrar; se pide al usarla.
+  assert.equal(await page.evaluate(() => Boolean(window.XLSX)), false, 'SheetJS is not loaded on entry');
+  await page.evaluate(() => window.NexusExcel.cargar());
 
   await page.addScriptTag({ url: new URL('scripts/farmacia_evaluation_ledger.js', BASE_URL).href });
   await page.addScriptTag({ url: new URL('scripts/farmacia_evaluation_workbook.js', BASE_URL).href });
