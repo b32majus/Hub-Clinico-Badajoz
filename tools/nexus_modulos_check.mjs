@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = 'modules/nexus';
-const FILES = ['index.js', 'texto.js', 'fechas.js', 'avisos.js', 'piezas/nx-aviso.js', 'piezas/nx-pestanas.js', 'piezas/nx-shell.js', 'menus.js', 'version.js'];
+const FILES = ['index.js', 'texto.js', 'fechas.js', 'avisos.js', 'piezas/nx-aviso.js', 'piezas/nx-ayuda.js', 'piezas/nx-pestanas.js', 'piezas/nx-shell.js', 'menus.js', 'version.js'];
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
 const load = (rel) => import(pathToFileURL(path.join(ROOT, DIR, rel)).href);
 function walk(dir) {
@@ -48,7 +48,9 @@ await test('M2 módulos ES: imports solo relativos y con .js; nada de innerHTML,
         if (/\bimport\s*\(/.test(src)) problems.push(`${f}: import() dinámico`);
         if (/innerHTML|outerHTML|insertAdjacentHTML|document\.write/.test(src)) problems.push(`${f}: HTML como texto`);
         if (/\b(alert|confirm|prompt)\s*\(/.test(src)) problems.push(`${f}: alert/confirm/prompt`);
-        if (/#[0-9a-fA-F]{3,8}\b|rgba?\(|style\s*=|\.style\./.test(src)) problems.push(`${f}: color o estilo escrito a mano (va en CSS, tramo 4)`);
+        // #717: la posición de la ayuda emergente (fija, bajo su botón) solo se conoce al abrirla: nx-ayuda.js pone `left` y `top`; ningún otro estilo.
+        const srcEstilo = f === 'piezas/nx-ayuda.js' ? src.replace(/\.style\.(left|top)\b/g, '') : src;
+        if (/#[0-9a-fA-F]{3,8}\b|rgba?\(|style\s*=|\.style\./.test(srcEstilo)) problems.push(`${f}: color o estilo escrito a mano (va en CSS, tramo 4)`);
         if (/window\.[A-Za-z]+\s*=|globalThis\.[A-Za-z]+\s*=/.test(src)) problems.push(`${f}: crea un global`);
         // Única excepción (tramo 5, ADR-009 R5 y ADR-010 §3): <nx-shell> lee el perfil del hospital y «Terminar» olvida el profesional.
         const sinExcepciones = f === 'piezas/nx-shell.js'
@@ -71,9 +73,11 @@ await test('M3 solo las 17 páginas con barra cargan modules/nexus, y solo pieza
                 .replace(/modules\/nexus\/piezas\/nx-shell\.js/g, '');
             // ADR-010: cada pantalla importa la pieza que usa. Solo nx-pestanas, y solo si la página tiene <nx-pestanas> (tramo 7, 23-11).
             if (html.includes('<nx-pestanas')) html = html.replace(/<script type="module" src="modules\/nexus\/piezas\/nx-pestanas\.js(\?v=[\w-]+)?"><\/script>/g, '');
+            // #717: igual con nx-ayuda (el icono de información junto a un campo), solo si la página tiene <nx-ayuda>.
+            if (html.includes('<nx-ayuda')) html = html.replace(/<script type="module" src="modules\/nexus\/piezas\/nx-ayuda\.js(\?v=[\w-]+)?"><\/script>/g, '');
             return html.includes('modules/nexus');
         });
-    assert.deepEqual(mal, [], 'las páginas solo cargan piezas/nx-shell.js (y piezas/nx-pestanas.js si usan <nx-pestanas>)');
+    assert.deepEqual(mal, [], 'las páginas solo cargan piezas/nx-shell.js (y piezas/nx-pestanas.js o piezas/nx-ayuda.js si usan <nx-pestanas> o <nx-ayuda>)');
 });
 
 await test('M4 index.js reexporta la API pública', async () => {

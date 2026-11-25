@@ -10,9 +10,9 @@
     <link rel="preload" href="vendor/inter/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
     <style>@layer nx.vendor, nx.tokens, nx.base, nx.piezas, modulo; @import url("vendor/fontawesome/css/all.min.css?v=6.0.0-beta3") layer(nx.vendor);</style>
-    <link rel="stylesheet" href="css/nexus_tokens.css?v=20261124-col">
+    <link rel="stylesheet" href="css/nexus_tokens.css?v=20261125-ayuda">
     <link rel="stylesheet" href="css/nexus_base.css?v=20261122-t7f">
-    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261124-t1">
+    <link rel="stylesheet" href="css/nexus_piezas.css?v=20261125-ayuda">
     <link rel="modulepreload" href="modules/nexus/piezas/nx-shell.js">
     <link rel="modulepreload" href="modules/nexus/menus.js">
     <link rel="modulepreload" href="modules/nexus/version.js">
@@ -1269,13 +1269,16 @@
                                     <input class="nx-campo__control" type="number" id="pcrValue" min="0" step="0.1">
                                 </div>
                                 <div class="nx-campo">
+                                    <div class="nx-campo__cabecera">
                                     <label class="nx-campo__etiqueta" for="pcrUnit">Unidad PCR:</label>
-                                    <select id="pcrUnit" class="pcr-unit-select nx-campo__control" aria-describedby="pcrUnitHelp">
+                                    <nx-ayuda etiqueta="Unidades de PCR por hospital">Mérida y Cáceres informan la PCR en mg/L; Badajoz, en mg/dL. Elige siempre la unidad que figura en la analítica del paciente.</nx-ayuda>
+                                </div>
+                                    <select id="pcrUnit" class="pcr-unit-select nx-campo__control">
                                         <option value="" selected>Selecciona la unidad</option>
                                         <option value="mg/L">mg/L</option>
                                         <option value="mg/dL">mg/dL</option>
                                     </select>
-                                    <small id="pcrUnitHelp">Selecciona la unidad indicada en la analítica. Si no consta, el cálculo con PCR queda pendiente</small>
+                                    <p class="nx-campo__aviso" id="pcrUnitAviso" role="status" hidden>Indica la unidad de la PCR; sin ella el cálculo con PCR queda pendiente.</p>
                                 </div>
                                 <div class="nx-campo">
                                     <label class="nx-campo__etiqueta" for="vsgValue">VSG (mm/h):</label>
@@ -2649,7 +2652,7 @@
     <script src="modules/reuma_act_contract.js?v=20260929a" defer></script>
     <script src="modules/reuma_legacy_export_adapter.js?v=20260929a" defer></script>
     <script src="scripts/farmacia_pautas_catalog.js?v=20261125-xl" defer></script>
-    <script src="modules/formController.js?v=20261122-t7l" defer></script>
+    <script src="modules/formController.js?v=20261125-pcr" defer></script>
     <script src="modules/drugCatalog.js?v=20261125-xl" defer></script>
     <script src="modules/cimaSearch.js?v=20261125-bif" defer></script>
     <script src="modules/drugAutocomplete.js?v=20261124-des" defer></script>
@@ -2670,6 +2673,7 @@
          any new polling loop. These four selects opt out of the shared decorator
          via data-no-custom-select="true" (no change to modules/customSelect.js). -->
     <script src="scripts/primera_visita_chips.js?v=20261124-par" defer></script>
+<script type="module" src="modules/nexus/piezas/nx-ayuda.js"></script>
 </body>
 
 </html>

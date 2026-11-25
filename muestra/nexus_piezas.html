@@ -82,6 +82,18 @@
                 <label class="nx-campo__etiqueta" for="c-buscar">Buscar</label>
                 <input class="nx-campo__control" id="c-buscar" type="search" placeholder="Nombre o identificador">
             </div>
+            <div class="nx-campo">
+                <div class="nx-campo__cabecera">
+                    <label class="nx-campo__etiqueta" for="c-unidad">Unidad de la prueba</label>
+                    <nx-ayuda etiqueta="Qué unidad elegir">La unidad depende del laboratorio. Elige siempre la que figura en el informe del paciente.</nx-ayuda>
+                </div>
+                <select class="nx-campo__control" id="c-unidad">
+                    <option value="" selected>Selecciona la unidad</option>
+                    <option>mg/L</option>
+                    <option>mg/dL</option>
+                </select>
+                <p class="nx-campo__aviso">Indica la unidad; sin ella el cálculo queda pendiente.</p>
+            </div>
             <button type="submit" class="nx-boton nx-boton--principal">Buscar</button>
         </form>
     </section>

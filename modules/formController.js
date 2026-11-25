@@ -2484,6 +2484,14 @@ function initScoreWiring() {
         });
     }
 
+    // Recordatorio: solo aparece si hay valor de PCR y falta la unidad (sin ella el cálculo con PCR queda pendiente)
+    function actualizarAvisoUnidadPcr() {
+        var aviso = document.getElementById('pcrUnitAviso');
+        if (!aviso) return;
+        var hayValor = getFormValue('pcrValue') !== '';
+        aviso.hidden = !(hayValor && !getFormValue('pcrUnit'));
+    }
+
     function getPcrSourceUnit() {
         return getFormValue('pcrUnit');
     }
@@ -2563,11 +2571,14 @@ function initScoreWiring() {
     if (pcrUnitSelect) {
         pcrUnitSelect.addEventListener('change', function () {
             actualizarEspejoUnidadPcr();
+            actualizarAvisoUnidadPcr();
             recalcularASDAS();
             recalcularDAPSA();
             recalcularDAS28();
         });
         actualizarEspejoUnidadPcr();
+        if (pcrInput) pcrInput.addEventListener('input', actualizarAvisoUnidadPcr);
+        actualizarAvisoUnidadPcr();
         debugLog('  ✓ Unidad PCR wiring');
     }
     if (vsgInput && asdasVSGField) {

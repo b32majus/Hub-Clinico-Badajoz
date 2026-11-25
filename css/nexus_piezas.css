@@ -228,6 +228,89 @@
     content: "Error: ";
   }
 
+  /* Recordatorio bajo un campo: empieza por «Atención:»; el color no basta */
+  .nx-campo__aviso {
+    margin: 0;
+    padding: var(--nx-espacio-1) var(--nx-espacio-2);
+    border: var(--nx-borde-fino) solid var(--nx-color-aviso-borde);
+    border-radius: var(--nx-radio-sm);
+    background: var(--nx-color-aviso-fondo);
+    color: var(--nx-color-aviso);
+    font-size: var(--nx-texto-sm);
+  }
+
+  .nx-campo__aviso::before {
+    content: "Atención: ";
+    font-weight: var(--nx-peso-semi);
+  }
+
+  .nx-campo__aviso[hidden] {
+    display: none;
+  }
+
+  /* Etiqueta del campo con una ayuda al lado */
+  .nx-campo__cabecera {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-espacio-2);
+  }
+
+  /* ---------- Ayuda emergente (nx-ayuda) ---------- */
+  nx-ayuda {
+    display: inline-flex;
+  }
+
+  /* El icono (círculo con «i», Font Awesome) es el propio botón: sin marco ni fondo */
+  .nx-ayuda__boton {
+    inline-size: var(--nx-espacio-5);
+    block-size: var(--nx-espacio-5);
+    padding: 0;
+    border: 0;
+    border-radius: var(--nx-radio-pildora);
+    background: transparent;
+    color: var(--nx-color-info);
+    font-size: var(--nx-texto-lg);
+    line-height: 1;
+    cursor: help;
+  }
+
+  /* Posición fija: ninguna tarjeta con overflow lo recorta. top y left los pone nx-ayuda.js al abrirla */
+  .nx-ayuda__texto {
+    position: fixed;
+    z-index: 2;
+    inline-size: var(--nx-ancho-ayuda);
+    max-inline-size: 90%;
+    padding: var(--nx-espacio-3);
+    border: var(--nx-borde-fino) solid var(--nx-color-borde);
+    border-radius: var(--nx-radio-md);
+    background: var(--nx-color-superficie);
+    box-shadow: var(--nx-sombra-md);
+    color: var(--nx-color-texto);
+    font-size: var(--nx-texto-sm);
+    font-weight: var(--nx-peso-normal);
+    line-height: var(--nx-interlineado);
+    visibility: hidden;
+    transition: visibility var(--nx-retardo-ayuda); /* al ocultarse, sigue visible un instante: da tiempo a bajar el ratón al texto */
+  }
+
+  /* Puente invisible entre el botón y el texto: el ratón puede bajar al texto sin que se cierre */
+  .nx-ayuda__texto::before {
+    content: "";
+    position: absolute;
+    inset-block-end: 100%;
+    inset-inline: 0;
+    block-size: var(--nx-espacio-2);
+  }
+
+  nx-ayuda:not([data-oculta]):is(:hover, :has(:focus-visible), [data-abierta]) .nx-ayuda__texto {
+    visibility: visible;
+  }
+
+  /* Escape o cerrar con el botón: se oculta al momento */
+  nx-ayuda[data-oculta] .nx-ayuda__texto {
+    transition: none;
+  }
+
   .nx-casilla {
     display: inline-flex;
     align-items: center;
