@@ -193,7 +193,7 @@ assert.equal(memoryOnlyLedger.listEvents().length, 1, 'memory fallback remains u
 
 const indexHtml = fs.readFileSync(path.join(ROOT, 'farmacia_index.html'), 'utf8');
 assert.doesNotMatch(indexHtml, /farmacia_evaluation_(ledger|workbook)\.js/, 'Inicio loads neither ledger nor workbook module');
-assert.match(indexHtml, /vendor\/sheetjs\/xlsx\.full\.min\.js/, 'Inicio retains SheetJS for normal Excel imports');
+assert.match(indexHtml, /modules\/cargadorExcel\.js/, 'Inicio retains SheetJS on demand for normal Excel imports (#956)');
 
 const clinicalPages = [
   ['farmacia_validacion.html', 'scripts/farmacia_validacion.js', ['fhValExportTxt', 'fhValExcelExportBtn', 'fhValExportV2Btn']],

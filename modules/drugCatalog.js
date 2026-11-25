@@ -340,6 +340,12 @@
             callback();
             return;
         }
+        if (typeof window !== 'undefined' && window.NexusExcel && typeof window.NexusExcel.cargar === 'function') {
+            window.NexusExcel.cargar().then(function () { callback(); }, function (err) {
+                if (typeof onError === 'function') onError(err && err.message ? err.message : 'No se pudo cargar la librería de Excel.');
+            });
+            return;
+        }
         if (typeof document === 'undefined') {
             if (onError) onError('SheetJS no disponible.');
             return;

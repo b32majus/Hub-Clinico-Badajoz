@@ -76,7 +76,7 @@ for (const id of ['fhManualInduccion', 'fhDermaInduccion', 'fhValidadoInduccion'
   const markup = (html.match(new RegExp('<select[^>]+id=["\\\']' + id + '["\\\'][^>]*>[\\s\\S]*?<\\/select>', 'i')) || [''])[0];
   check(/<option value=["']?["']>No informado<\/option>/.test(markup), id + ' comienza sin valor clínico por defecto');
 }
-check(/farmacia_export_v2_core\.js\?v=2\.0\.0-draft\.1[\s\S]*farmacia_export_v2_validation_adapter\.js\?v=1\.0\.0-draft\.1[\s\S]*farmacia_validacion\.js/.test(html), 'Core y adaptador v2 cargan antes del controlador DOM');
+check(/farmacia_export_v2_core\.js\?v=20261125-xl[\s\S]*farmacia_export_v2_validation_adapter\.js\?v=1\.0\.0-draft\.1[\s\S]*farmacia_validacion\.js/.test(html), 'Core y adaptador v2 cargan antes del controlador DOM');
 // F4.3E (#477): la activación demo paralela publicada (fe84d83, PR #227) sancionó
 // exactamente un botón demo Export v2 por página (fhValExportV2Btn, desactivado
 // por defecto en HTML, sin descarga pública v2). El literal anterior prohibía

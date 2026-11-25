@@ -277,6 +277,9 @@ function validateSheetHeaders(sheetName, actualHeaders) {
 async function loadDatabase(file) {
     try {
         const data = await file.arrayBuffer();
+        if (typeof XLSX === 'undefined' && typeof window !== 'undefined' && window.NexusExcel) {
+            await window.NexusExcel.cargar();
+        }
         const workbook = XLSX.read(data);
 
         const dbData = {};
