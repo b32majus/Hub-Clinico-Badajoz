@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Reuma (#940, inventario A5/A10): el CIP no va en la dirección ni en el nombre de ninguna
 // entrada del navegador; un solo paciente a la vez, como Farmacia. Casos validados por Sil
-// (14-11): 1 buscador→panel, 2 panel→Seguimiento, 3 vista rápida, 4 F5 olvida el paciente
-// (opción A: el Excel sigue cargado), 5 cambio de paciente borra lo del anterior, 6 enlaces
+// (14-11): 1 buscador→panel, 2 panel→Seguimiento, 3 vista rápida, 4 F5 pregunta «continuar /
+// empezar de cero» como Farmacia (#714 tramo 2; empezar de cero olvida al paciente y el Excel
+// sigue cargado), 5 cambio de paciente borra lo del anterior, 6 enlaces
 // antiguos con ?id= se aceptan una vez y se limpian, 7 prebiológico en una sola entrada,
 // 8 sin paciente → vacío. Solo datos sintéticos.
 
@@ -92,12 +93,20 @@ async function test(name, fn) {
 
 const browser = await chromium.launch({ executablePath: chromiumExecutable(), headless: true });
 const pageErrors = [];
+// #714 tramo 2: la pregunta de F5 se acepta (continuar) o se cancela (empezar de cero) según el caso.
+let resumeAnswer = 'accept';
+const resumeQuestions = [];
+const RESUME_RE = /Hay un paciente actual en esta sesión/;
 
 // Puerta de sesión real (Excel → profesional → confirmar). Devuelve la página en reuma_index.
 async function freshSession() {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
-    page.on('dialog', (dialog) => dialog.accept());
+    page.on('dialog', (dialog) => {
+        if (!RESUME_RE.test(dialog.message())) return dialog.accept();
+        resumeQuestions.push(dialog.message());
+        return resumeAnswer === 'dismiss' ? dialog.dismiss() : dialog.accept();
+    });
     page.on('pageerror', (error) => pageErrors.push(String(error)));
     await page.goto(base + 'reuma_index.html', { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
@@ -201,13 +210,30 @@ try {
         await assertNoCipInKeys(p, 'C2');
     });
 
-    await test('C4 F5 en Seguimiento: formulario vacío y nada guardado del paciente', async () => {
+    await test('C4 F5 en Seguimiento y «continuar»: pregunta y sigue el mismo paciente', async () => {
+        resumeAnswer = 'accept';
+        const before = resumeQuestions.length;
+        await p.reload({ waitUntil: 'load', timeout: 45000 });
+        await waitSeguimientoId(p, A);
+        assert.equal(resumeQuestions.length, before + 1, 'C4 F5 con paciente debe preguntar una vez');
+        assertUrlClean(p, 'C4 continuar');
+        await assertNoCipInKeys(p, 'C4 continuar');
+    });
+
+    await test('C4 F5 en Seguimiento y «empezar de cero»: formulario vacío y nada guardado del paciente', async () => {
+        resumeAnswer = 'dismiss';
         await p.reload({ waitUntil: 'load', timeout: 45000 });
         await p.waitForTimeout(1500);
         const id = await p.evaluate(() => (document.getElementById('idPaciente') || {}).value || '');
         assert.equal(id, '', 'C4 tras F5 el CIP de Seguimiento debe quedar vacío');
         assertUrlClean(p, 'C4');
         await assertNoValueWith(p, A, 'C4 Seguimiento');
+        // Sin paciente, F5 ya no pregunta.
+        const before = resumeQuestions.length;
+        resumeAnswer = 'accept';
+        await p.reload({ waitUntil: 'load', timeout: 45000 });
+        await p.waitForTimeout(1000);
+        assert.equal(resumeQuestions.length, before, 'C4 F5 sin paciente no debe preguntar');
     });
 
     await test('C7 prebiológico: una sola entrada, sin CIP en el nombre, solo del paciente actual', async () => {
@@ -233,8 +259,18 @@ try {
         await assertNoCipInKeys(p, 'C5');
     });
 
-    await test('C4 F5 en el panel: «Busca un paciente…», nada guardado del paciente, el Excel sigue cargado', async () => {
+    await test('C4 F5 en el panel y «continuar»: pregunta y sigue el mismo paciente', async () => {
+        resumeAnswer = 'accept';
+        const before = resumeQuestions.length;
+        await p.reload({ waitUntil: 'load', timeout: 45000 });
+        await waitBadge(p, B);
+        assert.equal(resumeQuestions.length, before + 1, 'C4 F5 en el panel con paciente debe preguntar una vez');
+        assertUrlClean(p, 'C4 panel continuar');
+    });
+
+    await test('C4 F5 en el panel y «empezar de cero»: «Busca un paciente…», nada guardado del paciente, el Excel sigue cargado', async () => {
         await p.evaluate((b) => window.HubTools.prebiologic.setStatus(b, 'EN_CURSO', ''), B);
+        resumeAnswer = 'dismiss';
         await p.reload({ waitUntil: 'load', timeout: 45000 });
         await waitEmptyDashboard(p);
         const subtitle = await p.evaluate(() => (document.getElementById('emptyStateSubtitle') || {}).textContent || '');
@@ -244,6 +280,7 @@ try {
         const hasDb = await p.evaluate(() => !!sessionStorage.getItem('hubClinicoDB'));
         assert.equal(hasDb, true, 'C4 el Excel sigue cargado en la sesión (opción A)');
         // Y se puede elegir otro paciente sin volver a cargar el Excel.
+        resumeAnswer = 'accept';
         await searchAndOpen(p, A);
     });
     await s1.context.close();
